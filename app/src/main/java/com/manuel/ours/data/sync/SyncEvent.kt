@@ -48,6 +48,15 @@ data class SyncPayload(
     val source: String,
     val ownerName: String,
     val needsReview: Boolean = false,
-    /** Original bank message. Plaintext in the sheet — see the class note. */
+    /**
+     * The original bank message, so a mis-parse can be diagnosed on either phone.
+     *
+     * **This is the most sensitive field in the payload** — it carries the account tail
+     * and the running balance in the bank's own words. On the folder and Bluetooth
+     * transports it is AES-256-GCM encrypted per line and never appears in the clear.
+     * On the Sheet transport it does: the script writes it into an `Original message`
+     * column in plaintext. That is the stated cost of a ledger you can open and repair,
+     * and it is the reason Sheet sync carries a warning the other transports do not.
+     */
     val rawSms: String? = null,
 )

@@ -75,8 +75,24 @@ line is separately AES-256-GCM encrypted with a key derived (HKDF-SHA256) from t
 invite secret. Per-line rather than whole-file encryption means one corrupt or
 truncated line costs you that event, not the file.
 
-**Raw SMS bodies are never synced.** `SyncPayload` has no field for them, and a test
-asserts that stays true through refactors.
+**Raw SMS bodies *are* synced, and that is a deliberate trade — not an oversight.**
+`SyncPayload.rawSms` carries the original message so a mis-parse can be diagnosed on
+either phone, and `CryptoAndCodecTest` asserts the field is present rather than absent.
+
+What it costs depends entirely on the transport:
+
+- **Bluetooth and shared folder** — every log line is separately AES-256-GCM encrypted,
+  so the message text never appears in the clear. `CryptoAndCodecTest` pins this by
+  encoding a real debit alert and asserting the account tail and balance cannot be found
+  in the ciphertext.
+- **Google Sheet** — plaintext. The script writes the message into an `Original message`
+  column (`Code.gs`, ledger row builder). So your bank's full text, including account
+  tails and running balances, sits in that spreadsheet, reachable by anyone holding the
+  `/exec` URL.
+
+If that is not acceptable, do not use the Sheet path. Nothing about it can be made
+private while it stays a spreadsheet you can read and repair — that legibility *is* the
+plaintext.
 
 ---
 
