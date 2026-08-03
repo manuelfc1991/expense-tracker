@@ -50,7 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -66,6 +65,7 @@ import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.StatePill
 import com.manuel.ours.ui.components.TapeHeader
+import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.work.SyncWorker
@@ -181,7 +181,7 @@ fun SettingsScreen(
                             Text(
                                 text = secret,
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = OursMono,
                                 fontWeight = FontWeight.Bold,
                                 color = Ours.text,
                             )

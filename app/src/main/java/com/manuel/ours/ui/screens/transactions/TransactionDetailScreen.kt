@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +37,7 @@ import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.TapeHeader
+import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.WordmarkStyle
@@ -197,7 +197,7 @@ fun TransactionDetailScreen(
                         Text(
                             text = raw,
                             style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = OursMono,
                             color = Ours.textSecondary,
                         )
                     }

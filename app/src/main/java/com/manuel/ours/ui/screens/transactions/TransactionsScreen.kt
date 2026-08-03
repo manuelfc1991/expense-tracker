@@ -66,6 +66,7 @@ private val EDGE = 15.dp
 @Composable
 fun TransactionsScreen(
     onTransactionClick: (String) -> Unit,
+    onSort: () -> Unit,
     viewModel: TransactionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -96,8 +97,26 @@ fun TransactionsScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("ACTIVITY", style = WordmarkStyle, color = Ours.text)
-                val shown = state.groups.sumOf { it.transactions.size }
-                MicroLabel("$shown ${if (shown == 1) "entry" else "entries"}")
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val shown = state.groups.sumOf { it.transactions.size }
+                    MicroLabel("$shown ${if (shown == 1) "entry" else "entries"}")
+                    // The only permanent way into Sort.
+                    //
+                    // Home shows a "Sort N expenses" card, but the mockup only draws it
+                    // when something is untagged — so the moment the last one was
+                    // categorised the screen became unreachable from anywhere in the
+                    // app. Sort still does useful work then (it is where a wrong
+                    // category gets corrected in bulk), and a screen you can only reach
+                    // by first letting your data get messy is not a feature.
+                    MicroLabel(
+                        "Sort",
+                        color = Ours.accent,
+                        modifier = Modifier.clickable(onClick = onSort),
+                    )
+                }
             }
 
             SearchField(

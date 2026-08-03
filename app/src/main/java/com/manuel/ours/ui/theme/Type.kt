@@ -22,7 +22,7 @@ val OursTypography = Typography(
     // The one very large number. Everything else is restrained specifically so this
     // can be this big; the jump from a 9sp label to a 48sp figure *is* the hierarchy.
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = OursMono,
         fontWeight = FontWeight.Bold,
         fontSize = 48.sp,
         lineHeight = 44.sp,
@@ -32,7 +32,7 @@ val OursTypography = Typography(
     // The summary's net figure. A step down, because it carries a sign and needs the
     // room for it without wrapping.
     displayMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = OursMono,
         fontWeight = FontWeight.Bold,
         fontSize = 40.sp,
         lineHeight = 38.sp,
@@ -95,7 +95,7 @@ val OursTypography = Typography(
         letterSpacing = 0.1.sp,
     ),
     labelSmall = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = OursMono,
         fontWeight = FontWeight.Medium,
         fontSize = 9.sp,
         letterSpacing = 1.6.sp,
@@ -111,7 +111,7 @@ val OursTypography = Typography(
  * body text someone forgot to enlarge.
  */
 val MicroLabelStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
     fontSize = 9.sp,
     lineHeight = 12.sp,
@@ -120,7 +120,7 @@ val MicroLabelStyle = TextStyle(
 
 /** The amount in the shared right-hand column. Bold, tabular, right-aligned. */
 val AmountTextStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Bold,
     fontSize = 14.sp,
     fontFeatureSettings = TABULAR,
@@ -128,7 +128,7 @@ val AmountTextStyle = TextStyle(
 
 /** A value under a [MicroLabelStyle] caption — the "₹32,000" in a BUDGET/USED/LEFT triple. */
 val ValueTextStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
     fontSize = 15.sp,
     fontFeatureSettings = TABULAR,
@@ -136,7 +136,7 @@ val ValueTextStyle = TextStyle(
 
 /** "OURS" in the top-left. Tracked out far enough to read as a mark, not a word. */
 val WordmarkStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Bold,
     fontSize = 14.sp,
     letterSpacing = 3.6.sp,
@@ -144,7 +144,7 @@ val WordmarkStyle = TextStyle(
 
 /** The month stepper — "JULY 2026". */
 val MonthTitleStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
     fontSize = 13.sp,
     letterSpacing = 1.8.sp,
@@ -152,7 +152,7 @@ val MonthTitleStyle = TextStyle(
 
 /** Chart axis ends, e.g. the "1" and "31" under the daily columns. */
 val AxisLabelStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
     fontSize = 9.sp,
     letterSpacing = 0.9.sp,
@@ -161,7 +161,7 @@ val AxisLabelStyle = TextStyle(
 
 /** Status pills: SYNCED, 3 WAITING, OFF. */
 val PillTextStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+    fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
     fontSize = 9.sp,
     letterSpacing = 1.1.sp,

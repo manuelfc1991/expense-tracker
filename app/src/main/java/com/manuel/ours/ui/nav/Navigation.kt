@@ -187,6 +187,7 @@ fun OursNavHost(
             composable(Routes.TRANSACTIONS) {
                 TransactionsScreen(
                     onTransactionClick = { navController.navigate(Routes.txnDetail(it)) },
+                    onSort = { navController.navigate(Routes.SORT) },
                 )
             }
 

@@ -197,7 +197,8 @@ private fun EarnedSpentSaved(summary: MonthSummary, modifier: Modifier = Modifie
 @Composable
 private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
     val top = summary.byCategory.take(6)
-    val largest = top.maxOfOrNull { it.totalPaise } ?: 1L
+    // The month total, not the biggest category. See [RankedBar].
+    val total = summary.totalSpentPaise.takeIf { it > 0 } ?: 1L
     Column(
         modifier.fillMaxWidth().padding(horizontal = EDGE),
         verticalArrangement = Arrangement.spacedBy(13.dp),
@@ -206,12 +207,12 @@ private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
         // Home, not a caption over a value. Without the rule the ranked bars float
         // free of anything and the eye has no line to start from.
         TapeHeader("Where it went")
-        top.forEach { entry -> RankedBar(entry, largest) }
+        top.forEach { entry -> RankedBar(entry, total) }
     }
 }
 
 @Composable
-private fun RankedBar(entry: CategoryTotal, largest: Long) {
+private fun RankedBar(entry: CategoryTotal, totalSpentPaise: Long) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             Modifier.fillMaxWidth(),
@@ -219,7 +220,7 @@ private fun RankedBar(entry: CategoryTotal, largest: Long) {
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
-                text = entry.category.label,
+                text = entry.category.shortLabel,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Ours.text,
@@ -228,10 +229,16 @@ private fun RankedBar(entry: CategoryTotal, largest: Long) {
             )
             AmountColumn(entry.totalPaise)
         }
-        // Scaled against the largest category rather than the month total, so the
-        // smaller bars keep a comparable length instead of collapsing to slivers.
+        // A share of the month, not a share of the biggest category.
+        //
+        // Scaling against the largest category made its bar full-width by definition,
+        // so the top row always read "all of it" no matter what it actually was —
+        // ₹3,233 of a ₹3,233 month and ₹8,412 of a ₹22,000 one drew the identical bar.
+        // The question this section asks is "where did the month go", and only the
+        // share of the total answers it. The mockup does the same: its four bars are
+        // 38/27/16/10%, which is exactly each category over ₹21,979.
         Meter(
-            fraction = if (largest > 0) entry.totalPaise.toFloat() / largest else 0f,
+            fraction = entry.totalPaise.toFloat() / totalSpentPaise,
             color = colorForCategory(entry.category),
         )
     }
