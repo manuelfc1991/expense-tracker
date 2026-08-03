@@ -88,6 +88,7 @@ private val EDGE = 15.dp
 fun SettingsScreen(
     onOpenParserTester: () -> Unit,
     onOpenRules: () -> Unit = {},
+    onOpenSheetSetup: () -> Unit = {},
     onScanInvite: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -208,6 +209,10 @@ fun SettingsScreen(
                         "Paste the Apps Script URL from your Google Sheet. Use the same " +
                             "URL on your partner's phone and you'll both see every " +
                             "expense, wherever you are."
+                    )
+                    GhostButton(
+                        label = "How do I set this up?",
+                        onClick = onOpenSheetSetup,
                     )
                     HairlineField(
                         value = draft,

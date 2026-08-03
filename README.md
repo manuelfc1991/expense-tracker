@@ -14,7 +14,13 @@ The Sheet path exists because a spreadsheet is **readable and repairable** — w
 something looks wrong you can open it and see. That comes at a real cost, stated
 plainly: the script URL is the only credential, and the sheet holds your data
 in plain text including the original bank messages. The sheet itself stays private;
-only the script URL is shared. Setup is in `sheet-sync/Code.gs`.
+only the script URL is shared.
+
+Setup is walked through inside the app — **Settings ▸ Sheet sync ▸ How do I set this
+up?** — which also carries the script itself, copyable and shareable, so the second
+phone never depends on having this repository to hand. The script has one source,
+`sheet-sync/Code.gs`; Gradle copies it into the app at build time rather than keeping a
+second copy that could drift into speaking a different wire format.
 
 Neither path needs a Cloud Console project, OAuth client, API key or SHA-1
 fingerprint. Bluetooth is encrypted end to end and involves no third party at all.

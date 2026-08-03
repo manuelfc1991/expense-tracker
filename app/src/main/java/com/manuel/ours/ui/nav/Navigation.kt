@@ -41,6 +41,7 @@ import com.manuel.ours.ui.screens.home.HomeScreen
 import com.manuel.ours.ui.screens.onboarding.OnboardingScreen
 import com.manuel.ours.ui.screens.settings.ParserTesterScreen
 import com.manuel.ours.ui.screens.settings.QrScannerScreen
+import com.manuel.ours.ui.screens.settings.SheetSetupScreen
 import com.manuel.ours.ui.screens.settings.SettingsViewModel
 import com.manuel.ours.ui.screens.settings.SettingsScreen
 import com.manuel.ours.ui.screens.rules.RulesScreen
@@ -60,6 +61,7 @@ object Routes {
     const val QR_SCANNER = "qr_scanner"
     const val SORT = "sort"
     const val RULES = "rules"
+    const val SHEET_SETUP = "sheet_setup"
     const val TXN_DETAIL = "txn/{txnId}"
 
     fun txnDetail(id: String) = "txn/$id"
@@ -185,6 +187,7 @@ fun OursNavHost(
                 SettingsScreen(
                     onOpenParserTester = { navController.navigate(Routes.PARSER_TESTER) },
                     onOpenRules = { navController.navigate(Routes.RULES) },
+                    onOpenSheetSetup = { navController.navigate(Routes.SHEET_SETUP) },
                     onScanInvite = { navController.navigate(Routes.QR_SCANNER) },
                 )
             }
@@ -205,6 +208,10 @@ fun OursNavHost(
 
             composable(Routes.SORT) {
                 SortScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.SHEET_SETUP) {
+                SheetSetupScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.RULES) {

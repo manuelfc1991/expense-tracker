@@ -157,3 +157,20 @@ tasks.withType<Test>().configureEach {
     systemProperty("corpus", System.getProperty("corpus") ?: "")
     testLogging { showStandardStreams = true }
 }
+
+/**
+ * The Apps Script the user must paste into their spreadsheet is shipped inside the app
+ * so the setup screen can offer it as copyable text.
+ *
+ * Copied from the single source in `sheet-sync/Code.gs` at build time rather than kept
+ * as a second copy under `res/raw`. Two hand-maintained copies of a protocol
+ * implementation drift, and the failure would be silent: the phone would speak a
+ * version of the wire format the pasted script does not.
+ */
+val syncSheetScript by tasks.registering(Copy::class) {
+    from(rootProject.file("sheet-sync/Code.gs"))
+    into(layout.projectDirectory.dir("src/main/res/raw"))
+    rename { "sheet_sync_script.txt" }
+}
+
+tasks.named("preBuild") { dependsOn(syncSheetScript) }

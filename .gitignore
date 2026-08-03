@@ -5,3 +5,4 @@ build/
 .gradle/
 .kotlin/
 *.apk
+app/src/main/res/raw/sheet_sync_script.txt
