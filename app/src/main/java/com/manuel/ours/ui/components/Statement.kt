@@ -108,8 +108,7 @@ fun LabelOverValue(
  *
  * A solid fill says "roughly this much". Ticks say "this many out of that many", which
  * is what a budget actually is — and it borrows the vernacular of a printed scale,
- * which is the material the whole interface is made of. Every fifth tick runs full
- * height so the eye can count without a legend.
+ * which is the material the whole interface is made of.
  *
  * @param fraction 0f..1f of budget consumed; values above 1f render entirely as [over].
  */
@@ -130,12 +129,14 @@ fun Ruler(
         // past its own end would just look broken.
         val filled = (count * fraction.coerceIn(0f, 1f)).roundToInt()
         for (i in 0 until count) {
-            val tall = i % 5 == 0
-            val h = if (tall) size.height else size.height * 0.55f
+            // Every tick full height and identical. An earlier pass made every fifth
+            // taller, from a design note rather than the design — the mockup draws a
+            // plain repeating gradient, and the varied heights read as a chart axis
+            // with meaning in the tall marks that they do not carry.
             drawRect(
                 color = if (i < filled) fill else track,
-                topLeft = Offset(i * pitch, size.height - h),
-                size = Size(tickWidth, h),
+                topLeft = Offset(i * pitch, 0f),
+                size = Size(tickWidth, size.height),
             )
         }
     }

@@ -229,9 +229,13 @@ private fun GroupCard(
                 color = Ours.textSecondary,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Filled, as the mockup has it: the likely answer for a payment the
+                // bank named nobody for is that it was money moved, not spent. It is a
+                // recommendation rather than a selection — nothing is applied until it
+                // is tapped — but it is the one chip worth aiming a thumb at.
                 OursChip(
                     label = "Moving money",
-                    selected = false,
+                    selected = true,
                     icon = BiIcon.forCategory(Category.TRANSFERS),
                     onClick = { onAssign(Category.TRANSFERS) },
                 )
@@ -243,10 +247,13 @@ private fun GroupCard(
             }
         } else {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                group.suggestions.forEach { category ->
+                group.suggestions.forEachIndexed { index, category ->
                     OursChip(
                         label = category.label.substringBefore(" &"),
-                        selected = false,
+                        // The leading guess is filled and the rest are outlines, so the
+                        // one-tap path is obvious at a glance. Ninety-four rows become
+                        // six decisions only if each decision is already half-made.
+                        selected = index == 0,
                         icon = BiIcon.forCategory(category),
                         onClick = { onAssign(category) },
                     )

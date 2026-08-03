@@ -95,6 +95,7 @@ fun HomeScreen(
     onTransactionClick: (String) -> Unit,
     onSeeAll: () -> Unit,
     onSort: () -> Unit,
+    onSetBudget: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -154,8 +155,15 @@ fun HomeScreen(
                 }
             }
 
-            state.budgetPaise?.let { budget ->
-                item { BudgetRuler(spent = state.spentThisMonth, budget = budget) }
+            // Always present, with or without a budget. The ruler is what gives the
+            // figure above it a scale; without it the hero is a number with nothing to
+            // measure against, and the screen loses the shape the mockup gives it.
+            item {
+                BudgetRuler(
+                    spent = state.spentThisMonth,
+                    budget = state.budgetPaise,
+                    onSetBudget = onSetBudget,
+                )
             }
 
             if (state.days.any { it.totalPaise > 0 }) {
@@ -310,8 +318,45 @@ fun HomeScreen(
  * decision — nobody has ever declined to buy something because they were at 68%.
  */
 @Composable
-private fun BudgetRuler(spent: Long, budget: Long, modifier: Modifier = Modifier) {
-    val fraction = if (budget > 0) spent.toFloat() / budget else 0f
+private fun BudgetRuler(
+    spent: Long,
+    budget: Long?,
+    onSetBudget: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (budget == null || budget <= 0) {
+        Column(
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = onSetBudget)
+                .padding(horizontal = EDGE),
+            verticalArrangement = Arrangement.spacedBy(11.dp),
+        ) {
+            // An empty scale, not a filled one. Drawing a bar with nothing behind it
+            // would invent a budget the household never set; an unmarked ruler says
+            // plainly that there is a scale here and nothing is measured on it yet.
+            Ruler(fraction = 0f)
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                LabelOverValue(
+                    label = "Budget",
+                    value = "Not set",
+                    valueColor = Ours.textSecondary,
+                )
+                MicroLabel(
+                    "Set one",
+                    color = Ours.accent,
+                    modifier = Modifier.padding(top = 14.dp),
+                )
+            }
+        }
+        return
+    }
+
+    val fraction = spent.toFloat() / budget
     val over = spent > budget
     val left = budget - spent
     Column(
@@ -319,10 +364,9 @@ private fun BudgetRuler(spent: Long, budget: Long, modifier: Modifier = Modifier
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         Ruler(fraction = fraction, over = over)
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
         Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 1.dp),
+            Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             LabelOverValue("Budget", Money.formatCompact(budget))

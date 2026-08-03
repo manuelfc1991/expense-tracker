@@ -170,6 +170,17 @@ fun OursNavHost(
                     onTransactionClick = { navController.navigate(Routes.txnDetail(it)) },
                     onSeeAll = { navController.navigate(Routes.TRANSACTIONS) },
                     onSort = { navController.navigate(Routes.SORT) },
+                    onSetBudget = {
+                        // Same options as a tab tap, so the back stack does not grow a
+                        // second Budgets entry every time the prompt is used.
+                        navController.navigate(Routes.BUDGETS) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                 )
             }
 
