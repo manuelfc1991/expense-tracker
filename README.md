@@ -3,13 +3,12 @@
 Android expense tracker that reads Indian bank/UPI SMS, produces monthly summaries,
 and syncs between two phones.
 
-No account and no server of ours. Three sync paths, any combination:
+No account and no server of ours. Two sync paths, either or both:
 
 | Path | Setup | Works when | Encrypted |
 |---|---|---|---|
 | **Google Sheet** | Paste an Apps Script URL on both phones | Anywhere | No — plaintext by design |
-| **Shared folder** (SAF) | Pick a folder in the system file picker | Anywhere | Yes |
-| **Bluetooth** (Nearby) | None at all | The two phones are close | Yes |
+| **Bluetooth** (Nearby) | Grant Bluetooth once, on both phones | The two phones are close | Yes |
 
 The Sheet path exists because a spreadsheet is **readable and repairable** — when
 something looks wrong you can open it and see. That comes at a real cost, stated
@@ -17,8 +16,13 @@ plainly: the script URL is the only credential, and the sheet holds your data
 in plain text including the original bank messages. The sheet itself stays private;
 only the script URL is shared. Setup is in `sheet-sync/Code.gs`.
 
-Neither the folder nor the Bluetooth path needs a Cloud Console project, OAuth client,
-API key or SHA-1 fingerprint, and both stay encrypted end to end.
+Neither path needs a Cloud Console project, OAuth client, API key or SHA-1
+fingerprint. Bluetooth is encrypted end to end and involves no third party at all.
+
+A third transport — a shared folder over the system file picker — exists in
+`SafFolderTransport` and is fully tested, but nothing in the UI can select a folder, so
+it never activates. It is kept because it is the only design that is both encrypted
+*and* works at a distance, should the Sheet's plaintext ever stop being acceptable.
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
@@ -53,7 +57,7 @@ SMS / manual entry
       ↓
    Room (single source of truth) ──► UI reads only from Room
       ↓  append SyncEvent to my own log
-   ├── shared folder (SAF), from anywhere
+   ├── Google Sheet (Apps Script), from anywhere
    └── Nearby Connections (Bluetooth), when the phones are close
       ↓
    merge peer's log → upsert Room → UI updates
@@ -129,10 +133,16 @@ prove no drift.
 
 **Working end to end:** SMS parsing and backfill, live SMS receiver, notification
 listener as an alternative source, categorization with learned user corrections,
-bulk sorting by merchant, manual entry, transactions with search/filter/grouping and
-swipe-to-delete with undo, monthly summary, budgets, CSV + PDF export, home-screen
-widget, theming, QR invite generation and scanning, the whole sync core, and Bluetooth
-sync.
+editable auto-assign rules, bulk sorting by merchant, manual entry, transactions with
+search/filter/grouping and swipe-to-delete with undo, monthly summary, budgets, a
+tracking start date that retires older months without deleting them, CSV + PDF export,
+home-screen widget, theming, QR invite generation and scanning, and the sync core with
+its convergence tests.
+
+**Verified on one phone, not yet on two.** Everything above was exercised against a
+real inbox. The sync *transports* have not been: `MergeConvergenceTest` proves the merge
+converges under adversarial ordering, but no pair of phones has actually exchanged a log
+in the field. Treat "sync works" as tested-in-theory until you have run it.
 
 **On-device security**
 
@@ -148,6 +158,13 @@ you can get permanently stuck behind is worse than no lock.
 2. **Bill reminders** — parsed correctly and `ReminderDao` exists, but nothing writes
    to it. Dead path.
 3. Bulk multi-select and widget refresh-on-change are not built.
+4. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
+   choose a folder, so the path is dormant. See above.
+5. **Nearby sync is unproven against a second device.** Its runtime permissions were
+   declared in the manifest but never requested until recently, so every entry point
+   silently reported "no peers" — the toggle looked on and did nothing. The request now
+   happens when you enable it, and the preconditions check out on one phone, but a real
+   two-phone exchange has not been observed.
 
 ---
 
