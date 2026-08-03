@@ -44,6 +44,32 @@ class HouseholdRepository @Inject constructor(
     }
 
     /** Joins via a scanned QR or a pasted invite payload. */
+    /**
+     * Brings a household created before the id was derived onto the derived id.
+     *
+     * Households made earlier hold a random UUID that only ever travelled inside the
+     * QR. Someone joining such a household by *typing* the code now derives an id from
+     * the secret and lands somewhere else — so the fix that made typed codes work would
+     * leave existing households half-broken, working by QR and silently not by code.
+     *
+     * Every device sharing a secret derives the same id, so this converges: whoever
+     * runs it ends up in the same place, whenever they run it. Safe because nothing
+     * durable is keyed on the old value — the sheet does not use the household id at
+     * all, and the id only salts the key for transports that have never yet carried
+     * data for anyone.
+     *
+     * Returns true if it changed anything.
+     */
+    suspend fun migrateHouseholdIdIfLegacy(): Boolean {
+        val snapshot = prefs.snapshot()
+        val secret = snapshot.inviteSecret ?: return false
+        val current = snapshot.householdId ?: return false
+        val derived = idForSecret(secret)
+        if (current == derived) return false
+        prefs.setHousehold(derived, secret)
+        return true
+    }
+
     suspend fun joinHousehold(bundle: InviteBundle, uid: String, name: String, email: String) {
         prefs.setHousehold(bundle.householdId, bundle.inviteSecret)
         prefs.setSelf(uid, name, email)

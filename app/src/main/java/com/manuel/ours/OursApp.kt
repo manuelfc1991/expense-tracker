@@ -13,6 +13,7 @@ import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.data.sync.LamportClock
 import com.manuel.ours.work.SmsBackfillWorker
+import com.manuel.ours.data.sync.NearbySyncService
 import com.manuel.ours.work.SyncWorker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,7 @@ class OursApp : Application(), Configuration.Provider {
     @Inject lateinit var prefs: AppPrefs
     @Inject lateinit var clock: LamportClock
     @Inject lateinit var repository: TransactionRepository
+    @Inject lateinit var householdRepository: com.manuel.ours.data.repo.HouseholdRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -56,7 +58,20 @@ class OursApp : Application(), Configuration.Provider {
             if (prefs.onboarded.first() && !prefs.onboardedBlocking()) {
                 prefs.setOnboarded(true)
             }
+            // Bring a pre-derivation household onto the derived id, so a partner
+            // joining by typed code lands in the same place as one joining by QR.
+            householdRepository.migrateHouseholdIdIfLegacy()
+
             SyncWorker.enqueuePeriodic(this@OursApp)
+
+            // Restore nearby sync if it is switched on. The toggle used to be the only
+            // thing that ever started the service, so after an app restart — or a phone
+            // reboot — the switch still read ON while nothing was advertising or
+            // scanning. The setting claimed a capability that was not running, which is
+            // indistinguishable from "your partner is not nearby".
+            if (prefs.nearbyAlways.first()) {
+                NearbySyncService.start(this@OursApp)
+            }
 
             // Safety net for the "skipped the permission, granted it later" path.
             // Without this the app sits permanently empty even though it now has
