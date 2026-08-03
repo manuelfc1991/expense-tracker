@@ -1,6 +1,7 @@
 package com.manuel.ours.ui.screens.onboarding
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -70,8 +71,8 @@ private val pages = listOf(
         icon = BiIcon.Privacy,
         title = "Nobody else can read it",
         body = "No account and no server of ours. Your messages are read on this " +
-            "phone, and you choose how the two phones share: a Google Sheet you own, " +
-            "a shared folder, or Bluetooth when you're together.",
+            "phone, and you choose how the phones share: a Google Sheet you own, or " +
+            "Bluetooth when you're together.",
     ),
 )
 
@@ -128,10 +129,19 @@ fun OnboardingScreen(
                 OnboardingStep.PERMISSION -> PermissionStep(
                     onGrant = {
                         smsPermissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.READ_SMS,
-                                Manifest.permission.RECEIVE_SMS,
-                            )
+                            buildList {
+                                add(Manifest.permission.READ_SMS)
+                                add(Manifest.permission.RECEIVE_SMS)
+                                // Android 13 turned this into a runtime permission.
+                                // Declaring it in the manifest is not enough: without
+                                // the grant every notification the app posts is dropped
+                                // on the floor, silently — including the heads-up
+                                // quick-categorize prompt, which is the entire reason
+                                // the actionable channel exists at IMPORTANCE_HIGH.
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    add(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            }.toTypedArray()
                         )
                     },
                     onSkip = { viewModel.onSmsPermissionResult(false) },

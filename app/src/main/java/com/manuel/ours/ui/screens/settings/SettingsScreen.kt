@@ -1,6 +1,8 @@
 package com.manuel.ours.ui.screens.settings
 
 import android.Manifest
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -23,22 +25,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.prefs.ThemeMode
@@ -65,8 +70,8 @@ import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.StatePill
 import com.manuel.ours.ui.components.TapeHeader
-import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.work.SyncWorker
 import java.time.Instant
@@ -97,6 +102,24 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    // Re-read on every resume, because the only way to change this is to leave for
+    // system settings and come back. A value read once at composition would still say
+    // "blocked" after the user had just switched it on, which reads as a broken row.
+    var notificationsAllowed by remember {
+        mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                notificationsAllowed =
+                    NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(containerColor = Ours.ink) { padding ->
         LazyColumn(
@@ -406,6 +429,46 @@ fun SettingsScreen(
                 }
             }
 
+            // Only ever drawn when the app genuinely cannot post anything.
+            //
+            // POST_NOTIFICATIONS became a runtime permission in Android 13, and this
+            // app declared it without ever asking for it — so on any recent phone
+            // every alert it raised was dropped silently: the new-expense ping, the
+            // one-tap categorize prompt, the budget warning. Onboarding now asks, but
+            // that only helps a fresh install; anyone already set up needs this.
+            if (!notificationsAllowed) {
+                item { Section("Notifications") }
+                item {
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        SettingRow(
+                            title = "Turn on notifications",
+                            caption = "Android is blocking them, so nothing is reaching you",
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                )
+                            },
+                        )
+                        // SettingRow insets itself; Note does not, so it needs the
+                        // edge explicitly or it runs flush to the screen border.
+                        Box(Modifier.padding(horizontal = EDGE)) {
+                            Note(
+                                "New expenses, the one-tap categorize prompt and budget " +
+                                    "warnings all arrive as notifications. Until this is " +
+                                    "on, none of them appear.",
+                                tone = Ours.warning,
+                            )
+                        }
+                    }
+                }
+            }
+
             // ─── Source ──────────────────────────────────────────────────
             item { Section("Where expenses come from") }
 
@@ -545,10 +608,10 @@ fun SettingsScreen(
                 Panel {
                     Note(
                         "The database on this phone is encrypted with a key held in the " +
-                            "Android Keystore. Bluetooth and folder sync are encrypted end " +
-                            "to end. Sheet sync is not — it writes plain text, including " +
-                            "your original bank messages, so that you can read and fix the " +
-                            "sheet yourself."
+                            "Android Keystore. Bluetooth sync is encrypted end to end. " +
+                            "Sheet sync is not — it writes plain text, so that you can " +
+                            "read and fix the sheet yourself. Your original bank messages " +
+                            "are stripped before anything is written there."
                     )
                 }
             }
