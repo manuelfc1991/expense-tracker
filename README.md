@@ -92,6 +92,11 @@ What it costs depends entirely on the transport:
   events are left untouched, since the encrypted transports push the same list and must
   keep carrying it.
 
+A sheet you recreate or clear by hand needs **Settings ▸ Sheet sync ▸ Re-upload
+everything**. "Pushed" only ever meant "pushed to whatever sheet was there at the time",
+and nothing on the phone can tell that the spreadsheet behind an unchanged URL is a
+different one — so it is a button rather than a guess.
+
 Everything else still goes to the sheet in the clear — amounts, merchants, account
 tails, who paid. That is inherent: a ledger you can open and repair is a ledger anyone
 holding the `/exec` URL can read. Only the bank's raw text is held back, because it is

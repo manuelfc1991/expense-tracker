@@ -140,6 +140,27 @@ class SettingsViewModel @Inject constructor(
      * by moving the date back — and a household that retires a messy month should not
      * have to destroy it to do so.
      */
+    /**
+     * Queues this device's entire history for upload again.
+     *
+     * Connecting a *different* sheet re-queues automatically, but that is not the only
+     * way a sheet ends up empty: recreating the spreadsheet behind the same deployment,
+     * clearing its rows by hand, or a partner joining months late all leave the phone
+     * believing everything was already sent. "Pushed" only ever meant "pushed to
+     * whatever sheet was there at the time", and nothing on the phone can tell the
+     * difference — so this is a button rather than a guess.
+     *
+     * Safe to press at any time: transports are required to be idempotent, so a repeat
+     * push cannot duplicate rows.
+     */
+    fun reuploadEverything() {
+        viewModelScope.launch {
+            syncEventDao.markAllUnpushed()
+            prefs.setSheetCursor(0L)
+            SyncWorker.syncNow(getApplication())
+        }
+    }
+
     fun setTrackingStartAt(epochMillis: Long) {
         viewModelScope.launch { prefs.setTrackingStartAt(epochMillis) }
     }

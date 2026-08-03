@@ -236,10 +236,22 @@ fun SettingsScreen(
                         },
                         onClick = { if (!testing) viewModel.saveSheetUrl(draft) },
                     )
+                    if (state.sheetUrl.isNotBlank()) {
+                        GhostButton(
+                            label = "Re-upload everything",
+                            onClick = { viewModel.reuploadEverything() },
+                        )
+                        Note(
+                            "For a sheet you recreated or cleared. The phone otherwise " +
+                                "believes it already sent everything, and only new " +
+                                "expenses would appear."
+                        )
+                    }
                     Note(
-                        "Anyone with this URL can read and change your expenses. Treat it " +
-                            "like a password, and note the sheet stores your messages in " +
-                            "plain text.",
+                        "Anyone with this URL can read and change your expenses — treat it " +
+                            "like a password. Amounts, merchants and account tails are " +
+                            "stored in the clear; the original bank messages are stripped " +
+                            "before they are sent.",
                         tone = Ours.warning,
                     )
                 }
