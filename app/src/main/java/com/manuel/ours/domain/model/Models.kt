@@ -75,6 +75,15 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
     }
 
     val countsAsSpending: Boolean get() = flow == MoneyFlow.SPENDING
+
+    /**
+     * The label without its qualifier — "Food", not "Food & Dining".
+     *
+     * For captions and chips, where the row already carries a merchant, a time and an
+     * amount. "FOOD & DINING · 4:18 PM" spends a third of the line on a distinction
+     * nobody is making at a glance.
+     */
+    val shortLabel: String get() = label.substringBefore(" &").substringBefore(" ")
 }
 
 data class Transaction(

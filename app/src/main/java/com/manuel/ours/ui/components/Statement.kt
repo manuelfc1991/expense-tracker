@@ -505,7 +505,7 @@ fun TransactionEntry(
     // in the month's total yet. Showing it at full weight would imply it was counted.
     val untagged = txn.needsReview || txn.category == Category.OTHER
     val caption = buildString {
-        append(if (untagged) "Untagged" else txn.category.label)
+        append(if (untagged) "Untagged" else txn.category.shortLabel)
         append(" · ")
         append(time)
         if (showOwner) {
