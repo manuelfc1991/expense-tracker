@@ -238,4 +238,38 @@ class MergeConvergenceTest {
         assertThat(stateA["a3"]?.op).isEqualTo(SyncOp.DELETE)
         assertThat(LogMerger.resolve(logA + logB)).hasSize(9) // 10 created, 1 deleted
     }
+
+    @Test
+    fun `compaction keeps the winning event for every transaction`() {
+        // Regression. Compaction used to delete by watermark — the highest lamport
+        // among superseded events — and remove everything pushed below it.
+        //
+        // That is safe only while superseded events are old. A late batch edit breaks
+        // it: re-labelling a merchant across the history supersedes events at *high*
+        // lamports, lifting the watermark over winners belonging to entirely different
+        // transactions. The device kept its transactions but lost the log, and with it
+        // the ability to send its history to a new sheet or a new peer.
+        val events = listOf(
+            event("txnB", lamport = 2, device = "phoneA", eventId = "win-b"),
+            event("txnC", lamport = 3, device = "phoneA", eventId = "win-c"),
+            // txnA is written, then re-written twice by a late batch pass.
+            event("txnA", lamport = 50, device = "phoneA", eventId = "lost-a"),
+            event("txnA", lamport = 90, device = "phoneA", eventId = "win-a"),
+        )
+
+        val keep = LogMerger.compact(events).map { it.eventId }.toSet()
+        val superseded = events.map { it.eventId }.filterNot { it in keep }
+
+        assertThat(superseded).containsExactly("lost-a")
+        assertThat(keep).containsExactly("win-b", "win-c", "win-a")
+
+        // The old watermark sat at 50, above two winners — this is how they were lost.
+        val watermark = events.filter { it.eventId in superseded }.maxOf { it.lamport }
+        val casualties = events.filter { it.lamport <= watermark && it.eventId in keep }
+        assertThat(casualties.map { it.eventId }).containsExactly("win-b", "win-c")
+
+        // Deleting by name instead removes only the superseded event.
+        val deleted = events.map { it.eventId }.filter { it in superseded }
+        assertThat(deleted).containsExactly("lost-a")
+    }
 }

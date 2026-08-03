@@ -140,8 +140,21 @@ interface SyncEventDao {
     @Query("SELECT COUNT(*) FROM sync_events")
     suspend fun count(): Int
 
-    @Query("DELETE FROM sync_events WHERE lamport <= :upTo AND pushed = 1")
-    suspend fun compactUpTo(upTo: Long)
+    /**
+     * Deletes exactly the events named, and only if they have been pushed.
+     *
+     * Replaces a watermark delete — `lamport <= :upTo AND pushed = 1` — which took the
+     * *highest lamport among superseded events* and removed everything below it. Any
+     * event compaction had decided to keep but which happened to sit under that
+     * watermark went too, so a batch re-categorisation could wipe most of the log. The
+     * transactions survived, being a separate table, but the device lost its ability to
+     * transmit its own history to a new sheet or a new peer.
+     */
+    @Query("DELETE FROM sync_events WHERE eventId IN (:ids) AND pushed = 1")
+    suspend fun deletePushedByIds(ids: List<String>)
+
+    @Query("DELETE FROM sync_events")
+    suspend fun deleteAll()
 }
 
 @Dao

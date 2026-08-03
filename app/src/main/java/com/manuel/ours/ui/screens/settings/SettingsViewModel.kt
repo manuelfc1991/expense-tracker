@@ -56,6 +56,7 @@ class SettingsViewModel @Inject constructor(
     private val householdRepository: HouseholdRepository,
     private val sheetTransport: com.manuel.ours.data.sync.SheetTransport,
     private val syncEventDao: com.manuel.ours.data.db.SyncEventDao,
+    private val transactionRepository: com.manuel.ours.data.repo.TransactionRepository,
 ) : AndroidViewModel(application) {
 
     private val _sheetStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
@@ -155,8 +156,10 @@ class SettingsViewModel @Inject constructor(
      */
     fun reuploadEverything() {
         viewModelScope.launch {
-            syncEventDao.markAllUnpushed()
+            _sheetStatus.value = "Rebuilding…"
+            val count = transactionRepository.rebuildOwnLog()
             prefs.setSheetCursor(0L)
+            _sheetStatus.value = "Queued $count expenses to upload"
             SyncWorker.syncNow(getApplication())
         }
     }

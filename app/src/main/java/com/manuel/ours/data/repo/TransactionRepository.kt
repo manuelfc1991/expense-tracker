@@ -376,6 +376,27 @@ class TransactionRepository @Inject constructor(
         return stale.size
     }
 
+    /**
+     * Rebuilds this device's outbound log from the transactions table.
+     *
+     * "Re-upload everything" cannot simply un-mark events as unsent, because there may
+     * be no events left to un-mark: compaction deletes superseded entries once pushed,
+     * and until recently it deleted rather more than that. The transactions table is the
+     * source of truth and survives all of it, so the log is regenerated from there.
+     *
+     * Returns how many events were minted.
+     */
+    suspend fun rebuildOwnLog(): Int {
+        val transactions = txnDao.getBetween(0, Long.MAX_VALUE).filterNot { it.deleted }
+        // Drop the old log first, or every transaction ends up with two events saying
+        // the same thing and the sheet grows a duplicate of its entire history.
+        eventDao.deleteAll()
+        for (row in transactions) {
+            saveAndLog(row.toDomain(), row.dedupeKey, row.dedupeAt)
+        }
+        return transactions.size
+    }
+
     suspend fun seedMerchantRulesIfNeeded() {
         if (merchantRuleDao.count() > 0) return
         merchantRuleDao.insertAll(Categorizer.seedEntities())

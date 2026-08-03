@@ -118,8 +118,11 @@ class SyncEngine @Inject constructor(
         val all = eventDao.all().map { it.toSyncEvent() }
         if (all.size < COMPACT_THRESHOLD) return
         val keep = LogMerger.compact(all).map { it.eventId }.toHashSet()
-        val supersededMax = all.filter { it.eventId !in keep }.maxOfOrNull { it.lamport } ?: return
-        eventDao.compactUpTo(supersededMax)
+        val superseded = all.filter { it.eventId !in keep }.map { it.eventId }
+        if (superseded.isEmpty()) return
+        // Delete the losers by name. Chunked because SQLite caps bound parameters, and
+        // a long-lived log can supersede far more than that in one round.
+        superseded.chunked(500).forEach { eventDao.deletePushedByIds(it) }
     }
 
     private fun SyncEventEntity.toSyncEvent() = SyncEvent(
