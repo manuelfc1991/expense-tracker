@@ -116,9 +116,13 @@ fun HomeScreen(
     }
 
     Scaffold { padding ->
+      Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            modifier = Modifier.fillMaxSize(),
+            // Room for the floating button to sit over. Without this the last row of
+            // the statement can never be scrolled clear of it — and that is exactly
+            // the row you just added.
+            contentPadding = PaddingValues(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -272,32 +276,29 @@ fun HomeScreen(
                 }
             }
 
-            // In the flow, right-aligned, rather than floating over the list. A
-            // floating button permanently covers the last row of a statement — which
-            // is exactly the row you just added.
-            item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Box(
-                        Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(15.dp))
-                            .background(Ours.accent)
-                            .clickable { showAddSheet = true },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        BiIconView(
-                            BiIcon.Add,
-                            contentDescription = "Add expense",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                }
-            }
         }
+
+        // Anchored bottom-right, floating over the list rather than riding along in
+        // it. The list carries 96dp of bottom padding so the last entry can still be
+        // scrolled out from under it.
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = EDGE, bottom = 20.dp)
+                .size(44.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(Ours.accent)
+                .clickable { showAddSheet = true },
+            contentAlignment = Alignment.Center,
+        ) {
+            BiIconView(
+                BiIcon.Add,
+                contentDescription = "Add expense",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+      }
     }
 
     if (showAddSheet) {
