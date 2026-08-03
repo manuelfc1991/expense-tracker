@@ -10,6 +10,7 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.manuel.ours.data.sync.NearbyTransport
 import com.manuel.ours.data.sync.SafFolderTransport
 import com.manuel.ours.data.sync.SheetTransport
@@ -50,36 +51,74 @@ class SyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         var attempted = 0
         var succeeded = 0
+        var pushed = 0
+        var pulled = 0
+        val used = mutableListOf<String>()
 
         // Sheet first: it is the one path that works when the phones are apart and
         // no folder has been shared.
         if (sheetTransport.isAvailable()) {
             attempted++
-            if (engine.sync(sheetTransport).success) succeeded++
+            val outcome = engine.sync(sheetTransport)
+            if (outcome.success) {
+                succeeded++
+                pushed += outcome.pushedEvents
+                pulled += outcome.appliedEvents
+                if (outcome.pushedEvents > 0 || outcome.appliedEvents > 0) used += outcome.transport
+            }
         }
 
         if (folderTransport.isAvailable()) {
             attempted++
-            if (engine.sync(folderTransport).success) succeeded++
+            val outcome = engine.sync(folderTransport)
+            if (outcome.success) {
+                succeeded++
+                pushed += outcome.pushedEvents
+                pulled += outcome.appliedEvents
+                if (outcome.pushedEvents > 0 || outcome.appliedEvents > 0) used += outcome.transport
+            }
         }
 
         if (nearbyTransport.isAvailable()) {
             attempted++
-            if (engine.sync(nearbyTransport).success) succeeded++
+            val outcome = engine.sync(nearbyTransport)
+            if (outcome.success) {
+                succeeded++
+                pushed += outcome.pushedEvents
+                pulled += outcome.appliedEvents
+                if (outcome.pushedEvents > 0 || outcome.appliedEvents > 0) used += outcome.transport
+            }
         }
 
         engine.compactOwnLog()
 
+        // Report what actually moved. Without this the UI can only say "it ran",
+        // which is indistinguishable from "it ran and did nothing because your sheet
+        // was unreachable" — the exact confusion this app has already caused once.
+        val summary = workDataOf(
+            KEY_ATTEMPTED to attempted,
+            KEY_PUSHED to pushed,
+            KEY_PULLED to pulled,
+            KEY_TRANSPORTS to used.distinct().joinToString(", "),
+        )
+
         return when {
-            attempted == 0 -> Result.success()
-            succeeded > 0 -> Result.success()
+            attempted == 0 -> Result.success(summary)
+            succeeded > 0 -> Result.success(summary)
             else -> Result.retry()
         }
     }
 
     companion object {
         private const val PERIODIC = "sync_periodic"
-        private const val ONE_SHOT = "sync_now"
+
+        /** Public so the UI can observe this run and report what it moved. */
+        const val ONE_SHOT = "sync_now"
+
+        const val KEY_ATTEMPTED = "attempted"
+        const val KEY_PUSHED = "pushed"
+        const val KEY_PULLED = "pulled"
+        const val KEY_TRANSPORTS = "transports"
 
         fun enqueuePeriodic(context: Context) {
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)

@@ -21,8 +21,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SelectableDates
@@ -189,11 +192,50 @@ fun SettingsScreen(
             item { Section("Sync") }
 
             item {
-                SettingRow(
-                    title = "Sync now",
-                    caption = state.lastSyncLabel,
-                    onClick = { SyncWorker.syncNow(context) },
-                )
+                val progress by viewModel.syncProgress.collectAsStateWithLifecycle()
+                val running = progress == "Syncing…"
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !running) { SyncWorker.syncNow(context) }
+                        .padding(horizontal = EDGE, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            "Sync now",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Ours.text,
+                        )
+                        // The result of the last run wins over "synced 4m ago": what it
+                        // did is more useful than when it happened.
+                        MicroLabel(
+                            text = progress ?: state.lastSyncLabel,
+                            color = when {
+                                running -> Ours.accent
+                                progress == "Sync failed" ||
+                                    progress == "Could not reach anything to sync with" -> Ours.warning
+                                else -> Ours.textLabel
+                            },
+                        )
+                    }
+                    if (running) {
+                        CircularProgressIndicator(
+                            color = Ours.accent,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    } else {
+                        BiIconView(
+                            BiIcon.Sync,
+                            contentDescription = null,
+                            tint = Ours.textLabel,
+                            modifier = Modifier.size(13.dp),
+                        )
+                    }
+                }
             }
 
             item {

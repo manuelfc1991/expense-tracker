@@ -15,6 +15,8 @@ import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.data.repo.HouseholdRepository
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.manuel.ours.data.sync.NearbySyncService
 import com.manuel.ours.domain.model.Member
 import com.google.zxing.BarcodeFormat
@@ -23,6 +25,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -154,6 +157,46 @@ class SettingsViewModel @Inject constructor(
      * Safe to press at any time: transports are required to be idempotent, so a repeat
      * push cannot duplicate rows.
      */
+    /**
+     * What the last "Sync now" actually did, as a sentence.
+     *
+     * Sync is the one action in this app with no visible result — the numbers on every
+     * other screen come from the local database, so a sync that reached nothing looks
+     * exactly like a sync that worked. This reports what moved, including "nothing",
+     * which is a real and common answer rather than a failure.
+     */
+    val syncProgress: StateFlow<String?> =
+        WorkManager.getInstance(application)
+            .getWorkInfosForUniqueWorkFlow(SyncWorker.ONE_SHOT)
+            .map { infos ->
+                val info = infos.lastOrNull() ?: return@map null
+                when (info.state) {
+                    WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> "Syncing…"
+                    WorkInfo.State.SUCCEEDED -> {
+                        val d = info.outputData
+                        val attempted = d.getInt(SyncWorker.KEY_ATTEMPTED, 0)
+                        val pushed = d.getInt(SyncWorker.KEY_PUSHED, 0)
+                        val pulled = d.getInt(SyncWorker.KEY_PULLED, 0)
+                        val via = d.getString(SyncWorker.KEY_TRANSPORTS).orEmpty()
+                        when {
+                            attempted == 0 -> "No sync set up yet"
+                            pushed == 0 && pulled == 0 -> "Already up to date"
+                            else -> buildString {
+                                if (pushed > 0) append("Sent $pushed")
+                                if (pushed > 0 && pulled > 0) append(" · ")
+                                if (pulled > 0) append("Received $pulled")
+                                if (via.isNotBlank()) append(" · $via")
+                            }
+                        }
+                    }
+                    WorkInfo.State.FAILED -> "Sync failed"
+                    // Retry means every transport it tried was unreachable.
+                    WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED -> null
+                    else -> "Could not reach anything to sync with"
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun reuploadEverything() {
         viewModelScope.launch {
             _sheetStatus.value = "Rebuilding…"
