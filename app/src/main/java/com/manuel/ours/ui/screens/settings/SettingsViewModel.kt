@@ -314,7 +314,13 @@ class SettingsViewModel @Inject constructor(
                     // "pushed" only ever meant "pushed to the previous sheet". Without
                     // this, pointing at a fresh sheet uploads nothing and the ledger
                     // starts from whatever happens next.
-                    if (changed) syncEventDao.markAllUnpushed()
+                    //
+                    // Rebuild rather than merely un-mark: the existing log can predate
+                    // the tracking cutoff, or a compaction pass, so re-queueing it
+                    // as-is ships months the household has retired. Rebuilding from the
+                    // transactions table produces exactly what is in scope today. The
+                    // remote sheet is left alone — it may already hold a partner's rows.
+                    if (changed) transactionRepository.rebuildOwnLog()
                     _sheetStatus.value = "Connected to \"$it\""
                     SyncWorker.syncNow(getApplication())
                 }

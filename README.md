@@ -184,10 +184,26 @@ you can get permanently stuck behind is worse than no lock.
 
 **Known gaps, honestly:**
 
-1. **Budget alerts** — the notification channel exists but nothing ever posts to it.
-2. **Bill reminders** — parsed correctly and `ReminderDao` exists, but nothing writes
-   to it. Dead path.
-3. Bulk multi-select and widget refresh-on-change are not built.
+1. **The notification source is second-class.** Budget alerts and bill reminders are
+   raised from `SmsReceiver` only. Switch the source to Notifications and both stop
+   firing, silently — the expenses still import, but you are no longer warned about a
+   budget or an upcoming bill and nothing says so.
+2. **The widget never refreshes on a data change.** Nothing outside the provider asks
+   it to update, so it shows whatever it last drew until the system happens to.
+3. **Bulk multi-select** is not built.
+4. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
+   choose a folder, so the path is dormant.
+5. **No two phones have exchanged a log.** `MergeConvergenceTest` proves the merge
+   converges under adversarial ordering, and the Sheet transport is verified end to end
+   against a live deployment — but device-to-device convergence has never been observed.
+6. **Nearby is unproven against a second device.** Its runtime permissions were declared
+   but never requested until recently, so every entry point silently reported "no peers".
+   The request now happens and the preconditions check out on one phone; a real exchange
+   has not been seen.
+7. **A retired month is retired for the household, not just for you.** The tracking start
+   date bounds what syncs as well as what is drawn, so months before it never reach the
+   other phone. That is deliberate — but it means a partner joining later receives only
+   what is in scope, and the two settings pull against each other.
 4. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
    choose a folder, so the path is dormant. See above.
 5. **Nearby sync is unproven against a second device.** Its runtime permissions were
