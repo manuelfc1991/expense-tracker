@@ -7,7 +7,7 @@ import javax.inject.Singleton
 /**
  * Builds the household's encrypted log codec on demand.
  *
- * Exists so [NearbyTransport] and [SafFolderTransport] can keep encrypting after the
+ * Exists so [NearbyTransport] can keep encrypting after the
  * transport interface moved from opaque strings to events. Both need the same key
  * derivation and the same per-line format, and duplicating it in two places is how
  * two implementations silently drift until one can no longer read the other's output.

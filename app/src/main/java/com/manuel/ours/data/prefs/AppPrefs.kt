@@ -96,7 +96,6 @@ class AppPrefs @Inject constructor(
     }
 
     /** Tree URI of the user-picked sync folder, or null when none is chosen. */
-    val syncFolderUri: Flow<String?> = context.dataStore.data.map { it[Keys.SYNC_FOLDER_URI] }
 
     /** Apps Script web-app URL both phones paste in. Blank means sheet sync is off. */
     val sheetUrl: Flow<String?> = context.dataStore.data.map { it[Keys.SHEET_URL] }
@@ -131,8 +130,6 @@ class AppPrefs @Inject constructor(
         context.dataStore.edit { it[Keys.SHEET_CURSOR] = value }
     }
 
-    suspend fun syncFolderUriString(): String? =
-        context.dataStore.data.map { it[Keys.SYNC_FOLDER_URI] }.first()
 
     /**
      * Budget alerts already shown, keyed by month so the set self-prunes when the
@@ -153,11 +150,6 @@ class AppPrefs @Inject constructor(
         }
     }
 
-    suspend fun setSyncFolderUri(uri: String?) {
-        context.dataStore.edit {
-            if (uri == null) it.remove(Keys.SYNC_FOLDER_URI) else it[Keys.SYNC_FOLDER_URI] = uri
-        }
-    }
 
     val theme: Flow<ThemeMode> = context.dataStore.data.map {
         runCatching { ThemeMode.valueOf(it[Keys.THEME] ?: "SYSTEM") }.getOrDefault(ThemeMode.SYSTEM)

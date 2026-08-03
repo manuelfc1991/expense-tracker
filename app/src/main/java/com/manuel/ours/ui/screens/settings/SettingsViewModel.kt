@@ -41,7 +41,6 @@ data class SettingsUiState(
     val inviteQr: Bitmap? = null,
     val lastSyncLabel: String = "Never synced",
     val nearbyAlways: Boolean = false,
-    val syncFolderName: String? = null,
     val sheetUrl: String = "",
     val sheetStatus: String? = null,
     val sheetTesting: Boolean = false,
@@ -75,9 +74,7 @@ class SettingsViewModel @Inject constructor(
         prefs.nearbyAlways,
         combine(
             prefs.appLock, prefs.theme, prefs.ingestSource, prefs.householdId,
-            combine(prefs.syncFolderUri, prefs.sheetUrl, prefs.trackingStartAt) {
-                folder, sheet, start -> Triple(folder, sheet, start)
-            },
+            combine(prefs.sheetUrl, prefs.trackingStartAt) { sheet, start -> sheet to start },
         ) { lock, theme, source, household, paths ->
             listOf(lock, theme, source, household, paths)
         },
@@ -87,10 +84,9 @@ class SettingsViewModel @Inject constructor(
         val source = rest[2] as IngestSource
         val householdId = rest[3] as String?
         @Suppress("UNCHECKED_CAST")
-        val paths = rest[4] as Triple<String?, String?, Long>
-        val folderUri = paths.first
-        val sheet = paths.second.orEmpty()
-        val trackingStartAt = paths.third
+        val paths = rest[4] as Pair<String?, Long>
+        val sheet = paths.first.orEmpty()
+        val trackingStartAt = paths.second
 
         SettingsUiState(
             members = members,
@@ -105,7 +101,6 @@ class SettingsViewModel @Inject constructor(
             } else null,
             lastSyncLabel = relativeSyncLabel(lastSync),
             nearbyAlways = nearby,
-            syncFolderName = folderUri?.let(::prettyFolderName),
             sheetUrl = sheet,
             sheetStatus = sheetState,
             appLock = appLock,
@@ -246,23 +241,6 @@ class SettingsViewModel @Inject constructor(
      * Without takePersistableUriPermission the grant dies with the process and sync
      * silently stops working after the next restart.
      */
-    fun setSyncFolder(uri: android.net.Uri?) {
-        viewModelScope.launch {
-            if (uri == null) {
-                prefs.setSyncFolderUri(null)
-                return@launch
-            }
-            runCatching {
-                getApplication<Application>().contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-                )
-            }
-            prefs.setSyncFolderUri(uri.toString())
-            SyncWorker.syncNow(getApplication())
-        }
-    }
 
     /**
      * Joins the household encoded in a scanned QR.
@@ -331,13 +309,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     /** Turns an opaque tree URI into something a human recognises. */
-    private fun prettyFolderName(uriString: String): String = runCatching {
-        val uri = android.net.Uri.parse(uriString)
-        android.provider.DocumentsContract.getTreeDocumentId(uri)
-            .substringAfterLast(':')
-            .substringAfterLast('/')
-            .ifBlank { "Selected folder" }
-    }.getOrDefault("Selected folder")
 
     /** Cached: the invite payload only changes when the household does. */
     private var cachedQr: Pair<String, Bitmap>? = null

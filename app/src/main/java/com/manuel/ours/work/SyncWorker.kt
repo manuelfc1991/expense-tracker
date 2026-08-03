@@ -12,7 +12,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.manuel.ours.data.sync.NearbyTransport
-import com.manuel.ours.data.sync.SafFolderTransport
 import com.manuel.ours.data.sync.SheetTransport
 import com.manuel.ours.data.sync.SyncEngine
 import dagger.assisted.Assisted
@@ -37,13 +36,12 @@ class SyncWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val engine: SyncEngine,
     private val nearbyTransport: NearbyTransport,
-    private val folderTransport: SafFolderTransport,
     private val sheetTransport: SheetTransport,
 ) : CoroutineWorker(context, params) {
 
     /**
-     * Tries both paths each round: the shared folder (works from anywhere, if one is
-     * chosen) and Bluetooth (works with no setup, if the other phone is close).
+     * Tries both paths each round: the sheet (works from anywhere, if one is
+     * configured) and Bluetooth (works with no setup, if the other phone is close).
      *
      * Neither being usable is the normal case, not a failure — retrying would burn
      * battery scanning for a phone that simply is not there.
@@ -68,16 +66,6 @@ class SyncWorker @AssistedInject constructor(
             }
         }
 
-        if (folderTransport.isAvailable()) {
-            attempted++
-            val outcome = engine.sync(folderTransport)
-            if (outcome.success) {
-                succeeded++
-                pushed += outcome.pushedEvents
-                pulled += outcome.appliedEvents
-                if (outcome.pushedEvents > 0 || outcome.appliedEvents > 0) used += outcome.transport
-            }
-        }
 
         if (nearbyTransport.isAvailable()) {
             attempted++

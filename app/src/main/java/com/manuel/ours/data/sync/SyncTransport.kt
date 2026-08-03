@@ -10,7 +10,7 @@ package com.manuel.ours.data.sync
  * whole reason for using a sheet.
  *
  * Encryption is therefore each transport's own business: [NearbyTransport] and
- * [SafFolderTransport] encrypt before handing bytes over, while [SheetTransport]
+ * [NearbyTransport] encrypts before handing bytes over, while [SheetTransport]
  * deliberately writes plaintext so a human can read it.
  *
  * What did *not* change is [SyncEngine] and [LogMerger]. Convergence, Lamport ordering

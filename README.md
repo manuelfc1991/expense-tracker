@@ -25,11 +25,6 @@ second copy that could drift into speaking a different wire format.
 Neither path needs a Cloud Console project, OAuth client, API key or SHA-1
 fingerprint. Bluetooth is encrypted end to end and involves no third party at all.
 
-A third transport — a shared folder over the system file picker — exists in
-`SafFolderTransport` and is fully tested, but nothing in the UI can select a folder, so
-it never activates. It is kept because it is the only design that is both encrypted
-*and* works at a distance, should the Sheet's plaintext ever stop being acceptable.
-
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew testDebugUnitTest    # 187 tests
@@ -81,7 +76,7 @@ either phone, and `CryptoAndCodecTest` asserts the field is present rather than 
 
 What it costs depends entirely on the transport:
 
-- **Bluetooth and shared folder** — every log line is separately AES-256-GCM encrypted,
+- **Bluetooth** — every log line is separately AES-256-GCM encrypted,
   so the message text never appears in the clear. `CryptoAndCodecTest` pins this by
   encoding a real debit alert and asserting the account tail and balance cannot be found
   in the ciphertext.
@@ -191,16 +186,14 @@ you can get permanently stuck behind is worse than no lock.
 2. **The widget never refreshes on a data change.** Nothing outside the provider asks
    it to update, so it shows whatever it last drew until the system happens to.
 3. **Bulk multi-select** is not built.
-4. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
-   choose a folder, so the path is dormant.
-5. **No two phones have exchanged a log.** `MergeConvergenceTest` proves the merge
+4. **No two phones have exchanged a log.** `MergeConvergenceTest` proves the merge
    converges under adversarial ordering, and the Sheet transport is verified end to end
    against a live deployment — but device-to-device convergence has never been observed.
-6. **Nearby is unproven against a second device.** Its runtime permissions were declared
+5. **Nearby is unproven against a second device.** Its runtime permissions were declared
    but never requested until recently, so every entry point silently reported "no peers".
    The request now happens and the preconditions check out on one phone; a real exchange
    has not been seen.
-7. **A retired month is retired for the household, not just for you.** The tracking start
+6. **A retired month is retired for the household, not just for you.** The tracking start
    date bounds what syncs as well as what is drawn, so months before it never reach the
    other phone. That is deliberate — but it means a partner joining later receives only
    what is in scope, and the two settings pull against each other.

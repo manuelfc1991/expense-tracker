@@ -93,15 +93,15 @@ class HomeViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
-        combine(prefs.selfUid, prefs.selfName, prefs.syncFolderUri) { uid, name, folder ->
-            Triple(uid.orEmpty(), name.orEmpty(), folder)
+        combine(prefs.selfUid, prefs.selfName) { uid, name ->
+            uid.orEmpty() to name.orEmpty()
         },
         filter,
         budgetRepository.observeOverall(),
         syncEventDao.observeUnpushedCount(),
         prefs.lastSyncAt,
     ) { self, memberFilter, budget, pending, lastSync ->
-        Params(self.first, self.second, memberFilter, budget, pending, lastSync, self.third)
+        Params(self.first, self.second, memberFilter, budget, pending, lastSync)
     }.flatMapLatest { params ->
         val today = LocalDate.now(MonthlyAggregator.ZONE)
         val thisMonth = MonthlyAggregator.monthRange(today.year, today.monthValue)
@@ -191,7 +191,7 @@ class HomeViewModel @Inject constructor(
                 // read as "someone else" and the toggle rendered "Both · Me · Me".
                 partnerName = partnerRow?.ownerName,
                 hasPartner = partnerRow != null,
-                syncConfigured = partnerRow != null || params.syncFolder != null,
+                syncConfigured = partnerRow != null,
             )
         }
     }
@@ -240,7 +240,6 @@ class HomeViewModel @Inject constructor(
         val budget: Long?,
         val pending: Int,
         val lastSync: Long,
-        val syncFolder: String? = null,
     )
 
     private companion object {
