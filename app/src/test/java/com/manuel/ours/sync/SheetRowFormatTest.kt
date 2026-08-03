@@ -1,6 +1,7 @@
 package com.manuel.ours.sync
 
 import com.manuel.ours.data.sync.LogMerger
+import com.manuel.ours.data.sync.SheetTransport
 import com.manuel.ours.data.sync.SyncEvent
 import com.manuel.ours.data.sync.SyncOp
 import com.manuel.ours.data.sync.SyncPayload
@@ -119,5 +120,39 @@ class SheetRowFormatTest {
         assertThat(p.amountPaise).isEqualTo(21_000)
         // Columns the script writes must all exist, or the sheet gets blank cells.
         assertThat(p.rawSms).isNotNull()
+    }
+
+    @Test
+    fun `the sheet never receives the original bank message`() {
+        // The sheet is plaintext behind a URL. The raw SMS carries the account tail and
+        // the running balance in the bank's own words, so it is stripped before it
+        // leaves the phone — on this transport only.
+        val sensitive = "Debited Rs 151.00 from a/c X4657 Bal Rs 3469.55 -Federal Bank"
+        val event = event("e1", "t1", 1, "phoneA").let {
+            it.copy(payload = it.payload!!.copy(rawSms = sensitive, accountTail = "4657"))
+        }
+
+        val redacted = SheetTransport.redactForSheet(listOf(event))
+
+        assertThat(redacted.single().payload?.rawSms).isNull()
+        // Nothing else may be lost in the process — this is a redaction, not a filter.
+        assertThat(redacted.single().payload?.amountPaise)
+            .isEqualTo(event.payload?.amountPaise)
+        assertThat(redacted.single().payload?.merchant).isEqualTo(event.payload?.merchant)
+        assertThat(redacted.single().payload?.accountTail).isEqualTo(event.payload?.accountTail)
+        assertThat(redacted.single().eventId).isEqualTo(event.eventId)
+
+        // And it must not survive anywhere else in the payload, under any field.
+        assertThat(redacted.single().payload.toString()).doesNotContain("3469.55")
+        assertThat(redacted.single().payload.toString()).doesNotContain("X4657 Bal")
+    }
+
+    @Test
+    fun `redaction leaves the caller's events untouched`() {
+        // The encrypted transports push the same list. If redaction mutated in place,
+        // stripping for the sheet would silently strip for Bluetooth too.
+        val original = event("e2", "t2", 2, "phoneA")
+        SheetTransport.redactForSheet(listOf(original))
+        assertThat(original.payload?.rawSms).isNotNull()
     }
 }

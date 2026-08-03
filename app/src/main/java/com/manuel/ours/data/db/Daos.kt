@@ -124,6 +124,16 @@ interface SyncEventDao {
     @Query("UPDATE sync_events SET pushed = 1 WHERE eventId IN (:ids)")
     suspend fun markPushed(ids: List<String>)
 
+    /**
+     * Queues every event for upload again.
+     *
+     * Used when the sheet changes: a new spreadsheet holds none of this device's
+     * history, and "pushed" only ever meant "pushed to the sheet we were using before".
+     * Transports are required to be idempotent, so a repeat push is safe.
+     */
+    @Query("UPDATE sync_events SET pushed = 0")
+    suspend fun markAllUnpushed()
+
     @Query("SELECT COALESCE(MAX(lamport), 0) FROM sync_events")
     suspend fun maxLamport(): Long
 

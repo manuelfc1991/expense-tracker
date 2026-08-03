@@ -47,12 +47,24 @@ class SheetTransport @Inject constructor(
             if (events.isEmpty()) return@withContext
             val url = prefs.sheetUrlString() ?: error("No sheet URL configured")
 
+            // The original bank message never goes to the sheet.
+            //
+            // Every other transport encrypts each line, so carrying the raw text costs
+            // nothing and makes a mis-parse diagnosable on either phone. The sheet is
+            // plaintext by design, and that text is the most sensitive thing in the
+            // payload — the bank's own words, account tail and running balance included.
+            // Stripping it here rather than at the call site keeps the decision with the
+            // transport that has the problem, so the encrypted paths are unaffected.
+            val safe = events.map { event ->
+                event.copy(payload = event.payload?.copy(rawSms = null))
+            }
+
             // Batched into one request. A row-per-request design would take 170
             // round-trips on a first sync, and Apps Script cold-starts each one.
             val body = JSONObject()
                 .put("action", "push")
                 .put("deviceId", deviceId)
-                .put("events", JSONArray(events.map { it.toJson() }))
+                .put("events", JSONArray(safe.map { it.toJson() }))
                 .toString()
 
             val response = post(url, body)
@@ -163,4 +175,22 @@ class SheetTransport @Inject constructor(
         payload = row.optString("payload").takeIf { it.isNotBlank() && it != "null" }
             ?.let { json.decodeFromString(SyncPayload.serializer(), it) },
     )
+
+    companion object {
+
+        /**
+         * Removes the original bank message before anything is sent to the sheet.
+         *
+         * Every other transport encrypts each line, so carrying the raw text there costs
+         * nothing and makes a mis-parse diagnosable on either phone. This one is
+         * plaintext by design, and that text is the most sensitive thing in the payload
+         * — the bank's own words, with the account tail and running balance in them.
+         *
+         * Kept as a pure function rather than inlined into [push] so the guarantee is
+         * testable without a network: a privacy property asserted only by a comment is
+         * one refactor away from being untrue.
+         */
+        fun redactForSheet(events: List<SyncEvent>): List<SyncEvent> =
+            events.map { event -> event.copy(payload = event.payload?.copy(rawSms = null)) }
+    }
 }

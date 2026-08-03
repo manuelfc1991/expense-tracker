@@ -55,6 +55,7 @@ class SettingsViewModel @Inject constructor(
     private val prefs: AppPrefs,
     private val householdRepository: HouseholdRepository,
     private val sheetTransport: com.manuel.ours.data.sync.SheetTransport,
+    private val syncEventDao: com.manuel.ours.data.db.SyncEventDao,
 ) : AndroidViewModel(application) {
 
     private val _sheetStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
@@ -232,7 +233,12 @@ class SettingsViewModel @Inject constructor(
 
             sheetTransport.testConnection(trimmed)
                 .onSuccess {
-                    prefs.setSheetUrl(trimmed)
+                    val changed = prefs.setSheetUrl(trimmed)
+                    // A new spreadsheet holds none of this device's history, and
+                    // "pushed" only ever meant "pushed to the previous sheet". Without
+                    // this, pointing at a fresh sheet uploads nothing and the ledger
+                    // starts from whatever happens next.
+                    if (changed) syncEventDao.markAllUnpushed()
                     _sheetStatus.value = "Connected to \"$it\""
                     SyncWorker.syncNow(getApplication())
                 }

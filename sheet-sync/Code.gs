@@ -21,9 +21,12 @@ var EVENT_HEADERS = [
   'ownerUid', 'wallClock', 'payload'
 ];
 
+// No 'Original message' column. The phones deliberately strip the raw bank text
+// before pushing here — this sheet is plaintext, and that text carries account tails
+// and running balances. The other transports encrypt each line and do send it.
 var LEDGER_HEADERS = [
   'Date', 'Merchant', 'Category', 'Type', 'Amount (INR)',
-  'Paid by', 'Counts as', 'Bank', 'Account', 'Reference', 'Original message'
+  'Paid by', 'Counts as', 'Bank', 'Account', 'Reference'
 ];
 
 function doPost(e) {
@@ -130,8 +133,7 @@ function rebuildLedger() {
       p.merchant, p.category, p.type,
       (p.amountPaise / 100),
       p.ownerName, p.splitType,
-      p.bank || '', p.accountTail || '', p.refNo || '',
-      p.rawSms || ''
+      p.bank || '', p.accountTail || '', p.refNo || ''
     ]);
   }
   rows.sort(function (a, b) { return b[0] - a[0]; });

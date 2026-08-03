@@ -96,17 +96,23 @@ class AppPrefs @Inject constructor(
     suspend fun sheetUrlString(): String? =
         context.dataStore.data.map { it[Keys.SHEET_URL] }.first()?.takeIf { it.isNotBlank() }
 
-    suspend fun setSheetUrl(url: String?) {
+    /**
+     * Returns true when this actually changed which sheet is in use.
+     *
+     * The cursor is a row index into one specific spreadsheet, so it has to be dropped
+     * whenever the sheet changes — not merely when sync is switched off, which is all
+     * the original code did. Pointing at a fresh sheet while holding a cursor of 400
+     * silently skips its first 400 rows, and the sync looks like it succeeded.
+     */
+    suspend fun setSheetUrl(url: String?): Boolean {
+        val trimmed = url?.trim()?.takeUnless { it.isBlank() }
+        var changed = false
         context.dataStore.edit {
-            if (url.isNullOrBlank()) {
-                it.remove(Keys.SHEET_URL)
-                // Reset the cursor too: a different sheet has different row numbers,
-                // and carrying the old one over would skip real events.
-                it.remove(Keys.SHEET_CURSOR)
-            } else {
-                it[Keys.SHEET_URL] = url.trim()
-            }
+            changed = it[Keys.SHEET_URL] != trimmed
+            if (trimmed == null) it.remove(Keys.SHEET_URL) else it[Keys.SHEET_URL] = trimmed
+            if (changed) it.remove(Keys.SHEET_CURSOR)
         }
+        return changed
     }
 
     /** Last sheet row read. Row index, not a timestamp — rows never reorder. */

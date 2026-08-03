@@ -32,7 +32,7 @@ it never activates. It is kept because it is the only design that is both encryp
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 185 tests
+./gradlew testDebugUnitTest    # 187 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -85,14 +85,17 @@ What it costs depends entirely on the transport:
   so the message text never appears in the clear. `CryptoAndCodecTest` pins this by
   encoding a real debit alert and asserting the account tail and balance cannot be found
   in the ciphertext.
-- **Google Sheet** — plaintext. The script writes the message into an `Original message`
-  column (`Code.gs`, ledger row builder). So your bank's full text, including account
-  tails and running balances, sits in that spreadsheet, reachable by anyone holding the
-  `/exec` URL.
+- **Google Sheet** — plaintext, so the message is **stripped before it is sent**.
+  `SheetTransport.redactForSheet` nulls `rawSms` on the way out and the ledger has no
+  `Original message` column. Two tests pin it: one asserts the text and the balance
+  cannot be found anywhere in the redacted payload, the other asserts the caller's
+  events are left untouched, since the encrypted transports push the same list and must
+  keep carrying it.
 
-If that is not acceptable, do not use the Sheet path. Nothing about it can be made
-private while it stays a spreadsheet you can read and repair — that legibility *is* the
-plaintext.
+Everything else still goes to the sheet in the clear — amounts, merchants, account
+tails, who paid. That is inherent: a ledger you can open and repair is a ledger anyone
+holding the `/exec` URL can read. Only the bank's raw text is held back, because it is
+the one field that adds running balances and full account context on top.
 
 ---
 
@@ -244,9 +247,9 @@ InvestmentLedgerTest    9   FD/RD/SIP handling
 SafFolderNamingTest     7   one file per device, never a shared one
 DedupeTimeTest          7   bank + UPI-app double messages
 BillReminderTest        6   money owed, not money spent
-SheetRowFormatTest      6   Apps Script row shape
+SheetRowFormatTest      8   Apps Script row shape, raw-message redaction
 RescanIdempotencyTest   4   a backfill never duplicates
 CorpusReportTest        1   parser coverage over the whole corpus
                        ―――
-                      185
+                      187
 ```
