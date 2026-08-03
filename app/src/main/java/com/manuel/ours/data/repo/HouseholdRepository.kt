@@ -12,6 +12,7 @@ import com.manuel.ours.domain.model.Member
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
+import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,8 +32,8 @@ class HouseholdRepository @Inject constructor(
      * is just a shared secret that the two phones agree on.
      */
     suspend fun createHousehold(uid: String, name: String, email: String): InviteBundle {
-        val householdId = UUID.randomUUID().toString()
         val secret = CryptoBox.generateInviteSecret()
+        val householdId = idForSecret(secret)
 
         prefs.setHousehold(householdId, secret)
         prefs.setSelf(uid, name, email)
@@ -55,6 +56,31 @@ class HouseholdRepository @Inject constructor(
     }
 
     suspend fun removeMember(uid: String) = memberDao.delete(uid)
+
+    companion object {
+        /**
+         * The household id, derived from the invite secret rather than generated.
+         *
+         * It used to be a random UUID, which meant the two devices only agreed on it if
+         * the QR carried it across. Someone joining by *typing* the code — the
+         * documented fallback when a camera will not scan — got `householdId = code`
+         * while the creator held a UUID, and nothing said so.
+         *
+         * That broke Bluetooth twice over. Nearby advertises on
+         * `com.manuel.ours.sync.$householdId`, so the phones looked for each other on
+         * different service ids; and [CryptoBox.deriveKey] salts with the household id,
+         * so even meeting they would have derived different keys and failed to decrypt.
+         *
+         * Deriving it means both sides compute the same id from the one thing they
+         * genuinely share. Hashed rather than used raw: the id is broadcast to every
+         * nearby device, and the secret is what protects the household.
+         */
+        fun idForSecret(inviteSecret: String): String {
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest("ours:household:${inviteSecret.trim().uppercase()}".toByteArray())
+            return digest.take(16).joinToString("") { "%02x".format(it) }
+        }
+    }
 
     data class InviteBundle(
         val householdId: String,

@@ -1,5 +1,6 @@
 package com.manuel.ours.sync
 
+import com.manuel.ours.data.repo.HouseholdRepository
 import com.manuel.ours.data.sync.CryptoBox
 import com.manuel.ours.data.sync.LogCodec
 import com.manuel.ours.data.sync.SyncEvent
@@ -153,5 +154,51 @@ class CryptoAndCodecTest {
         // …and survives the round trip intact.
         assertThat(LogCodec(key).decodeLines(encoded).single().payload?.rawSms)
             .isEqualTo(sensitive)
+    }
+
+    @Test
+    fun `a typed invite code reaches the same household as a scanned one`() {
+        // Regression. The household id used to be a random UUID that only travelled in
+        // the QR. Typing the code instead set householdId = code while the creator held
+        // a UUID, which broke Bluetooth twice: Nearby advertises on
+        // "com.manuel.ours.sync.$householdId" so the phones searched different service
+        // ids, and CryptoBox.deriveKey salts with the household id so they would have
+        // derived different keys anyway.
+        val secret = "JSEAZY"
+
+        val creator = HouseholdRepository.idForSecret(secret)
+        val typedJoin = HouseholdRepository.idForSecret(secret)
+
+        assertThat(typedJoin).isEqualTo(creator)
+
+        // Same id and same secret means the same key, which is the part that matters.
+        assertThat(CryptoBox.deriveKey(secret, typedJoin))
+            .isEqualTo(CryptoBox.deriveKey(secret, creator))
+    }
+
+    @Test
+    fun `the invite code is not recoverable from the broadcast household id`() {
+        // The id goes out to every nearby device in the advertising name. The secret is
+        // the only thing protecting the household, so the id must not carry it.
+        val secret = "JSEAZY"
+        val id = HouseholdRepository.idForSecret(secret)
+        assertThat(id).doesNotContain(secret)
+        assertThat(id).doesNotContain(secret.lowercase())
+        assertThat(id).hasLength(32)
+    }
+
+    @Test
+    fun `entering the code in lower case still joins the same household`() {
+        // People type what they see, and some keyboards will helpfully lower-case it.
+        assertThat(HouseholdRepository.idForSecret("jseazy"))
+            .isEqualTo(HouseholdRepository.idForSecret("JSEAZY"))
+        assertThat(HouseholdRepository.idForSecret(" JSEAZY "))
+            .isEqualTo(HouseholdRepository.idForSecret("JSEAZY"))
+    }
+
+    @Test
+    fun `different households never collide`() {
+        assertThat(HouseholdRepository.idForSecret("JSEAZY"))
+            .isNotEqualTo(HouseholdRepository.idForSecret("JSEAZZ"))
     }
 }

@@ -89,8 +89,11 @@ class OnboardingViewModel @Inject constructor(
             val snapshot = prefs.snapshot()
             householdRepository.joinHousehold(
                 bundle = HouseholdRepository.InviteBundle(
-                    householdId = code,
-                    inviteSecret = code,
+                    // Derived, not the code itself — the creator derives the same id
+                    // from the same secret, which is what makes a typed code as good
+                    // as a scanned one.
+                    householdId = HouseholdRepository.idForSecret(code),
+                    inviteSecret = code.trim().uppercase(),
                 ),
                 uid = snapshot.selfUid ?: UUID.randomUUID().toString(),
                 name = snapshot.selfName ?: "Me",
