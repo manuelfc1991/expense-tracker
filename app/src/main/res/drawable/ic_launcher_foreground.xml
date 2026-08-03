@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "Ours" — two rings, one shared middle.
+
+  Two people, two phones, one pot of money: the overlap *is* the product. Drawn as
+  outlined rings rather than filled discs so the shared lens is the only solid mass
+  in the mark, which is where the eye lands first.
+
+  Geometry: r=15, centres (45.5,54) and (62.5,54) — 17 apart, a centre-distance to
+  radius ratio of 1.13. That ratio is the whole design: at 1.5 the lens thins to a
+  sliver that disappears at 48px, and below 1.0 the rings collapse into each other.
+  Everything sits within a radius of 26 from centre, inside the 36 the launcher mask
+  guarantees, so no mask shape can clip it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shared middle. Drawn first so the ring strokes sit cleanly on top of it. -->
+    <path
+        android:pathData="M54,41.64 A15,15 0 0,0 54,66.36 A15,15 0 0,0 54,41.64 Z"
+        android:fillColor="#FF3DDCA0" />
+
+    <!-- Left ring -->
+    <path
+        android:pathData="M45.5,39 a15,15 0 1,0 0,30 a15,15 0 1,0 0,-30"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:fillColor="#00000000" />
+
+    <!-- Right ring -->
+    <path
+        android:pathData="M62.5,39 a15,15 0 1,0 0,30 a15,15 0 1,0 0,-30"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:fillColor="#00000000" />
+</vector>

@@ -1,0 +1,619 @@
+<title>Ours — interface proposal</title>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-house" viewBox="0 0 16 16"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/><path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 16 16"><path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .854.354v14a.5.5 0 0 1-.854.354L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647A.5.5 0 0 1 1.5 15V1a.5.5 0 0 1 .42-.494M4 4a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z"/></symbol>
+    <symbol id="i-pie" viewBox="0 0 16 16"><path d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.793zm1 0V7.5h6.482A7 7 0 0 0 8.5 1.018M14.982 8.5H8.207l-4.79 4.79A7 7 0 0 0 14.982 8.5M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 16 16"><path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 16 16"><path d="M.5 6a.5.5 0 0 0-.488.608l1.652 7.434A2.5 2.5 0 0 0 4.104 16h5.792a2.5 2.5 0 0 0 2.44-1.958l.131-.59a3 3 0 0 0 1.3-5.854l.221-.99A.5.5 0 0 0 13.5 6zM13 12.5a2 2 0 0 1-.316-.025l.867-3.898A2.001 2.001 0 0 1 13 12.5"/><path d="m4.4.8-.003.004-.014.019a4 4 0 0 0-.204.31 2 2 0 0 0-.141.267c-.026.06-.034.092-.037.103v.004a.6.6 0 0 0 .091.248c.075.133.178.272.308.445l.01.012c.118.158.26.347.37.543.112.2.22.455.22.745 0 .188-.065.368-.119.494a3 3 0 0 1-.202.388 5 5 0 0 1-.253.382l-.018.025-.005.006-.002.002A.5.5 0 0 1 3.6 4.8l.003-.004.014-.019a4 4 0 0 0 .204-.31 2 2 0 0 0 .141-.267c.026-.06.034-.092.037-.103a.6.6 0 0 0-.09-.252A4 4 0 0 0 3.6 3.4l-.01-.012a5 5 0 0 1-.37-.543A1.53 1.53 0 0 1 3 2.1c0-.188.065-.368.119-.494.055-.13.128-.26.202-.388a6 6 0 0 1 .253-.382l.025-.035A.5.5 0 0 1 4.4.8m3 0-.003.004-.014.019a4 4 0 0 0-.204.31 2 2 0 0 0-.141.267c-.026.06-.034.092-.037.103v.004a.6.6 0 0 0 .091.248c.075.133.178.272.308.445l.01.012c.118.158.26.347.37.543.112.2.22.455.22.745 0 .188-.065.368-.119.494a3 3 0 0 1-.202.388 5 5 0 0 1-.репеat"/></symbol>
+    <symbol id="i-basket" viewBox="0 0 16 16"><path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1v4.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 13.5V9a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1.217L5.07 1.243a.5.5 0 0 1 .686-.172M2 9v4.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V9zM1 7v1h14V7z"/></symbol>
+    <symbol id="i-fuel" viewBox="0 0 16 16"><path d="M3 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5z"/><path d="M1 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1 2 2v.5a.5.5 0 0 0 1 0V8h-.5a.5.5 0 0 1-.5-.5V4.375a.5.5 0 0 1 .5-.5h1.495c-.011-.181-.037-.353-.088-.presence"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 16 16"><path d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 16 16"><path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0"/><path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1M1 2v4.586a2 2 0 0 0 .586 1.414l7 7a2 2 0 0 0 2.828 0l4.586-4.586a2 2 0 0 0 0-2.828l-7-7A2 2 0 0 0 6.586 0H2a2 2 0 0 0-2 2z"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 16 16"><path d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/><path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383m.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.099"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 16 16"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></symbol>
+    <symbol id="i-card" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Interface proposal</p>
+    <h1>Ours</h1>
+    <p class="lede">
+      Four screens, built on the palette and type already in the app. Two are
+      redesigns of what exists. Two are new, and both come directly from what your
+      own data does to the current interface.
+    </p>
+  </header>
+
+  <section class="screens" aria-label="Screen proposals">
+
+    <!-- ── HOME ─────────────────────────────────────────────────── -->
+    <figure class="slot">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>4:48</span><span class="sb-right">LTE&nbsp;&nbsp;100%</span></div>
+
+          <div class="app">
+            <div class="topbar">
+              <span class="wordmark">OURS</span>
+              <span class="pill pill-ok"><svg class="ic"><use href="#i-cloud"/></svg>2m ago</span>
+            </div>
+
+            <div class="card hero">
+              <div class="hero-top">
+                <span class="micro">Spent this month</span>
+                <span class="delta delta-up">▲ 179%</span>
+              </div>
+              <div class="figure">₹21,979</div>
+
+              <div class="ruler" role="img" aria-label="68 percent of budget used">
+                <div class="ticks"></div>
+                <div class="ticks fill" style="width:68%"></div>
+              </div>
+
+              <div class="hero-stats">
+                <div><span class="micro">Budget</span><b>₹32K</b></div>
+                <div><span class="micro">Used</span><b class="ok">68%</b></div>
+                <div><span class="micro">Left</span><b class="ok">₹10K</b></div>
+              </div>
+
+              <div class="excluded">
+                <svg class="ic"><use href="#i-swap"/></svg>
+                <span>₹57,329 in transfers &amp; card bills not counted</span>
+                <svg class="ic chev"><use href="#i-chev"/></svg>
+              </div>
+            </div>
+
+            <div class="split">
+              <div class="split-bar"><i style="width:64%"></i><i class="alt" style="width:36%"></i></div>
+              <div class="split-legend">
+                <span><b class="dot"></b>You ₹14,066</span>
+                <span><b class="dot alt"></b>Priya ₹7,913</span>
+              </div>
+            </div>
+
+            <a class="card triage" href="#triage">
+              <div class="triage-head">
+                <svg class="ic warn"><use href="#i-tag"/></svg>
+                <span>94 need a category</span>
+                <svg class="ic chev"><use href="#i-chev"/></svg>
+              </div>
+              <div class="triage-bar"><i style="width:47%"></i></div>
+              <span class="micro">83 of 177 sorted — about 6 taps left</span>
+            </a>
+
+            <div class="section-head"><span class="micro">Recent</span><span class="link">See all</span></div>
+
+            <div class="row">
+              <span class="avatar cat-food"><svg class="ic"><use href="#i-cup"/></svg></span>
+              <div class="row-main"><b>Keecheril St</b><span class="micro">Food · 7:48 am</span></div>
+              <span class="amt">₹151</span>
+            </div>
+            <div class="row">
+              <span class="avatar cat-gro"><svg class="ic"><use href="#i-basket"/></svg></span>
+              <div class="row-main"><b>Reliance Smart</b><span class="micro">Groceries · Yesterday</span></div>
+              <span class="amt">₹2,358</span>
+            </div>
+            <div class="row">
+              <span class="avatar cat-other"><svg class="ic"><use href="#i-dots"/></svg></span>
+              <div class="row-main"><b>Vezhampasser</b><span class="micro flag">Needs a category</span></div>
+              <span class="amt">₹70</span>
+            </div>
+
+            <div class="fab"><svg class="ic"><use href="#i-plus"/></svg></div>
+            <nav class="tabbar">
+              <span class="tab on"><svg class="ic"><use href="#i-house"/></svg>Home</span>
+              <span class="tab"><svg class="ic"><use href="#i-receipt"/></svg>Activity</span>
+              <span class="tab"><svg class="ic"><use href="#i-pie"/></svg>Summary</span>
+              <span class="tab"><svg class="ic"><use href="#i-wallet"/></svg>Budgets</span>
+              <span class="tab"><svg class="ic"><use href="#i-gear"/></svg>Settings</span>
+            </nav>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Home</h2>
+        <p>
+          The excluded ₹57,329 becomes a <em>tappable line</em> rather than something
+          you only find by opening Summary. The two-person split moves up here — it is
+          the reason the app exists and it was buried three screens deep.
+        </p>
+      </figcaption>
+    </figure>
+
+    <!-- ── TRIAGE ───────────────────────────────────────────────── -->
+    <figure class="slot" id="triage">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>4:48</span><span class="sb-right">LTE&nbsp;&nbsp;100%</span></div>
+          <div class="app">
+            <div class="topbar"><span class="wordmark">SORT 94</span><span class="micro">6 groups</span></div>
+
+            <p class="explain">
+              Grouped by merchant, so twelve trips to the same shop is one decision.
+            </p>
+
+            <div class="card group">
+              <div class="group-head">
+                <span class="avatar cat-food"><svg class="ic"><use href="#i-cup"/></svg></span>
+                <div class="row-main"><b>Keecheril St</b><span class="micro">12 payments · ₹1,812</span></div>
+              </div>
+              <div class="chips">
+                <span class="chip chip-lead"><svg class="ic"><use href="#i-cup"/></svg>Food</span>
+                <span class="chip"><svg class="ic"><use href="#i-basket"/></svg>Groceries</span>
+                <span class="chip">More</span>
+              </div>
+              <span class="micro apply">Applies to all 12, and to future ones</span>
+            </div>
+
+            <div class="card group">
+              <div class="group-head">
+                <span class="avatar cat-fuel"><svg class="ic"><use href="#i-fuel"/></svg></span>
+                <div class="row-main"><b>Bhadra Fuels</b><span class="micro">4 payments · ₹840</span></div>
+              </div>
+              <div class="chips">
+                <span class="chip chip-lead"><svg class="ic"><use href="#i-fuel"/></svg>Transport</span>
+                <span class="chip"><svg class="ic"><use href="#i-bag"/></svg>Shopping</span>
+                <span class="chip">More</span>
+              </div>
+            </div>
+
+            <div class="card group dim">
+              <div class="group-head">
+                <span class="avatar cat-other"><svg class="ic"><use href="#i-swap"/></svg></span>
+                <div class="row-main"><b>Unknown payee</b><span class="micro">3 payments · ₹50,000</span></div>
+              </div>
+              <p class="micro note">
+                No payee in the message. Kept out of spending until you say otherwise.
+              </p>
+              <div class="chips">
+                <span class="chip chip-lead"><svg class="ic"><use href="#i-swap"/></svg>Transfer</span>
+                <span class="chip">It was spending</span>
+              </div>
+            </div>
+
+            <div class="card group done">
+              <div class="group-head">
+                <span class="avatar ok-bg"><svg class="ic"><use href="#i-check"/></svg></span>
+                <div class="row-main"><b>Amazon Pay</b><span class="micro">Shopping · 9 sorted</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Sort <span class="tagnew">new</span></h2>
+        <p>
+          The screen that fixes your real problem. <b>95% of your spending sits in
+          “Other”</b> because 94 rows are untagged, and tapping them one at a time is
+          not a solution. Grouped by merchant it is roughly <b>six decisions</b>, and
+          each one teaches the app permanently.
+        </p>
+      </figcaption>
+    </figure>
+
+    <!-- ── SUMMARY ──────────────────────────────────────────────── -->
+    <figure class="slot">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>4:48</span><span class="sb-right">LTE&nbsp;&nbsp;100%</span></div>
+          <div class="app">
+            <div class="topbar month">
+              <span class="nav-arrow">‹</span><b>July 2026</b><span class="nav-arrow">›</span>
+            </div>
+
+            <div class="totals">
+              <div class="tot"><span class="micro">Spent</span><b>₹21,979</b></div>
+              <div class="tot"><span class="micro">Earned</span><b class="ok">₹38,240</b></div>
+              <div class="tot"><span class="micro">Net</span><b class="ok">₹16,261</b></div>
+            </div>
+
+            <div class="card saved">
+              <svg class="ic ok"><use href="#i-check"/></svg>
+              <span>Saved &amp; invested</span><b class="ok">₹5,000</b>
+            </div>
+
+            <div class="section-head"><span class="micro">Where it went</span></div>
+
+            <div class="card ranks">
+              <div class="rank">
+                <span class="avatar cat-gro"><svg class="ic"><use href="#i-basket"/></svg></span>
+                <div class="rank-main">
+                  <div class="rank-top"><b>Groceries</b><span class="amt">₹8,412</span></div>
+                  <div class="meter"><i class="cat-gro-bg" style="width:38%"></i></div>
+                </div>
+              </div>
+              <div class="rank">
+                <span class="avatar cat-food"><svg class="ic"><use href="#i-cup"/></svg></span>
+                <div class="rank-main">
+                  <div class="rank-top"><b>Food</b><span class="amt">₹5,904</span></div>
+                  <div class="meter"><i class="cat-food-bg" style="width:27%"></i></div>
+                </div>
+              </div>
+              <div class="rank">
+                <span class="avatar cat-fuel"><svg class="ic"><use href="#i-fuel"/></svg></span>
+                <div class="rank-main">
+                  <div class="rank-top"><b>Transport</b><span class="amt">₹3,510</span></div>
+                  <div class="meter"><i class="cat-fuel-bg" style="width:16%"></i></div>
+                </div>
+              </div>
+              <div class="rank">
+                <span class="avatar cat-shop"><svg class="ic"><use href="#i-bag"/></svg></span>
+                <div class="rank-main">
+                  <div class="rank-top"><b>Shopping</b><span class="amt">₹2,201</span></div>
+                  <div class="meter"><i class="cat-shop-bg" style="width:10%"></i></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card excl-card">
+              <div class="rank-top"><b>Not counted</b><span class="amt">₹57,329</span></div>
+              <div class="excl-row"><svg class="ic"><use href="#i-swap"/></svg>Transfers (4)<span class="amt">₹50,004</span></div>
+              <div class="excl-row"><svg class="ic"><use href="#i-card"/></svg>Card bills (2)<span class="amt">₹7,325</span></div>
+              <p class="micro note">
+                A card bill settles purchases already listed. Counting both would
+                double them.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Summary</h2>
+        <p>
+          The donut is gone. With one category at 95% a donut is a circle with a
+          notch — it carries no information. <b>Ranked bars</b> stay readable at any
+          distribution, and “Not counted” is promoted from a footnote to a card,
+          because ₹57,329 vanishing silently is what made you distrust the total.
+        </p>
+      </figcaption>
+    </figure>
+
+    <!-- ── SHEET SYNC ───────────────────────────────────────────── -->
+    <figure class="slot">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>4:48</span><span class="sb-right">LTE&nbsp;&nbsp;100%</span></div>
+          <div class="app">
+            <div class="topbar"><span class="wordmark">SYNC</span></div>
+
+            <div class="card sync-live">
+              <div class="sync-head">
+                <span class="pulse"></span>
+                <div class="row-main"><b>Sheet connected</b><span class="micro">Household expenses · 2m ago</span></div>
+              </div>
+              <div class="sync-meta">
+                <div><span class="micro">Sent</span><b>177</b></div>
+                <div><span class="micro">Received</span><b>41</b></div>
+                <div><span class="micro">Waiting</span><b>0</b></div>
+              </div>
+              <span class="btn-ghost">Open in Sheets</span>
+            </div>
+
+            <div class="section-head"><span class="micro">Script address</span></div>
+            <div class="field">
+              <span class="field-val">script.google.com/macros/s/AKfy…/exec</span>
+              <svg class="ic"><use href="#i-check"/></svg>
+            </div>
+            <p class="micro note">
+              Paste the same address on Priya’s phone. That is the whole setup.
+            </p>
+
+            <div class="card caution">
+              <svg class="ic warn"><use href="#i-warn"/></svg>
+              <div>
+                <b>Anyone with this address can read and change your expenses.</b>
+                <p class="micro">
+                  Treat it like a password. The sheet stores your bank messages as
+                  plain text so you can read and fix them.
+                </p>
+              </div>
+            </div>
+
+            <div class="section-head"><span class="micro">Also on</span></div>
+            <div class="alt-row"><svg class="ic"><use href="#i-swap"/></svg>Bluetooth, when you’re together<span class="pill pill-ok">On</span></div>
+            <div class="alt-row off"><svg class="ic"><use href="#i-cloud"/></svg>Shared folder<span class="pill">Off</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Sync <span class="tagnew">new</span></h2>
+        <p>
+          Sync failed twice and told you nothing, so this screen leads with
+          <em>evidence</em>: sent, received, waiting. If those numbers move, it works.
+          The warning is stated plainly rather than buried — a shared address really
+          is the only thing protecting your finances.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="tokens">
+    <h2 class="tok-head">Tokens</h2>
+    <p class="tok-lede">
+      Unchanged from the app. Nothing here needs a new colour or a new typeface —
+      what the screens needed was better information design.
+    </p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#0B0B0F;border:1px solid #2A2A34"></i><b>Ink</b><code>#0B0B0F</code></div>
+      <div class="sw"><i style="background:#131318;border:1px solid #2A2A34"></i><b>Surface</b><code>#131318</code></div>
+      <div class="sw"><i style="background:#2A2A34"></i><b>Hairline</b><code>#2A2A34</code></div>
+      <div class="sw"><i style="background:#2F5BFF"></i><b>Accent</b><code>#2F5BFF</code></div>
+      <div class="sw"><i style="background:#3DDCA0"></i><b>Positive</b><code>#3DDCA0</code></div>
+      <div class="sw"><i style="background:#FFB020"></i><b>Warning</b><code>#FFB020</code></div>
+      <div class="sw"><i style="background:#FF5C7A"></i><b>Negative</b><code>#FF5C7A</code></div>
+    </div>
+  </section>
+</div>
+
+<style>
+  :root {
+    --page-bg: #F4F4F7;
+    --page-fg: #14141A;
+    --page-mut: #5C5C70;
+    --page-line: #DEDEE6;
+    --page-card: #FFFFFF;
+
+    --ink: #0B0B0F;
+    --surface: #131318;
+    --raised: #1A1A21;
+    --hair: #2A2A34;
+    --tx: #F2F2F7;
+    --tx2: #9A9AAE;
+    --label: #7C7C99;
+    --accent: #2F5BFF;
+    --ok: #3DDCA0;
+    --warn: #FFB020;
+    --bad: #FF5C7A;
+
+    --c-food: #FF8A4C;
+    --c-gro: #3DDCA0;
+    --c-fuel: #4CC3FF;
+    --c-shop: #A96BFF;
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-bg: #08080B; --page-fg: #ECECF2; --page-mut: #9A9AAE;
+      --page-line: #23232C; --page-card: #101015;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #08080B; --page-fg: #ECECF2; --page-mut: #9A9AAE;
+    --page-line: #23232C; --page-card: #101015;
+  }
+  :root[data-theme="light"] {
+    --page-bg: #F4F4F7; --page-fg: #14141A; --page-mut: #5C5C70;
+    --page-line: #DEDEE6; --page-card: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page-bg); color: var(--page-fg);
+    font-family: var(--sans); -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  .page { max-width: 1500px; margin: 0 auto; padding: clamp(28px, 5vw, 72px) clamp(18px, 4vw, 48px) 96px; }
+
+  .masthead { max-width: 60ch; margin-bottom: clamp(36px, 5vw, 64px); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 12px;
+  }
+  .masthead h1 {
+    font-family: var(--mono); font-size: clamp(38px, 7vw, 62px); font-weight: 700;
+    letter-spacing: -.03em; margin: 0 0 16px; text-wrap: balance;
+  }
+  .lede { font-size: 17px; line-height: 1.65; color: var(--page-mut); margin: 0; }
+
+  .screens {
+    display: grid; gap: clamp(32px, 4vw, 56px);
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  }
+  .slot { margin: 0; display: flex; flex-direction: column; gap: 22px; }
+  figcaption h2 {
+    font-family: var(--mono); font-size: 19px; margin: 0 0 8px;
+    letter-spacing: -.01em; display: flex; align-items: center; gap: 10px;
+  }
+  figcaption p { margin: 0; font-size: 14.5px; line-height: 1.62; color: var(--page-mut); max-width: 46ch; }
+  figcaption b { color: var(--page-fg); font-weight: 600; }
+  figcaption em { color: var(--page-fg); font-style: normal; border-bottom: 1px solid var(--accent); }
+  .tagnew {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 2px 6px;
+  }
+
+  /* phone shell */
+  .phone {
+    background: #000; border: 1px solid var(--page-line); border-radius: 30px;
+    padding: 7px; box-shadow: 0 18px 44px rgb(0 0 0 / .28);
+  }
+  .screen { background: var(--ink); border-radius: 24px; overflow: hidden; color: var(--tx); }
+  .statusbar {
+    display: flex; justify-content: space-between; padding: 11px 18px 4px;
+    font-family: var(--mono); font-size: 10px; color: var(--tx2);
+  }
+  .app { padding: 6px 14px 16px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 2px 2px; }
+  .topbar.month { justify-content: center; gap: 20px; font-family: var(--mono); font-size: 15px; }
+  .nav-arrow { color: var(--tx2); font-size: 20px; line-height: 1; }
+  .wordmark { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: .22em; }
+
+  .micro {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--label);
+  }
+  .ic { width: 13px; height: 13px; fill: currentColor; flex: none; }
+  .ic.chev { width: 10px; height: 10px; opacity: .6; margin-left: auto; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .hero-top { display: flex; justify-content: space-between; align-items: center; }
+  .figure { font-family: var(--mono); font-size: 38px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+  .delta { font-family: var(--mono); font-size: 10px; padding: 3px 7px; border-radius: 5px; }
+  .delta-up { color: var(--bad); background: rgb(255 92 122 / .13); }
+
+  .ruler { position: relative; height: 20px; }
+  .ticks {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(to right, var(--hair) 0 1.5px, transparent 1.5px 7px);
+  }
+  .ticks.fill { background-image: repeating-linear-gradient(to right, var(--ok) 0 1.5px, transparent 1.5px 7px); }
+  .hero-stats { display: flex; justify-content: space-between; }
+  .hero-stats div { display: flex; flex-direction: column; gap: 3px; }
+  .hero-stats b { font-family: var(--mono); font-size: 13px; }
+
+  .excluded {
+    display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--tx2);
+    border-top: 1px solid var(--hair); padding-top: 10px; margin-top: 2px;
+  }
+
+  .split { display: flex; flex-direction: column; gap: 7px; padding: 0 2px; }
+  .split-bar { display: flex; gap: 3px; height: 7px; }
+  .split-bar i { background: var(--accent); border-radius: 3px; }
+  .split-bar i.alt { background: var(--c-shop); }
+  .split-legend { display: flex; gap: 16px; font-size: 10.5px; color: var(--tx2); font-family: var(--mono); }
+  .split-legend span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .dot.alt { background: var(--c-shop); }
+
+  .triage { text-decoration: none; color: inherit; border-color: rgb(255 176 32 / .35); }
+  .triage-head { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; }
+  .triage-bar { height: 4px; background: var(--hair); border-radius: 2px; overflow: hidden; }
+  .triage-bar i { display: block; height: 100%; background: var(--warn); }
+
+  .section-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 2px 0; }
+  .link { font-family: var(--mono); font-size: 10px; color: var(--accent); }
+
+  .row { display: flex; align-items: center; gap: 11px; padding: 3px 2px; }
+  .row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .row-main b { font-size: 13px; font-weight: 600; }
+  .amt { font-family: var(--mono); font-size: 13px; font-weight: 700; margin-left: auto; }
+  .flag { color: var(--warn); }
+
+  .avatar {
+    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none;
+  }
+  .cat-food { background: rgb(255 138 76 / .16); color: var(--c-food); }
+  .cat-gro  { background: rgb(61 220 160 / .16); color: var(--c-gro); }
+  .cat-fuel { background: rgb(76 195 255 / .16); color: var(--c-fuel); }
+  .cat-shop { background: rgb(169 107 255 / .16); color: var(--c-shop); }
+  .cat-other{ background: rgb(154 154 174 / .14); color: var(--tx2); }
+  .ok-bg    { background: rgb(61 220 160 / .16); color: var(--ok); }
+  .cat-gro-bg{background: var(--c-gro);} .cat-food-bg{background: var(--c-food);}
+  .cat-fuel-bg{background: var(--c-fuel);} .cat-shop-bg{background: var(--c-shop);}
+
+  .explain { font-size: 12px; color: var(--tx2); margin: 0 2px; line-height: 1.5; }
+  .group-head { display: flex; align-items: center; gap: 11px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 5px; font-size: 11px;
+    border: 1px solid var(--hair); border-radius: 7px; padding: 5px 9px; color: var(--tx2);
+  }
+  .chip-lead { border-color: var(--accent); color: #fff; background: rgb(47 91 255 / .18); }
+  .apply { display: block; }
+  .group.dim { border-color: rgb(255 176 32 / .3); }
+  .group.done { opacity: .5; }
+  .note { line-height: 1.55; margin: 0; text-transform: none; letter-spacing: .02em; font-size: 10px; }
+
+  .totals { display: flex; gap: 8px; }
+  .tot {
+    flex: 1; background: var(--surface); border: 1px solid var(--hair); border-radius: 12px;
+    padding: 11px; display: flex; flex-direction: column; gap: 5px;
+  }
+  .tot b { font-family: var(--mono); font-size: 14px; }
+  .saved { flex-direction: row; align-items: center; gap: 9px; font-size: 12px; border-color: rgb(61 220 160 / .3); }
+  .saved b { margin-left: auto; font-family: var(--mono); }
+
+  .ranks { gap: 13px; }
+  .rank { display: flex; align-items: center; gap: 11px; }
+  .rank-main { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .rank-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; }
+  .meter { height: 5px; background: var(--hair); border-radius: 3px; overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 3px; }
+
+  .excl-card { border-style: dashed; }
+  .excl-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx2); }
+  .excl-row .amt { font-size: 12px; font-weight: 600; }
+
+  .sync-live { border-color: rgb(61 220 160 / .32); }
+  .sync-head { display: flex; align-items: center; gap: 11px; }
+  .pulse {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--ok); flex: none;
+    box-shadow: 0 0 0 0 rgb(61 220 160 / .55); animation: beat 2.4s ease-out infinite;
+  }
+  @keyframes beat { 70% { box-shadow: 0 0 0 9px rgb(61 220 160 / 0); } 100% { box-shadow: 0 0 0 0 rgb(61 220 160 / 0); } }
+  @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+  .sync-meta { display: flex; justify-content: space-between; border-top: 1px solid var(--hair); padding-top: 10px; }
+  .sync-meta div { display: flex; flex-direction: column; gap: 4px; }
+  .sync-meta b { font-family: var(--mono); font-size: 15px; }
+  .btn-ghost {
+    text-align: center; font-size: 12px; border: 1px solid var(--accent); color: #fff;
+    background: rgb(47 91 255 / .16); border-radius: 9px; padding: 8px;
+  }
+  .field {
+    display: flex; align-items: center; gap: 9px; background: var(--raised);
+    border: 1px solid var(--hair); border-radius: 10px; padding: 11px 12px;
+  }
+  .field-val { font-family: var(--mono); font-size: 10.5px; color: var(--tx2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .field .ic { color: var(--ok); margin-left: auto; }
+  .caution { flex-direction: row; gap: 10px; border-color: rgb(255 176 32 / .32); }
+  .caution b { font-size: 11.5px; font-weight: 600; line-height: 1.45; display: block; margin-bottom: 5px; }
+  .caution p { margin: 0; }
+  .alt-row {
+    display: flex; align-items: center; gap: 9px; font-size: 12px;
+    padding: 10px 2px; border-bottom: 1px solid var(--hair); color: var(--tx2);
+  }
+  .alt-row.off { opacity: .5; }
+  .pill {
+    margin-left: auto; font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+    text-transform: uppercase; border: 1px solid var(--hair); border-radius: 20px;
+    padding: 3px 8px; display: flex; align-items: center; gap: 5px; color: var(--tx2);
+  }
+  .pill-ok { color: var(--ok); border-color: rgb(61 220 160 / .4); }
+
+  .fab {
+    position: absolute; right: 16px; bottom: 62px; width: 42px; height: 42px;
+    border-radius: 13px; background: var(--accent); display: grid; place-items: center; color: #fff;
+  }
+  .fab .ic { width: 17px; height: 17px; }
+  .tabbar {
+    display: flex; justify-content: space-between; border-top: 1px solid var(--hair);
+    padding: 11px 4px 4px; margin-top: 6px;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 8px; letter-spacing: .06em; color: var(--label);
+  }
+  .tab.on { color: var(--accent); }
+
+  .tokens { margin-top: clamp(56px, 7vw, 96px); border-top: 1px solid var(--page-line); padding-top: 34px; }
+  .tok-head { font-family: var(--mono); font-size: 15px; margin: 0 0 8px; letter-spacing: .04em; }
+  .tok-lede { margin: 0 0 22px; font-size: 14px; color: var(--page-mut); max-width: 56ch; line-height: 1.6; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .sw {
+    display: flex; align-items: center; gap: 9px; background: var(--page-card);
+    border: 1px solid var(--page-line); border-radius: 10px; padding: 9px 13px; font-size: 12px;
+  }
+  .sw i { width: 17px; height: 17px; border-radius: 5px; flex: none; }
+  .sw code { font-family: var(--mono); font-size: 10.5px; color: var(--page-mut); }
+
+  a:focus-visible, .slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>

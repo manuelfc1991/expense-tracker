@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ours</string>
+    <string name="notification_listener_label">Ours bank alerts</string>
+
+    <!-- Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_summary">Summary</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="spent_this_month">Spent this month</string>
+    <string name="of_budget">of %1$s budget</string>
+    <string name="no_budget_set">No budget set</string>
+    <string name="filter_both">Both</string>
+    <string name="filter_me">Me</string>
+    <string name="filter_partner">Partner</string>
+    <string name="today">Today</string>
+    <string name="this_week">This week</string>
+    <string name="recent_activity">Recent activity</string>
+    <string name="see_all">See all</string>
+    <string name="needs_review">%1$d need review</string>
+    <string name="add_expense">Add expense</string>
+
+    <!-- Sync -->
+    <string name="sync_synced">Synced %1$s</string>
+    <string name="sync_syncing">Syncing…</string>
+    <string name="sync_offline">Offline — %1$d pending</string>
+    <string name="sync_via_bluetooth">Synced via Bluetooth</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_never">Never synced</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="grant_permission">Grant permission</string>
+    <string name="skip_for_now">Skip for now</string>
+    <string name="create_household">Create household</string>
+    <string name="join_household">Join household</string>
+
+    <!-- Transactions -->
+    <string name="search_transactions">Search transactions</string>
+    <string name="no_transactions">No transactions yet</string>
+    <string name="uncategorized">Uncategorized</string>
+    <string name="report_wrong_parse">Report wrong parse</string>
+
+    <!-- Summary -->
+    <string name="total_spent">Total spent</string>
+    <string name="total_received">Total received</string>
+    <string name="net_savings">Net savings</string>
+    <string name="who_spent_what">Who spent what</string>
+    <string name="top_merchants">Top merchants</string>
+    <string name="biggest_expense">Biggest expense</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="export_pdf">Export PDF</string>
+
+    <!-- Settings -->
+    <string name="household_members">Household members</string>
+    <string name="invite_code">Invite code</string>
+    <string name="parser_tester">Parser tester</string>
+    <string name="theme">Theme</string>
+    <string name="app_lock">App lock</string>
+    <string name="keep_syncing_nearby">Keep syncing when nearby</string>
+    <string name="keep_syncing_nearby_desc">Uses Bluetooth in the background. Costs battery — leave off unless you want instant sync.</string>
+
+    <!-- Widget -->
+    <string name="widget_description">This month\'s spending at a glance</string>
+</resources>

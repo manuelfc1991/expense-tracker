@@ -1,0 +1,801 @@
+<title>Ours — design system &amp; screens</title>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="k-house" viewBox="0 0 16 16"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/><path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/></symbol>
+  <symbol id="k-receipt" viewBox="0 0 16 16"><path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .854.354v14a.5.5 0 0 1-.854.354L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647A.5.5 0 0 1 1.5 15V1a.5.5 0 0 1 .42-.494M4 4a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z"/></symbol>
+  <symbol id="k-pie" viewBox="0 0 16 16"><path d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.793zm1 0V7.5h6.482A7 7 0 0 0 8.5 1.018M14.982 8.5H8.207l-4.79 4.79A7 7 0 0 0 14.982 8.5M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8"/></symbol>
+  <symbol id="k-wallet" viewBox="0 0 16 16"><path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z"/></symbol>
+  <symbol id="k-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52z"/></symbol>
+  <symbol id="k-cup" viewBox="0 0 16 16"><path d="M.5 6a.5.5 0 0 0-.488.608l1.652 7.434A2.5 2.5 0 0 0 4.104 16h5.792a2.5 2.5 0 0 0 2.44-1.958l.131-.59a3 3 0 0 0 1.3-5.854l.221-.99A.5.5 0 0 0 13.5 6zM13 12.5a2 2 0 0 1-.316-.025l.867-3.898A2.001 2.001 0 0 1 13 12.5"/></symbol>
+  <symbol id="k-basket" viewBox="0 0 16 16"><path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1v4.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 13.5V9a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1.217L5.07 1.243a.5.5 0 0 1 .686-.172M2 9v4.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V9zM1 7v1h14V7z"/></symbol>
+  <symbol id="k-fuel" viewBox="0 0 16 16"><path d="M3 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5z"/><path d="M1 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm1 0v10h8V2z"/></symbol>
+  <symbol id="k-bag" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="k-swap" viewBox="0 0 16 16"><path d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/></symbol>
+  <symbol id="k-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></symbol>
+  <symbol id="k-plus" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></symbol>
+  <symbol id="k-chev" viewBox="0 0 16 16"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></symbol>
+  <symbol id="k-check" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></symbol>
+  <symbol id="k-card" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">Design system · v2</p>
+  <h1>Ours</h1>
+  <p class="intro">
+    Bank messages are machine-printed lines: fixed pitch, amounts flush right,
+    hairlines between entries. The interface is built from that same material rather
+    than dressed up to hide it — a statement you can read at a glance, not a wallet
+    app wearing a chart.
+  </p>
+</header>
+
+<!-- ═══ ELEMENTS ═══════════════════════════════════════════════ -->
+<section class="block">
+  <div class="block-head">
+    <h2>Elements</h2>
+    <p>Every piece the screens are assembled from. Build these once and the screens
+       are arrangement, not invention.</p>
+  </div>
+
+  <div class="specs">
+
+    <div class="spec">
+      <h3>Scale</h3>
+      <div class="dark-pad">
+        <div class="sp-figure">₹21,979</div>
+        <div class="sp-amount">₹2,358.19</div>
+        <div class="sp-body">Reliance Smart</div>
+        <div class="sp-micro">Spent this month</div>
+      </div>
+      <p class="note">
+        The jump from 9px label to 64px figure is the whole hierarchy. Restraint
+        everywhere else pays for one very large number.
+      </p>
+    </div>
+
+    <div class="spec">
+      <h3>Label over value</h3>
+      <div class="dark-pad stack-demo">
+        <div><span class="lbl">Budget</span><b class="val">₹32,000</b></div>
+        <div><span class="lbl">Used</span><b class="val ok">68%</b></div>
+        <div><span class="lbl">Left</span><b class="val ok">₹10,021</b></div>
+      </div>
+      <p class="note">
+        Label above, never beside. Eyes land on the number first and only read the
+        caption if they need it.
+      </p>
+    </div>
+
+    <div class="spec">
+      <h3>Rulers</h3>
+      <div class="dark-pad">
+        <span class="lbl">Budget · 68%</span>
+        <div class="ruler"><div class="tk"></div><div class="tk fill" style="width:68%"></div></div>
+        <span class="lbl">Over · 112%</span>
+        <div class="ruler"><div class="tk"></div><div class="tk fill over" style="width:100%"></div></div>
+      </div>
+      <p class="note">
+        Discrete ticks, every fifth taller. A measured quantity, not a vague fill —
+        and it borrows the vernacular of a printed scale.
+      </p>
+    </div>
+
+    <div class="spec">
+      <h3>Controls</h3>
+      <div class="dark-pad ctrls">
+        <span class="btn">Sort 94 expenses</span>
+        <span class="btn ghost">Open in Sheets</span>
+        <div class="chiprow">
+          <span class="chip on"><svg class="ico"><use href="#k-cup"/></svg>Food</span>
+          <span class="chip"><svg class="ico"><use href="#k-basket"/></svg>Groceries</span>
+          <span class="chip">More</span>
+        </div>
+      </div>
+      <p class="note">
+        One accent, one primary action per screen. The chosen chip is the only
+        filled thing in view.
+      </p>
+    </div>
+
+    <div class="spec">
+      <h3>Entry</h3>
+      <div class="dark-pad">
+        <div class="entry">
+          <span class="av c1"><svg class="ico"><use href="#k-cup"/></svg></span>
+          <span class="ent-main"><b>Keecheril St</b><span class="lbl">Food · 7:48 am</span></span>
+          <span class="num">151</span>
+        </div>
+        <div class="entry">
+          <span class="av c0"><svg class="ico"><use href="#k-dots"/></svg></span>
+          <span class="ent-main"><b>Vezhampasser</b><span class="lbl warn">Untagged</span></span>
+          <span class="num">70</span>
+        </div>
+        <div class="entry">
+          <span class="av c2"><svg class="ico"><use href="#k-basket"/></svg></span>
+          <span class="ent-main"><b>Reliance Smart</b><span class="lbl">Groceries · 19 Jul</span></span>
+          <span class="num">2,358</span>
+        </div>
+      </div>
+      <p class="note">
+        Amounts share one right-hand column with tabular figures, so they align into
+        a true column exactly like a statement. No ₹ on every row — the column is
+        the unit.
+      </p>
+    </div>
+
+    <div class="spec">
+      <h3>States</h3>
+      <div class="dark-pad">
+        <div class="pillrow">
+          <span class="pl ok"><svg class="ico"><use href="#k-check"/></svg>Synced</span>
+          <span class="pl warn">3 waiting</span>
+          <span class="pl">Off</span>
+        </div>
+        <div class="skel"><i></i><i class="w60"></i></div>
+        <div class="empty">
+          <svg class="ico big"><use href="#k-receipt"/></svg>
+          <span>Nothing yet this month</span>
+        </div>
+      </div>
+      <p class="note">
+        Loading is a shimmer of the shape that is coming, not a spinner. Empty says
+        what is missing, never “no data”.
+      </p>
+    </div>
+  </div>
+
+  <div class="palette">
+    <h3>Category colour</h3>
+    <div class="chips-pal">
+      <span class="pal"><i style="background:#1E9E74"></i>Groceries <code>#1E9E74</code></span>
+      <span class="pal"><i style="background:#C4571F"></i>Food <code>#C4571F</code></span>
+      <span class="pal"><i style="background:#2E82BC"></i>Transport <code>#2E82BC</code></span>
+      <span class="pal"><i style="background:#7443BE"></i>Shopping <code>#7443BE</code></span>
+      <span class="pal"><i style="background:#B2760A"></i>Bills <code>#B2760A</code></span>
+    </div>
+    <p class="note wide">
+      Re-stepped for the dark surface and machine-checked, not eyeballed: lightness
+      band, chroma floor, colour-blind separation and contrast all pass against
+      <code>#131318</code>. My first pass failed — the hues were bright enough to
+      glare on OLED and fight the text. Shopping sits just under 3:1, which is
+      allowed only because every bar carries a visible name and amount.
+    </p>
+  </div>
+</section>
+
+<!-- ═══ SCREENS ════════════════════════════════════════════════ -->
+<section class="block">
+  <div class="block-head">
+    <h2>Screens</h2>
+    <p>Three, assembled entirely from the elements above.</p>
+  </div>
+
+  <div class="row3">
+
+    <!-- HOME -->
+    <figure class="fig">
+      <div class="dev"><div class="scr">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd"><span class="mark">OURS</span><span class="pl ok"><svg class="ico"><use href="#k-check"/></svg>2m</span></div>
+
+          <div class="hero">
+            <span class="lbl">Spent this month</span>
+            <div class="big">₹21,979</div>
+            <div class="ruler"><div class="tk"></div><div class="tk fill" style="width:68%"></div></div>
+            <div class="triple">
+              <div><span class="lbl">Budget</span><b class="val">₹32K</b></div>
+              <div><span class="lbl">Used</span><b class="val ok">68%</b></div>
+              <div><span class="lbl">Left</span><b class="val ok">₹10K</b></div>
+            </div>
+          </div>
+
+          <div class="daychart">
+            <span class="lbl">Daily · July</span>
+            <div class="cols" role="img" aria-label="Daily spending, highest on the 19th">
+              <i style="height:14%"></i><i style="height:8%"></i><i style="height:30%"></i>
+              <i style="height:12%"></i><i style="height:52%"></i><i style="height:20%"></i>
+              <i style="height:6%"></i><i style="height:38%"></i><i style="height:16%"></i>
+              <i style="height:70%"></i><i style="height:24%"></i><i style="height:10%"></i>
+              <i style="height:44%"></i><i style="height:100%" class="peak"></i>
+              <i style="height:18%"></i><i style="height:9%"></i>
+            </div>
+            <div class="axis"><span>1</span><span>19 · ₹2,358</span><span>31</span></div>
+          </div>
+
+          <div class="two-up">
+            <span class="lbl">Household</span>
+            <div class="splitbar"><i style="width:64%"></i><i class="alt" style="width:36%"></i></div>
+            <div class="legend">
+              <span><i class="sw"></i>You<b class="num">14,066</b></span>
+              <span><i class="sw alt"></i>Priya<b class="num">7,913</b></span>
+            </div>
+          </div>
+
+          <a class="cta" href="#sort">
+            <span><b>Sort 94 expenses</b><span class="lbl">6 groups · about 6 taps</span></span>
+            <svg class="ico"><use href="#k-chev"/></svg>
+          </a>
+
+          <div class="tapehd"><span class="lbl">Today</span><span class="lbl">₹597</span></div>
+          <div class="entry">
+            <span class="av c1"><svg class="ico"><use href="#k-cup"/></svg></span>
+            <span class="ent-main"><b>Keecheril St</b><span class="lbl">Food · 7:48 am</span></span>
+            <span class="num">151</span>
+          </div>
+          <div class="entry">
+            <span class="av c0"><svg class="ico"><use href="#k-swap"/></svg></span>
+            <span class="ent-main"><b>Unknown payee</b><span class="lbl warn">Not counted</span></span>
+            <span class="num dim">10,000</span>
+          </div>
+
+          <div class="fabrow"><div class="fab"><svg class="ico"><use href="#k-plus"/></svg></div></div>
+          <nav class="tabs">
+            <span class="tb on"><svg class="ico"><use href="#k-house"/></svg>Home</span>
+            <span class="tb"><svg class="ico"><use href="#k-receipt"/></svg>Activity</span>
+            <span class="tb"><svg class="ico"><use href="#k-pie"/></svg>Summary</span>
+            <span class="tb"><svg class="ico"><use href="#k-wallet"/></svg>Budgets</span>
+            <span class="tb"><svg class="ico"><use href="#k-gear"/></svg>Settings</span>
+          </nav>
+        </div>
+      </div></div>
+      <figcaption>
+        <h3>Home</h3>
+        <p>
+          The daily columns are new, and they earn their place — a single figure
+          tells you the total but not that <b>one Saturday was a third of the
+          month</b>. Only the peak is labelled; a number on every column would be
+          noise.
+        </p>
+      </figcaption>
+    </figure>
+
+    <!-- SORT -->
+    <figure class="fig" id="sort">
+      <div class="dev"><div class="scr">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd"><span class="mark">SORT</span><span class="lbl">94 left · 6 groups</span></div>
+          <div class="ruler slim"><div class="tk"></div><div class="tk fill" style="width:47%"></div></div>
+
+          <div class="grp">
+            <div class="grp-hd">
+              <span class="av c1 lg"><svg class="ico"><use href="#k-cup"/></svg></span>
+              <span class="ent-main"><b>Keecheril St</b><span class="lbl">12 payments</span></span>
+              <span class="num">1,812</span>
+            </div>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-cup"/></svg>Food</span>
+              <span class="chip"><svg class="ico"><use href="#k-basket"/></svg>Groceries</span>
+              <span class="chip">More</span>
+            </div>
+            <span class="lbl foot">Applies to all 12, and every future one</span>
+          </div>
+
+          <div class="grp">
+            <div class="grp-hd">
+              <span class="av c3 lg"><svg class="ico"><use href="#k-fuel"/></svg></span>
+              <span class="ent-main"><b>Bhadra Fuels</b><span class="lbl">4 payments</span></span>
+              <span class="num">840</span>
+            </div>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-fuel"/></svg>Transport</span>
+              <span class="chip"><svg class="ico"><use href="#k-bag"/></svg>Shopping</span>
+              <span class="chip">More</span>
+            </div>
+          </div>
+
+          <div class="grp flag">
+            <div class="grp-hd">
+              <span class="av c0 lg"><svg class="ico"><use href="#k-swap"/></svg></span>
+              <span class="ent-main"><b>Unknown payee</b><span class="lbl">3 payments</span></span>
+              <span class="num">50,000</span>
+            </div>
+            <p class="tiny">
+              The bank named nobody. Held out of spending until you decide.
+            </p>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-swap"/></svg>Moving money</span>
+              <span class="chip">It was spending</span>
+            </div>
+          </div>
+
+          <div class="grp done last">
+            <div class="grp-hd">
+              <span class="av okbg lg"><svg class="ico"><use href="#k-check"/></svg></span>
+              <span class="ent-main"><b>Amazon Pay</b><span class="lbl">Shopping · 9 sorted</span></span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>
+        <h3>Sort <em>new</em></h3>
+        <p>
+          Grouped by merchant, so twelve trips to one shop is <b>one decision</b>.
+          94 rows becomes roughly six. The unknown-payee group gets a plain-language
+          escape hatch instead of an accounting term.
+        </p>
+      </figcaption>
+    </figure>
+
+    <!-- SUMMARY -->
+    <figure class="fig">
+      <div class="dev"><div class="scr">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd mo"><span class="arw">‹</span><b>JULY 2026</b><span class="arw">›</span></div>
+
+          <div class="hero flat">
+            <span class="lbl">Net this month</span>
+            <div class="big ok">+₹16,261</div>
+            <div class="triple">
+              <div><span class="lbl">Earned</span><b class="val">₹38,240</b></div>
+              <div><span class="lbl">Spent</span><b class="val">₹21,979</b></div>
+              <div><span class="lbl">Saved</span><b class="val ok">₹5,000</b></div>
+            </div>
+          </div>
+
+          <div class="tapehd"><span class="lbl">Where it went</span></div>
+          <div class="ranks">
+            <div class="rk">
+              <div class="rk-top"><b>Groceries</b><span class="num">8,412</span></div>
+              <div class="mtr"><i style="width:38%" class="m2"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Food</b><span class="num">5,904</span></div>
+              <div class="mtr"><i style="width:27%" class="m1"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Transport</b><span class="num">3,510</span></div>
+              <div class="mtr"><i style="width:16%" class="m3"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Shopping</b><span class="num">2,201</span></div>
+              <div class="mtr"><i style="width:10%" class="m4"></i></div>
+            </div>
+          </div>
+
+          <div class="notcount">
+            <div class="rk-top"><b>Not counted</b><span class="num">57,329</span></div>
+            <div class="nc"><svg class="ico"><use href="#k-swap"/></svg><span>Moving money</span><span class="num dim">50,004</span></div>
+            <div class="nc"><svg class="ico"><use href="#k-card"/></svg><span>Card bills</span><span class="num dim">7,325</span></div>
+            <p class="tiny">
+              A card bill pays for purchases already in the list above. Counting both
+              would show them twice.
+            </p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>
+        <h3>Summary</h3>
+        <p>
+          Headline is <b>net</b>, not spend — spending alone can't tell you whether
+          the month went well. The donut is gone: with one slice at 95% it was a
+          circle with a notch. Ranked bars stay readable at any split.
+        </p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="lite-head">
+    <h2>Light</h2>
+    <p>The same three screens, same structure. Semantic and category hues are stepped
+       separately for the paper surface and machine-checked against it — a dark palette
+       dropped onto white fails contrast and turns muddy.</p>
+  </div>
+  <div class="row3">
+
+    <!-- HOME -->
+    <figure class="fig">
+      <div class="dev lite"><div class="scr lite">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd"><span class="mark">OURS</span><span class="pl ok"><svg class="ico"><use href="#k-check"/></svg>2m</span></div>
+
+          <div class="hero">
+            <span class="lbl">Spent this month</span>
+            <div class="big">₹21,979</div>
+            <div class="ruler"><div class="tk"></div><div class="tk fill" style="width:68%"></div></div>
+            <div class="triple">
+              <div><span class="lbl">Budget</span><b class="val">₹32K</b></div>
+              <div><span class="lbl">Used</span><b class="val ok">68%</b></div>
+              <div><span class="lbl">Left</span><b class="val ok">₹10K</b></div>
+            </div>
+          </div>
+
+          <div class="daychart">
+            <span class="lbl">Daily · July</span>
+            <div class="cols" role="img" aria-label="Daily spending, highest on the 19th">
+              <i style="height:14%"></i><i style="height:8%"></i><i style="height:30%"></i>
+              <i style="height:12%"></i><i style="height:52%"></i><i style="height:20%"></i>
+              <i style="height:6%"></i><i style="height:38%"></i><i style="height:16%"></i>
+              <i style="height:70%"></i><i style="height:24%"></i><i style="height:10%"></i>
+              <i style="height:44%"></i><i style="height:100%" class="peak"></i>
+              <i style="height:18%"></i><i style="height:9%"></i>
+            </div>
+            <div class="axis"><span>1</span><span>19 · ₹2,358</span><span>31</span></div>
+          </div>
+
+          <div class="two-up">
+            <span class="lbl">Household</span>
+            <div class="splitbar"><i style="width:64%"></i><i class="alt" style="width:36%"></i></div>
+            <div class="legend">
+              <span><i class="sw"></i>You<b class="num">14,066</b></span>
+              <span><i class="sw alt"></i>Priya<b class="num">7,913</b></span>
+            </div>
+          </div>
+
+          <a class="cta" href="#sort-lite">
+            <span><b>Sort 94 expenses</b><span class="lbl">6 groups · about 6 taps</span></span>
+            <svg class="ico"><use href="#k-chev"/></svg>
+          </a>
+
+          <div class="tapehd"><span class="lbl">Today</span><span class="lbl">₹597</span></div>
+          <div class="entry">
+            <span class="av c1"><svg class="ico"><use href="#k-cup"/></svg></span>
+            <span class="ent-main"><b>Keecheril St</b><span class="lbl">Food · 7:48 am</span></span>
+            <span class="num">151</span>
+          </div>
+          <div class="entry">
+            <span class="av c0"><svg class="ico"><use href="#k-swap"/></svg></span>
+            <span class="ent-main"><b>Unknown payee</b><span class="lbl warn">Not counted</span></span>
+            <span class="num dim">10,000</span>
+          </div>
+
+          <div class="fabrow"><div class="fab"><svg class="ico"><use href="#k-plus"/></svg></div></div>
+          <nav class="tabs">
+            <span class="tb on"><svg class="ico"><use href="#k-house"/></svg>Home</span>
+            <span class="tb"><svg class="ico"><use href="#k-receipt"/></svg>Activity</span>
+            <span class="tb"><svg class="ico"><use href="#k-pie"/></svg>Summary</span>
+            <span class="tb"><svg class="ico"><use href="#k-wallet"/></svg>Budgets</span>
+            <span class="tb"><svg class="ico"><use href="#k-gear"/></svg>Settings</span>
+          </nav>
+        </div>
+      </div></div>
+      
+    </figure>
+
+    <!-- SORT -->
+    <figure class="fig" id="sort-lite">
+      <div class="dev lite"><div class="scr lite">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd"><span class="mark">SORT</span><span class="lbl">94 left · 6 groups</span></div>
+          <div class="ruler slim"><div class="tk"></div><div class="tk fill" style="width:47%"></div></div>
+
+          <div class="grp">
+            <div class="grp-hd">
+              <span class="av c1 lg"><svg class="ico"><use href="#k-cup"/></svg></span>
+              <span class="ent-main"><b>Keecheril St</b><span class="lbl">12 payments</span></span>
+              <span class="num">1,812</span>
+            </div>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-cup"/></svg>Food</span>
+              <span class="chip"><svg class="ico"><use href="#k-basket"/></svg>Groceries</span>
+              <span class="chip">More</span>
+            </div>
+            <span class="lbl foot">Applies to all 12, and every future one</span>
+          </div>
+
+          <div class="grp">
+            <div class="grp-hd">
+              <span class="av c3 lg"><svg class="ico"><use href="#k-fuel"/></svg></span>
+              <span class="ent-main"><b>Bhadra Fuels</b><span class="lbl">4 payments</span></span>
+              <span class="num">840</span>
+            </div>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-fuel"/></svg>Transport</span>
+              <span class="chip"><svg class="ico"><use href="#k-bag"/></svg>Shopping</span>
+              <span class="chip">More</span>
+            </div>
+          </div>
+
+          <div class="grp flag">
+            <div class="grp-hd">
+              <span class="av c0 lg"><svg class="ico"><use href="#k-swap"/></svg></span>
+              <span class="ent-main"><b>Unknown payee</b><span class="lbl">3 payments</span></span>
+              <span class="num">50,000</span>
+            </div>
+            <p class="tiny">
+              The bank named nobody. Held out of spending until you decide.
+            </p>
+            <div class="chiprow">
+              <span class="chip on"><svg class="ico"><use href="#k-swap"/></svg>Moving money</span>
+              <span class="chip">It was spending</span>
+            </div>
+          </div>
+
+          <div class="grp done last">
+            <div class="grp-hd">
+              <span class="av okbg lg"><svg class="ico"><use href="#k-check"/></svg></span>
+              <span class="ent-main"><b>Amazon Pay</b><span class="lbl">Shopping · 9 sorted</span></span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      
+    </figure>
+
+    <!-- SUMMARY -->
+    <figure class="fig">
+      <div class="dev lite"><div class="scr lite">
+        <div class="sbar"><span>4:48</span><span>LTE 100%</span></div>
+        <div class="ui">
+          <div class="hd mo"><span class="arw">‹</span><b>JULY 2026</b><span class="arw">›</span></div>
+
+          <div class="hero flat">
+            <span class="lbl">Net this month</span>
+            <div class="big ok">+₹16,261</div>
+            <div class="triple">
+              <div><span class="lbl">Earned</span><b class="val">₹38,240</b></div>
+              <div><span class="lbl">Spent</span><b class="val">₹21,979</b></div>
+              <div><span class="lbl">Saved</span><b class="val ok">₹5,000</b></div>
+            </div>
+          </div>
+
+          <div class="tapehd"><span class="lbl">Where it went</span></div>
+          <div class="ranks">
+            <div class="rk">
+              <div class="rk-top"><b>Groceries</b><span class="num">8,412</span></div>
+              <div class="mtr"><i style="width:38%" class="m2"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Food</b><span class="num">5,904</span></div>
+              <div class="mtr"><i style="width:27%" class="m1"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Transport</b><span class="num">3,510</span></div>
+              <div class="mtr"><i style="width:16%" class="m3"></i></div>
+            </div>
+            <div class="rk">
+              <div class="rk-top"><b>Shopping</b><span class="num">2,201</span></div>
+              <div class="mtr"><i style="width:10%" class="m4"></i></div>
+            </div>
+          </div>
+
+          <div class="notcount">
+            <div class="rk-top"><b>Not counted</b><span class="num">57,329</span></div>
+            <div class="nc"><svg class="ico"><use href="#k-swap"/></svg><span>Moving money</span><span class="num dim">50,004</span></div>
+            <div class="nc"><svg class="ico"><use href="#k-card"/></svg><span>Card bills</span><span class="num dim">7,325</span></div>
+            <p class="tiny">
+              A card bill pays for purchases already in the list above. Counting both
+              would show them twice.
+            </p>
+          </div>
+        </div>
+      </div></div>
+      
+    </figure>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>
+    Same tokens as the shipped app. Nothing here needs a new colour or typeface —
+    what changed is hierarchy, alignment, and deciding what deserves to be large.
+  </p>
+</footer>
+</div>
+
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8; --card:#fff;
+    --ink:#0B0B0F; --sur:#131318; --sur2:#191920; --hair:#2A2A34;
+    --tx:#F2F2F7; --tx2:#9A9AAE; --lab:#7C7C99;
+    --acc:#2F5BFF; --ok:#3DDCA0; --warn:#FFB020; --bad:#FF5C7A;
+    --c0:#6C7A93; --c1:#C4571F; --c2:#1E9E74; --c3:#2E82BC; --c4:#7443BE;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B;--card:#0F0F14;}
+  }
+  :root[data-theme="dark"]{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B;--card:#0F0F14;}
+  :root[data-theme="light"]{--bg:#F5F5F8;--fg:#15151C;--mut:#5E5E72;--line:#E0E0E8;--card:#fff;}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+       font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1560px;margin:0 auto;padding:clamp(28px,5vw,72px) clamp(18px,4vw,52px) 90px}
+
+  .top{max-width:62ch;margin-bottom:clamp(40px,6vw,72px)}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+          color:var(--acc);margin:0 0 14px}
+  .top h1{font-family:var(--mono);font-size:clamp(44px,8vw,76px);font-weight:700;
+          letter-spacing:-.045em;margin:0 0 18px;line-height:.95}
+  .intro{font-size:17px;line-height:1.68;color:var(--mut);margin:0}
+
+  .block{margin-bottom:clamp(56px,8vw,104px)}
+  .block-head{border-top:1px solid var(--line);padding-top:22px;margin-bottom:32px;
+              display:flex;gap:28px;flex-wrap:wrap;align-items:baseline}
+  .block-head h2{font-family:var(--mono);font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+                 margin:0;color:var(--acc)}
+  .block-head p{margin:0;font-size:14.5px;color:var(--mut);max-width:52ch;line-height:1.6}
+
+  .specs{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+  .spec h3{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+           margin:0 0 12px;color:var(--mut)}
+  .dark-pad{background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;
+            display:flex;flex-direction:column;gap:12px;color:var(--tx)}
+  .note{font-size:12.5px;line-height:1.6;color:var(--mut);margin:11px 0 0}
+  .note.wide{max-width:64ch}
+  .note code{font-family:var(--mono);font-size:11px}
+
+  .sp-figure{font-family:var(--mono);font-size:46px;font-weight:700;letter-spacing:-.05em;line-height:1}
+  .sp-amount{font-family:var(--mono);font-size:17px;font-weight:700}
+  .sp-body{font-size:13px;font-weight:600}
+  .sp-micro,.lbl{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--lab)}
+  .lbl.warn{color:var(--warn)}
+  .stack-demo{flex-direction:row;justify-content:space-between}
+  .stack-demo>div{display:flex;flex-direction:column;gap:5px}
+  .val{font-family:var(--mono);font-size:15px}
+  .val.ok,.ok{color:var(--ok)}
+
+  .ruler{position:relative;height:22px}
+  .ruler.slim{height:12px}
+  .tk{position:absolute;inset:0;
+      background-image:repeating-linear-gradient(to right,var(--hair) 0 1.5px,transparent 1.5px 7px)}
+  .tk.fill{background-image:repeating-linear-gradient(to right,var(--ok) 0 1.5px,transparent 1.5px 7px)}
+  .tk.fill.over{background-image:repeating-linear-gradient(to right,var(--bad) 0 1.5px,transparent 1.5px 7px)}
+
+  .ctrls{gap:14px}
+  .btn{display:block;text-align:center;background:var(--acc);color:#fff;font-size:13px;font-weight:600;
+       border-radius:11px;padding:12px}
+  .btn.ghost{background:transparent;border:1px solid var(--hair);color:var(--tx2);font-weight:500}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:5px;font-size:11px;border:1px solid var(--hair);
+        border-radius:8px;padding:6px 10px;color:var(--tx2)}
+  .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+  .ico{width:13px;height:13px;fill:currentColor;flex:none}
+  .ico.big{width:22px;height:22px}
+  .entry{display:flex;align-items:center;gap:11px;padding:7px 0;border-bottom:1px solid var(--hair)}
+  .entry:last-child{border-bottom:0}
+  .ent-main{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+  .ent-main b{font-size:13px;font-weight:600}
+  .num{font-family:var(--mono);font-size:13.5px;font-weight:700;margin-left:auto;
+       min-width:62px;text-align:right}
+  .num.dim{color:var(--tx2);font-weight:500}
+  .av{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none}
+  .av.lg{width:32px;height:32px;border-radius:10px}
+  .c0{background:color-mix(in srgb,var(--tx2) 16%,transparent);color:var(--tx2)}
+  .c1{background:rgb(196 87 31/.2);color:#E0824A}
+  .c2{background:rgb(30 158 116/.2);color:#3FC094}
+  .c3{background:rgb(46 130 188/.2);color:#5AAAE0}
+  .c4{background:rgb(116 67 190/.2);color:#9C74E0}
+  .okbg{background:rgb(61 220 160/.18);color:var(--ok)}
+
+  .pillrow{display:flex;gap:7px;flex-wrap:wrap}
+  .pl{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+      text-transform:uppercase;border:1px solid var(--hair);border-radius:20px;padding:4px 9px;color:var(--tx2)}
+  .pl.ok{color:var(--ok);border-color:rgb(61 220 160/.42)}
+  .pl.warn{color:var(--warn);border-color:rgb(255 176 32/.42)}
+  .skel{display:flex;flex-direction:column;gap:7px}
+  .skel i{height:11px;border-radius:5px;background:linear-gradient(90deg,var(--sur),var(--sur2),var(--sur));
+          background-size:200% 100%;animation:sh 1.5s linear infinite}
+  .skel i.w60{width:60%}
+  @keyframes sh{to{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){.skel i{animation:none}}
+  .empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0;
+         color:var(--tx2);font-size:12px}
+
+  .palette{margin-top:34px;border-top:1px solid var(--line);padding-top:24px}
+  .palette h3{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+              margin:0 0 14px;color:var(--mut)}
+  .chips-pal{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+  .pal{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+       border-radius:9px;padding:8px 12px;font-size:12px}
+  .pal i{width:15px;height:15px;border-radius:4px;flex:none}
+  .pal code{font-family:var(--mono);font-size:10.5px;color:var(--mut)}
+
+  .lite-head{grid-column:1/-1;border-top:1px solid var(--line);padding-top:22px;margin-top:14px;
+             display:flex;gap:26px;flex-wrap:wrap;align-items:baseline}
+  .lite-head h2{font-family:var(--mono);font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+                margin:0;color:var(--acc)}
+  .lite-head p{margin:0;font-size:14px;color:var(--mut);max-width:52ch;line-height:1.6}
+  .row3{display:grid;gap:clamp(30px,4vw,52px);grid-template-columns:repeat(auto-fit,minmax(322px,1fr))}
+  .fig{margin:0;display:flex;flex-direction:column;gap:20px}
+  .dev{background:#000;border:1px solid var(--line);border-radius:32px;padding:7px;
+       box-shadow:0 20px 50px rgb(0 0 0/.3)}
+  .scr{
+    --ink:#0B0B0F; --sur:#131318; --hair:#2A2A34;
+    --tx:#F2F2F7; --tx2:#9A9AAE; --lab:#7C7C99;
+    --ok:#3DDCA0; --warn:#FFB020; --bad:#FF5C7A;
+    --k1:#C4571F; --k2:#1E9E74; --k3:#2E82BC; --k4:#7443BE;
+    background:var(--ink);border-radius:26px;overflow:hidden;color:var(--tx);
+  }
+  /* Light is not an inversion. A bank statement is black ink on paper — this is
+     the original the dark theme was derived from, with its own validated hues. */
+  .scr.lite{
+    --ink:#F4F4F7; --sur:#FFFFFF; --hair:#E3E3EA;
+    --tx:#101014; --tx2:#5A5A6E; --lab:#79798F;
+    --ok:#0E8F62; --warn:#9A6200; --bad:#CE2C4C;
+    --k1:#C24E1D; --k2:#128863; --k3:#2478B4; --k4:#6B3BB8;
+  }
+  .dev.lite{background:#DCDCE4;box-shadow:0 20px 44px rgb(20 20 30/.14)}
+  .sbar{display:flex;justify-content:space-between;padding:11px 18px 2px;
+        font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+  .ui{padding:8px 15px 18px;display:flex;flex-direction:column;gap:14px;position:relative}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:4px 1px}
+  .hd.mo{justify-content:center;gap:22px;font-family:var(--mono);font-size:13px;letter-spacing:.14em}
+  .arw{color:var(--tx2);font-size:19px;line-height:1}
+  .mark{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.26em}
+
+  .hero{display:flex;flex-direction:column;gap:11px}
+  .big{font-family:var(--mono);font-size:52px;font-weight:700;letter-spacing:-.055em;line-height:.92}
+  .triple{display:flex;justify-content:space-between;border-top:1px solid var(--hair);padding-top:11px}
+  .triple>div{display:flex;flex-direction:column;gap:5px}
+
+  .daychart{display:flex;flex-direction:column;gap:8px}
+  .cols{display:flex;align-items:flex-end;gap:2px;height:56px}
+  .cols i{flex:1;background:var(--hair);border-radius:3px 3px 0 0;min-height:2px}
+  .cols i.peak{background:var(--acc)}
+  .axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8.5px;
+        letter-spacing:.1em;color:var(--lab)}
+
+  .two-up{display:flex;flex-direction:column;gap:8px}
+  .splitbar{display:flex;gap:3px;height:8px}
+  .splitbar i{background:var(--acc);border-radius:3px}
+  .splitbar i.alt{background:var(--k4)}
+  .legend{display:flex;gap:18px}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)}
+  .legend .num{min-width:0;margin-left:4px;font-size:12px;color:var(--tx)}
+  .sw{width:7px;height:7px;border-radius:2px;background:var(--acc);display:inline-block}
+  .sw.alt{background:var(--k4)}
+
+  .cta{display:flex;align-items:center;gap:10px;background:var(--acc);color:#fff;
+       border-radius:12px;padding:13px 15px;text-decoration:none}
+  .cta span{display:flex;flex-direction:column;gap:4px}
+  .cta b{font-size:13.5px}
+  .cta .lbl{color:rgb(255 255 255/.72)}
+  .cta .ico{margin-left:auto;width:11px;height:11px}
+
+  .tapehd{display:flex;justify-content:space-between;align-items:center;
+          border-bottom:1px solid var(--hair);padding-bottom:7px}
+
+  .grp{border:1px solid var(--hair);border-radius:13px;padding:13px;display:flex;
+       flex-direction:column;gap:11px;background:var(--sur)}
+  .grp-hd{display:flex;align-items:center;gap:11px}
+  .grp.flag{border-color:rgb(255 176 32/.35)}
+  .grp.done{opacity:.45}
+  .grp.last{margin-bottom:6px}
+  .foot{display:block}
+  .tiny{font-size:10.5px;line-height:1.55;color:var(--tx2);margin:0}
+
+  .hero.flat .big{font-size:44px}
+  .ranks{display:flex;flex-direction:column;gap:13px}
+  .rk{display:flex;flex-direction:column;gap:6px}
+  .rk-top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600}
+  .mtr{height:6px;background:var(--hair);border-radius:3px;overflow:hidden}
+  .mtr i{display:block;height:100%;border-radius:3px}
+  .m1{background:var(--k1)} .m2{background:var(--k2)}
+  .m3{background:var(--k3)} .m4{background:var(--k4)}
+  .notcount{border:1px dashed var(--hair);border-radius:13px;padding:13px;display:flex;
+            flex-direction:column;gap:9px}
+  .nc{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--tx2)}
+  .nc .num{font-size:12px}
+
+  .fabrow{display:flex;justify-content:flex-end;padding-top:2px}
+  .fab{width:44px;height:44px;border-radius:15px;background:var(--acc);
+       display:grid;place-items:center;color:#fff}
+  .fab .ico{width:16px;height:16px}
+  .tabs{display:flex;justify-content:space-between;border-top:1px solid var(--hair);
+        padding:11px 3px 2px;margin-top:4px}
+  .tb{display:flex;flex-direction:column;align-items:center;gap:5px;font-family:var(--mono);
+      font-size:7.5px;letter-spacing:.08em;color:var(--lab)}
+  .tb.on{color:var(--acc)}
+
+  figcaption h3{font-family:var(--mono);font-size:17px;margin:0 0 9px;letter-spacing:-.01em;
+                display:flex;align-items:center;gap:10px}
+  figcaption h3 em{font-family:var(--mono);font-size:8.5px;font-style:normal;letter-spacing:.15em;
+                   text-transform:uppercase;color:var(--acc);border:1px solid var(--acc);
+                   border-radius:4px;padding:2px 6px}
+  figcaption p{margin:0;font-size:14px;line-height:1.62;color:var(--mut);max-width:44ch}
+  figcaption b{color:var(--fg);font-weight:600}
+
+  .foot p{border-top:1px solid var(--line);padding-top:24px;font-size:13.5px;color:var(--mut);
+          max-width:60ch;line-height:1.65;margin:0}
+  a:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+</style>
