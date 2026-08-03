@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +46,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MemberTotal
@@ -181,19 +184,24 @@ fun HomeScreen(
             if (state.hasPartner) {
                 item {
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = EDGE),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        val names = listOf(
-                            "Both",
-                            "Me",
-                            state.partnerName?.split(" ")?.firstOrNull() ?: "Partner",
+                        // One chip per person who actually has rows, not a fixed
+                        // Both/Me/Partner triple — a household can be three.
+                        OursChip(
+                            label = "Everyone",
+                            selected = state.filter == MemberFilter.Everyone,
+                            onClick = { viewModel.setFilter(MemberFilter.Everyone) },
                         )
-                        names.forEachIndexed { index, label ->
+                        state.people.forEach { person ->
                             OursChip(
-                                label = label,
-                                selected = MemberFilter.entries.indexOf(state.filter) == index,
-                                onClick = { viewModel.setFilter(MemberFilter.entries[index]) },
+                                label = person.chipLabel,
+                                selected = (state.filter as? MemberFilter.Person)?.uid == person.uid,
+                                onClick = { viewModel.setFilter(MemberFilter.Person(person.uid)) },
                             )
                         }
                     }
@@ -384,7 +392,19 @@ private fun HouseholdSplit(
     modifier: Modifier = Modifier,
 ) {
     val total = members.sumOf { it.totalPaise }.coerceAtLeast(1)
-    val colors = listOf(Ours.accent, colorForCategory(com.manuel.ours.domain.model.Category.SHOPPING))
+    // A colour for every member, not two. The bar used to draw the first two and take
+    // the rest with it — a third person's spending vanished from both the bar and the
+    // legend, while still counting toward the total the widths were computed from, so
+    // the bar quietly failed to fill.
+    val palette = listOf(
+        Ours.accent,
+        colorForCategory(Category.SHOPPING),
+        colorForCategory(Category.GROCERIES),
+        colorForCategory(Category.FOOD),
+        colorForCategory(Category.TRANSPORT),
+        colorForCategory(Category.HEALTH),
+    )
+    val colorFor = { index: Int -> palette[index % palette.size] }
 
     Column(
         modifier.fillMaxWidth().padding(horizontal = EDGE),
@@ -395,18 +415,21 @@ private fun HouseholdSplit(
             Modifier.fillMaxWidth().height(8.dp),
             horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            members.take(colors.size).forEachIndexed { index, member ->
+            members.forEachIndexed { index, member ->
                 Box(
                     Modifier
                         .weight((member.totalPaise.toFloat() / total).coerceAtLeast(0.02f))
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(3.dp))
-                        .background(colors[index])
+                        .background(colorFor(index))
                 )
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            members.take(colors.size).forEachIndexed { index, member ->
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            members.forEachIndexed { index, member ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -415,7 +438,7 @@ private fun HouseholdSplit(
                         Modifier
                             .size(7.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(colors[index])
+                            .background(colorFor(index))
                     )
                     Text(
                         text = if (member.uid == selfUid) "You"

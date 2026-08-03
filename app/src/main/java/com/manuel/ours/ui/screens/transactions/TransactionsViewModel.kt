@@ -6,6 +6,7 @@ import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.domain.model.HouseholdMember
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
@@ -33,12 +34,14 @@ data class TransactionGroup(
 data class TransactionsUiState(
     val loading: Boolean = true,
     val query: String = "",
-    val memberFilter: MemberFilter = MemberFilter.BOTH,
+    val memberFilter: MemberFilter = MemberFilter.Everyone,
     val categoryFilter: Category? = null,
     val groups: List<TransactionGroup> = emptyList(),
     /** Set briefly after a swipe-delete so the UI can offer Undo. */
     val lastDeletedId: String? = null,
     val hasPartner: Boolean = false,
+    /** Everyone with a row, self first — one filter chip each. */
+    val people: List<HouseholdMember> = emptyList(),
 )
 
 @HiltViewModel
@@ -48,7 +51,7 @@ class TransactionsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
-    private val memberFilter = MutableStateFlow(MemberFilter.BOTH)
+    private val memberFilter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
     private val categoryFilter = MutableStateFlow<Category?>(null)
     private val lastDeleted = MutableStateFlow<String?>(null)
 
@@ -71,13 +74,13 @@ class TransactionsViewModel @Inject constructor(
                     txn.note?.contains(searchText, ignoreCase = true) == true
             }
 
-        val hasPartner = all.any {
-            selfUid.isNotEmpty() && it.ownerUid != selfUid && it.ownerUid != "local"
-        }
+        val people = MonthlyAggregator.peopleIn(all, selfUid)
+        val hasPartner = people.count { !it.isSelf } > 0
 
         TransactionsUiState(
             loading = false,
             hasPartner = hasPartner,
+            people = people,
             query = searchText,
             memberFilter = member,
             categoryFilter = category,

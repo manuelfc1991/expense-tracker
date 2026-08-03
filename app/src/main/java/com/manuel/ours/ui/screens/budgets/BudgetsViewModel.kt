@@ -47,7 +47,7 @@ class BudgetsViewModel @Inject constructor(
         prefs.selfUid,
     ) { transactions, budgets, selfUid ->
         val visible = MonthlyAggregator.applyFilter(
-            transactions, MemberFilter.BOTH, selfUid.orEmpty(),
+            transactions, MemberFilter.Everyone, selfUid.orEmpty(),
         )
         val overall = budgets.firstOrNull { it.category == null }?.limitPaise
         val limits = budgets.filter { it.category != null }

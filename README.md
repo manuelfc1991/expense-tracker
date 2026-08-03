@@ -1,7 +1,7 @@
 # Ours
 
 Android expense tracker that reads Indian bank/UPI SMS, produces monthly summaries,
-and syncs between two phones.
+and syncs between the phones in a household — two, three, or more.
 
 No account and no server of ours. Two sync paths, either or both:
 
@@ -193,7 +193,11 @@ you can get permanently stuck behind is worse than no lock.
    but never requested until recently, so every entry point silently reported "no peers".
    The request now happens and the preconditions check out on one phone; a real exchange
    has not been seen.
-6. **A retired month is retired for the household, not just for you.** The tracking start
+6. **Three or more people is supported but only tested with two.** The filter, the
+   split bar, the merge and both transports all take an arbitrary number of members,
+   and `AggregationTest` covers a household of three — but only two real devices have
+   ever exchanged a log.
+7. **A retired month is retired for the household, not just for you.** The tracking start
    date bounds what syncs as well as what is drawn, so months before it never reach the
    other phone. That is deliberate — but it means a partner joining later receives only
    what is in scope, and the two settings pull against each other.

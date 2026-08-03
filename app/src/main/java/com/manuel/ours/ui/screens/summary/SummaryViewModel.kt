@@ -26,7 +26,7 @@ import javax.inject.Inject
 data class SummaryUiState(
     val loading: Boolean = true,
     val yearMonth: YearMonth = YearMonth.now(MonthlyAggregator.ZONE),
-    val filter: MemberFilter = MemberFilter.BOTH,
+    val filter: MemberFilter = MemberFilter.Everyone,
     val summary: MonthSummary? = null,
     val transactions: List<Transaction> = emptyList(),
 )
@@ -38,7 +38,7 @@ class SummaryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val yearMonth = MutableStateFlow(YearMonth.now(MonthlyAggregator.ZONE))
-    private val filter = MutableStateFlow(MemberFilter.BOTH)
+    private val filter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<SummaryUiState> =

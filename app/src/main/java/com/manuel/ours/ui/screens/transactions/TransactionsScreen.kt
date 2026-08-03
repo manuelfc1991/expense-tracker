@@ -111,11 +111,19 @@ fun TransactionsScreen(
                     Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    listOf("Both", "Me", "Partner").forEachIndexed { index, label ->
+                    OursChip(
+                        label = "Everyone",
+                        selected = state.memberFilter == MemberFilter.Everyone,
+                        onClick = { viewModel.setMemberFilter(MemberFilter.Everyone) },
+                    )
+                    state.people.forEach { person ->
                         OursChip(
-                            label = label,
-                            selected = MemberFilter.entries.indexOf(state.memberFilter) == index,
-                            onClick = { viewModel.setMemberFilter(MemberFilter.entries[index]) },
+                            label = person.chipLabel,
+                            selected =
+                                (state.memberFilter as? MemberFilter.Person)?.uid == person.uid,
+                            onClick = {
+                                viewModel.setMemberFilter(MemberFilter.Person(person.uid))
+                            },
                         )
                     }
                 }

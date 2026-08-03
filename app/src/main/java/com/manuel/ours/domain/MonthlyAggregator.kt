@@ -5,6 +5,7 @@ import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.Insight
+import com.manuel.ours.domain.model.HouseholdMember
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.MerchantTotal
@@ -41,12 +42,14 @@ object MonthlyAggregator {
         selfUid: String,
     ): List<Transaction> = transactions.filter { txn ->
         when (filter) {
-            MemberFilter.ME -> txn.ownerUid == selfUid
-            MemberFilter.PARTNER -> txn.ownerUid != selfUid
-            MemberFilter.BOTH ->
-                // A partner's PERSONAL spend is theirs alone and stays out of the
-                // household total, but I still see my own personal rows.
+            // Everyone's shared spending counts toward the household, whether it came
+            // from a partner or a child. Someone else's PERSONAL rows stay theirs — but
+            // I still see my own, because hiding my own spending from me is absurd.
+            MemberFilter.Everyone ->
                 txn.splitType == SplitType.SHARED || txn.ownerUid == selfUid
+            // One person means everything of theirs, personal included. Picking a name
+            // is asking "what did they spend", not "what did they contribute".
+            is MemberFilter.Person -> txn.ownerUid == filter.uid
         }
     }
 
@@ -120,6 +123,30 @@ object MonthlyAggregator {
             }
             .sortedByDescending { it.totalPaise }
     }
+
+    /**
+     * Everyone who owns a row here, self first and the rest alphabetical.
+     *
+     * Derived from the transactions rather than the member table because that is what
+     * the filter chips need to be true about: a member with nothing recorded has
+     * nothing to filter to, and a person whose rows arrived by sync should appear even
+     * if they were never added locally.
+     */
+    fun peopleIn(
+        transactions: List<Transaction>,
+        selfUid: String,
+        placeholderUid: String = "local",
+    ): List<HouseholdMember> = transactions
+        .asSequence()
+        .filter { it.ownerUid.isNotBlank() }
+        // The placeholder is *me before I had an id*, never a second person. Treating
+        // it as one is what used to render "Both · Me · Me".
+        .filter { it.ownerUid != placeholderUid || it.ownerUid == selfUid }
+        .map { it.ownerUid to it.ownerName }
+        .distinctBy { it.first }
+        .map { (uid, name) -> HouseholdMember(uid, name, isSelf = uid == selfUid) }
+        .sortedWith(compareByDescending<HouseholdMember> { it.isSelf }.thenBy { it.displayName })
+        .toList()
 
     fun byMember(transactions: List<Transaction>): List<MemberTotal> =
         spendable(transactions)

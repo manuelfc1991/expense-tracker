@@ -29,6 +29,7 @@ class AggregationTest {
         merchant: String = "Swiggy",
         split: SplitType = SplitType.SHARED,
         month: Int = 6,
+        ownerName: String? = null,
     ) = Transaction(
         id = "$owner-$day-$amount-$category-$merchant",
         amountPaise = amount,
@@ -38,7 +39,7 @@ class AggregationTest {
         occurredAt = at(day, month),
         splitType = split,
         ownerUid = owner,
-        ownerName = if (owner == me) "Me" else "Partner",
+        ownerName = ownerName ?: if (owner == me) "Me" else "Partner",
     )
 
     @Test
@@ -111,7 +112,7 @@ class AggregationTest {
     @Test
     fun `filter ME shows only my transactions`() {
         val txns = listOf(txn(10_000, 1, owner = me), txn(20_000, 2, owner = partner))
-        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.ME, me)
+        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.Person(me), me)
         assertThat(filtered).hasSize(1)
         assertThat(filtered.first().ownerUid).isEqualTo(me)
     }
@@ -119,7 +120,7 @@ class AggregationTest {
     @Test
     fun `filter PARTNER shows only their transactions`() {
         val txns = listOf(txn(10_000, 1, owner = me), txn(20_000, 2, owner = partner))
-        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.PARTNER, me)
+        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.Person(partner), me)
         assertThat(filtered.single().ownerUid).isEqualTo(partner)
     }
 
@@ -131,7 +132,7 @@ class AggregationTest {
             txn(30_000, 3, owner = partner, split = SplitType.SHARED),
             txn(40_000, 4, owner = partner, split = SplitType.PERSONAL),
         )
-        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.BOTH, me)
+        val filtered = MonthlyAggregator.applyFilter(txns, MemberFilter.Everyone, me)
 
         assertThat(MonthlyAggregator.totalSpent(filtered)).isEqualTo(60_000)
         assertThat(filtered.none { it.ownerUid == partner && it.splitType == SplitType.PERSONAL })
@@ -203,5 +204,64 @@ class AggregationTest {
             emptyList(),
         )
         assertThat(summary.netPaise).isEqualTo(20_00_000)
+    }
+
+    @Test
+    fun `a household of three keeps everyone visible and counted`() {
+        // Was BOTH / ME / PARTNER, which asserted a household of exactly two: "Partner"
+        // meant everyone-who-is-not-me, so a wife and a child were indistinguishable
+        // and neither could be looked at alone.
+        val me = "uid-me"
+        val wife = "uid-wife"
+        val child = "uid-child"
+        val txns = listOf(
+            txn(500_00, day = 5, owner = me, ownerName = "Manuel"),
+            txn(300_00, day = 5, owner = wife, ownerName = "Sindhu"),
+            txn(200_00, day = 5, owner = child, ownerName = "Child"),
+        )
+
+        val people = MonthlyAggregator.peopleIn(txns, me)
+        assertThat(people.map { it.uid }).containsExactly(me, wife, child)
+        // Self first, so "Me" is always the leftmost chip.
+        assertThat(people.first().isSelf).isTrue()
+
+        // Each person is reachable on their own.
+        assertThat(MonthlyAggregator.applyFilter(txns, MemberFilter.Person(child), me))
+            .hasSize(1)
+        assertThat(MonthlyAggregator.applyFilter(txns, MemberFilter.Person(wife), me))
+            .hasSize(1)
+
+        // And a child's shared spending counts toward the household, exactly as a
+        // partner's does — that was the decision, so it is pinned here.
+        val everyone = MonthlyAggregator.applyFilter(txns, MemberFilter.Everyone, me)
+        assertThat(MonthlyAggregator.totalSpent(everyone)).isEqualTo(1000_00)
+    }
+
+    @Test
+    fun `someone else's personal spending stays out of the household total`() {
+        val me = "uid-me"
+        val child = "uid-child"
+        val txns = listOf(
+            txn(500_00, day = 5, owner = me, ownerName = "Manuel"),
+            txn(200_00, day = 5, owner = child, ownerName = "Child", split = SplitType.PERSONAL),
+        )
+        val everyone = MonthlyAggregator.applyFilter(txns, MemberFilter.Everyone, me)
+        assertThat(MonthlyAggregator.totalSpent(everyone)).isEqualTo(500_00)
+
+        // But it is still theirs to see when you ask for them specifically.
+        assertThat(MonthlyAggregator.applyFilter(txns, MemberFilter.Person(child), me))
+            .hasSize(1)
+    }
+
+    @Test
+    fun `the placeholder owner never becomes a household member`() {
+        // "local" is me before I had an id. Counting it as a person is what used to
+        // render "Both / Me / Me".
+        val me = "uid-me"
+        val txns = listOf(
+            txn(500_00, day = 5, owner = me, ownerName = "Manuel"),
+            txn(100_00, day = 5, owner = "local", ownerName = "Me"),
+        )
+        assertThat(MonthlyAggregator.peopleIn(txns, me).map { it.uid }).containsExactly(me)
     }
 }

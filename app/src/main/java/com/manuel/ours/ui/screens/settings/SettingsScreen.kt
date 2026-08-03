@@ -143,18 +143,23 @@ fun SettingsScreen(
                         }
                     }
 
-                    if (state.members.size < 2) {
+                    // Always available. This used to hide once two people existed,
+                    // which made a third member impossible to add — there is no other
+                    // route to the code, so the household was silently capped at two.
+                    run {
                         Hairline()
                         Text(
-                            "Invite your partner",
+                            if (state.members.size < 2) "Invite your partner"
+                            else "Add someone else",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = Ours.text,
                         )
                         Note(
-                            "Have them install Ours and scan this code. It carries the " +
-                                "household key — anyone who scans it can read your " +
-                                "expenses, so show it in person."
+                            "Have them install Ours and scan this code, or type it in. It " +
+                                "carries the household key — anyone who has it can read " +
+                                "your expenses, so share it in person. The same code adds " +
+                                "everyone: a partner, a child, anyone in the household."
                         )
                         state.inviteQr?.let { bitmap ->
                             // White plate under the code: a QR on a near-black ground

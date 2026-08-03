@@ -10,6 +10,7 @@ import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
+import com.manuel.ours.domain.model.HouseholdMember
 import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.SplitType
@@ -31,7 +32,7 @@ import javax.inject.Inject
 
 data class HomeUiState(
     val loading: Boolean = true,
-    val filter: MemberFilter = MemberFilter.BOTH,
+    val filter: MemberFilter = MemberFilter.Everyone,
     val spentThisMonth: Long = 0,
     val budgetPaise: Long? = null,
     val vsLastMonthPercent: Float? = null,
@@ -41,8 +42,10 @@ data class HomeUiState(
     val recent: List<Transaction> = emptyList(),
     /** Every day of the month, zero-spend days included, for the daily columns. */
     val days: List<DayTotal> = emptyList(),
-    /** Who spent what, for the household split bar. Empty until a partner exists. */
+    /** Who spent what, for the household split bar. Empty until someone else exists. */
     val memberTotals: List<MemberTotal> = emptyList(),
+    /** Everyone with a row this month, self first — one filter chip each. */
+    val people: List<HouseholdMember> = emptyList(),
     val selfUid: String = "",
     /** Today's transactions, newest first — the tape at the bottom of Home. */
     val todayEntries: List<Transaction> = emptyList(),
@@ -89,7 +92,7 @@ class HomeViewModel @Inject constructor(
     syncEventDao: SyncEventDao,
 ) : ViewModel() {
 
-    private val filter = MutableStateFlow(MemberFilter.BOTH)
+    private val filter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
@@ -131,11 +134,9 @@ class HomeViewModel @Inject constructor(
             // spent nothing so far this month is still a partner.
             // The placeholder owner is *me before I had an id*, never a second
             // person. Treating it as a partner is what produced "Both · Me · Me".
-            val partnerRow = allTxns.firstOrNull {
-                it.ownerUid != params.selfUid &&
-                    it.ownerUid != PLACEHOLDER_OWNER &&
-                    it.ownerName != params.selfName
-            }
+            // Everyone who owns a row across both months — a member who spent nothing
+            // this month is still a member, so the chip must not vanish mid-month.
+            val people = MonthlyAggregator.peopleIn(allTxns, params.selfUid, PLACEHOLDER_OWNER)
 
             // "Unsorted" is anything the parser could not confidently place: rows it
             // flagged, plus rows it dropped into Other. Both need the same one tap.
@@ -189,9 +190,10 @@ class HomeViewModel @Inject constructor(
                 // Guard against showing your own name in the Partner slot. Rows
                 // imported before onboarding carried a placeholder owner, so they
                 // read as "someone else" and the toggle rendered "Both · Me · Me".
-                partnerName = partnerRow?.ownerName,
-                hasPartner = partnerRow != null,
-                syncConfigured = partnerRow != null,
+                people = people,
+                partnerName = people.firstOrNull { !it.isSelf }?.displayName,
+                hasPartner = people.count { !it.isSelf } > 0,
+                syncConfigured = people.count { !it.isSelf } > 0,
             )
         }
     }

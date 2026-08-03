@@ -179,5 +179,29 @@ data class Insight(
     enum class Tone { POSITIVE, NEGATIVE, NEUTRAL }
 }
 
-/** Home-screen filter: whose spending to show. */
-enum class MemberFilter { BOTH, ME, PARTNER }
+/**
+ * Whose spending to show.
+ *
+ * Was `BOTH / ME / PARTNER`, which quietly asserted a household of exactly two: with a
+ * wife *and* a child, "Partner" meant "everyone who is not me" and there was no way to
+ * look at either of them alone. Carrying the uid instead lets the chips be generated
+ * from whoever actually exists.
+ */
+sealed interface MemberFilter {
+    /** The household total. */
+    data object Everyone : MemberFilter
+
+    /** One person, self included — "Me" is just this with your own uid. */
+    data class Person(val uid: String) : MemberFilter
+}
+
+/** A household member, as derived from the rows they own. */
+data class HouseholdMember(
+    val uid: String,
+    val displayName: String,
+    val isSelf: Boolean,
+) {
+    /** "You" for yourself, first names for everyone else — chips are narrow. */
+    val chipLabel: String
+        get() = if (isSelf) "Me" else displayName.trim().split(" ").firstOrNull().orEmpty()
+}
