@@ -46,8 +46,8 @@ data class SortGroup(
 data class SortUiState(
     val loading: Boolean = true,
     val groups: List<SortGroup> = emptyList(),
-    /** Groups resolved in this sitting, so they can fade rather than vanish. */
-    val doneMerchants: Set<String> = emptySet(),
+    /** Merchant -> the category chosen for it in this sitting. */
+    val doneMerchants: Map<String, Category> = emptyMap(),
     val totalRemaining: Int = 0,
     val startingTotal: Int = 0,
 )
@@ -57,7 +57,7 @@ class SortViewModel @Inject constructor(
     private val repository: TransactionRepository,
 ) : ViewModel() {
 
-    private val done = MutableStateFlow<Set<String>>(emptySet())
+    private val done = MutableStateFlow<Map<String, Category>>(emptyMap())
 
     /**
      * The number of rows when this screen was opened, kept fixed for the session.
@@ -133,7 +133,7 @@ class SortViewModel @Inject constructor(
             group.txnIds.forEachIndexed { index, id ->
                 repository.recategorize(id, category, learn = index == 0)
             }
-            done.value = done.value + group.merchant
+            done.value = done.value + (group.merchant to category)
         }
     }
 

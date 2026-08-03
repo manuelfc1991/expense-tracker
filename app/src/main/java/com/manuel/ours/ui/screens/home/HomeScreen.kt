@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -115,24 +114,10 @@ fun HomeScreen(
         if (hasSmsPermission) SmsBackfillWorker.rescan(context)
     }
 
-    Scaffold(
-        floatingActionButton = {
-            // Square-ish rather than circular, and icon-only. An extended "Add" pill
-            // was a second filled accent competing with the one real call to action.
-            FloatingActionButton(
-                onClick = { showAddSheet = true },
-                shape = RoundedCornerShape(15.dp),
-                containerColor = Ours.accent,
-                contentColor = Color.White,
-                modifier = Modifier.size(44.dp),
-            ) {
-                BiIconView(BiIcon.Add, contentDescription = "Add expense", modifier = Modifier.size(16.dp))
-            }
-        }
-    ) { padding ->
+    Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -276,6 +261,32 @@ fun HomeScreen(
                         last = txn.id == tape.last().id,
                         onClick = { onTransactionClick(txn.id) },
                     )
+                }
+            }
+
+            // In the flow, right-aligned, rather than floating over the list. A
+            // floating button permanently covers the last row of a statement — which
+            // is exactly the row you just added.
+            item {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Box(
+                        Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(Ours.accent)
+                            .clickable { showAddSheet = true },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        BiIconView(
+                            BiIcon.Add,
+                            contentDescription = "Add expense",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
                 }
             }
         }

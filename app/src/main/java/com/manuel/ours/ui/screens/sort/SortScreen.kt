@@ -120,7 +120,7 @@ fun SortScreen(
             items(state.groups, key = { it.merchant }) { group ->
                 GroupCard(
                     group = group,
-                    done = group.merchant in state.doneMerchants,
+                    settledAs = state.doneMerchants[group.merchant],
                     onAssign = { viewModel.assign(group, it) },
                     onMore = { picking = group },
                 )
@@ -144,10 +144,11 @@ fun SortScreen(
 @Composable
 private fun GroupCard(
     group: SortGroup,
-    done: Boolean,
+    settledAs: Category?,
     onAssign: (Category) -> Unit,
     onMore: () -> Unit,
 ) {
+    val done = settledAs != null
     // A sorted group fades instead of disappearing. Rows vanishing under your thumb
     // makes the list feel unstable and costs you the chance to notice a mistake.
     val edge = when {
@@ -171,13 +172,33 @@ private fun GroupCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(11.dp),
         ) {
-            // Tinted with the leading guess rather than left grey: the colour is a
-            // preview of what tapping the first chip would do.
-            CategoryAvatar(
-                category = group.suggestions.firstOrNull() ?: Category.OTHER,
-                size = 32.dp,
-                overrideIcon = if (group.unknownPayee) BiIcon.NeedsReview else null,
-            )
+            if (settledAs != null) {
+                // A settled group states its outcome: a tick in the positive colour and
+                // the category it landed in. Leaving the guess-tinted mark and the
+                // payment count would make a finished decision look like a pending one.
+                Box(
+                    Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Ours.positive.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BiIconView(
+                        BiIcon.Done,
+                        contentDescription = null,
+                        tint = Ours.positive,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
+            } else {
+                // Tinted with the leading guess rather than left grey: the colour is a
+                // preview of what tapping the first chip would do.
+                CategoryAvatar(
+                    category = group.suggestions.firstOrNull() ?: Category.OTHER,
+                    size = 32.dp,
+                    overrideIcon = if (group.unknownPayee) BiIcon.NeedsReview else null,
+                )
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     group.merchant,
@@ -187,13 +208,19 @@ private fun GroupCard(
                     maxLines = 1,
                 )
                 MicroLabel(
-                    "${group.count} ${if (group.count == 1) "payment" else "payments"}"
+                    if (settledAs != null) {
+                        "${settledAs.label} · ${group.count} sorted"
+                    } else {
+                        "${group.count} ${if (group.count == 1) "payment" else "payments"}"
+                    }
                 )
             }
-            AmountColumn(group.totalPaise)
+            if (settledAs == null) AmountColumn(group.totalPaise)
         }
 
-        if (group.unknownPayee) {
+        if (done) {
+            // No chips on a settled group: there is nothing left to choose.
+        } else if (group.unknownPayee) {
             // Plain language, not accounting language. "Uncategorised debit" is a
             // description of the database; this is a description of what happened.
             Text(

@@ -42,6 +42,7 @@ import com.manuel.ours.ui.components.LabelOverValue
 import com.manuel.ours.ui.components.Meter
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.QuietEmpty
+import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.MonthTitleStyle
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.colorForCategory
@@ -201,7 +202,10 @@ private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
         modifier.fillMaxWidth().padding(horizontal = EDGE),
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
-        MicroLabel("Where it went")
+        // A rule under it, as in the mockup: this is a section head like "Today" on
+        // Home, not a caption over a value. Without the rule the ranked bars float
+        // free of anything and the eye has no line to start from.
+        TapeHeader("Where it went")
         top.forEach { entry -> RankedBar(entry, largest) }
     }
 }
