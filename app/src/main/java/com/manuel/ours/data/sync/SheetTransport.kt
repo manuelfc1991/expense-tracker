@@ -42,6 +42,16 @@ class SheetTransport @Inject constructor(
     override suspend fun isAvailable(): Boolean =
         !prefs.sheetUrlString().isNullOrBlank()
 
+    /**
+     * Empties the sheet so a rebuild replaces its contents instead of appending beside
+     * them. Only ever called from an explicit "re-upload everything".
+     */
+    suspend fun reset(): Boolean = withContext(Dispatchers.IO) {
+        val url = prefs.sheetUrlString() ?: return@withContext false
+        val response = post(url, JSONObject().put("action", "reset").toString())
+        response.optBoolean("ok", false)
+    }
+
     override suspend fun push(deviceId: String, events: List<SyncEvent>) =
         withContext(Dispatchers.IO) {
             if (events.isEmpty()) return@withContext

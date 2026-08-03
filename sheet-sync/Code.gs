@@ -38,6 +38,7 @@ function doPost(e) {
     var req = JSON.parse(e.postData.contents);
     switch (req.action) {
       case 'ping': return reply({ ok: true, sheet: SpreadsheetApp.getActive().getName() });
+      case 'reset': return reply(reset());
       case 'push': return reply(push(req));
       case 'pull': return reply(pull(req));
       default:     return reply({ ok: false, error: 'Unknown action: ' + req.action });
@@ -77,6 +78,29 @@ function push(req) {
     rebuildLedger();
   }
   return { ok: true, written: rows.length };
+}
+
+/**
+ * Empties both tabs, keeping their header rows.
+ *
+ * Called by a phone before it re-uploads its history. The events tab is append-only, so
+ * without this a rebuild would stack a second copy of everything beside the first, and
+ * any row the phone has since stopped syncing — a retired month, a deleted expense —
+ * would linger in the ledger forever. The phone is the source of truth; this lets it
+ * say so.
+ */
+function reset() {
+  var cleared = 0;
+  [EVENTS, LEDGER].forEach(function (name) {
+    var sheet = SpreadsheetApp.getActive().getSheetByName(name);
+    if (!sheet) return;
+    var last = sheet.getLastRow();
+    if (last > 1) {
+      sheet.deleteRows(2, last - 1);
+      cleared += last - 1;
+    }
+  });
+  return { ok: true, cleared: cleared };
 }
 
 function pull(req) {

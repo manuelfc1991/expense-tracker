@@ -199,6 +199,15 @@ class SettingsViewModel @Inject constructor(
 
     fun reuploadEverything() {
         viewModelScope.launch {
+            _sheetStatus.value = "Clearing the sheet…"
+            // Clear first. The events tab is append-only, so rebuilding without this
+            // stacks a second copy beside the first, and anything the phone has since
+            // stopped syncing — a retired month — would linger in the ledger forever.
+            val cleared = sheetTransport.reset()
+            if (!cleared) {
+                _sheetStatus.value = "Could not clear the sheet — is the script up to date?"
+                return@launch
+            }
             _sheetStatus.value = "Rebuilding…"
             val count = transactionRepository.rebuildOwnLog()
             prefs.setSheetCursor(0L)

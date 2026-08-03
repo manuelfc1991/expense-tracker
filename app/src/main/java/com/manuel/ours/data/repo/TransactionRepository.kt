@@ -363,9 +363,11 @@ class TransactionRepository @Inject constructor(
      * so once they are relabelled it does nothing.
      */
     suspend fun relabelBareCredits(): Int {
-        val stale = txnDao.getBetween(0, Long.MAX_VALUE)
-            .filter { it.type == TxnType.CREDIT.name && it.merchant == UNKNOWN_PAYEE }
-            .filter { !it.bank.isNullOrBlank() }
+        // One shot. This repairs rows imported before bare credits carried their bank's
+        // name; once done it can never find anything again, and re-running it on every
+        // launch meant decrypting the entire history to prove that.
+        if (prefs.bareCreditsRelabelled()) return 0
+        val stale = txnDao.creditsWithPlaceholderPayee(UNKNOWN_PAYEE)
         for (row in stale) {
             saveAndLog(
                 row.copy(merchant = row.bank!!).toDomain(),
@@ -387,7 +389,12 @@ class TransactionRepository @Inject constructor(
      * Returns how many events were minted.
      */
     suspend fun rebuildOwnLog(): Int {
-        val transactions = txnDao.getBetween(0, Long.MAX_VALUE).filterNot { it.deleted }
+        // Respects the tracking cutoff. Retiring a month is a statement about what the
+        // household counts as theirs, not merely about what this screen draws — so a
+        // month you have retired is not shipped to the sheet or to the other phone
+        // either. Without this the sheet held every row the app had stopped showing.
+        val startAt = prefs.trackingStartAtOnce()
+        val transactions = txnDao.getBetween(startAt, Long.MAX_VALUE).filterNot { it.deleted }
         // Drop the old log first, or every transaction ends up with two events saying
         // the same thing and the sheet grows a duplicate of its entire history.
         eventDao.deleteAll()

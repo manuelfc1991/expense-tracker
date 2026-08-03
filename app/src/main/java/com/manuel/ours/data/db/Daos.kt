@@ -19,6 +19,14 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE deleted = 0 ORDER BY occurredAt DESC")
     fun observeAll(): Flow<List<TransactionEntity>>
 
+    /**
+     * Credits still carrying the placeholder payee. Narrow on purpose: the repair that
+     * uses this ran as a full table scan on every launch, decrypting the whole history
+     * to find, almost always, nothing.
+     */
+    @Query("SELECT * FROM transactions WHERE type = 'CREDIT' AND merchant = :placeholder AND bank IS NOT NULL AND deleted = 0")
+    suspend fun creditsWithPlaceholderPayee(placeholder: String): List<TransactionEntity>
+
     @Query(
         """
         SELECT * FROM transactions

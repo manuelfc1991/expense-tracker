@@ -45,6 +45,7 @@ class AppPrefs @Inject constructor(
         val SHEET_URL = stringPreferencesKey("sheet_url")
         val SHEET_CURSOR = longPreferencesKey("sheet_cursor")
         val TRACKING_START_AT = longPreferencesKey("tracking_start_at")
+        val BARE_CREDITS_RELABELLED = booleanPreferencesKey("bare_credits_relabelled")
         val FIRED_BUDGET_ALERTS = stringSetPreferencesKey("fired_budget_alerts")
     }
 
@@ -86,6 +87,13 @@ class AppPrefs @Inject constructor(
 
     /** For the backfill worker, which runs outside a composition. */
     suspend fun trackingStartAtOnce(): Long = trackingStartAt.first()
+
+    suspend fun bareCreditsRelabelled(): Boolean =
+        context.dataStore.data.map { it[Keys.BARE_CREDITS_RELABELLED] ?: false }.first()
+
+    suspend fun setBareCreditsRelabelled(done: Boolean) {
+        context.dataStore.edit { it[Keys.BARE_CREDITS_RELABELLED] = done }
+    }
 
     /** Tree URI of the user-picked sync folder, or null when none is chosen. */
     val syncFolderUri: Flow<String?> = context.dataStore.data.map { it[Keys.SYNC_FOLDER_URI] }
