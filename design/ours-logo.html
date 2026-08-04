@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ours — logo studies</title>
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8; --card:#fff;
+    --acc:#2F5BFF; --ink:#0B0B0F; --paper:#F4F4F7;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B;--card:#0F0F14}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 90px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;line-height:1.65;max-width:72ch;margin:0 0 8px}
+  .rule{height:1px;background:var(--line);margin:30px 0}
+
+  .card{border:1px solid var(--line);border-radius:16px;background:var(--card);
+        padding:22px;margin:26px 0;overflow:hidden}
+  .card h2{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+           color:var(--mut);margin:0 0 4px;font-weight:600}
+  .card h3{font-size:18px;margin:0 0 10px;letter-spacing:-.01em}
+  .card p{color:var(--mut);font-size:13.5px;line-height:1.65;margin:0;max-width:62ch}
+  .card p b{color:var(--fg);font-weight:600}
+  .verdict{margin-top:12px;font-size:12.5px;color:var(--mut);border-left:2px solid var(--line);
+           padding-left:11px}
+  .verdict b{color:var(--fg)}
+
+  .stage{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:16px 0 4px}
+  .tile{border-radius:22%;display:grid;place-items:center;flex:none}
+  .t96{width:96px;height:96px}
+  .t48{width:48px;height:48px;border-radius:24%}
+  .t28{width:28px;height:28px;border-radius:26%}
+  .dark{background:var(--ink)}
+  .lite{background:var(--paper);border:1px solid var(--line)}
+  .blue{background:var(--acc)}
+  .cap{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--mut);
+       text-transform:uppercase;align-self:flex-end;padding-bottom:4px}
+  .sizes{display:flex;gap:10px;align-items:center;padding-left:8px;border-left:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Ours — logo studies</h1>
+<p class="sub">
+  Six directions. Each is shown at 96px, at 48px — the size a launcher actually draws —
+  and at 28px, because an icon that only works large is not an icon.
+</p>
+<p class="sub">
+  The constraint worth stating first: this app already has a mark. <b>OURS in tracked
+  monospace</b> sits at the top of every screen, and the whole visual language is
+  hairlines, printed rules and tabular figures. A logo that ignores that is a second
+  identity competing with the first.
+</p>
+
+<div class="rule"></div>
+
+<!-- 1 -->
+<div class="card">
+  <h2>01</h2>
+  <h3>The wordmark, cropped</h3>
+  <div class="stage">
+    <div class="tile t96 dark">
+      <svg width="62" height="62" viewBox="0 0 62 62" fill="none">
+        <text x="31" y="41" text-anchor="middle" fill="#F2F2F7"
+              style="font:700 30px ui-monospace,monospace;letter-spacing:.02em">OU</text>
+        <rect x="12" y="47" width="38" height="2" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="tile t96 lite">
+      <svg width="62" height="62" viewBox="0 0 62 62" fill="none">
+        <text x="31" y="41" text-anchor="middle" fill="#101014"
+              style="font:700 30px ui-monospace,monospace;letter-spacing:.02em">OU</text>
+        <rect x="12" y="47" width="38" height="2" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 dark">
+        <svg width="31" height="31" viewBox="0 0 62 62"><text x="31" y="41" text-anchor="middle" fill="#F2F2F7" style="font:700 30px ui-monospace,monospace">OU</text><rect x="12" y="47" width="38" height="2" fill="#2F5BFF"/></svg>
+      </div>
+      <div class="tile t28 dark">
+        <svg width="18" height="18" viewBox="0 0 62 62"><text x="31" y="41" text-anchor="middle" fill="#F2F2F7" style="font:700 30px ui-monospace,monospace">OU</text><rect x="12" y="47" width="38" height="2" fill="#2F5BFF"/></svg>
+      </div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    The first two letters of the wordmark already on every screen, over the accent rule
+    that runs under every section header. Nothing invented.
+  </p>
+  <p class="verdict">
+    <b>Strongest continuity, weakest distinctiveness.</b> At 28px "OU" reads as a
+    truncation rather than a mark, and two-letter icons are the most crowded shelf on
+    any home screen.
+  </p>
+</div>
+
+<!-- 2 -->
+<div class="card">
+  <h2>02</h2>
+  <h3>Two rules, one ledger</h3>
+  <div class="stage">
+    <div class="tile t96 dark">
+      <svg width="58" height="58" viewBox="0 0 58 58" fill="none">
+        <rect x="6" y="18" width="46" height="3" rx="1.5" fill="#F2F2F7"/>
+        <rect x="6" y="28" width="30" height="3" rx="1.5" fill="#5A5A6E"/>
+        <rect x="6" y="38" width="46" height="3" rx="1.5" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="tile t96 lite">
+      <svg width="58" height="58" viewBox="0 0 58 58" fill="none">
+        <rect x="6" y="18" width="46" height="3" rx="1.5" fill="#101014"/>
+        <rect x="6" y="28" width="30" height="3" rx="1.5" fill="#9A9AAE"/>
+        <rect x="6" y="38" width="46" height="3" rx="1.5" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 dark"><svg width="29" height="29" viewBox="0 0 58 58"><rect x="6" y="18" width="46" height="3" rx="1.5" fill="#F2F2F7"/><rect x="6" y="28" width="30" height="3" rx="1.5" fill="#5A5A6E"/><rect x="6" y="38" width="46" height="3" rx="1.5" fill="#2F5BFF"/></svg></div>
+      <div class="tile t28 dark"><svg width="17" height="17" viewBox="0 0 58 58"><rect x="6" y="18" width="46" height="3" rx="1.5" fill="#F2F2F7"/><rect x="6" y="28" width="30" height="3" rx="1.5" fill="#5A5A6E"/><rect x="6" y="38" width="46" height="3" rx="1.5" fill="#2F5BFF"/></svg></div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    Three statement lines: two full, one short. The accent one is the total. This is
+    literally what the app looks like — a printed statement of ruled lines.
+  </p>
+  <p class="verdict">
+    <b>Survives 28px better than anything else here</b>, and it is unmistakably a
+    ledger. But it says nothing about <i>ours</i>: it could be any finance app.
+  </p>
+</div>
+
+<!-- 3 -->
+<div class="card">
+  <h2>03</h2>
+  <h3>Two circles, one overlap</h3>
+  <div class="stage">
+    <div class="tile t96 dark">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="23" cy="30" r="13.5" stroke="#F2F2F7" stroke-width="3"/>
+        <circle cx="37" cy="30" r="13.5" stroke="#2F5BFF" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="tile t96 lite">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="23" cy="30" r="13.5" stroke="#101014" stroke-width="3"/>
+        <circle cx="37" cy="30" r="13.5" stroke="#2F5BFF" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 dark"><svg width="30" height="30" viewBox="0 0 60 60"><circle cx="23" cy="30" r="13.5" stroke="#F2F2F7" stroke-width="3"/><circle cx="37" cy="30" r="13.5" stroke="#2F5BFF" stroke-width="3"/></svg></div>
+      <div class="tile t28 dark"><svg width="18" height="18" viewBox="0 0 60 60"><circle cx="23" cy="30" r="13.5" stroke="#F2F2F7" stroke-width="4"/><circle cx="37" cy="30" r="13.5" stroke="#2F5BFF" stroke-width="4"/></svg></div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    Two people, one shared middle. Close to what the app ships with today, drawn
+    properly: equal weights, one ring in the accent so the pair reads as two rather
+    than as a blur.
+  </p>
+  <p class="verdict">
+    <b>Says "ours" more directly than any other option.</b> The risk is that
+    interlocking rings are the most-used mark in the world — you will meet it on other
+    icons, and the overlap muddies below about 32px.
+  </p>
+</div>
+
+<!-- 4 -->
+<div class="card">
+  <h2>04</h2>
+  <h3>The budget ruler</h3>
+  <div class="stage">
+    <div class="tile t96 dark">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <g fill="#3A3A46">
+          <rect x="8"  y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="14" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="20" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="26" y="20" width="2.6" height="20" rx="1.3"/>
+        </g>
+        <g fill="#2F5BFF">
+          <rect x="32" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="38" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="44" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="50" y="20" width="2.6" height="20" rx="1.3"/>
+        </g>
+      </svg>
+    </div>
+    <div class="tile t96 lite">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <g fill="#C9C9D4">
+          <rect x="8"  y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="14" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="20" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="26" y="20" width="2.6" height="20" rx="1.3"/>
+        </g>
+        <g fill="#2F5BFF">
+          <rect x="32" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="38" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="44" y="20" width="2.6" height="20" rx="1.3"/>
+          <rect x="50" y="20" width="2.6" height="20" rx="1.3"/>
+        </g>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 dark"><svg width="30" height="30" viewBox="0 0 60 60"><g fill="#3A3A46"><rect x="8" y="20" width="2.6" height="20" rx="1.3"/><rect x="14" y="20" width="2.6" height="20" rx="1.3"/><rect x="20" y="20" width="2.6" height="20" rx="1.3"/><rect x="26" y="20" width="2.6" height="20" rx="1.3"/></g><g fill="#2F5BFF"><rect x="32" y="20" width="2.6" height="20" rx="1.3"/><rect x="38" y="20" width="2.6" height="20" rx="1.3"/><rect x="44" y="20" width="2.6" height="20" rx="1.3"/><rect x="50" y="20" width="2.6" height="20" rx="1.3"/></g></svg></div>
+      <div class="tile t28 dark"><svg width="18" height="18" viewBox="0 0 60 60"><g fill="#3A3A46"><rect x="8" y="20" width="2.6" height="20" rx="1.3"/><rect x="14" y="20" width="2.6" height="20" rx="1.3"/><rect x="20" y="20" width="2.6" height="20" rx="1.3"/><rect x="26" y="20" width="2.6" height="20" rx="1.3"/></g><g fill="#2F5BFF"><rect x="32" y="20" width="2.6" height="20" rx="1.3"/><rect x="38" y="20" width="2.6" height="20" rx="1.3"/><rect x="44" y="20" width="2.6" height="20" rx="1.3"/><rect x="50" y="20" width="2.6" height="20" rx="1.3"/></g></svg></div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    The ruler under the month's figure, which is the single most distinctive element in
+    this app — nothing else on a phone looks like it. Half spent, half left.
+  </p>
+  <p class="verdict">
+    <b>The most "this app and no other" of the six.</b> It also collapses fastest: at
+    28px the ticks merge into a smear, and it needs at least a 4-tick version drawn
+    separately for small sizes.
+  </p>
+</div>
+
+<!-- 5 -->
+<div class="card">
+  <h2>05</h2>
+  <h3>Rupee, ruled</h3>
+  <div class="stage">
+    <div class="tile t96 dark">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <text x="30" y="40" text-anchor="middle" fill="#F2F2F7"
+              style="font:700 34px ui-monospace,monospace">₹</text>
+        <rect x="13" y="46" width="34" height="2.6" rx="1.3" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="tile t96 lite">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <text x="30" y="40" text-anchor="middle" fill="#101014"
+              style="font:700 34px ui-monospace,monospace">₹</text>
+        <rect x="13" y="46" width="34" height="2.6" rx="1.3" fill="#2F5BFF"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 dark"><svg width="30" height="30" viewBox="0 0 60 60"><text x="30" y="40" text-anchor="middle" fill="#F2F2F7" style="font:700 34px ui-monospace,monospace">₹</text><rect x="13" y="46" width="34" height="2.6" rx="1.3" fill="#2F5BFF"/></svg></div>
+      <div class="tile t28 dark"><svg width="18" height="18" viewBox="0 0 60 60"><text x="30" y="40" text-anchor="middle" fill="#F2F2F7" style="font:700 34px ui-monospace,monospace">₹</text><rect x="13" y="46" width="34" height="2.6" rx="1.3" fill="#2F5BFF"/></svg></div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    The rupee sign in the app's own mono, underlined by the accent rule. Unambiguous
+    about what the app is for, and unambiguously Indian.
+  </p>
+  <p class="verdict">
+    <b>Clear at every size and instantly legible</b> — but a currency glyph is the
+    default choice for a money app, and it would sit on the home screen looking like a
+    banking app rather than a household one.
+  </p>
+</div>
+
+<!-- 6 -->
+<div class="card">
+  <h2>06</h2>
+  <h3>The shared line</h3>
+  <div class="stage">
+    <div class="tile t96 blue">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22" cy="22" r="7" fill="#fff"/>
+        <circle cx="38" cy="22" r="7" fill="#fff" opacity=".55"/>
+        <rect x="10" y="38" width="40" height="3.4" rx="1.7" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="tile t96 dark">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22" cy="22" r="7" fill="#F2F2F7"/>
+        <circle cx="38" cy="22" r="7" fill="#2F5BFF"/>
+        <rect x="10" y="38" width="40" height="3.4" rx="1.7" fill="#F2F2F7"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="tile t48 blue"><svg width="30" height="30" viewBox="0 0 60 60"><circle cx="22" cy="22" r="7" fill="#fff"/><circle cx="38" cy="22" r="7" fill="#fff" opacity=".55"/><rect x="10" y="38" width="40" height="3.4" rx="1.7" fill="#fff"/></svg></div>
+      <div class="tile t28 blue"><svg width="18" height="18" viewBox="0 0 60 60"><circle cx="22" cy="22" r="7.5" fill="#fff"/><circle cx="38" cy="22" r="7.5" fill="#fff" opacity=".55"/><rect x="10" y="38" width="40" height="4" rx="2" fill="#fff"/></svg></div>
+      <span class="cap">48 · 28</span>
+    </div>
+  </div>
+  <p>
+    Two people above one line. The line is the ledger they share — the same hairline
+    that separates every row in the app — and the two marks sit on it equally.
+  </p>
+  <p class="verdict">
+    <b>My pick.</b> It says the thing the app is actually about, it is built from
+    elements already on screen, and it is the only option here that stays legible at
+    28px while still meaning something. Two solid dots do not merge the way two rings
+    do.
+  </p>
+</div>
+
+<div class="rule"></div>
+
+<h2 style="font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--mut)">
+  HOW TO CHOOSE
+</h2>
+<p class="sub">
+  Look at the <b>28px column</b> first and ignore the large ones. That is the size your
+  launcher draws, and it is where four of these six fall apart. Then ask which one you
+  would recognise on a crowded home screen without reading a label — an icon's whole job
+  is to be found, not admired.
+</p>
+<p class="sub">
+  Tell me a number and I will draw it properly as adaptive icon layers — foreground,
+  background and monochrome for Android 13 themed icons — and wire it into the manifest.
+</p>
+
+</div>
+</body>
+</html>
