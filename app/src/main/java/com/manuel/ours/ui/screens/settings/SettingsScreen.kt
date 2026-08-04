@@ -1,6 +1,7 @@
 package com.manuel.ours.ui.screens.settings
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -109,12 +110,19 @@ fun SettingsScreen(
     var notificationsAllowed by remember {
         mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
     }
+    // Notification *access* is a separate grant from POST_NOTIFICATIONS: the first lets
+    // the app post, this lets it read what other apps post. Reading bank notifications
+    // is the whole Notifications ingest source, and it does nothing at all until this
+    // is on — there is no permission dialog for it, only a system page the user has to
+    // be sent to.
+    var listenerEnabled by remember { mutableStateOf(context.notificationAccessGranted()) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 notificationsAllowed =
                     NotificationManagerCompat.from(context).areNotificationsEnabled()
+                listenerEnabled = context.notificationAccessGranted()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -497,11 +505,34 @@ fun SettingsScreen(
                                     "restricts this permission — fine for a sideloaded app."
                             IngestSource.NOTIFICATION ->
                                 "Reads bank app notifications instead. No restricted " +
-                                    "permission, but only catches alerts you actually receive."
+                                    "permission, but it needs notification access, and " +
+                                    "only catches alerts you actually receive."
                             IngestSource.MANUAL_ONLY ->
                                 "Nothing is read automatically. You add every expense yourself."
                         }
                     )
+
+                    // Picking Notifications without this grant is a no-op: the listener
+                    // is never bound, so nothing is read and the app looks broken in a
+                    // way that offers no explanation. There is no runtime dialog for
+                    // notification access — the only route is this system page.
+                    if (state.ingestSource == IngestSource.NOTIFICATION && !listenerEnabled) {
+                        Note(
+                            "Notification access is off, so nothing is being read. " +
+                                "Ours needs permission to see other apps' notifications " +
+                                "before this source does anything.",
+                            tone = Ours.warning,
+                        )
+                        GhostButton(
+                            label = "Grant notification access",
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            },
+                        )
+                    }
                 }
             }
 
@@ -841,3 +872,12 @@ internal fun relativeSyncLabel(epochMillis: Long): String {
         else -> "Synced ${TimeUnit.MILLISECONDS.toDays(delta)}d ago"
     }
 }
+
+/**
+ * Whether the user has given Ours access to *read* other apps' notifications.
+ *
+ * There is no runtime-permission dialog for this one — the grant lives on a system
+ * page, and an app can only check the list and send the user there.
+ */
+private fun Context.notificationAccessGranted(): Boolean =
+    NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)

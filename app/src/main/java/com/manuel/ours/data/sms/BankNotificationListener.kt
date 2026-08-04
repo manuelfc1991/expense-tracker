@@ -28,6 +28,7 @@ class BankNotificationListener : NotificationListenerService() {
     @Inject lateinit var parser: SmsParser
     @Inject lateinit var repository: TransactionRepository
     @Inject lateinit var prefs: AppPrefs
+    @Inject lateinit var notifier: IngestNotifier
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -48,14 +49,25 @@ class BankNotificationListener : NotificationListenerService() {
             if (prefs.ingestSource.first() != IngestSource.NOTIFICATION) return@launch
             when (val result = parser.parse(sender, full, sbn.postTime)) {
                 is SmsParser.Result.Expense -> {
-                    if (repository.ingestParsed(
-                            result.txn,
-                            com.manuel.ours.domain.model.TxnSource.NOTIFICATION,
-                        ) != null
-                    ) {
+                    val txn = repository.ingestParsed(
+                        result.txn,
+                        com.manuel.ours.domain.model.TxnSource.NOTIFICATION,
+                    )
+                    if (txn != null) {
+                        // The same follow-up work the SMS path does. This branch used
+                        // to save and stop, so choosing this source silently cost you
+                        // the categorize prompt and every budget alert.
+                        val suggestions = if (txn.needsReview) {
+                            repository.predictCategories(
+                                txn.merchant, txn.amountPaise, txn.type,
+                            )
+                        } else emptyList()
+                        notifier.notifyExpense(txn, suggestions)
+                        notifier.notifyBudgetAlerts()
                         SyncWorker.syncNow(applicationContext)
                     }
                 }
+                is SmsParser.Result.BillReminder -> notifier.saveReminder(result)
                 else -> Unit
             }
         }
