@@ -50,6 +50,7 @@ import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.Transaction
+import com.manuel.ours.ui.components.CaptureSheet
 import com.manuel.ours.ui.components.AmountColumn
 import com.manuel.ours.ui.components.AnimatedAmount
 import com.manuel.ours.ui.components.BiIcon
@@ -113,6 +114,22 @@ fun HomeScreen(
     ) { result ->
         hasSmsPermission = result[Manifest.permission.READ_SMS] == true
         if (hasSmsPermission) SmsBackfillWorker.rescan(context)
+    }
+
+    // The payment that landed while you were looking. Nothing is drawn for history.
+    val arrived by viewModel.justArrived.collectAsStateWithLifecycle()
+    arrived?.let { capture ->
+        val txn = capture.txn
+        CaptureSheet(
+            txn = txn,
+            suggestions = capture.suggestions,
+            onDismiss = { viewModel.dismissCapture(txn.id) },
+            onCategorize = { viewModel.categorize(txn.id, it) },
+            onRename = { name, keep ->
+                viewModel.renameFromCapture(txn.id, name, txn.counterpartyTail, keep)
+            },
+            onNote = { viewModel.noteFromCapture(txn.id, it) },
+        )
     }
 
     Scaffold { padding ->

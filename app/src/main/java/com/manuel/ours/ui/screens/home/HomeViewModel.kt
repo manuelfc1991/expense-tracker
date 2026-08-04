@@ -11,24 +11,25 @@ import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.HouseholdMember
-import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.MemberFilter
+import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.domain.model.TxnType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
 
 data class HomeUiState(
     val loading: Boolean = true,
@@ -93,6 +94,61 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val filter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
+
+    /**
+     * When this screen started watching.
+     *
+     * Anything recorded before it is history and is left alone; only a payment that
+     * lands while the app is open earns a prompt. Without this the sheet would fire on
+     * every launch for whatever happened to be untagged, which is nagging rather than
+     * capture.
+     */
+    private val watchingSince = System.currentTimeMillis()
+
+    private val dismissed = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Puts the sheet away without deciding anything; the row stays in Sort. */
+    fun dismissCapture(txnId: String) { dismissed.value = dismissed.value + txnId }
+
+    fun categorize(txnId: String, category: Category) {
+        viewModelScope.launch { transactionRepository.recategorize(txnId, category, learn = true) }
+    }
+
+    fun renameFromCapture(txnId: String, name: String, tail: String?, remember: Boolean) {
+        viewModelScope.launch {
+            if (remember && !tail.isNullOrBlank()) transactionRepository.nameAccount(tail, name)
+            else transactionRepository.rename(txnId, name)
+        }
+    }
+
+    fun noteFromCapture(txnId: String, note: String) {
+        viewModelScope.launch { transactionRepository.setNote(txnId, note) }
+    }
+
+    /** A payment that landed while the app was open, with its three guesses ready. */
+    data class Capture(val txn: Transaction, val suggestions: List<Category>)
+
+    val justArrived: StateFlow<Capture?> = combine(
+        transactionRepository.observeNeedsReview(),
+        dismissed,
+    ) { pending, seen ->
+        pending.firstOrNull { it.id !in seen && it.occurredAt >= watchingSince }
+    }.mapLatest { txn ->
+        // Guesses resolved here rather than in the composable: a sheet that opened
+        // empty and filled in a frame later would offer "All" as the only option at
+        // exactly the moment a thumb is arriving.
+        txn?.let {
+            Capture(
+                txn = it,
+                suggestions = transactionRepository.predictCategories(
+                    it.merchant, it.amountPaise, it.type,
+                ).filter { c -> c != Category.OTHER },
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(

@@ -319,6 +319,14 @@ class TransactionRepository @Inject constructor(
         }
     }
 
+    /** Blank clears it, so a row returns to offering the invitation rather than a box. */
+    suspend fun setNote(txnId: String, note: String) {
+        val existing = txnDao.getById(txnId) ?: return
+        val clean = note.trim().takeIf { it.isNotEmpty() }
+        if (existing.note == clean) return
+        saveAndLog(existing.copy(note = clean).toDomain(), existing.dedupeKey, existing.dedupeAt)
+    }
+
     suspend fun setSplitType(txnId: String, splitType: SplitType) {
         val existing = txnDao.getById(txnId) ?: return
         saveAndLog(

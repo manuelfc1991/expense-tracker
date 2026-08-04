@@ -58,6 +58,10 @@ class TransactionDetailViewModel @Inject constructor(
         }
     }
 
+    fun setNote(txnId: String, note: String) {
+        viewModelScope.launch { repository.setNote(txnId, note) }
+    }
+
     fun setSplitType(txnId: String, splitType: SplitType) {
         viewModelScope.launch { repository.setSplitType(txnId, splitType) }
     }

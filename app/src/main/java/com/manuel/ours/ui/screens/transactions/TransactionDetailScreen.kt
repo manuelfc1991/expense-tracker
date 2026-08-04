@@ -6,6 +6,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +72,7 @@ private val EDGE = 15.dp
  * which account, and the original message the parser read — because the only reason to
  * open a single row is to find out whether the app got it right.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TransactionDetailScreen(
     txnId: String,
@@ -80,6 +83,18 @@ fun TransactionDetailScreen(
     /** Non-null while the rename dialog is open; holds the text being edited. */
     var renaming by remember { mutableStateOf<String?>(null) }
     var editingAmount by remember { mutableStateOf<String?>(null) }
+    var editingNote by remember { mutableStateOf<String?>(null) }
+
+    editingNote?.let { draft ->
+        NoteDialog(
+            initial = draft,
+            onDismiss = { editingNote = null },
+            onConfirm = { text ->
+                viewModel.setNote(txnId, text)
+                editingNote = null
+            },
+        )
+    }
     val canEditAmount by viewModel.canEditAmount.collectAsStateWithLifecycle(initialValue = false)
 
     editingAmount?.let { draft ->
@@ -199,18 +214,52 @@ fun TransactionDetailScreen(
             }
 
             TapeHeader("Category", modifier = Modifier.padding(horizontal = EDGE))
-            Row(
-                Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = EDGE),
+            // Wrapped, not scrolled sideways.
+            //
+            // A horizontal strip showed five of fifteen categories, and Android draws
+            // no scrollbar — nothing indicated the row continued, so the ten off the
+            // right edge might as well not have existed. That is a large part of why
+            // 262 rows on a real ledger sat in Other: not because nothing fitted, but
+            // because nobody knew the rest were there.
+            FlowRow(
+                Modifier.fillMaxWidth().padding(horizontal = EDGE),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Category.entries.forEach { option ->
                     OursChip(
-                        label = option.label,
+                        label = option.shortLabel,
                         selected = current.category == option,
                         icon = BiIcon.forCategory(option),
                         onClick = { viewModel.recategorize(txnId, option) },
+                    )
+                }
+            }
+
+            TapeHeader(
+                "Note",
+                trailing = if (current.note.isNullOrBlank()) null else "Edit",
+                modifier = Modifier
+                    .padding(horizontal = EDGE)
+                    .clickable { editingNote = current.note.orEmpty() },
+            )
+            // The only field holding something the bank could never have sent, and the
+            // only defence against a row that made sense in August and is a mystery by
+            // December. Never read by the app — it is for the household, not the
+            // categoriser.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = EDGE)
+                    .clickable { editingNote = current.note.orEmpty() }
+            ) {
+                if (current.note.isNullOrBlank()) {
+                    MicroLabel("Add a note — optional")
+                } else {
+                    Text(
+                        current.note!!,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Ours.text,
                     )
                 }
             }
@@ -429,6 +478,54 @@ private fun AmountDialog(
                 onClick = { onConfirm(text.text) },
                 enabled = text.text.isNotBlank(),
             ) { Text("Save", color = Ours.accent) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+        },
+    )
+}
+
+/**
+ * A sentence about why, for the one row that will not explain itself later.
+ *
+ * Multi-line and unpunished for being left empty: clearing the text removes the note
+ * rather than storing a blank, so the row goes back to offering the dim invitation
+ * instead of showing an empty box.
+ */
+@Composable
+private fun NoteDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(TextFieldValue(initial)) }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surface,
+        title = { Text("Note", style = MaterialTheme.typography.titleMedium, color = Ours.text) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
+                    cursorBrush = SolidColor(Ours.accent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus)
+                        .padding(vertical = 6.dp),
+                )
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                MicroLabel("Only you and your household see this")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text.text) }) {
+                Text("Save", color = Ours.accent)
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
