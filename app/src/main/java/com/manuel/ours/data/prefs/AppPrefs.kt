@@ -49,6 +49,12 @@ class AppPrefs @Inject constructor(
         val TRACKING_START_AT = longPreferencesKey("tracking_start_at")
         val BARE_CREDITS_RELABELLED = booleanPreferencesKey("bare_credits_relabelled")
         val ACCOUNT_LABELS_REPAIRED = booleanPreferencesKey("account_labels_repaired")
+        // v2: 1.6 shipped a pass whose predicate demanded identical account tails, which
+        // the pairs it was meant to find never have. It completed, matched nothing, and
+        // set the old flag — so the corrected pass needs a key that release has not
+        // already consumed.
+        val MERIDIEM_TWINS_REPAIRED = booleanPreferencesKey("meridiem_twins_repaired_v2")
+        val CARD_BILL_ECHOES_REPAIRED = booleanPreferencesKey("card_bill_echoes_repaired")
         val FIRED_BUDGET_ALERTS = stringSetPreferencesKey("fired_budget_alerts")
     }
 
@@ -124,6 +130,20 @@ class AppPrefs @Inject constructor(
 
     /** For the backfill worker, which runs outside a composition. */
     suspend fun trackingStartAtOnce(): Long = trackingStartAt.first()
+
+    suspend fun cardBillEchoesRepaired(): Boolean =
+        context.dataStore.data.map { it[Keys.CARD_BILL_ECHOES_REPAIRED] ?: false }.first()
+
+    suspend fun setCardBillEchoesRepaired() {
+        context.dataStore.edit { it[Keys.CARD_BILL_ECHOES_REPAIRED] = true }
+    }
+
+    suspend fun meridiemTwinsRepaired(): Boolean =
+        context.dataStore.data.map { it[Keys.MERIDIEM_TWINS_REPAIRED] ?: false }.first()
+
+    suspend fun setMeridiemTwinsRepaired() {
+        context.dataStore.edit { it[Keys.MERIDIEM_TWINS_REPAIRED] = true }
+    }
 
     suspend fun accountLabelsRepaired(): Boolean =
         context.dataStore.data.map { it[Keys.ACCOUNT_LABELS_REPAIRED] ?: false }.first()

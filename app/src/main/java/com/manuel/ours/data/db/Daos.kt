@@ -27,6 +27,25 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = 'CREDIT' AND merchant = :placeholder AND bank IS NOT NULL AND deleted = 0")
     suspend fun creditsWithPlaceholderPayee(placeholder: String): List<TransactionEntity>
 
+    /**
+     * Same amount, same bank, same account, on the same day — candidates for the
+     * twelve-hour twins the AM/PM fix created.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deleted = 0 AND amountPaise = :amountPaise
+          AND IFNULL(bank,'') = IFNULL(:bank,'')
+          AND IFNULL(accountTail,'') = IFNULL(:tail,'')
+        """
+    )
+    suspend fun sameAmountAndAccount(
+        amountPaise: Long, bank: String?, tail: String?,
+    ): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE deleted = 0")
+    suspend fun allLive(): List<TransactionEntity>
+
     /** Rows whose "merchant" is really an account label the parser mistook for a payee. */
     @Query("SELECT * FROM transactions WHERE deleted = 0 AND LOWER(TRIM(merchant)) IN (:labels)")
     suspend fun withMerchantIn(labels: List<String>): List<TransactionEntity>

@@ -78,6 +78,12 @@ class OursApp : Application(), Configuration.Provider {
             // Folds an earlier install's identity back onto this person, so a reinstall
             // does not leave a second copy of them in the household filter.
             repository.mergeOwnAliases()
+            // Removes the duplicates that fixing AM/PM created on inboxes already
+            // holding wrongly-timed evening rows.
+            repository.repairMeridiemTwins()
+            // One bill, two banks, two messages — the card's acknowledgement echoes a
+            // debit the app already has.
+            repository.repairCardBillEchoes()
             // Sender and category rules taught through the sheet, applied before the
             // first message of this launch is parsed.
             rulesRepository.apply()

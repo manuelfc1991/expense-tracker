@@ -100,7 +100,19 @@ class TransactionRepository @Inject constructor(
         // the amount and minute when it did not, so the two halves of a pair were
         // filed under different keys and neither could find the other. On a real
         // ledger that left 25 clusters of the same payment recorded two to four times.
-        val window = SmsDeduplicator.WINDOW_MS
+        // A card bill produces two messages from two banks: the account says it paid,
+        // the card says it was paid. They are one payment, and they are never close
+        // together in the app's eyes — the card's acknowledgement carries a date and no
+        // clock time, so it lands at midnight, most of a day from the debit it echoes.
+        //
+        // The window widens only for that case, and only far enough to cover a calendar
+        // day. Nothing else about the match is relaxed: same amount to the paise, and
+        // the account-or-reference agreement below still applies.
+        val window = if (parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT) {
+            SmsDeduplicator.CARD_BILL_WINDOW_MS
+        } else {
+            SmsDeduplicator.WINDOW_MS
+        }
         val candidates = buildList {
             parsed.refNo?.takeIf { it.isNotBlank() }?.let { ref ->
                 txnDao.findByRef(ref)?.let(::add)
@@ -117,7 +129,14 @@ class TransactionRepository @Inject constructor(
         for (existing in candidates) {
             // Compare stored dedupeAt against incoming dedupeAt. Falling back to
             // occurredAt here is what let a rescan duplicate the whole history.
-            if (!SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)) continue
+            val cardBillPair = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT ||
+                existing.category == Category.CARD_PAYMENT.name
+            val matches = if (cardBillPair) {
+                SmsDeduplicator.isCardBillEcho(existing, parsed)
+            } else {
+                SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
+            }
+            if (!matches) continue
             if (SmsDeduplicator.richer(existing, parsed)) {
                 val merged = existing.copy(
                     merchant = parsed.merchant ?: existing.merchant,
@@ -528,6 +547,119 @@ class TransactionRepository @Inject constructor(
             )
         }
         return strays.size
+    }
+
+    /**
+     * Collapses card-bill pairs already in the database.
+     *
+     * One bill produces two messages from two banks — the account reports paying, the
+     * card reports being paid — and the card's arrives with a date and no clock time,
+     * so the two sit most of a day apart and no dedupe window could reach them. On the
+     * first real ledger that was Rs.7,177.79 counted twice.
+     *
+     * The debit is kept: money genuinely left the household there, and card purchases
+     * never reach this app any other way, so it is the row that belongs in the total.
+     * The card's acknowledgement is the echo.
+     */
+    suspend fun repairCardBillEchoes(): Int {
+        if (prefs.cardBillEchoesRepaired()) return 0
+        val live = txnDao.allLive()
+        val removed = mutableSetOf<String>()
+
+        for (row in live) {
+            if (row.id in removed || row.type != TxnType.DEBIT.name) continue
+            val echoes = live.filter { other ->
+                other.id != row.id &&
+                    other.id !in removed &&
+                    other.amountPaise == row.amountPaise &&
+                    other.bank != row.bank &&
+                    other.category == Category.CARD_PAYMENT.name &&
+                    kotlin.math.abs(other.dedupeAt - row.dedupeAt) <=
+                        SmsDeduplicator.CARD_BILL_WINDOW_MS
+            }
+            for (echo in echoes) {
+                delete(echo.id)
+                removed += echo.id
+            }
+        }
+        prefs.setCardBillEchoesRepaired()
+        return removed.size
+    }
+
+    /**
+     * Removes the twelve-hour twins that fixing AM/PM created.
+     *
+     * Until recently the time capture dropped the meridiem, so a Kerala Gramin
+     * "07:49 PM" was stored as 07:49. Correcting that was right, but on an inbox
+     * already holding wrongly-timed rows the next scan re-read the same message,
+     * arrived at 19:49, and found nothing to deduplicate against — the window is three
+     * minutes and the twin was twelve hours away. Every evening transaction already in
+     * the database therefore gained a copy.
+     *
+     * The signature is deliberately narrow: identical to the paise, same bank, same
+     * account tail, same calendar day, and separated by twelve hours to within a
+     * minute. Two genuine payments matching all of that are vanishingly unlikely, and
+     * the cost of being wrong is asymmetric — losing a real transaction is far worse
+     * than leaving a duplicate somebody can see and delete.
+     *
+     * The morning row goes, because the evening one is what the bank actually said.
+     */
+    suspend fun repairMeridiemTwins(): Int {
+        if (prefs.meridiemTwinsRepaired()) return 0
+        val twelveHours = 12 * 60 * 60 * 1000L
+        val tolerance = 60 * 1000L
+
+        // Compatible, not identical.
+        //
+        // These pairs are the bank's message and the UPI app's message for one payment,
+        // and they never carry the same fields: one names a reference and no account,
+        // the other an account and no reference. Demanding equality on both is
+        // precisely wrong for the case being repaired. This is the rule
+        // SmsDeduplicator already applies at ingest — agree where both know something,
+        // ignore where one is silent.
+        fun agrees(a: String?, b: String?) = a.isNullOrBlank() || b.isNullOrBlank() || a == b
+
+        val live = txnDao.allLive()
+        val removed = mutableSetOf<String>()
+
+        for (row in live) {
+            if (row.id in removed) continue
+            val twins = live.filter { other ->
+                other.id != row.id &&
+                    other.id !in removed &&
+                    other.amountPaise == row.amountPaise &&
+                    other.type == row.type &&
+                    other.bank == row.bank &&
+                    agrees(other.accountTail, row.accountTail) &&
+                    agrees(other.refNo, row.refNo) &&
+                    kotlin.math.abs(
+                        kotlin.math.abs(other.occurredAt - row.occurredAt) - twelveHours
+                    ) <= tolerance
+            }
+            for (twin in twins) {
+                val later = if (twin.occurredAt > row.occurredAt) twin else row
+                val earlier = if (twin.occurredAt > row.occurredAt) row else twin
+                if (earlier.id in removed) continue
+
+                // Keep the evening row — PM is what the bank said — but take anything
+                // the morning copy knew and it does not. Deleting outright would throw
+                // away the reference number that only the other message carried.
+                val merged = later.copy(
+                    refNo = later.refNo ?: earlier.refNo,
+                    accountTail = later.accountTail ?: earlier.accountTail,
+                    merchant = if (later.merchant.equals(UNKNOWN_PAYEE, true)) {
+                        earlier.merchant
+                    } else later.merchant,
+                )
+                if (merged != later) {
+                    saveAndLog(merged.toDomain(), merged.dedupeKey, merged.dedupeAt)
+                }
+                delete(earlier.id)
+                removed += earlier.id
+            }
+        }
+        prefs.setMeridiemTwinsRepaired()
+        return removed.size
     }
 
     /**
