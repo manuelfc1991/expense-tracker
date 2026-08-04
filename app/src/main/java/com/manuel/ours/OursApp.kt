@@ -86,6 +86,9 @@ class OursApp : Application(), Configuration.Provider {
             repository.repairCardBillEchoes()
             // Not a one-shot: an accidental round trip can happen any week, and the
             // pass costs nothing when there is no pair to find.
+            // Read the destination account out of messages stored before the column
+            // existed, so naming an account fixes the history it came from.
+            repository.backfillCounterpartyTails()
             repository.markSelfTransfers()
             // Sender and category rules taught through the sheet, applied before the
             // first message of this launch is parsed.

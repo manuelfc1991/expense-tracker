@@ -33,6 +33,7 @@ class RulesRepository @Inject constructor(
     private val sharedRuleDao: SharedRuleDao,
     private val merchantRuleDao: MerchantRuleDao,
     private val prefs: AppPrefs,
+    private val transactionRepository: TransactionRepository,
 ) {
 
     /**
@@ -81,6 +82,14 @@ class RulesRepository @Inject constructor(
                 .associate { it.ruleKey to it.value }
         )
 
+        // Names the household has given accounts, applied to the rows that have been
+        // waiting for one. Without this a name typed into the sheet — or given on the
+        // other phone — would only ever affect payments that had not happened yet.
+        val accountNames = all.filter { it.type == TYPE_ACCOUNT && it.value.isNotBlank() }
+        for (rule in accountNames) {
+            transactionRepository.applyAccountName(rule.ruleKey, rule.value)
+        }
+
         val merchantRules = all.filter { it.type == TYPE_MERCHANT }
         for (rule in merchantRules) {
             // An unknown category name is ignored rather than filed as Other: a typo in
@@ -118,6 +127,7 @@ class RulesRepository @Inject constructor(
     }
 
     companion object {
+        const val TYPE_ACCOUNT = "account"
         const val TYPE_SENDER = "sender"
         const val TYPE_MERCHANT = "merchant"
     }

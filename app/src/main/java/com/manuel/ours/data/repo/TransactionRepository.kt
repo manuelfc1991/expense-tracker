@@ -47,6 +47,7 @@ class TransactionRepository @Inject constructor(
     private val eventDao: SyncEventDao,
     private val merchantRuleDao: MerchantRuleDao,
     private val sharedRuleDao: com.manuel.ours.data.db.SharedRuleDao,
+    private val parser: com.manuel.ours.data.sms.SmsParser,
     private val prefs: AppPrefs,
     private val clock: LamportClock,
 ) {
@@ -230,6 +231,19 @@ class TransactionRepository @Inject constructor(
      */
     suspend fun namedAccounts(): Map<String, String> =
         sharedRuleDao.ofType(TYPE_ACCOUNT).associate { it.ruleKey to it.value }
+
+    /** Relabels rows for an account whose name is already known. */
+    suspend fun applyAccountName(tail: String, name: String) {
+        txnDao.allLive()
+            .filter { it.counterpartyTail == tail && it.merchant == UNKNOWN_PAYEE }
+            .forEach { row ->
+                saveAndLog(
+                    row.copy(merchant = name, needsReview = false).toDomain(),
+                    row.dedupeKey,
+                    row.dedupeAt,
+                )
+            }
+    }
 
     /** Names an account, so every future payment to it carries the name. */
     suspend fun nameAccount(tail: String, name: String) {
@@ -599,6 +613,34 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
+     * Reads the destination account out of messages already stored.
+     *
+     * The column arrived after these rows did, so every payment imported before it
+     * carries no identifier — and naming an account would then fix the future while
+     * leaving the history exactly as anonymous as before. The original message is kept
+     * on the phone, so the answer is already here; it only has to be read again.
+     *
+     * Writes nothing when the message names no destination, which is most of them.
+     */
+    suspend fun backfillCounterpartyTails(): Int {
+        if (prefs.counterpartyBackfilled()) return 0
+        var filled = 0
+        for (row in txnDao.allLive()) {
+            if (row.counterpartyTail != null) continue
+            val body = row.rawSms ?: continue
+            val tail = parser.extractCounterpartyTail(body) ?: continue
+            saveAndLog(
+                row.copy(counterpartyTail = tail).toDomain(),
+                row.dedupeKey,
+                row.dedupeAt,
+            )
+            filled++
+        }
+        prefs.setCounterpartyBackfilled()
+        return filled
+    }
+
+    /**
      * Marks money that only moved between the household's own accounts.
      *
      * The signal is the account tail. This phone receives alerts for accounts the
@@ -750,6 +792,12 @@ class TransactionRepository @Inject constructor(
                 val merged = later.copy(
                     refNo = later.refNo ?: earlier.refNo,
                     accountTail = later.accountTail ?: earlier.accountTail,
+                    // The two messages describe one payment but carry different facts:
+                    // the plain debit has the clock time, the UPI one names the
+                    // destination account. Keeping the later row for its time while
+                    // dropping the only copy of the account it paid loses the single
+                    // thing that could ever give that payment a name.
+                    counterpartyTail = later.counterpartyTail ?: earlier.counterpartyTail,
                     merchant = if (later.merchant.equals(UNKNOWN_PAYEE, true)) {
                         earlier.merchant
                     } else later.merchant,
