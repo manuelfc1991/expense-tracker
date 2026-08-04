@@ -1,0 +1,468 @@
+<meta charset="utf-8">
+<title>Ours · organising Settings</title>
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8; --card:#fff;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B;--card:#0F0F14}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 80px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);font-variant-numeric:tabular-nums;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 34px;max-width:70ch;line-height:1.6}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
+     margin:44px 0 4px;font-family:var(--mono);font-weight:600}
+  .note{color:var(--mut);font-size:13.5px;line-height:1.65;max-width:66ch;margin:0 0 20px}
+  .note b{color:var(--fg);font-weight:600}
+  .row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .verdict{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+           padding:4px 9px;border-radius:6px;margin-bottom:10px}
+  .v-yes{background:rgb(61 220 160/.15);color:#2FA87B}
+  .v-no{background:rgb(255 92 122/.15);color:#E04E6B}
+  .v-alt{background:rgb(47 91 255/.14);color:#3F63D8}
+
+  .dev{background:#000;border:1px solid var(--line);border-radius:32px;padding:7px;
+       box-shadow:0 20px 50px rgb(0 0 0/.3)}
+  .scr{
+    --ink:#0B0B0F; --sur:#131318; --hair:#2A2A34;
+    --tx:#F2F2F7; --tx2:#9A9AAE; --lab:#7C7C99;
+    --acc:#2F5BFF; --ok:#3DDCA0; --warn:#FFB020; --bad:#FF5C7A;
+    width:330px;background:var(--ink);border-radius:26px;overflow:hidden;color:var(--tx)}
+  .scr.tall{min-height:600px}
+  .sbar{display:flex;justify-content:space-between;padding:11px 18px 2px;
+        font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+  .ui{padding:8px 15px 16px;display:flex;flex-direction:column;gap:12px}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:4px 1px}
+  .mark{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.26em}
+  .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--lab)}
+  .lbl.acc{color:var(--acc)}
+  .lbl.warn{color:var(--warn)}
+  .lbl.ok{color:var(--ok)}
+  .num{font-family:var(--mono);font-size:13px;font-weight:700}
+
+  .sect{display:flex;justify-content:space-between;align-items:center;
+        border-bottom:1px solid var(--hair);padding-bottom:6px;margin-top:2px}
+  .panel{border:1px solid var(--hair);border-radius:13px;padding:11px 12px;
+         display:flex;flex-direction:column;gap:9px}
+  .r{display:flex;align-items:center;gap:10px}
+  .r .t{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .r .t b{font-size:12.5px;font-weight:600}
+  .r .t span{font-size:10.5px;color:var(--tx2);line-height:1.45}
+  .chev{color:var(--lab);font-size:14px;line-height:1}
+  .sw{width:30px;height:17px;border-radius:9px;background:var(--hair);flex:none;
+      position:relative}
+  .sw:after{content:"";position:absolute;width:13px;height:13px;border-radius:7px;
+            background:#6A6A80;top:2px;left:2px}
+  .sw.on{background:var(--acc)}
+  .sw.on:after{background:#fff;left:15px}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:11px;border:1px solid var(--hair);border-radius:9px;padding:6px 10px;
+        color:var(--tx2);white-space:nowrap}
+  .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .pill{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;padding:3px 7px;
+        border-radius:5px}
+  .pill.ok{background:rgb(61 220 160/.16);color:var(--ok)}
+  .pill.warn{background:rgb(255 176 32/.16);color:var(--warn)}
+  .pill.off{background:rgb(154 154 174/.14);color:var(--tx2)}
+  .hair{height:1px;background:var(--hair)}
+  .tabs{display:flex;justify-content:space-between;border-top:1px solid var(--hair);
+        padding:9px 6px 2px;margin-top:4px}
+  .tabs span{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--lab)}
+  .tabs span.on{color:var(--acc)}
+  .fade{height:26px;background:linear-gradient(var(--ink),transparent);margin-bottom:-26px;
+        position:relative;z-index:1}
+  .cut{text-align:center;color:var(--lab);font-family:var(--mono);font-size:9px;
+       letter-spacing:.14em;padding:6px 0}
+
+  .banner{display:flex;align-items:center;gap:8px;border-radius:10px;padding:9px 11px}
+  .banner.warn{background:rgb(255 176 32/.13);border:1px solid rgb(255 176 32/.4)}
+  .banner.ok{background:rgb(61 220 160/.1);border:1px solid rgb(61 220 160/.3)}
+
+  table{border-collapse:collapse;font-size:13px;margin:6px 0 26px;width:100%;max-width:920px}
+  th,td{text-align:left;padding:8px 16px 8px 0;border-bottom:1px solid var(--line);
+        vertical-align:top}
+  th{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--mut);font-weight:600}
+  td.n{font-family:var(--mono);color:var(--mut)}
+  .old{color:var(--mut)}
+  .arrow{color:var(--mut)}
+</style>
+
+<div class="wrap">
+
+<h1>Organising Settings</h1>
+<p class="sub">
+  Settings is <b>eleven sections and about two dozen controls</b> in one scroll. Nothing
+  in it is wrong; the problem is that things which belong together are far apart, and the
+  three switches that can silently break the app are buried among the ones that cannot.
+</p>
+
+<h2>0 · What is there now</h2>
+<p class="note">
+  In order: Household, Sync, Message scanning, Notifications, Where expenses come from,
+  Tracking, Appearance, Privacy, When a payment happens, Updates, About. Reaching the
+  bottom takes about a dozen swipes.
+</p>
+
+<div class="row">
+  <div style="max-width:430px">
+    <span class="verdict v-no">THREE PROBLEMS</span>
+    <table>
+      <tr><th>What</th><th>Where it hurts</th></tr>
+      <tr>
+        <td><b>One subject, split in two</b></td>
+        <td><b>Notifications</b> (section 4) and <b>When a payment happens</b> (section 9)
+            are the same subject — what Ours does the moment money moves — with five
+            sections between them. Turning the popup on without noticing notifications are
+            off is a thing you can currently do.</td>
+      </tr>
+      <tr>
+        <td><b>One subject, split in three</b></td>
+        <td><b>Message scanning</b>, <b>Where expenses come from</b> and <b>Tracking</b> all
+            answer "which payments become rows". They are separated by an unrelated
+            section.</td>
+      </tr>
+      <tr>
+        <td><b>Filed under the wrong thing</b></td>
+        <td><b>Auto-assign rules</b>, <b>Parser tester</b> and <b>Delete requests</b> sit
+            under "Where expenses come from". None of them is a source. Delete requests is
+            a household approval queue and belongs with the household.</td>
+      </tr>
+    </table>
+    <p class="note">
+      There is also a naming split nobody would notice but everybody feels: half the
+      sections are nouns (<b>Sync</b>, <b>Tracking</b>, <b>Privacy</b>, <b>About</b>) and
+      half are sentences (<b>Where expenses come from</b>, <b>When a payment happens</b>).
+      Scanning a list of headings works when they are the same kind of thing.
+    </p>
+  </div>
+
+  <div>
+    <div class="dev"><div class="scr tall">
+      <div class="sbar"><span>5:41</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="mark">SETTINGS</span><span class="pill ok">SYNCED</span></div>
+        <div class="sect"><span class="lbl">HOUSEHOLD</span></div>
+        <div class="cut">— members, invite QR, scan —</div>
+        <div class="sect"><span class="lbl">SYNC</span></div>
+        <div class="cut">— sheet, nearby, re-upload —</div>
+        <div class="sect"><span class="lbl">MESSAGE SCANNING</span></div>
+        <div class="cut">— permission, rescan —</div>
+        <div class="sect"><span class="lbl warn">NOTIFICATIONS</span></div>
+        <div class="cut">— grant, access —</div>
+        <div class="sect"><span class="lbl">WHERE EXPENSES COME FROM</span></div>
+        <div class="cut">— source, rules, tester, deletes —</div>
+        <div class="sect"><span class="lbl">TRACKING</span></div>
+        <div class="sect"><span class="lbl">APPEARANCE</span></div>
+        <div class="sect"><span class="lbl">PRIVACY</span></div>
+        <div class="sect"><span class="lbl warn">WHEN A PAYMENT HAPPENS</span></div>
+        <div class="sect"><span class="lbl">UPDATES</span></div>
+        <div class="sect"><span class="lbl">ABOUT</span></div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      The two amber headings are the same subject. Everything between them is not.
+    </p>
+  </div>
+</div>
+
+<h2>1 · Five groups, one scroll &nbsp;— recommended</h2>
+<p class="note">
+  Eleven sections become five, by putting each control next to the question it answers
+  rather than next to the code that implements it. Nothing is removed and nothing moves
+  behind a new screen — the same settings, in an order you can predict.
+  <br><br>
+  <b>Every heading is a noun phrase for a thing you own</b>: the household, the sync, the
+  money coming in, the moment of payment, the app itself.
+</p>
+
+<div class="row">
+  <div>
+    <span class="verdict v-yes">RECOMMENDED</span>
+    <div class="dev"><div class="scr tall">
+      <div class="sbar"><span>5:41</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="mark">SETTINGS</span><span class="pill ok">SYNCED</span></div>
+
+        <div class="banner warn">
+          <span class="lbl warn">NEEDS YOU</span>
+          <span style="font-size:11px;color:var(--tx2);flex:1">Popup permission not granted</span>
+          <span class="chev">›</span>
+        </div>
+
+        <div class="sect"><span class="lbl">HOUSEHOLD</span><span class="lbl">2 PEOPLE</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Manuel &nbsp;·&nbsp; Sindhu</b>
+            <span>You own this household</span></div></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Invite someone</b>
+            <span>Show the code and QR</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Delete requests</b>
+            <span>Rows Sindhu asked to remove</span></div>
+            <span class="pill warn">2 WAITING</span></div>
+        </div>
+
+        <div class="sect"><span class="lbl">SYNC</span><span class="lbl ok">2 MIN AGO</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Sheet sync</b>
+            <span>Plain text, so you can fix it yourself</span></div>
+            <span class="pill ok">ON</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Keep syncing when nearby</b>
+            <span>Bluetooth, encrypted end to end</span></div><span class="sw"></span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Sync now</b></div><span class="chev">›</span></div>
+        </div>
+
+        <div class="sect"><span class="lbl">WHAT BECOMES AN ENTRY</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Read from</b></div></div>
+          <div class="chiprow">
+            <span class="chip on">SMS</span><span class="chip">Notifications</span>
+            <span class="chip">Manual only</span>
+          </div>
+          <div class="r"><span class="pill ok">SMS ALLOWED</span>
+            <span style="font-size:10.5px;color:var(--tx2)">Kerala Gramin, Federal, ICICI</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>From 1 Aug 2026</b>
+            <span>Nothing before this is counted</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Rescan messages</b></div><span class="chev">›</span></div>
+          <div class="r"><div class="t"><b>Auto-assign rules</b></div><span class="chev">›</span></div>
+          <div class="r"><div class="t"><b>Parser tester</b></div><span class="chev">›</span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      <b>Rules</b> and <b>Parser tester</b> stay in this group but sit below a rule, after
+      the settings. They are tools for when something went wrong, not things you set.
+    </p>
+  </div>
+
+  <div>
+    <span class="verdict v-yes">CONTINUED</span>
+    <div class="dev"><div class="scr tall">
+      <div class="sbar"><span>5:41</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="fade"></div>
+
+        <div class="sect"><span class="lbl">WHEN A PAYMENT HAPPENS</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Notification</b>
+            <span>Amount, payee and three one-tap categories</span></div>
+            <span class="pill ok">ON</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Popup over other apps</b>
+            <span>Asks for category, name and note over whatever
+              you are doing — works when Ours is closed</span></div>
+            <span class="sw on"></span></div>
+          <div class="r"><span class="pill warn">PERMISSION NEEDED</span>
+            <span style="font-size:10.5px;color:var(--acc)">Open system settings ›</span></div>
+        </div>
+
+        <div class="sect"><span class="lbl">THIS APP</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Appearance</b></div></div>
+          <div class="chiprow">
+            <span class="chip on">System</span><span class="chip">Light</span>
+            <span class="chip">Dark</span>
+          </div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Require unlock</b>
+            <span>Fingerprint or screen lock to open Ours</span></div>
+            <span class="sw"></span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Ours 3.1 (22)</b>
+            <span>Up to date · checked 2 hours ago</span></div>
+            <span style="font-size:10.5px;color:var(--acc)">Check ›</span></div>
+          <div class="hair"></div>
+          <div class="r"><span class="lbl">HOUSEHOLD CODE</span>
+            <span class="num" style="margin-left:auto">WEDBGX</span></div>
+          <div class="r"><span class="lbl">ENTRIES</span>
+            <span class="num" style="margin-left:auto">19</span></div>
+        </div>
+
+        <div style="font-size:10.5px;color:var(--lab);line-height:1.5;padding:0 2px">
+          The database on this phone is encrypted. Bluetooth sync is encrypted end to end.
+          Sheet sync is not — it writes plain text, so that you can read and fix the sheet
+          yourself.
+        </div>
+      </div>
+      <div class="tabs"><span>HOME</span><span>ACTIVITY</span><span>SUMMARY</span>
+        <span>BUDGETS</span><span class="on">SETTINGS</span></div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      <b>Notification and popup are now one panel</b>, because they are one decision made
+      twice. Each shows its own permission where it is, rather than in a separate section
+      you have to know to look at.
+    </p>
+  </div>
+
+  <div style="max-width:380px">
+    <p class="note">
+      <b>The banner at the top is the real change.</b> Every failure this app has actually
+      had was a permission that was off while everything looked fine — notifications never
+      requested, notification access never granted, and now the overlay permission, which
+      Android can revoke at any time without telling anyone.
+      <br><br>
+      A settings screen that only shows state when you scroll to the right section will
+      not catch that. One line at the top, shown <b>only when something is wrong</b>, and
+      absent entirely when nothing is, means the answer to "is Ours working" is on screen
+      the moment you open it.
+    </p>
+    <table>
+      <tr><th>Old</th><th></th><th>New</th></tr>
+      <tr><td class="old">Household</td><td class="arrow">→</td><td>Household <span class="old">+ delete requests</span></td></tr>
+      <tr><td class="old">Sync</td><td class="arrow">→</td><td>Sync</td></tr>
+      <tr><td class="old">Message scanning<br>Where expenses come from<br>Tracking</td>
+          <td class="arrow">→</td><td>What becomes an entry</td></tr>
+      <tr><td class="old">Notifications<br>When a payment happens</td>
+          <td class="arrow">→</td><td>When a payment happens</td></tr>
+      <tr><td class="old">Appearance<br>Privacy<br>Updates<br>About</td>
+          <td class="arrow">→</td><td>This app</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>2 · The index &nbsp;— the other way to do it</h2>
+<p class="note">
+  The standard answer to a long settings screen: five rows, each opening its own page. The
+  first screen becomes a table of contents you can read without scrolling at all.
+</p>
+
+<div class="row">
+  <div>
+    <span class="verdict v-alt">ALTERNATIVE</span>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>5:41</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="mark">SETTINGS</span><span class="pill ok">SYNCED</span></div>
+        <div class="banner warn">
+          <span class="lbl warn">NEEDS YOU</span>
+          <span style="font-size:11px;color:var(--tx2);flex:1">Popup permission not granted</span>
+          <span class="chev">›</span>
+        </div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Household</b>
+            <span>Manuel and Sindhu · 2 delete requests</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Sync</b>
+            <span>Sheet on · Bluetooth off · 2 min ago</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>What becomes an entry</b>
+            <span>From SMS, since 1 Aug 2026</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>When a payment happens</b>
+            <span>Notification on · popup needs permission</span></div><span class="chev">›</span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>This app</b>
+            <span>Ours 3.1 (22) · up to date</span></div><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="tabs"><span>HOME</span><span>ACTIVITY</span><span>SUMMARY</span>
+        <span>BUDGETS</span><span class="on">SETTINGS</span></div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      Each row carries its own summary, so the index is a status report as well as a menu.
+    </p>
+  </div>
+
+  <div style="max-width:420px">
+    <p class="note">
+      <b>Why I would still pick section 1.</b> An index is the right shape when settings
+      are numerous and unrelated — a phone's own settings app. Here there are five groups
+      and about two dozen controls, which is one comfortable scroll, and the cost of the
+      index is that <b>everything is now two taps and a screen transition away</b>,
+      including the things you actually revisit: the sync status, the tracking date, the
+      popup switch.
+      <br><br>
+      It also splits the prose. Half of what makes this screen usable is the sentence under
+      each control explaining what it costs you — those sentences are the reason the panels
+      look the way they do. Behind five subpages, nobody reads them a second time.
+      <br><br>
+      <b>Worth taking from it anyway:</b> the summary line under each heading. Section 1
+      already puts <b>2 PEOPLE</b>, <b>2 MIN AGO</b> and the version on their section rules,
+      which is the same idea without the navigation.
+    </p>
+  </div>
+</div>
+
+<h2>3 · Two smaller things</h2>
+
+<div class="row">
+  <div style="max-width:420px">
+    <p class="note">
+      <b>The invite QR should be behind a tap.</b> It is a large white square near the top
+      of the screen, needed exactly once per person, and it is the reason Household is the
+      tallest section in the app. As a row that opens the code and QR, it costs one tap on
+      the day you use it and nothing on every other day.
+    </p>
+    <p class="note">
+      <b>Developer mode should not be under About.</b> It is unlocked from there — seven
+      taps on the version, then the household code — which is right, but its rows then
+      appear in the middle of a panel about what version you are running. They belong in
+      their own panel at the very bottom, below the encryption note, where the screen has
+      already ended for everyone who has not unlocked it.
+    </p>
+  </div>
+
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>5:42</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="fade"></div>
+        <div style="font-size:10.5px;color:var(--lab);line-height:1.5;padding:0 2px">
+          The database on this phone is encrypted with a key held in the Android Keystore.
+        </div>
+        <div class="sect"><span class="lbl warn">DEVELOPER</span></div>
+        <div class="panel">
+          <div class="r"><div class="t"><b>Edit amounts</b>
+            <span>Any row you change is stamped as hand-edited</span></div>
+            <span class="sw on"></span></div>
+          <div class="hair"></div>
+          <div class="r"><div class="t"><b>Send a test notification</b></div>
+            <span class="chev">›</span></div>
+          <div class="r"><div class="t"><b>Test the popup</b>
+            <span>Press Home straight after tapping</span></div><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="tabs"><span>HOME</span><span>ACTIVITY</span><span>SUMMARY</span>
+        <span>BUDGETS</span><span class="on">SETTINGS</span></div>
+    </div></div>
+  </div>
+</div>
+
+<h2>What this adds up to</h2>
+<table>
+  <tr><th>Change</th><th>Why</th></tr>
+  <tr><td>Eleven sections become five</td>
+      <td>Each control sits next to the question it answers</td></tr>
+  <tr><td>Notification and popup in one panel</td>
+      <td>They are one decision made twice, currently five sections apart</td></tr>
+  <tr><td>Scanning, source and tracking merge</td>
+      <td>All three answer "which payments become rows"</td></tr>
+  <tr><td>Delete requests move to Household</td>
+      <td>It is an approval queue between two people, not an expense source</td></tr>
+  <tr><td>Permission state shown inline</td>
+      <td>Beside the switch it gates, not in a section of its own</td></tr>
+  <tr><td>A "needs you" banner, only when true</td>
+      <td>Every real failure here has been a permission that was off silently</td></tr>
+  <tr><td>Status on the section rule</td>
+      <td>2 people, 2 min ago, the version — readable without opening anything</td></tr>
+  <tr><td>Invite QR behind a row</td>
+      <td>Needed once per person; currently the tallest thing on the screen</td></tr>
+  <tr><td>Developer in its own panel, last</td>
+      <td>Below where the screen ends for anyone who has not unlocked it</td></tr>
+  <tr><td>Headings all one kind of phrase</td>
+      <td>A list of headings is only scannable when they match</td></tr>
+</table>
+
+</div>
