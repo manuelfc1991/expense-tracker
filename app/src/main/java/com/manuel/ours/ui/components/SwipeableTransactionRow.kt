@@ -6,8 +6,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -187,7 +185,7 @@ private fun SelectableRow(
 }
 
 /** Full category list, for when the offered guesses were wrong. */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryPickerSheet(
     onDismiss: () -> Unit,
@@ -206,19 +204,11 @@ fun CategoryPickerSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MicroLabel(title)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Category.entries.filter { it != Category.INCOME }.forEach { category ->
-                    OursChip(
-                        label = category.label,
-                        selected = false,
-                        icon = BiIcon.forCategory(category),
-                        onClick = { onPick(category) },
-                    )
-                }
-            }
+            // The same grid as the add sheet, the detail screen and the filter. This was
+            // a wrapped flow of full-label chips with icons — a fourth way of drawing the
+            // one list, and the only one where Rent was somewhere different every time
+            // the set changed.
+            CategoryGrid(selected = null, onSelect = onPick)
         }
     }
 }

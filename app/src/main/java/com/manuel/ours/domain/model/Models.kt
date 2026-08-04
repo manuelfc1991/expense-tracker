@@ -271,6 +271,42 @@ data class Insight(
  * look at either of them alone. Carrying the uid instead lets the chips be generated
  * from whoever actually exists.
  */
+/**
+ * A row nobody has confirmed the category of.
+ *
+ * Two different states mean the same thing to a reader — the parser was unsure
+ * ([Transaction.needsReview]) or it landed in [Category.OTHER] having matched no rule —
+ * and the entry row has always drawn both the same way, in amber, with its amount dimmed
+ * because it is not in the month's total yet. The filter has to agree with the caption,
+ * so the test lives here rather than being written out twice.
+ */
+val Transaction.isUntagged: Boolean
+    get() = needsReview || category == Category.OTHER
+
+/**
+ * What the Activity screen is narrowed to.
+ *
+ * A nullable [Category] could not express the group people most want, which is the
+ * untagged rows — in August that was six of nineteen, the largest group on the screen,
+ * and there was no way to ask for it.
+ */
+sealed interface CategoryFilter {
+    data object All : CategoryFilter
+
+    /** Everything [isUntagged] — the parser's unsure pile and [Category.OTHER] together. */
+    data object Untagged : CategoryFilter
+
+    /**
+     * One category, counting only rows that are *not* untagged.
+     *
+     * A needs-review row can still carry a guessed category, so without that exclusion a
+     * single row would appear under both Food and Untagged and the chip counts would add
+     * up to more than the screen holds. Partitioning them means the chips sum exactly to
+     * All, which is what makes the counts trustworthy.
+     */
+    data class Of(val category: Category) : CategoryFilter
+}
+
 sealed interface MemberFilter {
     /** The household total. */
     data object Everyone : MemberFilter

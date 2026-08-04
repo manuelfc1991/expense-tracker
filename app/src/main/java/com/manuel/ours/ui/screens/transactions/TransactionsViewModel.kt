@@ -6,7 +6,9 @@ import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.domain.model.CategoryFilter
 import com.manuel.ours.domain.model.HouseholdMember
+import com.manuel.ours.domain.model.isUntagged
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
@@ -35,8 +37,22 @@ data class TransactionsUiState(
     val loading: Boolean = true,
     val query: String = "",
     val memberFilter: MemberFilter = MemberFilter.Everyone,
-    val categoryFilter: Category? = null,
+    val categoryFilter: CategoryFilter = CategoryFilter.All,
     val groups: List<TransactionGroup> = emptyList(),
+    /**
+     * How many rows each category holds *before* the category filter is applied — so the
+     * chips keep saying what the month contains even while one of them is chosen.
+     *
+     * Only non-empty categories appear. Together with [untaggedCount] these sum exactly
+     * to [baseCount], which is what lets the row be read as a breakdown rather than as a
+     * menu that happens to have numbers on it.
+     */
+    val counts: Map<Category, Int> = emptyMap(),
+    val untaggedCount: Int = 0,
+    /** Rows matching the member filter and the search, ignoring the category filter. */
+    val baseCount: Int = 0,
+    /** Total of what is on screen now — shown beside an active filter. */
+    val filteredTotalPaise: Long = 0L,
     /** Set briefly after a swipe-delete so the UI can offer Undo. */
     val lastDeletedId: String? = null,
     val hasPartner: Boolean = false,
@@ -48,6 +64,27 @@ data class TransactionsUiState(
     val lastBulkDeleted: List<String> = emptyList(),
 ) {
     val selectionMode: Boolean get() = selected.isNotEmpty()
+
+    val shownCount: Int get() = groups.sumOf { it.transactions.size }
+
+    val filtering: Boolean get() = categoryFilter != CategoryFilter.All
+
+    /**
+     * The chips, in the order they are drawn: untagged first, then by size.
+     *
+     * Most-used first rather than enum order, because the one you want is nearly always
+     * the one with the most rows, and enum order put Transfers thirteenth. Ties break on
+     * the label so the row does not reshuffle itself between two equal categories every
+     * time a transaction arrives.
+     */
+    val chips: List<Pair<CategoryFilter, Int>>
+        get() = buildList {
+            if (untaggedCount > 0) add(CategoryFilter.Untagged to untaggedCount)
+            counts.entries
+                .sortedWith(compareByDescending<Map.Entry<Category, Int>> { it.value }
+                    .thenBy { it.key.shortLabel })
+                .forEach { (category, count) -> add(CategoryFilter.Of(category) to count) }
+        }
 }
 
 @HiltViewModel
@@ -58,7 +95,7 @@ class TransactionsViewModel @Inject constructor(
 
     private val query = MutableStateFlow("")
     private val memberFilter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
-    private val categoryFilter = MutableStateFlow<Category?>(null)
+    private val categoryFilter = MutableStateFlow<CategoryFilter>(CategoryFilter.All)
     private val lastDeleted = MutableStateFlow<String?>(null)
     private val selection = MutableStateFlow<Set<String>>(emptySet())
     private val lastBulkDeleted = MutableStateFlow<List<String>>(emptyList())
@@ -84,15 +121,28 @@ class TransactionsViewModel @Inject constructor(
     ) { all, searchText, member, category, aux ->
         val selfUid = aux.selfUid
         val deletedId = aux.deletedId
-        val filtered = MonthlyAggregator
+
+        // Everything the search and the member filter allow, before the category filter.
+        // The chips are counted against *this*, not against the visible rows — a chip row
+        // recomputed from its own output would collapse to a single chip the moment you
+        // tapped one, and then there would be no way back to the others.
+        val base = MonthlyAggregator
             .applyFilter(all, member, selfUid)
-            .filter { category == null || it.category == category }
             .filter { txn ->
                 searchText.isBlank() ||
                     txn.merchant.contains(searchText, ignoreCase = true) ||
                     txn.category.label.contains(searchText, ignoreCase = true) ||
                     txn.note?.contains(searchText, ignoreCase = true) == true
             }
+
+        val (untagged, tagged) = base.partition { it.isUntagged }
+        val counts = tagged.groupingBy { it.category }.eachCount()
+
+        val filtered = when (category) {
+            CategoryFilter.All -> base
+            CategoryFilter.Untagged -> untagged
+            is CategoryFilter.Of -> tagged.filter { it.category == category.category }
+        }
 
         val people = MonthlyAggregator.peopleIn(all, selfUid)
         val hasPartner = people.count { !it.isSelf } > 0
@@ -104,6 +154,12 @@ class TransactionsViewModel @Inject constructor(
             query = searchText,
             memberFilter = member,
             categoryFilter = category,
+            counts = counts,
+            untaggedCount = untagged.size,
+            baseCount = base.size,
+            // Every row, not only debits: filtered to Income, a debit-only total would
+            // read ₹0 beside three visible entries.
+            filteredTotalPaise = filtered.sumOf { it.amountPaise },
             groups = groupByDay(filtered),
             lastDeletedId = deletedId,
             // Narrowed to what is actually on screen. Selecting three rows, then
@@ -149,7 +205,7 @@ class TransactionsViewModel @Inject constructor(
 
     fun setQuery(value: String) { query.value = value }
     fun setMemberFilter(value: MemberFilter) { memberFilter.value = value }
-    fun setCategoryFilter(value: Category?) { categoryFilter.value = value }
+    fun setCategoryFilter(value: CategoryFilter) { categoryFilter.value = value }
 
     fun recategorize(txnId: String, category: Category) {
         viewModelScope.launch { repository.recategorize(txnId, category) }

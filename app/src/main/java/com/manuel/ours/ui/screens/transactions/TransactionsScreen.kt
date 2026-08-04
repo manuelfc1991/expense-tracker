@@ -3,6 +3,10 @@ package com.manuel.ours.ui.screens.transactions
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -42,9 +45,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.domain.model.CategoryFilter
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.ui.components.BiIcon
 import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.CategoryFilterSheet
 import com.manuel.ours.ui.components.CategoryPickerSheet
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
@@ -63,7 +68,11 @@ private val EDGE = 15.dp
  * stick to the top while you scroll, because when every row is structurally alike the
  * date is the only thing telling you where you are.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class,
+    ExperimentalLayoutApi::class,
+)
 @Composable
 fun TransactionsScreen(
     onTransactionClick: (String) -> Unit,
@@ -73,6 +82,7 @@ fun TransactionsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var pendingCategoryFor by remember { mutableStateOf<String?>(null) }
     var bulkCategorize by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
 
     // Back should close the selection, not the screen. Leaving a selection open while
     // navigating away is how a bulk delete gets aimed at rows the reader forgot about.
@@ -148,8 +158,15 @@ fun TransactionsScreen(
                         )
                         return@Row
                     }
-                    val shown = state.groups.sumOf { it.transactions.size }
-                    MicroLabel("$shown ${if (shown == 1) "entry" else "entries"}")
+                    // "3 of 19" while filtered. A filtered screen that still claims the
+                    // month's full count is describing a list nobody is looking at.
+                    MicroLabel(
+                        if (state.filtering) {
+                            "${state.shownCount} of ${state.baseCount}"
+                        } else {
+                            "${state.shownCount} ${if (state.shownCount == 1) "entry" else "entries"}"
+                        }
+                    )
                     // The only permanent way into Sort.
                     //
                     // Home shows a "Sort N expenses" card, but the mockup only draws it
@@ -195,27 +212,56 @@ fun TransactionsScreen(
                 }
             }
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = EDGE, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                item {
+            // Chips while unfiltered; one line once something is chosen.
+            //
+            // The row was every category the app knows, in enum order, scrolling
+            // horizontally — eighteen chips of which three and a half fit, and eleven of
+            // which could only ever return an empty screen. It now lists what is actually
+            // in front of you, biggest first, and wraps rather than scrolling, because
+            // Android draws no scrollbar and off-screen chips are not merely out of
+            // reach: there is nothing to say they exist.
+            if (state.filtering) {
+                ActiveFilterLine(
+                    label = state.categoryFilter.label(),
+                    detail = buildString {
+                        append(state.shownCount)
+                        append(if (state.shownCount == 1) " entry · " else " entries · ")
+                        append(Money.whole(state.filteredTotalPaise))
+                    },
+                    tint = if (state.categoryFilter == CategoryFilter.Untagged) {
+                        Ours.warning
+                    } else {
+                        Ours.accent
+                    },
+                    onOpen = { showFilterSheet = true },
+                    onClear = { viewModel.setCategoryFilter(CategoryFilter.All) },
+                    modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+                )
+            } else {
+                FlowRow(
+                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     OursChip(
                         label = "All",
-                        selected = state.categoryFilter == null,
-                        onClick = { viewModel.setCategoryFilter(null) },
+                        selected = true,
+                        count = state.baseCount,
+                        onClick = {},
                     )
-                }
-                items(Category.entries) { category ->
+                    state.chips.forEach { (filter, count) ->
+                        OursChip(
+                            label = filter.label(),
+                            selected = false,
+                            count = count,
+                            tint = if (filter == CategoryFilter.Untagged) Ours.warning else null,
+                            onClick = { viewModel.setCategoryFilter(filter) },
+                        )
+                    }
                     OursChip(
-                        label = category.label,
-                        selected = state.categoryFilter == category,
-                        icon = BiIcon.forCategory(category),
-                        onClick = {
-                            viewModel.setCategoryFilter(
-                                if (state.categoryFilter == category) null else category
-                            )
-                        },
+                        label = "More ›",
+                        selected = false,
+                        onClick = { showFilterSheet = true },
                     )
                 }
             }
@@ -296,6 +342,72 @@ fun TransactionsScreen(
                 viewModel.recategorize(txnId, category)
                 pendingCategoryFor = null
             },
+        )
+    }
+
+    if (showFilterSheet) {
+        CategoryFilterSheet(
+            current = state.categoryFilter,
+            counts = state.counts,
+            untaggedCount = state.untaggedCount,
+            totalCount = state.baseCount,
+            onDismiss = { showFilterSheet = false },
+            onApply = viewModel::setCategoryFilter,
+        )
+    }
+}
+
+/** What a filter calls itself on a chip and on the collapsed line. */
+private fun CategoryFilter.label(): String = when (this) {
+    CategoryFilter.All -> "All"
+    CategoryFilter.Untagged -> "Untagged"
+    is CategoryFilter.Of -> category.shortLabel
+}
+
+/**
+ * The chosen filter, once the chips have done their job and got out of the way.
+ *
+ * The old row left the selected chip highlighted among the others, which fails in a way
+ * that is easy to miss: filter to Rent, scroll the strip back to the left, and the screen
+ * is indistinguishable from an unfiltered one that happens to be short. Hidden rows then
+ * read as absent rows, which is the worst thing a filter can do to a ledger.
+ *
+ * This cannot scroll away. It sits where the chips were, says what is being shown and how
+ * much it comes to, and carries its own way out.
+ */
+@Composable
+private fun ActiveFilterLine(
+    label: String,
+    detail: String,
+    tint: Color,
+    onOpen: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(tint.copy(alpha = 0.13f))
+            .border(1.dp, tint.copy(alpha = 0.4f), shape)
+            // The body reopens the sheet: having decided to filter, the next thing you
+            // want is usually a different filter, not no filter.
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 11.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        MicroLabel(label, color = tint)
+        MicroLabel(detail, modifier = Modifier.weight(1f))
+        Text(
+            "✕",
+            style = MaterialTheme.typography.labelLarge,
+            color = tint,
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(onClick = onClear)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
 }

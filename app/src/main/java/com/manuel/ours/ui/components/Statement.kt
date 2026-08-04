@@ -306,14 +306,36 @@ fun OursChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     @DrawableRes icon: Int? = null,
+    /**
+     * How many rows this chip would show.
+     *
+     * Only meaningful for a filter, where it turns "which of these is worth tapping"
+     * into something answerable by reading rather than by tapping each one.
+     */
+    count: Int? = null,
+    /** Overrides the accent — the untagged chip is amber, matching its captions. */
+    tint: Color? = null,
 ) {
-    val bg = if (selected) Ours.accent else Color.Transparent
-    val fg = if (selected) Color.White else Ours.textSecondary
+    val accent = tint ?: Ours.accent
+    val bg = if (selected) accent else Color.Transparent
+    val fg = when {
+        selected -> Color.White
+        tint != null -> tint
+        else -> Ours.textSecondary
+    }
     Row(
         modifier
             .clip(RoundedCornerShape(8.dp))
             .background(bg)
-            .border(1.dp, if (selected) Ours.accent else Ours.hairline, RoundedCornerShape(8.dp))
+            .border(
+                1.dp,
+                when {
+                    selected -> accent
+                    tint != null -> tint.copy(alpha = 0.5f)
+                    else -> Ours.hairline
+                },
+                RoundedCornerShape(8.dp),
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -323,6 +345,14 @@ fun OursChip(
             BiIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(13.dp))
         }
         Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+        if (count != null) {
+            Text(
+                count.toString(),
+                style = MicroLabelStyle,
+                color = if (selected) Color.White.copy(alpha = 0.7f) else Ours.textLabel,
+                maxLines = 1,
+            )
+        }
     }
 }
 

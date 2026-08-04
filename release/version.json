@@ -1,7 +1,7 @@
 {
-  "versionCode": 19,
-  "versionName": "2.8",
-  "notes": "Adding an expense by hand now looks the way the design draws it — amount first, everything else optional.",
+  "versionCode": 20,
+  "versionName": "2.9",
+  "notes": "The Activity filter now lists only the categories your month actually contains, biggest first, with counts — and Untagged is finally one of them.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25377416
 }
