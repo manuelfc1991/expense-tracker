@@ -141,7 +141,10 @@ fun SettingsScreen(
     Scaffold(containerColor = Ours.ink) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            // 96dp is Home's allowance for the floating add button, and Activity's
+            // for the undo snackbar. Nothing floats over this list, so the same figure
+            // was simply a screen-height of blank below the last panel.
+            contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
