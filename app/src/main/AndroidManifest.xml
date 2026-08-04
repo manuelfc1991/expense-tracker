@@ -14,6 +14,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      Sideloaded by design: this app is not on Play, so it updates itself from its own
+      public repository. Only ever used to open the system installer on a file the app
+      downloaded and verified was signed by the same key as the running build.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Only for scanning the household invite QR. Declared optional so the app
          still installs on a device without a camera. -->

@@ -64,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.data.sync.NearbyTransport
+import com.manuel.ours.ui.components.AccentButton
 import com.manuel.ours.ui.components.BiIcon
 import com.manuel.ours.ui.components.BiIconView
 import com.manuel.ours.ui.components.GhostButton
@@ -73,8 +74,8 @@ import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.StatePill
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.OursMono
+import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.work.SyncWorker
 import java.time.Instant
@@ -653,6 +654,51 @@ fun SettingsScreen(
                 )
             }
 
+            // ─── Updates ─────────────────────────────────────────────────
+            item { Section("Updates") }
+
+            item {
+                val updateStatus by viewModel.updateStatus.collectAsStateWithLifecycle()
+                val ready by viewModel.updateFile.collectAsStateWithLifecycle()
+                val result by viewModel.update.collectAsStateWithLifecycle()
+
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    verticalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    Note(
+                        "Ours is not on Play, so it updates itself from its own " +
+                            "repository. Nothing downloads until you ask, and a build " +
+                            "signed by a different key is refused."
+                    )
+
+                    val pending = result as? com.manuel.ours.data.update.UpdateChecker.Result.Update
+                    if (pending != null && pending.available.notes.isNotBlank()) {
+                        Note(pending.available.notes, tone = Ours.text)
+                    }
+
+                    when {
+                        ready != null -> AccentButton(
+                            label = "Install now",
+                            onClick = {
+                                context.installApk(ready!!)
+                                viewModel.clearUpdateFile()
+                            },
+                        )
+                        pending != null -> AccentButton(
+                            label = "Download ${pending.available.versionName}",
+                            onClick = { viewModel.downloadUpdate() },
+                        )
+                        else -> GhostButton(
+                            label = "Check for updates",
+                            onClick = { viewModel.checkForUpdate() },
+                        )
+                    }
+
+                    updateStatus?.let { MicroLabel(it) }
+                }
+            }
+
             item { Section("About") }
 
             item {
@@ -962,4 +1008,23 @@ private fun DetailLine(label: String, value: String, onClick: (() -> Unit)? = nu
             maxLines = 1,
         )
     }
+}
+
+/**
+ * Hands the verified file to the system installer.
+ *
+ * The app never installs anything itself — it opens Android's own installer, which
+ * shows the user what is about to happen and asks. A silent self-update would be a
+ * strictly worse thing to build even where it is possible.
+ */
+private fun Context.installApk(apk: java.io.File) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(
+        this, "$packageName.fileprovider", apk,
+    )
+    startActivity(
+        Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+    )
 }

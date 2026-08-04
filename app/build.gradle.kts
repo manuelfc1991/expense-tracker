@@ -174,3 +174,43 @@ val syncSheetScript by tasks.registering(Copy::class) {
 }
 
 tasks.named("preBuild") { dependsOn(syncSheetScript) }
+
+/**
+ * Publishes a build the household's phones can find.
+ *
+ * Copies the signed APK next to a manifest naming its version, both inside the
+ * repository, so `git push` is the whole release process — no server, no account, no
+ * Play listing. The phones read the manifest and compare against their own
+ * versionCode, so bumping that in defaultConfig is what makes an update visible.
+ */
+tasks.register("publishRelease") {
+    group = "distribution"
+    description = "Copies the signed release APK and version.json into release/"
+    dependsOn("assembleRelease")
+
+    doLast {
+        val apk = layout.buildDirectory
+            .file("outputs/apk/release/app-release.apk").get().asFile
+        require(apk.exists()) { "No signed release APK — is keystore.properties present?" }
+
+        val out = rootProject.file("release")
+        out.mkdirs()
+        val published = File(out, "Ours.apk")
+        apk.copyTo(published, overwrite = true)
+
+        val code = android.defaultConfig.versionCode
+        val name = android.defaultConfig.versionName
+        File(out, "version.json").writeText(
+            """
+            {
+              "versionCode": $code,
+              "versionName": "$name",
+              "notes": "",
+              "apkUrl": "https://github.com/manuelfc1991/expense-tracker/raw/master/release/Ours.apk",
+              "sizeBytes": ${published.length()}
+            }
+            """.trimIndent() + "\n"
+        )
+        println("Published ${published.name} (${published.length() / 1024 / 1024} MB), version $name ($code)")
+    }
+}

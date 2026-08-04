@@ -64,7 +64,50 @@ class SettingsViewModel @Inject constructor(
     private val sheetTransport: com.manuel.ours.data.sync.SheetTransport,
     private val syncEventDao: com.manuel.ours.data.db.SyncEventDao,
     private val transactionRepository: com.manuel.ours.data.repo.TransactionRepository,
+    private val updateChecker: com.manuel.ours.data.update.UpdateChecker,
 ) : AndroidViewModel(application) {
+
+    private val _update =
+        kotlinx.coroutines.flow.MutableStateFlow<com.manuel.ours.data.update.UpdateChecker.Result?>(null)
+    val update: kotlinx.coroutines.flow.StateFlow<com.manuel.ours.data.update.UpdateChecker.Result?> = _update
+
+    private val _updateStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val updateStatus: kotlinx.coroutines.flow.StateFlow<String?> = _updateStatus
+
+    private val _updateFile = kotlinx.coroutines.flow.MutableStateFlow<java.io.File?>(null)
+    val updateFile: kotlinx.coroutines.flow.StateFlow<java.io.File?> = _updateFile
+
+    fun checkForUpdate() {
+        viewModelScope.launch {
+            _updateStatus.value = "Checking…"
+            val result = updateChecker.check()
+            _update.value = result
+            _updateStatus.value = when (result) {
+                is com.manuel.ours.data.update.UpdateChecker.Result.UpToDate ->
+                    "You are on the latest build"
+                is com.manuel.ours.data.update.UpdateChecker.Result.Update ->
+                    "Version ${result.available.versionName} is available"
+                is com.manuel.ours.data.update.UpdateChecker.Result.Failed ->
+                    "Could not check — ${result.reason}"
+            }
+        }
+    }
+
+    fun downloadUpdate() {
+        val available = (_update.value as? com.manuel.ours.data.update.UpdateChecker.Result.Update)
+            ?.available ?: return
+        viewModelScope.launch {
+            _updateStatus.value = "Downloading…"
+            updateChecker.download(available)
+                .onSuccess {
+                    _updateFile.value = it
+                    _updateStatus.value = "Ready to install"
+                }
+                .onFailure { _updateStatus.value = it.message ?: "Download failed" }
+        }
+    }
+
+    fun clearUpdateFile() { _updateFile.value = null }
 
     private val _sheetStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     val sheetStatus: kotlinx.coroutines.flow.StateFlow<String?> = _sheetStatus
