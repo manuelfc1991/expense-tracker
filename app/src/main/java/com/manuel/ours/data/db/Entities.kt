@@ -37,6 +37,12 @@ data class TransactionEntity(
     /** Raw SMS body. Kept locally for debugging and re-parsing; NEVER synced. */
     val rawSms: String?,
     val deleted: Boolean,
+    /**
+     * Uid of a member who asked for this row to be removed but is not the household
+     * owner. The row stays visible and countable until the owner decides — a pending
+     * request must not quietly change anybody's totals.
+     */
+    val deleteRequestedBy: String? = null,
     /** (amount, rounded time bucket, account tail) — collapses the duplicate bank + UPI-app SMS. */
     val dedupeKey: String,
     /**
@@ -71,6 +77,7 @@ fun TransactionEntity.toDomain() = Transaction(
     needsReview = needsReview,
     rawSms = rawSms,
     deleted = deleted,
+    deleteRequestedBy = deleteRequestedBy,
 )
 
 fun Transaction.toEntity(
@@ -96,6 +103,7 @@ fun Transaction.toEntity(
     needsReview = needsReview,
     rawSms = rawSms,
     deleted = deleted,
+    deleteRequestedBy = deleteRequestedBy,
     dedupeKey = dedupeKey,
     dedupeAt = dedupeAt,
     updatedAtLamport = lamport,

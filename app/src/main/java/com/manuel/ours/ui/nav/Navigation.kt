@@ -62,6 +62,7 @@ object Routes {
     const val SORT = "sort"
     const val RULES = "rules"
     const val SHEET_SETUP = "sheet_setup"
+    const val DELETE_REQUESTS = "delete_requests"
     const val TXN_DETAIL = "txn/{txnId}"
 
     fun txnDetail(id: String) = "txn/$id"
@@ -200,6 +201,7 @@ fun OursNavHost(
                     onOpenParserTester = { navController.navigate(Routes.PARSER_TESTER) },
                     onOpenRules = { navController.navigate(Routes.RULES) },
                     onOpenSheetSetup = { navController.navigate(Routes.SHEET_SETUP) },
+                    onOpenDeleteRequests = { navController.navigate(Routes.DELETE_REQUESTS) },
                     onScanInvite = { navController.navigate(Routes.QR_SCANNER) },
                 )
             }
@@ -220,6 +222,13 @@ fun OursNavHost(
 
             composable(Routes.SORT) {
                 SortScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.DELETE_REQUESTS) {
+                com.manuel.ours.ui.screens.requests.DeleteRequestsScreen(
+                    onBack = { navController.popBackStack() },
+                    onTransactionClick = { navController.navigate(Routes.txnDetail(it)) },
+                )
             }
 
             composable(Routes.SHEET_SETUP) {

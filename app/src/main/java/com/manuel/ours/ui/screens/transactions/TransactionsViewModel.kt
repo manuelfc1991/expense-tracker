@@ -195,9 +195,10 @@ class TransactionsViewModel @Inject constructor(
         val ids = uiState.value.selected.toList()
         if (ids.isEmpty()) return
         viewModelScope.launch {
-            ids.forEach { id -> repository.delete(id) }
+            val removed = ids.filter { repository.deleteOrRequest(it) }
             selection.value = emptySet()
-            lastBulkDeleted.value = ids
+            // Only what actually went is undoable; the rest are now requests.
+            lastBulkDeleted.value = removed
         }
     }
 
@@ -217,7 +218,7 @@ class TransactionsViewModel @Inject constructor(
     }
 
     fun delete(txnId: String) {
-        viewModelScope.launch { repository.delete(txnId) }
+        viewModelScope.launch { repository.deleteOrRequest(txnId) }
     }
 
     /**
@@ -230,8 +231,9 @@ class TransactionsViewModel @Inject constructor(
      */
     fun deleteWithUndo(txnId: String) {
         viewModelScope.launch {
-            repository.delete(txnId)
-            lastDeleted.value = txnId
+            // Returns false when this member is not the owner: the row was flagged for
+            // approval rather than removed, so there is nothing to offer Undo for.
+            if (repository.deleteOrRequest(txnId)) lastDeleted.value = txnId
         }
     }
 

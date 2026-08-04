@@ -50,6 +50,8 @@ data class SettingsUiState(
     val ingestSource: IngestSource = IngestSource.SMS,
     /** Epoch millis before which nothing is counted; 0 means the whole history. */
     val trackingStartAt: Long = 0L,
+    val isHouseholdOwner: Boolean = false,
+    val pendingDeleteRequests: Int = 0,
 )
 
 @HiltViewModel
@@ -75,7 +77,12 @@ class SettingsViewModel @Inject constructor(
         prefs.nearbyAlways,
         combine(
             prefs.appLock, prefs.theme, prefs.ingestSource, prefs.householdId,
-            combine(prefs.sheetUrl, prefs.trackingStartAt) { sheet, start -> sheet to start },
+            combine(
+                prefs.sheetUrl,
+                prefs.trackingStartAt,
+                prefs.householdOwner,
+                transactionRepository.observeDeleteRequestCount(),
+            ) { sheet, start, owner, pending -> listOf(sheet, start, owner, pending) },
         ) { lock, theme, source, household, paths ->
             listOf(lock, theme, source, household, paths)
         },
@@ -85,9 +92,11 @@ class SettingsViewModel @Inject constructor(
         val source = rest[2] as IngestSource
         val householdId = rest[3] as String?
         @Suppress("UNCHECKED_CAST")
-        val paths = rest[4] as Pair<String?, Long>
-        val sheet = paths.first.orEmpty()
-        val trackingStartAt = paths.second
+        val paths = rest[4] as List<Any?>
+        val sheet = (paths[0] as String?).orEmpty()
+        val trackingStartAt = paths[1] as Long
+        val isOwner = paths[2] as Boolean
+        val pendingDeletes = paths[3] as Int
 
         SettingsUiState(
             members = members,
@@ -108,6 +117,8 @@ class SettingsViewModel @Inject constructor(
             theme = theme,
             ingestSource = source,
             trackingStartAt = trackingStartAt,
+            isHouseholdOwner = isOwner,
+            pendingDeleteRequests = pendingDeletes,
         )
     }.stateIn(
         scope = viewModelScope,

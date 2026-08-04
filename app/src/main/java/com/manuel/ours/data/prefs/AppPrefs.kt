@@ -27,6 +27,7 @@ class AppPrefs @Inject constructor(
     private object Keys {
         val DEVICE_ID = stringPreferencesKey("device_id")
         val HOUSEHOLD_ID = stringPreferencesKey("household_id")
+        val HOUSEHOLD_OWNER = booleanPreferencesKey("household_owner")
         val INVITE_SECRET = stringPreferencesKey("invite_secret")
         val SELF_UID = stringPreferencesKey("self_uid")
         val SELF_NAME = stringPreferencesKey("self_name")
@@ -60,6 +61,26 @@ class AppPrefs @Inject constructor(
     }
 
     val householdId: Flow<String?> = context.dataStore.data.map { it[Keys.HOUSEHOLD_ID] }
+
+    /**
+     * True on the phone that created the household, false on one that joined.
+     *
+     * The merge rule is deliberately symmetric — whoever wrote last wins, no device is
+     * privileged — so this is the only authority in the app, and it exists solely to
+     * decide whose delete takes effect immediately and whose becomes a request.
+     *
+     * Set when the household is created or joined. A creator who reinstalls and joins
+     * by code becomes a member; the switch in Settings is how that gets corrected,
+     * rather than pretending the app can know.
+     */
+    val householdOwner: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.HOUSEHOLD_OWNER] ?: false }
+
+    suspend fun householdOwnerOnce(): Boolean = householdOwner.first()
+
+    suspend fun setHouseholdOwner(owner: Boolean) {
+        context.dataStore.edit { it[Keys.HOUSEHOLD_OWNER] = owner }
+    }
     val inviteSecret: Flow<String?> = context.dataStore.data.map { it[Keys.INVITE_SECRET] }
     val selfUid: Flow<String?> = context.dataStore.data.map { it[Keys.SELF_UID] }
     val selfName: Flow<String?> = context.dataStore.data.map { it[Keys.SELF_NAME] }

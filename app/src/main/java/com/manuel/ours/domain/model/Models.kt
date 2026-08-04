@@ -117,6 +117,8 @@ data class Transaction(
     val needsReview: Boolean = false,
     val rawSms: String? = null,
     val deleted: Boolean = false,
+    /** Set when a member has asked the household owner to remove this row. */
+    val deleteRequestedBy: String? = null,
 ) {
     /** Signed value for arithmetic: debits reduce, credits add. */
     val signedPaise: Long get() = if (type == TxnType.DEBIT) -amountPaise else amountPaise

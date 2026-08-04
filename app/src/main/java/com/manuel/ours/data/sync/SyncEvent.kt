@@ -47,6 +47,11 @@ data class SyncPayload(
     val splitType: String,
     val source: String,
     val ownerName: String,
+    /**
+     * Carried so a pending delete reaches the owner's phone at all — the request is
+     * made on one device and answered on another.
+     */
+    val deleteRequestedBy: String? = null,
     val needsReview: Boolean = false,
     /**
      * The original bank message, so a mis-parse can be diagnosed on either phone.

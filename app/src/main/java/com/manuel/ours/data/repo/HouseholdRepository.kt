@@ -32,6 +32,10 @@ class HouseholdRepository @Inject constructor(
      * is just a shared secret that the two phones agree on.
      */
     suspend fun createHousehold(uid: String, name: String, email: String): InviteBundle {
+        // The device that creates the household is its owner: the only asymmetry
+        // in an otherwise peer-to-peer design, and it exists only to decide whose
+        // delete applies at once and whose waits for approval.
+        prefs.setHouseholdOwner(true)
         val secret = CryptoBox.generateInviteSecret()
         val householdId = idForSecret(secret)
 
@@ -71,6 +75,7 @@ class HouseholdRepository @Inject constructor(
     }
 
     suspend fun joinHousehold(bundle: InviteBundle, uid: String, name: String, email: String) {
+        prefs.setHouseholdOwner(false)
         prefs.setHousehold(bundle.householdId, bundle.inviteSecret)
         prefs.setSelf(uid, name, email)
         memberDao.upsert(MemberEntity(uid, name, email, isSelf = true))

@@ -32,12 +32,16 @@ class TransactionDetailViewModel @Inject constructor(
         viewModelScope.launch { repository.recategorize(txnId, category, learn = true) }
     }
 
+    fun rename(txnId: String, merchant: String) {
+        viewModelScope.launch { repository.rename(txnId, merchant) }
+    }
+
     fun setSplitType(txnId: String, splitType: SplitType) {
         viewModelScope.launch { repository.setSplitType(txnId, splitType) }
     }
 
     fun delete(txnId: String) {
-        viewModelScope.launch { repository.delete(txnId) }
+        viewModelScope.launch { repository.deleteOrRequest(txnId) }
     }
 
     /** Marks the row for review so it surfaces in the needs-review inbox. */

@@ -14,16 +14,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,8 +49,8 @@ import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.TapeHeader
-import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.WordmarkStyle
 import java.time.Instant
@@ -62,6 +74,19 @@ fun TransactionDetailScreen(
     viewModel: TransactionDetailViewModel = hiltViewModel(),
 ) {
     val txn by viewModel.observe(txnId).collectAsStateWithLifecycle(initialValue = null)
+    /** Non-null while the rename dialog is open; holds the text being edited. */
+    var renaming by remember { mutableStateOf<String?>(null) }
+
+    renaming?.let { draft ->
+        RenameDialog(
+            initial = draft,
+            onDismiss = { renaming = null },
+            onConfirm = { name ->
+                viewModel.rename(txnId, name)
+                renaming = null
+            },
+        )
+    }
 
     Scaffold(containerColor = Ours.ink) { padding ->
         val current = txn ?: return@Scaffold
@@ -111,10 +136,15 @@ fun TransactionDetailScreen(
                 ) {
                     CategoryAvatar(current.category, size = 34.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // Tap to rename. Banks often send no payee at all — a Kerala
+                        // Gramin UPI debit names only the destination account — and the
+                        // person who made the payment is the only one who can say who
+                        // it went to.
                         Text(
                             current.merchant,
                             style = MaterialTheme.typography.titleLarge,
                             color = Ours.text,
+                            modifier = Modifier.clickable { renaming = current.merchant },
                         )
                         MicroLabel(
                             Instant.ofEpochMilli(current.occurredAt)
@@ -230,4 +260,57 @@ private fun DetailRow(label: String, value: String) {
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
     }
+}
+
+/**
+ * Renaming a payee, on the one screen where you are reconciling against a statement.
+ *
+ * Prefilled and fully selected, because the common case is replacing a placeholder
+ * outright rather than editing it — "Unknown payee" has no useful prefix to keep.
+ */
+@Composable
+private fun RenameDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var text by remember {
+        mutableStateOf(
+            TextFieldValue(initial, selection = TextRange(0, initial.length))
+        )
+    }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surface,
+        title = { Text("Who was this?", style = MaterialTheme.typography.titleMedium, color = Ours.text) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
+                    cursorBrush = SolidColor(Ours.accent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus)
+                        .padding(vertical = 6.dp),
+                )
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                MicroLabel("Only this row. No rule is learned.")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(text.text) },
+                enabled = text.text.isNotBlank(),
+            ) { Text("Save", color = Ours.accent) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+        },
+    )
 }

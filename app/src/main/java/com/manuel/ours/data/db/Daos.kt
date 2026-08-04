@@ -101,6 +101,18 @@ interface TransactionDao {
     )
     suspend fun rowsOwnedByAlias(selfUid: String, selfName: String): List<TransactionEntity>
 
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deleted = 0 AND deleteRequestedBy IS NOT NULL
+        ORDER BY occurredAt DESC
+        """
+    )
+    fun observeDeleteRequests(): Flow<List<TransactionEntity>>
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND deleteRequestedBy IS NOT NULL")
+    fun observeDeleteRequestCount(): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1")
     fun observeNeedsReviewCount(): Flow<Int>
 

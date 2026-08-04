@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ReminderEntity::class,
         SharedRuleEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -43,6 +43,17 @@ abstract class AppDatabase : RoomDatabase() {
          * household that is six months of bank history that exists nowhere else on
          * the phone.
          */
+        /**
+         * Adds the delete-request marker. A nullable column with no default, so every
+         * existing row simply has no pending request — nothing to backfill and nothing
+         * that can change a total on upgrade.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN deleteRequestedBy TEXT")
+            }
+        }
+
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

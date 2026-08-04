@@ -246,6 +246,31 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /**
+     * Renames the payee on one row.
+     *
+     * Banks routinely name no payee at all — a Kerala Gramin UPI debit says only
+     * "credited to a/c no. XXXX" — and no amount of parsing can recover a name that was
+     * never sent. Ninety-six rows on the first real ledger said "Unknown payee", and the
+     * person holding the phone is the only one who knows who they paid.
+     *
+     * Renaming does *not* teach a merchant rule. The placeholder is shared by every
+     * unnamed debit in the household, so learning from one would file every future
+     * anonymous payment under whatever this one turned out to be.
+     */
+    suspend fun rename(txnId: String, merchant: String): Boolean {
+        val clean = merchant.trim()
+        if (clean.isEmpty()) return false
+        val existing = txnDao.getById(txnId) ?: return false
+        if (existing.merchant == clean) return false
+        saveAndLog(
+            existing.copy(merchant = clean, needsReview = false).toDomain(),
+            existing.dedupeKey,
+            existing.dedupeAt,
+        )
+        return true
+    }
+
     suspend fun updateTransaction(txn: Transaction) {
         val existing = txnDao.getById(txn.id)
         saveAndLog(
@@ -254,6 +279,50 @@ class TransactionRepository @Inject constructor(
             existing?.dedupeAt ?: txn.occurredAt,
         )
     }
+
+    /**
+     * Removes the row, or asks the owner to.
+     *
+     * A delete is the one change nobody can inspect afterwards: an edit leaves a value
+     * to disagree with, a deletion leaves nothing at all. In a shared ledger that makes
+     * it the one action worth a second pair of eyes, so a member's delete becomes a
+     * request and the row stays visible — and counted — until the owner decides.
+     *
+     * The owner's own delete is immediate. Asking yourself for permission is theatre.
+     */
+    suspend fun deleteOrRequest(txnId: String): Boolean {
+        if (prefs.householdOwnerOnce()) {
+            delete(txnId)
+            return true
+        }
+        val existing = txnDao.getById(txnId) ?: return false
+        val uid = prefs.snapshot().selfUid ?: return false
+        saveAndLog(
+            existing.copy(deleteRequestedBy = uid).toDomain(),
+            existing.dedupeKey,
+            existing.dedupeAt,
+        )
+        return false
+    }
+
+    /** Owner accepts: the row goes, and the tombstone syncs like any other delete. */
+    suspend fun approveDelete(txnId: String) = delete(txnId)
+
+    /** Owner declines: the marker clears and the row carries on as though nothing happened. */
+    suspend fun rejectDelete(txnId: String) {
+        val existing = txnDao.getById(txnId) ?: return
+        if (existing.deleteRequestedBy == null) return
+        saveAndLog(
+            existing.copy(deleteRequestedBy = null).toDomain(),
+            existing.dedupeKey,
+            existing.dedupeAt,
+        )
+    }
+
+    fun observeDeleteRequestCount(): Flow<Int> = txnDao.observeDeleteRequestCount()
+
+    fun observeDeleteRequests(): Flow<List<Transaction>> =
+        txnDao.observeDeleteRequests().map { list -> list.map { it.toDomain() } }
 
     suspend fun delete(txnId: String) {
         val existing = txnDao.getById(txnId) ?: return
@@ -316,6 +385,7 @@ class TransactionRepository @Inject constructor(
             source = txn.source.name,
             ownerName = txn.ownerName,
             needsReview = txn.needsReview,
+            deleteRequestedBy = txn.deleteRequestedBy,
             rawSms = txn.rawSms,
         )
         eventDao.append(

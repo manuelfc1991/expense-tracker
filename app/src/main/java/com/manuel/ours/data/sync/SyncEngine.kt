@@ -169,6 +169,7 @@ class SyncEngine @Inject constructor(
         ownerUid = event.ownerUid,
         ownerName = ownerName,
         needsReview = needsReview,
+        deleteRequestedBy = deleteRequestedBy,
         // Prefer whatever we already hold: our own copy came from this phone's
         // inbox and is authoritative. Fall back to the peer's only when we have none.
         rawSms = existing?.rawSms ?: rawSms,

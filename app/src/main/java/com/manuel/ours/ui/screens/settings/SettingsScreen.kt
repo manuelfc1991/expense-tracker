@@ -99,6 +99,7 @@ fun SettingsScreen(
     onOpenRules: () -> Unit = {},
     onOpenSheetSetup: () -> Unit = {},
     onScanInvite: () -> Unit = {},
+    onOpenDeleteRequests: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -533,6 +534,17 @@ fun SettingsScreen(
                             },
                         )
                     }
+                }
+            }
+
+            // Only the owner can answer these, and only worth a row when some exist.
+            if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
+                item {
+                    SettingRow(
+                        title = "Delete requests",
+                        caption = "${state.pendingDeleteRequests} waiting on you · they still count until you decide",
+                        onClick = onOpenDeleteRequests,
+                    )
                 }
             }
 
