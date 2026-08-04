@@ -119,6 +119,8 @@ data class Transaction(
     val deleted: Boolean = false,
     /** Set when a member has asked the household owner to remove this row. */
     val deleteRequestedBy: String? = null,
+    /** When the amount was last changed by hand; null means it is still the bank's. */
+    val amountEditedAt: Long? = null,
 ) {
     /** Signed value for arithmetic: debits reduce, credits add. */
     val signedPaise: Long get() = if (type == TxnType.DEBIT) -amountPaise else amountPaise

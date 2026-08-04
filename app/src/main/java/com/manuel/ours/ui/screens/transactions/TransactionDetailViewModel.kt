@@ -15,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TransactionDetailViewModel @Inject constructor(
     private val repository: TransactionRepository,
+    private val prefs: com.manuel.ours.data.prefs.AppPrefs,
 ) : ViewModel() {
 
     /**
@@ -30,6 +31,16 @@ class TransactionDetailViewModel @Inject constructor(
         // learn = true writes a merchant rule, so this merchant lands correctly
         // next month without asking again.
         viewModelScope.launch { repository.recategorize(txnId, category, learn = true) }
+    }
+
+    /** True only for a household owner with developer mode on. */
+    val canEditAmount: kotlinx.coroutines.flow.Flow<Boolean> =
+        kotlinx.coroutines.flow.combine(
+            prefs.householdOwner, prefs.developerMode,
+        ) { owner, dev -> owner && dev }
+
+    fun editAmount(txnId: String, amountPaise: Long) {
+        viewModelScope.launch { repository.editAmount(txnId, amountPaise) }
     }
 
     fun rename(txnId: String, merchant: String) {

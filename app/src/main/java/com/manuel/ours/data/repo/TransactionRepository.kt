@@ -22,6 +22,7 @@ import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.domain.model.TxnSource
 import com.manuel.ours.domain.model.TxnType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -271,6 +272,35 @@ class TransactionRepository @Inject constructor(
         return true
     }
 
+    /**
+     * Overwrites the amount and stamps the row as hand-edited.
+     *
+     * Gated on the household owner *and* developer mode, and both are checked here
+     * rather than only in the UI — a capability guarded solely by which screen you can
+     * reach is not guarded at all.
+     *
+     * The stamp is the point. An edited figure no longer reconciles against the bank
+     * message it came from, and the app has no way to re-derive the original once it is
+     * gone, so the row says plainly that a person changed it.
+     */
+    suspend fun editAmount(txnId: String, amountPaise: Long): Boolean {
+        if (amountPaise <= 0) return false
+        if (!prefs.householdOwnerOnce()) return false
+        if (!prefs.developerMode.first()) return false
+
+        val existing = txnDao.getById(txnId) ?: return false
+        if (existing.amountPaise == amountPaise) return false
+        saveAndLog(
+            existing.copy(
+                amountPaise = amountPaise,
+                amountEditedAt = System.currentTimeMillis(),
+            ).toDomain(),
+            existing.dedupeKey,
+            existing.dedupeAt,
+        )
+        return true
+    }
+
     suspend fun updateTransaction(txn: Transaction) {
         val existing = txnDao.getById(txn.id)
         saveAndLog(
@@ -386,6 +416,7 @@ class TransactionRepository @Inject constructor(
             ownerName = txn.ownerName,
             needsReview = txn.needsReview,
             deleteRequestedBy = txn.deleteRequestedBy,
+            amountEditedAt = txn.amountEditedAt,
             rawSms = txn.rawSms,
         )
         eventDao.append(

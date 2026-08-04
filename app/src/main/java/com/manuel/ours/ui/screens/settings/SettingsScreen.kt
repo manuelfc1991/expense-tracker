@@ -42,6 +42,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,6 +73,7 @@ import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.StatePill
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.work.SyncWorker
@@ -117,6 +119,10 @@ fun SettingsScreen(
     // is on — there is no permission dialog for it, only a system page the user has to
     // be sent to.
     var listenerEnabled by remember { mutableStateOf(context.notificationAccessGranted()) }
+    // Two different targets, in order: taps on the version, then one on the household
+    // code. A single repeated tap is something a thumb can do by accident on a screen
+    // people scroll; this cannot happen without meaning it.
+    var versionTaps by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -647,6 +653,47 @@ fun SettingsScreen(
                 )
             }
 
+            item { Section("About") }
+
+            item {
+                Panel {
+                    val version = "Ours ${com.manuel.ours.BuildConfig.VERSION_NAME} " +
+                        "(${com.manuel.ours.BuildConfig.VERSION_CODE})"
+                    DetailLine(
+                        label = "Version",
+                        value = version,
+                        onClick = {
+                            versionTaps++
+                            if (state.developerMode) viewModel.setDeveloperMode(false)
+                        },
+                    )
+                    DetailLine(
+                        label = "Household code",
+                        value = state.inviteSecret ?: "—",
+                        onClick = {
+                            // Only counts as the second half of the sequence, and only
+                            // for the owner: editing an amount is an owner's call.
+                            if (versionTaps >= VERSION_TAPS_TO_UNLOCK && state.isHouseholdOwner) {
+                                viewModel.setDeveloperMode(true)
+                            }
+                            versionTaps = 0
+                        },
+                    )
+                    DetailLine("Expenses", state.transactionCount.toString())
+                    DetailLine("Household", if (state.isHouseholdOwner) "You own it" else "You joined it")
+
+                    if (state.developerMode) {
+                        Note(
+                            "Developer mode is on. Amounts can be edited on a transaction, " +
+                                "and any row you change is stamped as hand-edited — an " +
+                                "edited figure no longer matches the bank message it came " +
+                                "from. Tap the version again to switch it off.",
+                            tone = Ours.warning,
+                        )
+                    }
+                }
+            }
+
             item {
                 Panel {
                     Note(
@@ -893,3 +940,26 @@ internal fun relativeSyncLabel(epochMillis: Long): String {
  */
 private fun Context.notificationAccessGranted(): Boolean =
     NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
+
+private const val VERSION_TAPS_TO_UNLOCK = 7
+
+/** A label and a value on one line, optionally tappable. */
+@Composable
+private fun DetailLine(label: String, value: String, onClick: (() -> Unit)? = null) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MicroLabel(label)
+        Text(
+            value,
+            style = ValueTextStyle,
+            color = Ours.text,
+            maxLines = 1,
+        )
+    }
+}

@@ -52,6 +52,7 @@ data class SyncPayload(
      * made on one device and answered on another.
      */
     val deleteRequestedBy: String? = null,
+    val amountEditedAt: Long? = null,
     val needsReview: Boolean = false,
     /**
      * The original bank message, so a mis-parse can be diagnosed on either phone.

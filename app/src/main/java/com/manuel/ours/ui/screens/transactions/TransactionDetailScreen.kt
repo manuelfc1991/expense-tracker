@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -76,6 +78,19 @@ fun TransactionDetailScreen(
     val txn by viewModel.observe(txnId).collectAsStateWithLifecycle(initialValue = null)
     /** Non-null while the rename dialog is open; holds the text being edited. */
     var renaming by remember { mutableStateOf<String?>(null) }
+    var editingAmount by remember { mutableStateOf<String?>(null) }
+    val canEditAmount by viewModel.canEditAmount.collectAsStateWithLifecycle(initialValue = false)
+
+    editingAmount?.let { draft ->
+        AmountDialog(
+            initial = draft,
+            onDismiss = { editingAmount = null },
+            onConfirm = { rupees ->
+                Money.parseToPaise(rupees)?.let { viewModel.editAmount(txnId, it) }
+                editingAmount = null
+            },
+        )
+    }
 
     renaming?.let { draft ->
         RenameDialog(
@@ -160,7 +175,25 @@ fun TransactionDetailScreen(
                     style = MaterialTheme.typography.displayMedium,
                     color = Ours.text,
                     maxLines = 1,
+                    modifier = if (canEditAmount) {
+                        Modifier.clickable {
+                            editingAmount =
+                                (current.amountPaise / 100.0).toString()
+                        }
+                    } else Modifier,
                 )
+
+                // Says why this row will not reconcile against the statement. The app
+                // cannot recover the bank's original figure once it is overwritten, so
+                // the least it can do is admit that somebody changed it.
+                current.amountEditedAt?.let { at ->
+                    MicroLabel(
+                        "Amount edited by hand · " + Instant.ofEpochMilli(at)
+                            .atZone(ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+                        color = Ours.warning,
+                    )
+                }
             }
 
             TapeHeader("Category", modifier = Modifier.padding(horizontal = EDGE))
@@ -301,6 +334,65 @@ private fun RenameDialog(
                 )
                 Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
                 MicroLabel("Only this row. No rule is learned.")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(text.text) },
+                enabled = text.text.isNotBlank(),
+            ) { Text("Save", color = Ours.accent) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+        },
+    )
+}
+
+/**
+ * Editing the one field that came straight from the bank.
+ *
+ * Deliberately plain and deliberately hard to reach: an amount is evidence, not
+ * interpretation, and overwriting it is irreversible — the original is not kept
+ * anywhere, because keeping a shadow copy would only move the question of which figure
+ * to believe.
+ */
+@Composable
+private fun AmountDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var text by remember {
+        mutableStateOf(TextFieldValue(initial, selection = TextRange(0, initial.length)))
+    }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surface,
+        title = {
+            Text("Correct the amount", style = MaterialTheme.typography.titleMedium, color = Ours.text)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
+                    cursorBrush = SolidColor(Ours.accent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus)
+                        .padding(vertical = 6.dp),
+                )
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                MicroLabel(
+                    "The bank's figure is not kept. This row will be marked as edited.",
+                    color = Ours.warning,
+                )
             }
         },
         confirmButton = {

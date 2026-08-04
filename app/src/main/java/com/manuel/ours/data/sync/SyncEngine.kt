@@ -170,6 +170,7 @@ class SyncEngine @Inject constructor(
         ownerName = ownerName,
         needsReview = needsReview,
         deleteRequestedBy = deleteRequestedBy,
+        amountEditedAt = amountEditedAt,
         // Prefer whatever we already hold: our own copy came from this phone's
         // inbox and is authoritative. Fall back to the peer's only when we have none.
         rawSms = existing?.rawSms ?: rawSms,

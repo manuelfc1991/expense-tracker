@@ -43,6 +43,15 @@ data class TransactionEntity(
      * request must not quietly change anybody's totals.
      */
     val deleteRequestedBy: String? = null,
+    /**
+     * When the amount was last changed by hand, or null if it is still the bank's.
+     *
+     * Kept because an edited figure no longer reconciles against the statement it came
+     * from, and a row that quietly disagrees with the bank is worse than one that says
+     * why. A timestamp rather than a flag, so a future reader can tell whether the edit
+     * predates the discrepancy they are chasing.
+     */
+    val amountEditedAt: Long? = null,
     /** (amount, rounded time bucket, account tail) — collapses the duplicate bank + UPI-app SMS. */
     val dedupeKey: String,
     /**
@@ -78,6 +87,7 @@ fun TransactionEntity.toDomain() = Transaction(
     rawSms = rawSms,
     deleted = deleted,
     deleteRequestedBy = deleteRequestedBy,
+    amountEditedAt = amountEditedAt,
 )
 
 fun Transaction.toEntity(
@@ -104,6 +114,7 @@ fun Transaction.toEntity(
     rawSms = rawSms,
     deleted = deleted,
     deleteRequestedBy = deleteRequestedBy,
+    amountEditedAt = amountEditedAt,
     dedupeKey = dedupeKey,
     dedupeAt = dedupeAt,
     updatedAtLamport = lamport,

@@ -52,6 +52,8 @@ data class SettingsUiState(
     val trackingStartAt: Long = 0L,
     val isHouseholdOwner: Boolean = false,
     val pendingDeleteRequests: Int = 0,
+    val developerMode: Boolean = false,
+    val transactionCount: Int = 0,
 )
 
 @HiltViewModel
@@ -82,7 +84,13 @@ class SettingsViewModel @Inject constructor(
                 prefs.trackingStartAt,
                 prefs.householdOwner,
                 transactionRepository.observeDeleteRequestCount(),
-            ) { sheet, start, owner, pending -> listOf(sheet, start, owner, pending) },
+                combine(
+                    prefs.developerMode,
+                    transactionRepository.observeAll(),
+                ) { dev, all -> dev to all.size },
+            ) { sheet, start, owner, pending, dev ->
+                listOf(sheet, start, owner, pending, dev)
+            },
         ) { lock, theme, source, household, paths ->
             listOf(lock, theme, source, household, paths)
         },
@@ -97,6 +105,8 @@ class SettingsViewModel @Inject constructor(
         val trackingStartAt = paths[1] as Long
         val isOwner = paths[2] as Boolean
         val pendingDeletes = paths[3] as Int
+        @Suppress("UNCHECKED_CAST")
+        val dev = paths[4] as Pair<Boolean, Int>
 
         SettingsUiState(
             members = members,
@@ -119,6 +129,8 @@ class SettingsViewModel @Inject constructor(
             trackingStartAt = trackingStartAt,
             isHouseholdOwner = isOwner,
             pendingDeleteRequests = pendingDeletes,
+            developerMode = dev.first,
+            transactionCount = dev.second,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -241,6 +253,20 @@ class SettingsViewModel @Inject constructor(
             prefs.setSheetCursor(0L)
             _sheetStatus.value = "Queued $count expenses to upload"
             SyncWorker.syncNow(getApplication())
+        }
+    }
+
+    /**
+     * Off is always allowed; on is not.
+     *
+     * Editing an amount is an owner's decision, so the guard lives here as well as in
+     * the repository — a capability protected only by which screen you can reach is not
+     * protected at all.
+     */
+    fun setDeveloperMode(on: Boolean) {
+        viewModelScope.launch {
+            if (on && !prefs.householdOwnerOnce()) return@launch
+            prefs.setDeveloperMode(on)
         }
     }
 

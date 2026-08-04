@@ -28,6 +28,7 @@ class AppPrefs @Inject constructor(
         val DEVICE_ID = stringPreferencesKey("device_id")
         val HOUSEHOLD_ID = stringPreferencesKey("household_id")
         val HOUSEHOLD_OWNER = booleanPreferencesKey("household_owner")
+        val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
         val INVITE_SECRET = stringPreferencesKey("invite_secret")
         val SELF_UID = stringPreferencesKey("self_uid")
         val SELF_NAME = stringPreferencesKey("self_name")
@@ -77,6 +78,20 @@ class AppPrefs @Inject constructor(
         context.dataStore.data.map { it[Keys.HOUSEHOLD_OWNER] ?: false }
 
     suspend fun householdOwnerOnce(): Boolean = householdOwner.first()
+
+    /**
+     * Unlocks editing an amount by hand.
+     *
+     * Off by default and reachable only through a deliberate sequence, because an
+     * amount is the one field that came straight from the bank. Everything else in a
+     * row is the app's interpretation and fair game to correct; the figure is evidence.
+     */
+    val developerMode: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.DEVELOPER_MODE] ?: false }
+
+    suspend fun setDeveloperMode(on: Boolean) {
+        context.dataStore.edit { it[Keys.DEVELOPER_MODE] = on }
+    }
 
     suspend fun setHouseholdOwner(owner: Boolean) {
         context.dataStore.edit { it[Keys.HOUSEHOLD_OWNER] = owner }
