@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -95,9 +96,10 @@ fun TransactionDetailScreen(
     renaming?.let { draft ->
         RenameDialog(
             initial = draft,
+            accountTail = txn?.counterpartyTail,
             onDismiss = { renaming = null },
-            onConfirm = { name ->
-                viewModel.rename(txnId, name)
+            onConfirm = { name, remember ->
+                viewModel.rename(txnId, name, txn?.counterpartyTail, remember)
                 renaming = null
             },
         )
@@ -304,9 +306,14 @@ private fun DetailRow(label: String, value: String) {
 @Composable
 private fun RenameDialog(
     initial: String,
+    accountTail: String?,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Boolean) -> Unit,
 ) {
+    // Default on when the bank named an account. Somebody correcting a placeholder
+    // almost always wants it to stick — and without it the same correction is due again
+    // next month, because the next payment arrives just as anonymous as this one.
+    var rememberAccount by remember(accountTail) { mutableStateOf(accountTail != null) }
     var text by remember {
         mutableStateOf(
             TextFieldValue(initial, selection = TextRange(0, initial.length))
@@ -333,12 +340,34 @@ private fun RenameDialog(
                         .padding(vertical = 6.dp),
                 )
                 Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
-                MicroLabel("Only this row. No rule is learned.")
+
+                if (accountTail == null) {
+                    MicroLabel("Only this row — the bank named no account to remember.")
+                } else {
+                    Row(
+                        Modifier.fillMaxWidth().clickable { rememberAccount = !rememberAccount },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Switch(
+                            checked = rememberAccount,
+                            onCheckedChange = { rememberAccount = it },
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Remember account ${'$'}accountTail",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Ours.text,
+                            )
+                            MicroLabel("Names every payment to it, past and future")
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(text.text) },
+                onClick = { onConfirm(text.text, rememberAccount) },
                 enabled = text.text.isNotBlank(),
             ) { Text("Save", color = Ours.accent) }
         },

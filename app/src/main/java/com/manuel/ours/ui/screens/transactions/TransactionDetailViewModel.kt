@@ -43,8 +43,19 @@ class TransactionDetailViewModel @Inject constructor(
         viewModelScope.launch { repository.editAmount(txnId, amountPaise) }
     }
 
-    fun rename(txnId: String, merchant: String) {
-        viewModelScope.launch { repository.rename(txnId, merchant) }
+    /**
+     * Renames the payee, and optionally teaches the name to the account behind it.
+     *
+     * @param remember when true the name is attached to the destination account, so
+     *   every past and future payment to it carries the name. That is the only way a
+     *   correction survives: the bank never names these payees, so the next payment
+     *   arrives as a placeholder again with nothing to match on.
+     */
+    fun rename(txnId: String, merchant: String, tail: String?, remember: Boolean) {
+        viewModelScope.launch {
+            if (remember && !tail.isNullOrBlank()) repository.nameAccount(tail, merchant)
+            else repository.rename(txnId, merchant)
+        }
     }
 
     fun setSplitType(txnId: String, splitType: SplitType) {

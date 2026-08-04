@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ReminderEntity::class,
         SharedRuleEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,6 +49,13 @@ abstract class AppDatabase : RoomDatabase() {
          * that can change a total on upgrade.
          */
         /** Adds the hand-edit stamp. Nullable, so every existing row is untouched. */
+        /** Adds the destination-account identifier. Nullable; nothing to backfill. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN counterpartyTail TEXT")
+            }
+        }
+
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN amountEditedAt INTEGER")

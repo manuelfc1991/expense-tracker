@@ -52,6 +52,8 @@ data class TransactionEntity(
      * predates the discrepancy they are chasing.
      */
     val amountEditedAt: Long? = null,
+    /** Last digits of the account paid, when the bank named one. See SmsParser. */
+    val counterpartyTail: String? = null,
     /** (amount, rounded time bucket, account tail) — collapses the duplicate bank + UPI-app SMS. */
     val dedupeKey: String,
     /**
@@ -88,6 +90,7 @@ fun TransactionEntity.toDomain() = Transaction(
     deleted = deleted,
     deleteRequestedBy = deleteRequestedBy,
     amountEditedAt = amountEditedAt,
+    counterpartyTail = counterpartyTail,
 )
 
 fun Transaction.toEntity(
@@ -115,6 +118,7 @@ fun Transaction.toEntity(
     deleted = deleted,
     deleteRequestedBy = deleteRequestedBy,
     amountEditedAt = amountEditedAt,
+    counterpartyTail = counterpartyTail,
     dedupeKey = dedupeKey,
     dedupeAt = dedupeAt,
     updatedAtLamport = lamport,

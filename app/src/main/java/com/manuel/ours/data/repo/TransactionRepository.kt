@@ -1,6 +1,7 @@
 package com.manuel.ours.data.repo
 
 import com.manuel.ours.data.db.MerchantRuleDao
+import com.manuel.ours.data.db.SharedRuleEntity
 import com.manuel.ours.data.db.MerchantRuleEntity
 import com.manuel.ours.data.db.SyncEventDao
 import com.manuel.ours.data.db.SyncEventEntity
@@ -45,6 +46,7 @@ class TransactionRepository @Inject constructor(
     private val txnDao: TransactionDao,
     private val eventDao: SyncEventDao,
     private val merchantRuleDao: MerchantRuleDao,
+    private val sharedRuleDao: com.manuel.ours.data.db.SharedRuleDao,
     private val prefs: AppPrefs,
     private val clock: LamportClock,
 ) {
@@ -155,6 +157,7 @@ class TransactionRepository @Inject constructor(
         if (parsed.occurredAt < startAt) return null
 
         val rules = merchantRuleDao.all()
+        val namedAccounts = namedAccounts()
         val self = prefs.snapshot()
 
         // The parser's Kind wins over merchant matching: a card bill payment must not
@@ -184,12 +187,18 @@ class TransactionRepository @Inject constructor(
             // Debits keep the placeholder. For money going out the payee is the whole
             // question, and answering it with your own bank's name would be misleading
             // rather than merely unhelpful.
+            // A name the household has given this account outranks the placeholder.
+            // The bank will never name a mother, a landlord or one's own second
+            // account, but the household can — once — and the number is what carries
+            // that name forward to every payment after it.
             merchant = parsed.merchant
+                ?: parsed.counterpartyTail?.let { namedAccounts[it] }
                 ?: parsed.bank?.takeIf { parsed.type == TxnType.CREDIT }
                 ?: UNKNOWN_PAYEE,
             category = category,
             occurredAt = parsed.occurredAt,
             accountTail = parsed.accountTail,
+            counterpartyTail = parsed.counterpartyTail,
             refNo = parsed.refNo,
             bank = parsed.bank,
             splitType = SplitType.SHARED,
@@ -200,7 +209,8 @@ class TransactionRepository @Inject constructor(
             // without naming the sender ("Rs.22 credited to your A/c") — flagging
             // those would bury the handful of debits that genuinely need a decision
             // under fifty pieces of unattributable income.
-            needsReview = (parsed.type == TxnType.DEBIT && parsed.merchant == null) ||
+            needsReview = (parsed.type == TxnType.DEBIT && parsed.merchant == null &&
+                parsed.counterpartyTail?.let { namedAccounts[it] } == null) ||
                 (parsed.kind == SmsParser.Kind.PURCHASE && category == Category.OTHER),
             rawSms = parsed.rawBody,
         )
@@ -209,6 +219,44 @@ class TransactionRepository @Inject constructor(
         )
         saveAndLog(txn, dedupeKey, parsed.dedupeAt)
         return txn
+    }
+
+    /**
+     * Accounts the household has named, keyed by the digits the bank shows.
+     *
+     * Stored as shared rules so a name given on one phone reaches the other through the
+     * sheet — the same path bank senders and merchant categories already travel. Naming
+     * "8891" as Mother once should not have to be done twice.
+     */
+    suspend fun namedAccounts(): Map<String, String> =
+        sharedRuleDao.ofType(TYPE_ACCOUNT).associate { it.ruleKey to it.value }
+
+    /** Names an account, so every future payment to it carries the name. */
+    suspend fun nameAccount(tail: String, name: String) {
+        val clean = name.trim()
+        if (tail.isBlank() || clean.isEmpty()) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = TYPE_ACCOUNT,
+                    ruleKey = tail,
+                    value = clean,
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+        // Apply it to what is already there, so naming an account fixes the history it
+        // came from rather than only the next payment.
+        txnDao.allLive()
+            .filter { it.counterpartyTail == tail && it.merchant == UNKNOWN_PAYEE }
+            .forEach { row ->
+                saveAndLog(
+                    row.copy(merchant = clean, needsReview = false).toDomain(),
+                    row.dedupeKey,
+                    row.dedupeAt,
+                )
+            }
     }
 
     suspend fun addManual(
@@ -436,6 +484,7 @@ class TransactionRepository @Inject constructor(
             needsReview = txn.needsReview,
             deleteRequestedBy = txn.deleteRequestedBy,
             amountEditedAt = txn.amountEditedAt,
+            counterpartyTail = txn.counterpartyTail,
             rawSms = txn.rawSms,
         )
         eventDao.append(
@@ -806,6 +855,9 @@ class TransactionRepository @Inject constructor(
     suspend fun deleteMerchantRule(id: Long) = merchantRuleDao.delete(id)
 
     companion object {
+        /** Shared-rule type for an account the household has named. */
+        const val TYPE_ACCOUNT = "account"
+
         /**
          * How close the two legs of an own-account transfer must be.
          *

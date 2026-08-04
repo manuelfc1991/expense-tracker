@@ -73,6 +73,17 @@ class SmsParser {
         val merchant: String?,
         val bank: String,
         val accountTail: String?,
+        /**
+         * Last digits of the account the money went *to*, when the bank named one.
+         *
+         * Not a payee and never shown as one — "a/c no. XXXX8891" says nothing about
+         * who owns it. It is an identifier, and that is exactly what these messages
+         * otherwise lack: Kerala Gramin words a payment to a mother, a landlord, a
+         * fixed deposit and one's own second account in identical language. The number
+         * is the only thing that differs, so it is the only thing that can carry a name
+         * the household gives it.
+         */
+        val counterpartyTail: String?,
         val refNo: String?,
         val balancePaise: Long?,
         val occurredAt: Long,
@@ -127,6 +138,7 @@ class SmsParser {
                 merchant = merchant,
                 bank = rule.bank,
                 accountTail = extractAccountTail(body),
+                counterpartyTail = extractCounterpartyTail(body),
                 refNo = extractRefNo(body),
                 balancePaise = extractBalance(body),
                 occurredAt = parsedDate?.epochMillis ?: receivedAt,
@@ -270,6 +282,21 @@ class SmsParser {
     }
 
     // -- Field extraction ---------------------------------------------------------
+
+    /**
+     * The account the money went to, when the bank named one.
+     *
+     * Only ever read from an explicit destination clause — "credited to a/c no. X",
+     * "transferred to a/c X". Never from the account the message is addressed to, which
+     * is the household's own and already captured as [ParsedTxn.accountTail].
+     */
+    fun extractCounterpartyTail(body: String): String? {
+        val match = COUNTERPARTY_ACCOUNT.find(body) ?: return null
+        val digits = match.groupValues[1].filter(Char::isDigit)
+        // Four is what banks mask to, and what a person can recognise. Fewer is not
+        // distinctive enough to hang a name on.
+        return digits.takeIf { it.length >= 4 }?.takeLast(4)
+    }
 
     /** First currency-tagged amount that is not the closing balance. */
     fun extractAmount(body: String): Long? {
@@ -523,6 +550,13 @@ class SmsParser {
         /** "UPI Ref no 5190…", "UPI/519012345678", "Ref no. 5190…" beside a UPI mention. */
         val UPI_REFERENCE = Regex("upi[\\s/:-]*(?:ref(?:erence)?)?[\\s.no:-]*\\d{6,}|\\bupi\\b.*\\bref\\b",
             RegexOption.IGNORE_CASE)
+
+        /** "credited to a/c no. XXXXX8891", "transferred to A/c 8891". */
+        val COUNTERPARTY_ACCOUNT = Regex(
+            "(?:credited|transferred|sent)\\s+to\\s+(?:a/c|ac|acct|account)\\s*" +
+                "(?:no\\.?)?\\s*([Xx*]*\\d{4,})",
+            RegexOption.IGNORE_CASE,
+        )
 
         val AMOUNT_LIKE_MERCHANT = Regex("^(?:rs|inr|₹)\\.?\\s*[0-9,.]+$", RegexOption.IGNORE_CASE)
 

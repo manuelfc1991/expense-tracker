@@ -134,6 +134,8 @@ data class Transaction(
     val deleteRequestedBy: String? = null,
     /** When the amount was last changed by hand; null means it is still the bank's. */
     val amountEditedAt: Long? = null,
+    /** Last digits of the account paid, when the bank named one. */
+    val counterpartyTail: String? = null,
 ) {
     /** Signed value for arithmetic: debits reduce, credits add. */
     val signedPaise: Long get() = if (type == TxnType.DEBIT) -amountPaise else amountPaise
