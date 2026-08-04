@@ -760,6 +760,24 @@ fun SettingsScreen(
                     )
                     DetailLine("Expenses", state.transactionCount.toString())
 
+                    ToggleRow(
+                        title = "I own this household",
+                        caption = "Other members' deletions come to you for approval, " +
+                            "and developer mode is yours to unlock",
+                        checked = state.isHouseholdOwner,
+                        onCheckedChange = {
+                            viewModel.setHouseholdOwner(it)
+                            unlockRefused = false
+                        },
+                        padded = false,
+                    )
+                    Note(
+                        "Nothing recorded who created this household — the app was not " +
+                            "keeping that when yours was made, and cannot work it out " +
+                            "afterwards, so it asks. A speed bump against an accidental " +
+                            "delete among people who trust each other, not a lock."
+                    )
+
                     // Android's own settings count down out loud, and for the same
                     // reason: a hidden sequence with no feedback is indistinguishable
                     // from one that does not work.
@@ -777,41 +795,6 @@ fun SettingsScreen(
                             MicroLabel("Now tap the household code", color = Ours.accent)
                         else -> Unit
                     }
-
-                    if (state.developerMode) {
-                        Note(
-                            "Developer mode is on. Amounts can be edited on a transaction, " +
-                                "and any row you change is stamped as hand-edited — an " +
-                                "edited figure no longer matches the bank message it came " +
-                                "from. Tap the version again to switch it off.",
-                            tone = Ours.warning,
-                        )
-                    }
-                }
-            }
-
-            item {
-                ToggleRow(
-                    title = "I own this household",
-                    caption = "Other members' deletions come to you for approval, and " +
-                        "developer mode is yours to unlock",
-                    checked = state.isHouseholdOwner,
-                    onCheckedChange = {
-                        viewModel.setHouseholdOwner(it)
-                        unlockRefused = false
-                    },
-                )
-            }
-
-            item {
-                Panel {
-                    Note(
-                        "Nothing recorded who created this household — the app was not " +
-                            "keeping that when yours was made, and it cannot work it out " +
-                            "afterwards. So it asks. This is a speed bump against an " +
-                            "accidental delete in a house of people who trust each other, " +
-                            "not a lock: anyone holding a phone can turn it on."
-                    )
 
                     if (state.developerMode) {
                         Note(
@@ -918,9 +901,13 @@ private fun ToggleRow(
     caption: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    /** Panels already inset their contents; a standalone row has to inset itself. */
+    padded: Boolean = true,
 ) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+        Modifier
+            .fillMaxWidth()
+            .then(if (padded) Modifier.padding(horizontal = EDGE) else Modifier),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
