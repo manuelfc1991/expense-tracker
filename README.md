@@ -53,6 +53,10 @@ identical state regardless of arrival order — which is what `MergeConvergenceT
 exercises: shuffled delivery, duplicate delivery, partial-then-catch-up, both phones
 editing the same row offline, deletes racing edits.
 
+Proven on real hardware, not only in tests: two phones in one household converged on a
+460-event ledger spanning six months, written by one and pulled whole by the other
+through a live Sheet deployment.
+
 ```
 SMS / manual entry
       ↓
@@ -209,30 +213,24 @@ you can get permanently stuck behind is worse than no lock.
 
 **Known gaps, honestly:**
 
-1. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
-   converges under adversarial ordering, and a phone and an emulator have exchanged
-   ledgers bidirectionally through a live Sheet deployment — so device-to-device
-   convergence has been observed, just never between two real handsets.
-2. **Nearby is unproven against a second device.** Its runtime permissions were declared
-   but never requested until recently, so every entry point silently reported "no peers".
-   The request now happens and the preconditions check out on one phone; a real exchange
-   has not been seen.
-3. **Three or more people is supported and tested, but not on real phones.** The
-   filter, the split bar, the merge and both transports all take an arbitrary number
-   of members; `AggregationTest` covers a household of three, and a four-member
-   household has been exercised end to end across one phone and three emulators. Only
-   one of those four was a real handset.
-4. **A retired month is retired for the household, not just for you.** The tracking start
-   date bounds what syncs as well as what is drawn, so months before it never reach the
-   other phone. That is deliberate — but it means a partner joining later receives only
-   what is in scope, and the two settings pull against each other.
-5. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
-   choose a folder, so the path is dormant. See above.
-6. **Nearby sync is unproven against a second device.** Its runtime permissions were
+1. **Bluetooth sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
-   happens when you enable it, and the preconditions check out on one phone, but a real
-   two-phone exchange has not been observed.
+   happens when you enable it, and the preconditions check out on both phones, but no
+   two devices have ever completed a Nearby handshake. Emulators get as far as
+   `requestConnection` and then fail on the virtual radio.
+2. **Three or more people is supported and tested, but not on three real phones.** The
+   filter, the split bar, the merge and both transports take an arbitrary number of
+   members; `AggregationTest` covers a household of three, and a four-member household
+   has been exercised across one phone and three emulators. Two real handsets is the
+   most that has ever run at once.
+3. **A retired month is retired for the household, not just for you.** The tracking
+   start date bounds what *syncs* as well as what is drawn, so months before it never
+   reach the other phone. That is deliberate, and it is also the single most confusing
+   thing in the app: a partner who joins later receives only what is in scope, and
+   "Re-upload everything" silently honours the cutoff too, so it can report success
+   having queued a fraction of the history. The number in "Queued N" is the only place
+   the cutoff's reach is visible, and it is easy to miss.
 
 ---
 

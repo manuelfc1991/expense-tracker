@@ -11,6 +11,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.manuel.ours.data.sync.SyncOutcome
 import com.manuel.ours.data.sync.NearbyTransport
 import com.manuel.ours.data.sync.SheetTransport
 import com.manuel.ours.data.sync.SyncEngine
@@ -52,12 +53,17 @@ class SyncWorker @AssistedInject constructor(
         var pushed = 0
         var pulled = 0
         val used = mutableListOf<String>()
+        // A transport that threw is the single most useful thing to report, and the
+        // one thing this worker used to discard. Without it a push that fails every
+        // time is indistinguishable from having nothing to send.
+        val failures = mutableListOf<String>()
 
         // Sheet first: it is the one path that works when the phones are apart and
         // no folder has been shared.
         if (sheetTransport.isAvailable()) {
             attempted++
             val outcome = engine.sync(sheetTransport)
+            if (!outcome.success) failures += describe(outcome)
             if (outcome.success) {
                 succeeded++
                 pushed += outcome.pushedEvents
@@ -70,6 +76,7 @@ class SyncWorker @AssistedInject constructor(
         if (nearbyTransport.isAvailable()) {
             attempted++
             val outcome = engine.sync(nearbyTransport)
+            if (!outcome.success) failures += describe(outcome)
             if (outcome.success) {
                 succeeded++
                 pushed += outcome.pushedEvents
@@ -88,6 +95,7 @@ class SyncWorker @AssistedInject constructor(
             KEY_PUSHED to pushed,
             KEY_PULLED to pulled,
             KEY_TRANSPORTS to used.distinct().joinToString(", "),
+            KEY_ERROR to failures.joinToString(" · "),
         )
 
         return when {
@@ -95,6 +103,14 @@ class SyncWorker @AssistedInject constructor(
             succeeded > 0 -> Result.success(summary)
             else -> Result.retry()
         }
+    }
+
+    /** Transport name plus whatever the failure actually was. */
+    private fun describe(outcome: SyncOutcome): String {
+        val reason = outcome.error?.message?.takeIf { it.isNotBlank() }
+            ?: outcome.error?.let { it::class.simpleName }
+            ?: "unknown error"
+        return "${outcome.transport}: $reason"
     }
 
     companion object {
@@ -107,6 +123,7 @@ class SyncWorker @AssistedInject constructor(
         const val KEY_PUSHED = "pushed"
         const val KEY_PULLED = "pulled"
         const val KEY_TRANSPORTS = "transports"
+        const val KEY_ERROR = "error"
 
         fun enqueuePeriodic(context: Context) {
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)

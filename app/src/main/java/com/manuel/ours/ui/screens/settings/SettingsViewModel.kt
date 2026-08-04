@@ -174,8 +174,14 @@ class SettingsViewModel @Inject constructor(
                         val pushed = d.getInt(SyncWorker.KEY_PUSHED, 0)
                         val pulled = d.getInt(SyncWorker.KEY_PULLED, 0)
                         val via = d.getString(SyncWorker.KEY_TRANSPORTS).orEmpty()
+                        val failure = d.getString(SyncWorker.KEY_ERROR).orEmpty()
                         when {
                             attempted == 0 -> "No sync set up yet"
+                            // Before this, a transport that threw on every attempt
+                            // reported "Already up to date" — the app claiming success
+                            // for the exact failure the user was trying to diagnose.
+                            failure.isNotBlank() && pushed == 0 && pulled == 0 ->
+                                "Couldn't sync — $failure"
                             pushed == 0 && pulled == 0 -> "Already up to date"
                             else -> buildString {
                                 if (pushed > 0) append("Sent $pushed")
