@@ -17,6 +17,7 @@ import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.data.repo.HouseholdRepository
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.manuel.ours.data.sync.SheetTransport
 import com.manuel.ours.data.sync.NearbySyncService
 import com.manuel.ours.domain.model.Member
 import com.google.zxing.BarcodeFormat
@@ -198,10 +199,25 @@ class SettingsViewModel @Inject constructor(
             // Clear first. The events tab is append-only, so rebuilding without this
             // stacks a second copy beside the first, and anything the phone has since
             // stopped syncing — a retired month — would linger in the ledger forever.
-            val cleared = sheetTransport.reset()
-            if (!cleared) {
-                _sheetStatus.value = "Could not clear the sheet — is the script up to date?"
-                return@launch
+            when (val cleared = sheetTransport.reset()) {
+                SheetTransport.ResetResult.Ok -> Unit
+
+                // Name the fix. This is the one failure the user can actually resolve,
+                // and it looks identical to a dead URL unless the message says so.
+                SheetTransport.ResetResult.ScriptOutdated -> {
+                    _sheetStatus.value =
+                        "This sheet is running an old copy of the script. Open " +
+                            "\"How do I set this up?\", copy the script into the " +
+                            "sheet's Apps Script, then Deploy ▸ Manage deployments ▸ " +
+                            "New version — editing the existing deployment keeps this URL."
+                    return@launch
+                }
+
+                is SheetTransport.ResetResult.Failed -> {
+                    _sheetStatus.value = "Could not clear the sheet" +
+                        (cleared.reason?.let { ": $it" } ?: ". Check the link and try again.")
+                    return@launch
+                }
             }
             _sheetStatus.value = "Rebuilding…"
             val count = transactionRepository.rebuildOwnLog()

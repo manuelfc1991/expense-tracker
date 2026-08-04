@@ -46,10 +46,35 @@ class SheetTransport @Inject constructor(
      * Empties the sheet so a rebuild replaces its contents instead of appending beside
      * them. Only ever called from an explicit "re-upload everything".
      */
-    suspend fun reset(): Boolean = withContext(Dispatchers.IO) {
-        val url = prefs.sheetUrlString() ?: return@withContext false
+    /**
+     * Why a clear failed, not merely that it did.
+     *
+     * A sheet deployed before `reset` existed answers "Unknown action: reset", which is
+     * a completely different problem from a network failure or a revoked URL — and the
+     * only one the user can fix, by re-pasting the script. Collapsing both into `false`
+     * produced "Could not clear the sheet" for a fault whose remedy is four taps away,
+     * with nothing pointing at it.
+     */
+    sealed interface ResetResult {
+        data object Ok : ResetResult
+
+        /** The deployed script predates the `reset` action and needs re-pasting. */
+        data object ScriptOutdated : ResetResult
+
+        data class Failed(val reason: String?) : ResetResult
+    }
+
+    suspend fun reset(): ResetResult = withContext(Dispatchers.IO) {
+        val url = prefs.sheetUrlString()
+            ?: return@withContext ResetResult.Failed("no sheet URL is set")
         val response = post(url, JSONObject().put("action", "reset").toString())
-        response.optBoolean("ok", false)
+        val error = response.optString("error").orEmpty()
+        when {
+            response.optBoolean("ok", false) -> ResetResult.Ok
+            // The script's own wording for a case its switch does not handle.
+            error.contains("Unknown action", ignoreCase = true) -> ResetResult.ScriptOutdated
+            else -> ResetResult.Failed(error.ifBlank { null })
+        }
     }
 
     override suspend fun push(deviceId: String, events: List<SyncEvent>) =
