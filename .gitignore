@@ -5,4 +5,7 @@ build/
 .gradle/
 .kotlin/
 *.apk
+# ...except the one the phones download. Build outputs stay ignored; this is the
+# published artefact the update manifest points at.
+!release/Ours.apk
 app/src/main/res/raw/sheet_sync_script.txt
