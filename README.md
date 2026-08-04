@@ -13,8 +13,8 @@ No account and no server of ours. Two sync paths, either or both:
 The Sheet path exists because a spreadsheet is **readable and repairable** — when
 something looks wrong you can open it and see. That comes at a real cost, stated
 plainly: the script URL is the only credential, and the sheet holds your data
-in plain text including the original bank messages. The sheet itself stays private;
-only the script URL is shared.
+in plain text — though the original bank messages are stripped before upload. The
+sheet itself stays private; only the script URL is shared.
 
 Setup is walked through inside the app — **Settings ▸ Sheet sync ▸ How do I set this
 up?** — which also carries the script itself, copyable and shareable, so the second
@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 187 tests
+./gradlew testDebugUnitTest    # 188 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -179,31 +179,29 @@ you can get permanently stuck behind is worse than no lock.
 
 **Known gaps, honestly:**
 
-1. **The widget never refreshes on a data change.** Nothing outside the provider asks
-   it to update, so it shows whatever it last drew until the system happens to.
-2. **Bulk multi-select** is not built.
-3. **No recurring or subscription detection.** A monthly Netflix debit is just another
+1. **Bulk multi-select** is not built.
+2. **No recurring or subscription detection.** A monthly Netflix debit is just another
    row; the app never learns that it repeats or warns you before the next one.
-4. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
+3. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
    converges under adversarial ordering, and a phone and an emulator have exchanged
    ledgers bidirectionally through a live Sheet deployment — so device-to-device
    convergence has been observed, just never between two real handsets.
-5. **Nearby is unproven against a second device.** Its runtime permissions were declared
+4. **Nearby is unproven against a second device.** Its runtime permissions were declared
    but never requested until recently, so every entry point silently reported "no peers".
    The request now happens and the preconditions check out on one phone; a real exchange
    has not been seen.
-6. **Three or more people is supported and tested, but not on real phones.** The
+5. **Three or more people is supported and tested, but not on real phones.** The
    filter, the split bar, the merge and both transports all take an arbitrary number
    of members; `AggregationTest` covers a household of three, and a four-member
    household has been exercised end to end across one phone and three emulators. Only
    one of those four was a real handset.
-7. **A retired month is retired for the household, not just for you.** The tracking start
+6. **A retired month is retired for the household, not just for you.** The tracking start
    date bounds what syncs as well as what is drawn, so months before it never reach the
    other phone. That is deliberate — but it means a partner joining later receives only
    what is in scope, and the two settings pull against each other.
-4. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
+7. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
    choose a folder, so the path is dormant. See above.
-5. **Nearby sync is unproven against a second device.** Its runtime permissions were
+8. **Nearby sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
    happens when you enable it, and the preconditions check out on one phone, but a real

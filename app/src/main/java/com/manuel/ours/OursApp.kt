@@ -8,20 +8,26 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorkerFactory
+import androidx.room.InvalidationTracker
 import androidx.work.Configuration
+import com.manuel.ours.data.db.AppDatabase
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.data.sync.LamportClock
-import com.manuel.ours.work.SmsBackfillWorker
 import com.manuel.ours.data.sync.NearbySyncService
+import com.manuel.ours.widget.SpendWidgetProvider
+import com.manuel.ours.work.SmsBackfillWorker
 import com.manuel.ours.work.SyncWorker
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltAndroidApp
 class OursApp : Application(), Configuration.Provider {
@@ -31,8 +37,18 @@ class OursApp : Application(), Configuration.Provider {
     @Inject lateinit var clock: LamportClock
     @Inject lateinit var repository: TransactionRepository
     @Inject lateinit var householdRepository: com.manuel.ours.data.repo.HouseholdRepository
+    @Inject lateinit var database: AppDatabase
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Coalesces widget redraws. A six-month backfill writes hundreds of rows and would
+     * otherwise fire a broadcast for each burst; only the final figure is worth drawing.
+     */
+    private val widgetRefreshes = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -42,6 +58,7 @@ class OursApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+        keepWidgetInStep()
 
         scope.launch {
             // The clock must be restored before anything mints an event, or a restart
@@ -84,6 +101,38 @@ class OursApp : Application(), Configuration.Provider {
                 SmsBackfillWorker.start(this@OursApp)
             }
         }
+    }
+
+    /**
+     * Redraw the home-screen widget whenever the numbers behind it move.
+     *
+     * The widget had no trigger at all: `updatePeriodMillis` is 30 minutes, the system
+     * treats that as a hint, and nothing else ever asked for a redraw. So it showed a
+     * total that could be half an hour stale and never budged in the moment you would
+     * actually look — just after paying for something.
+     *
+     * Watching Room's invalidation tracker rather than calling from each write site is
+     * deliberate. Rows arrive from SMS, from the notification listener, from a sync
+     * merge, from manual entry and from a recategorize; hanging a refresh off each of
+     * those is five chances to forget one, and the sixth path added later would be
+     * silently stale. The table is the one thing they all have in common.
+     *
+     * `budgets` is watched too because the subtitle reads "68% of ₹32K" — changing the
+     * limit changes the widget without any transaction moving.
+     */
+    private fun keepWidgetInStep() {
+        scope.launch {
+            widgetRefreshes
+                .debounce(1_500)
+                .collect { SpendWidgetProvider.refresh(this@OursApp) }
+        }
+        database.invalidationTracker.addObserver(
+            object : InvalidationTracker.Observer("transactions", "budgets") {
+                override fun onInvalidated(tables: Set<String>) {
+                    widgetRefreshes.tryEmit(Unit)
+                }
+            }
+        )
     }
 
     private fun createNotificationChannels() {
