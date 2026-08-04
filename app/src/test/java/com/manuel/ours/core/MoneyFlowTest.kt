@@ -46,9 +46,14 @@ class MoneyFlowTest {
         // An EMI genuinely leaves your hands — that is real spending.
         assertThat(Category.EMI.countsAsSpending).isTrue()
 
+        // Money that left the household counts, even when the bank named no payee
+        // and even when it arrived as a card bill — on a real ledger not one of 460
+        // rows was an individual card purchase, so the bill is the only record of it.
+        assertThat(Category.TRANSFERS.countsAsSpending).isTrue()
+        assertThat(Category.CARD_PAYMENT.countsAsSpending).isTrue()
+
+        // Saving is the one debit that is still yours afterwards.
         assertThat(Category.INVESTMENTS.countsAsSpending).isFalse()
-        assertThat(Category.TRANSFERS.countsAsSpending).isFalse()
-        assertThat(Category.CARD_PAYMENT.countsAsSpending).isFalse()
     }
 
     @Test
@@ -101,7 +106,8 @@ class MoneyFlowTest {
         assertThat(donut).isEqualTo(headline)
         assertThat(bars).isEqualTo(headline)
         assertThat(members).isEqualTo(headline)
-        assertThat(headline).isEqualTo(50_000)
+        // Food + transport + card bill + transfer. Only the investment is held back.
+        assertThat(headline).isEqualTo(12_50_000)
     }
 
     @Test
@@ -113,8 +119,8 @@ class MoneyFlowTest {
         )
         val summary = MonthlyAggregator.summarize(2026, 7, txns, emptyList())
 
-        assertThat(summary.totalSpentPaise).isEqualTo(50_000)
-        assertThat(summary.excludedPaise).isEqualTo(7_00_000)
+        assertThat(summary.totalSpentPaise).isEqualTo(2_50_000)
+        assertThat(summary.excludedPaise).isEqualTo(5_00_000)
         // Every rupee debited is accounted for somewhere the user can see.
         assertThat(summary.totalSpentPaise + summary.excludedPaise)
             .isEqualTo(MonthlyAggregator.totalDebited(txns))

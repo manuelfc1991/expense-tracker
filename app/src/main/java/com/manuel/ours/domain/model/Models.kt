@@ -48,8 +48,21 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
     INVESTMENTS("Savings & Investments", MoneyFlow.SAVING),
     // An EMI genuinely leaves your hands, so it stays spending.
     EMI("EMI & Loans"),
-    TRANSFERS("Transfers", MoneyFlow.NEUTRAL),
-    CARD_PAYMENT("Card bill payment", MoneyFlow.NEUTRAL),
+    // Both of these were NEUTRAL — money moved without being spent — and both were
+    // wrong for a household whose card purchases never reach the app.
+    //
+    // A transfer with no named payee is overwhelmingly money sent to somebody else's
+    // account, not shuffled between your own: on the first real ledger, 83 of 85 were
+    // unnamed payees and the remaining two were an IMPS charge and an ATM fee.
+    //
+    // A card bill is excluded elsewhere on the grounds that it settles purchases the
+    // app already counted one by one. That holds only if those purchases arrive as
+    // messages — and on this ledger not one of 460 rows was an individual card
+    // purchase, so the bill is the *only* record. Excluding it hid the money entirely
+    // rather than avoiding a double count. If a card whose purchases do arrive by SMS
+    // is ever added, this is the line to revisit.
+    TRANSFERS("Transfers"),
+    CARD_PAYMENT("Card bill payment"),
     INCOME("Income", MoneyFlow.INCOMING),
     OTHER("Other");
 
