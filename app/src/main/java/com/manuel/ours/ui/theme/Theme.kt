@@ -1,14 +1,18 @@
 package com.manuel.ours.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.manuel.ours.data.prefs.ThemeMode
 
 private fun schemeFor(c: OursColors) = if (c.isDark) {
@@ -96,6 +100,26 @@ fun OursTheme(
 
     val colors = oursColors(dark)
     val scheme = remember(dark) { schemeFor(colors) }
+
+    // Status-bar icons follow *this* theme, not the system's.
+    //
+    // `enableEdgeToEdge()` in the activity picks its bar style from the system dark
+    // mode, which is the wrong source once the app carries its own Light/Dark setting:
+    // choosing Light while the phone is in Dark left white icons on a white bar, and
+    // the clock and battery simply vanished. Driving it from `dark` — the value every
+    // other colour on screen is derived from — is the only way the two cannot disagree.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val window = (view.context as? Activity)?.window
+        SideEffect {
+            if (window != null) {
+                WindowCompat.getInsetsController(window, view)
+                    .isAppearanceLightStatusBars = !dark
+                WindowCompat.getInsetsController(window, view)
+                    .isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
 
     val spendColors = remember(dark) {
         SpendColors(

@@ -306,6 +306,21 @@ class SettingsViewModel @Inject constructor(
      * the repository — a capability protected only by which screen you can reach is not
      * protected at all.
      */
+    /**
+     * Declared, not detected.
+     *
+     * Nothing recorded who created a household made before the flag existed, and there
+     * is no signal to recover it from — the invite secret and the derived id are held
+     * by everyone. Turning it off also drops developer mode, so the two cannot drift
+     * apart into an owner-only capability held by a member.
+     */
+    fun setHouseholdOwner(owner: Boolean) {
+        viewModelScope.launch {
+            prefs.setHouseholdOwner(owner)
+            if (!owner) prefs.setDeveloperMode(false)
+        }
+    }
+
     fun setDeveloperMode(on: Boolean) {
         viewModelScope.launch {
             if (on && !prefs.householdOwnerOnce()) return@launch

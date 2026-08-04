@@ -726,7 +726,28 @@ fun SettingsScreen(
                         },
                     )
                     DetailLine("Expenses", state.transactionCount.toString())
-                    DetailLine("Household", if (state.isHouseholdOwner) "You own it" else "You joined it")
+                }
+            }
+
+            item {
+                ToggleRow(
+                    title = "I own this household",
+                    caption = "Other members' deletions come to you for approval, and " +
+                        "developer mode is yours to unlock",
+                    checked = state.isHouseholdOwner,
+                    onCheckedChange = { viewModel.setHouseholdOwner(it) },
+                )
+            }
+
+            item {
+                Panel {
+                    Note(
+                        "Nothing recorded who created this household — the app was not " +
+                            "keeping that when yours was made, and it cannot work it out " +
+                            "afterwards. So it asks. This is a speed bump against an " +
+                            "accidental delete in a house of people who trust each other, " +
+                            "not a lock: anyone holding a phone can turn it on."
+                    )
 
                     if (state.developerMode) {
                         Note(
