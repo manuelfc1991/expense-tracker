@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ours — capture &amp; detail</title>
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8; --card:#fff;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B;--card:#0F0F14}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 80px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);font-variant-numeric:tabular-nums;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 34px;max-width:70ch;line-height:1.6}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
+     margin:44px 0 4px;font-family:var(--mono);font-weight:600}
+  .note{color:var(--mut);font-size:13.5px;line-height:1.65;max-width:66ch;margin:0 0 20px}
+  .note b{color:var(--fg);font-weight:600}
+  .row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+
+  .dev{background:#000;border:1px solid var(--line);border-radius:32px;padding:7px;
+       box-shadow:0 20px 50px rgb(0 0 0/.3)}
+  .scr{
+    --ink:#0B0B0F; --sur:#131318; --hair:#2A2A34;
+    --tx:#F2F2F7; --tx2:#9A9AAE; --lab:#7C7C99;
+    --acc:#2F5BFF; --ok:#3DDCA0; --warn:#FFB020; --bad:#FF5C7A;
+    --k1:#C4571F; --k2:#1E9E74; --k3:#2E82BC; --k4:#7443BE;
+    width:330px;background:var(--ink);border-radius:26px;overflow:hidden;color:var(--tx)}
+  .sbar{display:flex;justify-content:space-between;padding:11px 18px 2px;
+        font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+  .ui{padding:8px 15px 18px;display:flex;flex-direction:column;gap:14px}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:4px 1px}
+  .mark{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.26em}
+  .arw{color:var(--tx2);font-size:19px;line-height:1}
+  .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--lab)}
+  .lbl.warn{color:var(--warn)}
+  .num{font-family:var(--mono);font-size:13.5px;font-weight:700}
+  .tapehd{display:flex;justify-content:space-between;align-items:center;
+          border-bottom:1px solid var(--hair);padding-bottom:7px}
+
+  /* the capture sheet */
+  .veil{background:rgb(0 0 0/.55);padding:26px 0 0}
+  .sheet{background:var(--sur);border-radius:20px 20px 0 0;padding:16px 15px 20px;
+         display:flex;flex-direction:column;gap:14px}
+  .grab{width:34px;height:4px;border-radius:2px;background:var(--hair);margin:0 auto 2px}
+  .cap-hd{display:flex;align-items:center;gap:11px}
+  .avatar{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;
+          font-size:15px}
+  .a1{background:rgb(196 87 31/.18);color:#E8814A}
+  .a0{background:rgb(108 122 147/.18);color:#9AA6BC}
+  .cap-main{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+  .cap-main b{font-size:14px}
+  .cap-amt{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-.04em}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:5px;font-size:11px;border:1px solid var(--hair);
+        border-radius:9px;padding:7px 10px;color:var(--tx2);white-space:nowrap}
+  .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .field{display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--hair);
+         padding:8px 1px}
+  .field .ph{color:var(--lab);font-size:12.5px}
+  .field .val{font-size:12.5px;color:var(--tx)}
+  .field .edit{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+               color:var(--acc)}
+  .acts{display:flex;gap:9px;padding-top:2px}
+  .btn{flex:1;text-align:center;border-radius:11px;padding:12px;font-size:13px;font-weight:600}
+  .btn.pri{background:var(--acc);color:#fff}
+  .btn.gho{border:1px solid var(--hair);color:var(--tx2)}
+
+  /* detail */
+  .hero2{display:flex;flex-direction:column;gap:9px}
+  .hero2 .big{font-family:var(--mono);font-size:34px;font-weight:700;letter-spacing:-.045em}
+  .catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .catgrid .chip{justify-content:center;padding:9px 6px;font-size:10.5px}
+  .rowline{display:flex;justify-content:space-between;align-items:baseline;
+           border-bottom:1px solid var(--hair);padding:7px 0}
+  .rowline:last-child{border-bottom:0}
+  .notebox{border:1px solid var(--hair);border-radius:11px;padding:11px;display:flex;
+           flex-direction:column;gap:7px}
+  .notebox p{margin:0;font-size:12.5px;line-height:1.5;color:var(--tx)}
+  .noteempty{color:var(--lab);font-size:12.5px}
+  .tabs{display:flex;justify-content:space-between;border-top:1px solid var(--hair);
+        padding:9px 6px 2px;margin-top:2px}
+  .tabs span{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--lab)}
+  .tabs span.on{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Capture, and a detail screen you can read</h1>
+<p class="sub">
+  Three changes. A payment should be sortable the moment it happens, not hunted down
+  later. The detail screen should show every category at once rather than hiding two
+  thirds of them off the right edge. And a row should be able to carry a sentence about
+  why, because in six months the amount will not remind you.
+</p>
+
+<h2>1 · The moment it happens</h2>
+<p class="note">
+  The heads-up notification already offers three guessed categories, but it is gone in
+  seconds and it cannot rename anything. This is the same moment given room: the amount,
+  who it looks like, the three best guesses, and — one tap further — the full list, a
+  name and a note.
+  <br><br>
+  <b>It appears only when the app is open.</b> A sheet that steals focus mid-payment
+  would be worse than useless; if the app is in the background the existing notification
+  still does its job, and this is waiting when you next open it.
+</p>
+
+<div class="row">
+
+  <!-- capture, unnamed payee -->
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>8:14</span><span>LTE 100%</span></div>
+      <div class="ui" style="gap:10px">
+        <div class="hd"><span class="mark">OURS</span><span class="lbl">NEW</span></div>
+        <div style="height:150px"></div>
+      </div>
+      <div class="veil">
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="cap-hd">
+            <span class="avatar a0">⇄</span>
+            <span class="cap-main">
+              <b>Unknown payee</b>
+              <span class="lbl">KERALA GRAMIN · JUST NOW</span>
+            </span>
+          </div>
+          <div class="cap-amt">₹1,000</div>
+
+          <span class="lbl">WHO WAS THIS?</span>
+          <div class="field">
+            <span class="ph">Tap to name — account ····8891</span>
+            <span class="edit">NAME</span>
+          </div>
+
+          <span class="lbl">CATEGORY</span>
+          <div class="chiprow">
+            <span class="chip on">Groceries</span>
+            <span class="chip">Food</span>
+            <span class="chip">Transport</span>
+            <span class="chip">All ›</span>
+          </div>
+
+          <div class="field">
+            <span class="ph">Add a note</span>
+            <span class="edit">OPTIONAL</span>
+          </div>
+
+          <div class="acts">
+            <span class="btn gho">Later</span>
+            <span class="btn pri">Save</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      An unnamed debit leads with the question the bank left unanswered. The account
+      number is offered because naming it once names every payment to it, before and
+      after.
+    </p>
+  </div>
+
+  <!-- capture, named merchant -->
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>7:48</span><span>LTE 100%</span></div>
+      <div class="ui" style="gap:10px">
+        <div class="hd"><span class="mark">OURS</span><span class="lbl">NEW</span></div>
+        <div style="height:150px"></div>
+      </div>
+      <div class="veil">
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="cap-hd">
+            <span class="avatar a1">☕</span>
+            <span class="cap-main">
+              <b>Keecheril St</b>
+              <span class="lbl">FEDERAL BANK · JUST NOW</span>
+            </span>
+          </div>
+          <div class="cap-amt">₹151</div>
+
+          <span class="lbl">CATEGORY</span>
+          <div class="chiprow">
+            <span class="chip on">Food</span>
+            <span class="chip">Groceries</span>
+            <span class="chip">Transport</span>
+            <span class="chip">All ›</span>
+          </div>
+
+          <div class="field">
+            <span class="val">Lunch with Sindhu</span>
+            <span class="edit">NOTE</span>
+          </div>
+
+          <div class="acts">
+            <span class="btn gho">Later</span>
+            <span class="btn pri">Save</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      When the bank named the payee there is nothing to ask, so the name question is
+      not shown at all — the sheet shrinks to the one decision left. <b>Later</b>
+      dismisses without marking anything; the row stays in Sort.
+    </p>
+  </div>
+
+  <!-- detail -->
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>8:20</span><span>LTE 100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="arw">←</span><span class="mark" style="font-size:12px">ENTRY</span><span class="arw" style="color:var(--bad)">🗑</span></div>
+
+        <div class="cap-hd">
+          <span class="avatar a0">⇄</span>
+          <span class="cap-main">
+            <b>Mother</b>
+            <span class="lbl">3 AUG 2026 · 8:33 PM</span>
+          </span>
+        </div>
+        <div class="hero2"><span class="big">₹1,000.00</span></div>
+
+        <div class="tapehd"><span class="lbl">CATEGORY</span></div>
+        <div class="catgrid">
+          <span class="chip">Food</span>
+          <span class="chip">Groceries</span>
+          <span class="chip">Transport</span>
+          <span class="chip">Shopping</span>
+          <span class="chip">Bills</span>
+          <span class="chip">Rent</span>
+          <span class="chip">Health</span>
+          <span class="chip">Education</span>
+          <span class="chip">Fun</span>
+          <span class="chip">Travel</span>
+          <span class="chip">Savings</span>
+          <span class="chip">EMI</span>
+          <span class="chip on">Transfers</span>
+          <span class="chip">Card bill</span>
+          <span class="chip">Ours</span>
+        </div>
+
+        <div class="tapehd"><span class="lbl">NOTE</span><span class="lbl" style="color:var(--acc)">EDIT</span></div>
+        <div class="notebox">
+          <p>Monthly help. Sent from the Gramin account, not the salary one.</p>
+        </div>
+
+        <div class="tapehd"><span class="lbl">WHERE IT CAME FROM</span></div>
+        <div class="rowline"><span class="lbl">PAID BY</span><span class="num">Manuel</span></div>
+        <div class="rowline"><span class="lbl">ACCOUNT</span><span class="num">····3062</span></div>
+        <div class="rowline"><span class="lbl">PAID TO</span><span class="num">····8891</span></div>
+
+        <div class="tabs">
+          <span class="on">HOME</span><span>ACTIVITY</span><span>SUMMARY</span>
+          <span>BUDGETS</span><span>SETTINGS</span>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      Fifteen categories in a three-column grid: all of them visible, none hidden off
+      an edge. <b>Paid to</b> is new — the account that received the money, which is
+      what a name can be attached to.
+    </p>
+  </div>
+
+</div>
+
+<h2>2 · Why the grid, not the strip</h2>
+<p class="note">
+  The detail screen scrolls its categories horizontally today, which shows five of
+  fifteen. The two thirds off-screen are invisible: there is no scrollbar on Android and
+  nothing indicates the row continues, so a category you have never scrolled to might as
+  well not exist. That is how a ledger ends up with everything in <b>Other</b>.
+  <br><br>
+  A grid is taller and worth it. Fifteen chips at three across is five rows — about the
+  height of the amount above them — and every option is a single tap from wherever your
+  thumb already is. The detail screen is not a place people linger; it is a place they
+  fix one thing and leave.
+</p>
+
+<h2>3 · The note</h2>
+<p class="note">
+  <b>Optional, and never in the way.</b> Empty, it is one dim line saying "Add a note".
+  Filled, it sits under the amount where it explains it. It is the only field in this
+  app that holds something the bank could never have sent, which makes it the only
+  defence against a row that made sense in August and is a mystery by December.
+  <br><br>
+  It syncs like everything else, so a note written on one phone answers the other's
+  question too. <b>Never used for matching or categorising</b> — a note is for the
+  household to read, not for the app to interpret.
+</p>
+
+<h2>What this does not change</h2>
+<p class="note">
+  The heads-up notification stays exactly as it is. It works when the app is closed,
+  which is most of the time, and its three one-tap chips are already the fastest path
+  when the guess is right. This sheet is for when it is not — and for the naming and
+  the note, neither of which fits in a notification.
+</p>
+
+</div>
+</body>
+</html>
