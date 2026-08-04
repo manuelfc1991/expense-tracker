@@ -1,16 +1,20 @@
 package com.manuel.ours.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -22,6 +26,8 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.dp
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.Transaction
@@ -35,7 +41,7 @@ import com.manuel.ours.ui.theme.Ours
  * swipe rather than a flick. Categorising — the thing you do dozens of times — is the
  * easy direction.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SwipeableTransactionRow(
     txn: Transaction,
@@ -45,7 +51,28 @@ fun SwipeableTransactionRow(
     modifier: Modifier = Modifier,
     showOwner: Boolean = true,
     divider: Boolean = true,
+    selected: Boolean = false,
+    selectionMode: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
 ) {
+    // While a selection is open the row stops swiping.
+    //
+    // Swipe acts on one row and selection acts on many, so leaving both live means a
+    // gesture that deletes the row you touched rather than the eight you had picked —
+    // and the two intents are indistinguishable at the moment the finger moves.
+    if (selectionMode) {
+        SelectableRow(
+            txn = txn,
+            showOwner = showOwner,
+            divider = divider,
+            selected = selected,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+        )
+        return
+    }
+
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             when (value) {
@@ -96,15 +123,66 @@ fun SwipeableTransactionRow(
     ) {
         // The row keeps its own opaque ground so the swipe colour behind it never
         // shows through the gaps between the printed lines.
-        Box(Modifier.background(Ours.ink)) {
+        Box(
+            Modifier
+                .background(Ours.ink)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        ) {
             TransactionEntry(
                 txn = txn,
                 showOwner = showOwner,
                 divider = divider,
-                onClick = onClick,
                 modifier = Modifier.padding(horizontal = 15.dp),
             )
         }
+    }
+}
+
+/**
+ * The same printed line, with a selection state.
+ *
+ * Selection is shown by tinting the row and marking the left edge rather than by adding
+ * a checkbox column. A checkbox would push every merchant, time and amount sideways the
+ * instant selection began, so the list you were reading would rearrange itself under
+ * your thumb at exactly the moment you were aiming at something.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SelectableRow(
+    txn: Transaction,
+    showOwner: Boolean,
+    divider: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val accent = Ours.accent
+    Box(
+        modifier
+            .background(if (selected) accent.copy(alpha = 0.14f) else Ours.ink)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    ) {
+        if (selected) {
+            // matchParentSize, then paint only the left strip. `fillMaxHeight` on a
+            // 3dp-wide child collapses to nothing here: the parent Box wraps its
+            // content, so the incoming height constraint is unbounded and there is no
+            // height to fill.
+            Box(
+                Modifier.matchParentSize().drawBehind {
+                    drawRect(
+                        color = accent,
+                        size = Size(3.dp.toPx(), size.height),
+                    )
+                }
+            )
+        }
+        TransactionEntry(
+            txn = txn,
+            showOwner = showOwner,
+            divider = divider,
+            modifier = Modifier.padding(horizontal = 15.dp),
+        )
     }
 }
 

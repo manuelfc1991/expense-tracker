@@ -209,27 +209,26 @@ you can get permanently stuck behind is worse than no lock.
 
 **Known gaps, honestly:**
 
-1. **Bulk multi-select** is not built.
-2. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
+1. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
    converges under adversarial ordering, and a phone and an emulator have exchanged
    ledgers bidirectionally through a live Sheet deployment — so device-to-device
    convergence has been observed, just never between two real handsets.
-3. **Nearby is unproven against a second device.** Its runtime permissions were declared
+2. **Nearby is unproven against a second device.** Its runtime permissions were declared
    but never requested until recently, so every entry point silently reported "no peers".
    The request now happens and the preconditions check out on one phone; a real exchange
    has not been seen.
-4. **Three or more people is supported and tested, but not on real phones.** The
+3. **Three or more people is supported and tested, but not on real phones.** The
    filter, the split bar, the merge and both transports all take an arbitrary number
    of members; `AggregationTest` covers a household of three, and a four-member
    household has been exercised end to end across one phone and three emulators. Only
    one of those four was a real handset.
-5. **A retired month is retired for the household, not just for you.** The tracking start
+4. **A retired month is retired for the household, not just for you.** The tracking start
    date bounds what syncs as well as what is drawn, so months before it never reach the
    other phone. That is deliberate — but it means a partner joining later receives only
    what is in scope, and the two settings pull against each other.
-6. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
+5. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
    choose a folder, so the path is dormant. See above.
-7. **Nearby sync is unproven against a second device.** Its runtime permissions were
+6. **Nearby sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
    happens when you enable it, and the preconditions check out on one phone, but a real

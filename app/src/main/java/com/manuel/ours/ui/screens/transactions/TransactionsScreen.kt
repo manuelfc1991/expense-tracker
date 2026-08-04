@@ -1,5 +1,6 @@
 package com.manuel.ours.ui.screens.transactions
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -71,6 +72,11 @@ fun TransactionsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var pendingCategoryFor by remember { mutableStateOf<String?>(null) }
+    var bulkCategorize by remember { mutableStateOf(false) }
+
+    // Back should close the selection, not the screen. Leaving a selection open while
+    // navigating away is how a bulk delete gets aimed at rows the reader forgot about.
+    BackHandler(enabled = state.selectionMode) { viewModel.clearSelection() }
     val snackbarHost = remember { SnackbarHostState() }
 
     // Undo is what makes a destructive swipe safe. Deleting rows behind a gesture with
@@ -86,6 +92,20 @@ fun TransactionsScreen(
         else viewModel.clearUndo()
     }
 
+    // One snackbar for the batch, not one per row. Ten stacked "Transaction deleted"
+    // toasts would bury the Undo that matters under nine that no longer do.
+    LaunchedEffect(state.lastBulkDeleted) {
+        val ids = state.lastBulkDeleted
+        if (ids.isEmpty()) return@LaunchedEffect
+        val result = snackbarHost.showSnackbar(
+            message = "${ids.size} transactions deleted",
+            actionLabel = "Undo",
+            duration = SnackbarDuration.Short,
+        )
+        if (result == SnackbarResult.ActionPerformed) viewModel.undoBulkDelete()
+        else viewModel.clearBulkUndo()
+    }
+
     Scaffold(
         containerColor = Ours.ink,
         snackbarHost = { SnackbarHost(snackbarHost) },
@@ -96,11 +116,38 @@ fun TransactionsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("ACTIVITY", style = WordmarkStyle, color = Ours.text)
+                Text(
+                    if (state.selectionMode) "${state.selected.size} SELECTED" else "ACTIVITY",
+                    style = WordmarkStyle,
+                    color = if (state.selectionMode) Ours.accent else Ours.text,
+                )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (state.selectionMode) {
+                        MicroLabel(
+                            "All",
+                            color = Ours.textSecondary,
+                            modifier = Modifier.clickable { viewModel.selectAllVisible() },
+                        )
+                        MicroLabel(
+                            "Categorize",
+                            color = Ours.accent,
+                            modifier = Modifier.clickable { bulkCategorize = true },
+                        )
+                        MicroLabel(
+                            "Delete",
+                            color = Ours.negative,
+                            modifier = Modifier.clickable { viewModel.deleteSelectedWithUndo() },
+                        )
+                        MicroLabel(
+                            "Done",
+                            color = Ours.textSecondary,
+                            modifier = Modifier.clickable { viewModel.clearSelection() },
+                        )
+                        return@Row
+                    }
                     val shown = state.groups.sumOf { it.transactions.size }
                     MicroLabel("$shown ${if (shown == 1) "entry" else "entries"}")
                     // The only permanent way into Sort.
@@ -211,7 +258,16 @@ fun TransactionsScreen(
                                 txn = txn,
                                 showOwner = state.hasPartner,
                                 divider = txn.id != group.transactions.last().id,
-                                onClick = { onTransactionClick(txn.id) },
+                                selectionMode = state.selectionMode,
+                                selected = txn.id in state.selected,
+                                // In selection mode a tap picks rather than opens.
+                                // Opening a detail screen mid-selection would lose the
+                                // set you had built up.
+                                onClick = {
+                                    if (state.selectionMode) viewModel.toggleSelected(txn.id)
+                                    else onTransactionClick(txn.id)
+                                },
+                                onLongClick = { viewModel.toggleSelected(txn.id) },
                                 onDelete = { viewModel.deleteWithUndo(txn.id) },
                                 onCategorize = { pendingCategoryFor = txn.id },
                             )
@@ -220,6 +276,17 @@ fun TransactionsScreen(
                 }
             }
         }
+    }
+
+    if (bulkCategorize) {
+        CategoryPickerSheet(
+            title = "Category for ${state.selected.size} transactions",
+            onDismiss = { bulkCategorize = false },
+            onPick = { category ->
+                viewModel.recategorizeSelected(category)
+                bulkCategorize = false
+            },
+        )
     }
 
     pendingCategoryFor?.let { txnId ->

@@ -42,7 +42,13 @@ data class TransactionsUiState(
     val hasPartner: Boolean = false,
     /** Everyone with a row, self first — one filter chip each. */
     val people: List<HouseholdMember> = emptyList(),
-)
+    /** Ids picked for a bulk action. Empty means the list is in its normal state. */
+    val selected: Set<String> = emptySet(),
+    /** Set briefly after a bulk delete so the UI can offer one Undo for all of them. */
+    val lastBulkDeleted: List<String> = emptyList(),
+) {
+    val selectionMode: Boolean get() = selected.isNotEmpty()
+}
 
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
@@ -54,16 +60,30 @@ class TransactionsViewModel @Inject constructor(
     private val memberFilter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
     private val categoryFilter = MutableStateFlow<Category?>(null)
     private val lastDeleted = MutableStateFlow<String?>(null)
+    private val selection = MutableStateFlow<Set<String>>(emptySet())
+    private val lastBulkDeleted = MutableStateFlow<List<String>>(emptyList())
+
+    /** Everything that is not a filter, bundled so the outer combine stays within five. */
+    private data class Aux(
+        val selfUid: String,
+        val deletedId: String?,
+        val selected: Set<String>,
+        val bulkDeleted: List<String>,
+    )
 
     val uiState: StateFlow<TransactionsUiState> = combine(
         repository.observeAll(),
         query,
         memberFilter,
         categoryFilter,
-        combine(prefs.selfUid, lastDeleted) { uid, deleted -> uid.orEmpty() to deleted },
-    ) { all, searchText, member, category, selfAndDeleted ->
-        val selfUid = selfAndDeleted.first
-        val deletedId = selfAndDeleted.second
+        combine(
+            prefs.selfUid, lastDeleted, selection, lastBulkDeleted,
+        ) { uid, deleted, selected, bulkDeleted ->
+            Aux(uid.orEmpty(), deleted, selected, bulkDeleted)
+        },
+    ) { all, searchText, member, category, aux ->
+        val selfUid = aux.selfUid
+        val deletedId = aux.deletedId
         val filtered = MonthlyAggregator
             .applyFilter(all, member, selfUid)
             .filter { category == null || it.category == category }
@@ -86,6 +106,12 @@ class TransactionsViewModel @Inject constructor(
             categoryFilter = category,
             groups = groupByDay(filtered),
             lastDeletedId = deletedId,
+            // Narrowed to what is actually on screen. Selecting three rows, then
+            // typing a search that hides two of them, must not leave a bulk delete
+            // armed against rows the reader can no longer see — "3 selected" has to
+            // mean three visible rows.
+            selected = aux.selected intersect filtered.map { it.id }.toSet(),
+            lastBulkDeleted = aux.bulkDeleted,
         )
     }
         // Aggregation runs off the main thread. combine/map inside stateIn execute on
@@ -128,6 +154,63 @@ class TransactionsViewModel @Inject constructor(
     fun recategorize(txnId: String, category: Category) {
         viewModelScope.launch { repository.recategorize(txnId, category) }
     }
+
+    // ─── Selection ──────────────────────────────────────────────────────────
+
+    fun toggleSelected(txnId: String) {
+        val current = selection.value
+        selection.value =
+            if (txnId in current) current - txnId else current + txnId
+    }
+
+    fun clearSelection() { selection.value = emptySet() }
+
+    /** Every row currently on screen — after search and filters, not the whole ledger. */
+    fun selectAllVisible() {
+        selection.value = uiState.value.groups.flatMap { group -> group.transactions }
+            .map { it.id }.toSet()
+    }
+
+    /**
+     * Apply one category to everything selected, without learning a rule.
+     *
+     * [Sort][com.manuel.ours.ui.screens.sort.SortViewModel] learns, because there the
+     * group *is* one merchant and the choice genuinely says "this shop is Groceries".
+     * A hand-made selection can span a dozen unrelated payees, so learning from it would
+     * teach the app that whichever merchant happened to be first now explains all of
+     * them — and that rule would then file every future payment from that shop wrongly.
+     */
+    fun recategorizeSelected(category: Category) {
+        // uiState, not `selection` — the state holds the set narrowed to visible rows,
+        // and acting on anything wider would touch rows the reader cannot see.
+        val ids = uiState.value.selected.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            ids.forEach { id -> repository.recategorize(id, category, learn = false) }
+            selection.value = emptySet()
+        }
+    }
+
+    fun deleteSelectedWithUndo() {
+        val ids = uiState.value.selected.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            ids.forEach { id -> repository.delete(id) }
+            selection.value = emptySet()
+            lastBulkDeleted.value = ids
+        }
+    }
+
+    fun undoBulkDelete() {
+        val ids = lastBulkDeleted.value
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            ids.forEach { id -> repository.restore(id) }
+            lastBulkDeleted.value = emptyList()
+        }
+    }
+
+    fun clearBulkUndo() { lastBulkDeleted.value = emptyList() }
 
     fun setSplitType(txnId: String, splitType: SplitType) {
         viewModelScope.launch { repository.setSplitType(txnId, splitType) }
