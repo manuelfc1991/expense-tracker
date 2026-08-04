@@ -92,9 +92,23 @@ fun OursNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination
 
-    val showBottomBar = tabs.any { tab ->
-        currentRoute?.hierarchy?.any { it.route == tab.route } == true
-    }
+    /**
+     * Screens that keep the tabs, beyond the tabs themselves.
+     *
+     * A transaction opens by tapping a row in a list, so it reads as a place inside
+     * Activity rather than somewhere you were taken — and people reach for Home. With
+     * the bar gone the only way out is a back arrow in the far corner, and tapping
+     * where Home should be does nothing at all, which is indistinguishable from the app
+     * having frozen.
+     *
+     * Onboarding, the QR scanner and the focused flows keep it hidden: those are jobs
+     * you are part-way through, and a tab tap mid-job loses the work.
+     */
+    val keepsTabs = setOf(Routes.TXN_DETAIL)
+
+    val showBottomBar = currentRoute?.hierarchy?.any { destination ->
+        tabs.any { it.route == destination.route } || destination.route in keepsTabs
+    } == true
 
     Scaffold(
         bottomBar = {
