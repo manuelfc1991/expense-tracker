@@ -3,6 +3,7 @@ package com.manuel.ours.di
 import android.content.Context
 import androidx.room.Room
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import com.manuel.ours.data.db.SharedRuleDao
 import com.manuel.ours.data.db.AppDatabase
 import com.manuel.ours.data.db.BudgetDao
 import com.manuel.ours.data.db.DatabaseKey
@@ -43,7 +44,14 @@ object AppModule {
 
         return Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME)
             .openHelperFactory(factory)
-            .fallbackToDestructiveMigration()
+            .addMigrations(AppDatabase.MIGRATION_2_3)
+            // No destructive fallback.
+            //
+            // It used to be here, and it is a loaded gun pointed at the only copy of
+            // the household's history: any future version bump that forgot a migration
+            // would drop every table without a word. Crashing on a missing migration is
+            // far better than silently deleting six months of bank records, because a
+            // crash is noticed and reversible and a wipe is neither.
             .build()
     }
 
@@ -54,6 +62,7 @@ object AppModule {
     @Provides fun provideBudgetDao(db: AppDatabase): BudgetDao = db.budgetDao()
     @Provides fun provideMemberDao(db: AppDatabase): MemberDao = db.memberDao()
     @Provides fun provideReminderDao(db: AppDatabase): ReminderDao = db.reminderDao()
+    @Provides fun provideSharedRuleDao(db: AppDatabase): SharedRuleDao = db.sharedRuleDao()
 
     @Provides
     @Singleton

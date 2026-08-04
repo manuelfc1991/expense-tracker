@@ -77,6 +77,75 @@ class SheetTransport @Inject constructor(
         }
     }
 
+    /** A rule the phones teach each other: (type, key) -> value, last write wins. */
+    data class Rule(
+        val type: String,
+        val key: String,
+        val value: String,
+        val updatedAt: Long,
+        val deviceId: String,
+    )
+
+    suspend fun pushRules(rules: List<Rule>): Int = withContext(Dispatchers.IO) {
+        if (rules.isEmpty()) return@withContext 0
+        val url = prefs.sheetUrlString() ?: return@withContext 0
+        val body = JSONObject()
+            .put("action", "pushRules")
+            .put(
+                "rules",
+                JSONArray(
+                    rules.map {
+                        JSONObject()
+                            .put("type", it.type)
+                            .put("key", it.key)
+                            .put("value", it.value)
+                            .put("updatedAt", it.updatedAt)
+                            .put("deviceId", it.deviceId)
+                    }
+                )
+            )
+            .toString()
+        val response = post(url, body)
+        if (!response.optBoolean("ok", false)) {
+            error("Sheet rejected the rules: ${response.optString("error", "unknown")}")
+        }
+        response.optInt("written", 0)
+    }
+
+    /**
+     * Returns an empty list rather than throwing when the sheet has no rules tab.
+     *
+     * A sheet still running an older script answers "Unknown action: pullRules", and
+     * that must not take the whole sync down with it — the ledger is the point, rules
+     * are a bonus.
+     */
+    suspend fun pullRules(): List<Rule> = withContext(Dispatchers.IO) {
+        val url = prefs.sheetUrlString() ?: return@withContext emptyList()
+        val response = runCatching {
+            post(url, JSONObject().put("action", "pullRules").toString())
+        }.getOrNull() ?: return@withContext emptyList()
+        if (!response.optBoolean("ok", false)) return@withContext emptyList()
+
+        val arr = response.optJSONArray("rules") ?: JSONArray()
+        buildList {
+            for (i in 0 until arr.length()) {
+                val o = runCatching { arr.getJSONObject(i) }.getOrNull() ?: continue
+                val type = o.optString("type").trim()
+                val key = o.optString("key").trim()
+                if (type.isBlank() || key.isBlank()) continue
+                add(
+                    Rule(
+                        type = type,
+                        key = key,
+                        value = o.optString("value").trim(),
+                        updatedAt = o.optLong("updatedAt", 0L),
+                        deviceId = o.optString("deviceId"),
+                    )
+                )
+            }
+        }
+    }
+
     override suspend fun push(deviceId: String, events: List<SyncEvent>) =
         withContext(Dispatchers.IO) {
             if (events.isEmpty()) return@withContext

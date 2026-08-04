@@ -15,6 +15,7 @@
 
 var EVENTS = 'events';
 var LEDGER = 'ledger';
+var RULES  = 'rules';
 
 var EVENT_HEADERS = [
   'rowId', 'eventId', 'txnId', 'op', 'lamport', 'deviceId',
@@ -29,6 +30,20 @@ var LEDGER_HEADERS = [
   'Paid by', 'Counts as', 'Bank', 'Account', 'Reference'
 ];
 
+/**
+ * Rules the phones teach each other, so a fix made on one reaches the other without
+ * anybody installing anything.
+ *
+ * Two kinds, and both have cost this household real money to learn:
+ *   sender   | KGBANK    | Kerala Gramin Bank   <- an unknown header is silently ignored,
+ *                                                  which once discarded 466 messages
+ *   merchant | keecheril | FOOD                 <- one categorisation, taught once
+ *
+ * Editable by hand. This tab is the one place a person can teach the app something
+ * without a new APK, so it is deliberately plain: type, key, value.
+ */
+var RULE_HEADERS = ['type', 'key', 'value', 'updatedAt', 'deviceId'];
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   // Two phones can post at the same moment. Without a lock, concurrent appends
@@ -41,6 +56,8 @@ function doPost(e) {
       case 'reset': return reply(reset());
       case 'push': return reply(push(req));
       case 'pull': return reply(pull(req));
+      case 'pushRules': return reply(pushRules(req));
+      case 'pullRules': return reply(pullRules());
       default:     return reply({ ok: false, error: 'Unknown action: ' + req.action });
     }
   } catch (err) {
@@ -180,6 +197,72 @@ function existingEventIds(sheet) {
   var ids = sheet.getRange(2, 2, last - 1, 1).getValues();
   for (var i = 0; i < ids.length; i++) if (ids[i][0]) seen[String(ids[i][0])] = true;
   return seen;
+}
+
+function rulesSheet() { return sheetNamed(RULES, RULE_HEADERS); }
+
+/**
+ * Upserts by (type, key). Last writer wins on updatedAt, so a phone that has been
+ * offline cannot undo a newer correction by pushing a stale copy of the same rule.
+ */
+function pushRules(req) {
+  var rules = req.rules || [];
+  if (!rules.length) return { ok: true, written: 0 };
+
+  var sheet = rulesSheet();
+  var last = sheet.getLastRow();
+  var existing = last > 1
+    ? sheet.getRange(2, 1, last - 1, RULE_HEADERS.length).getValues()
+    : [];
+
+  var indexByKey = {};
+  for (var i = 0; i < existing.length; i++) {
+    indexByKey[existing[i][0] + '\u0000' + existing[i][1]] = i;
+  }
+
+  var appended = [], written = 0;
+  for (var j = 0; j < rules.length; j++) {
+    var r = rules[j];
+    if (!r.type || !r.key) continue;
+    var row = [r.type, r.key, r.value, Number(r.updatedAt) || 0, r.deviceId || ''];
+    var at = indexByKey[r.type + '\u0000' + r.key];
+    if (at === undefined) {
+      indexByKey[r.type + '\u0000' + r.key] = existing.length;
+      existing.push(row);
+      appended.push(row);
+      written++;
+    } else if (row[3] > (Number(existing[at][3]) || 0)) {
+      existing[at] = row;
+      sheet.getRange(2 + at, 1, 1, RULE_HEADERS.length).setValues([row]);
+      written++;
+    }
+  }
+  if (appended.length) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, appended.length, RULE_HEADERS.length)
+      .setValues(appended);
+  }
+  return { ok: true, written: written };
+}
+
+function pullRules() {
+  var sheet = rulesSheet();
+  var last = sheet.getLastRow();
+  if (last < 2) return { ok: true, rules: [] };
+
+  var values = sheet.getRange(2, 1, last - 1, RULE_HEADERS.length).getValues();
+  var out = [];
+  for (var i = 0; i < values.length; i++) {
+    var v = values[i];
+    if (!v[0] || !v[1]) continue;
+    out.push({
+      type: String(v[0]).trim(),
+      key: String(v[1]).trim(),
+      value: String(v[2]).trim(),
+      updatedAt: Number(v[3]) || 0,
+      deviceId: String(v[4] || '')
+    });
+  }
+  return { ok: true, rules: out };
 }
 
 function eventsSheet() { return sheetNamed(EVENTS, EVENT_HEADERS); }

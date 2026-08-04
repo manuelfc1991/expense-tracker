@@ -200,6 +200,10 @@ interface MerchantRuleDao {
 
     @Query("SELECT COUNT(*) FROM merchant_rules")
     suspend fun count(): Int
+
+    /** The user's own corrections — the only ones worth teaching the other phone. */
+    @Query("SELECT * FROM merchant_rules WHERE userDefined = 1")
+    suspend fun userDefined(): List<MerchantRuleEntity>
 }
 
 @Dao
@@ -251,4 +255,19 @@ interface ReminderDao {
 
     @Query("UPDATE reminders SET dismissed = 1 WHERE id = :id")
     suspend fun dismiss(id: String)
+}
+
+@Dao
+interface SharedRuleDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(rules: List<SharedRuleEntity>)
+
+    @Query("SELECT * FROM shared_rules")
+    suspend fun all(): List<SharedRuleEntity>
+
+    @Query("SELECT * FROM shared_rules WHERE type = :type")
+    suspend fun ofType(type: String): List<SharedRuleEntity>
+
+    @Query("SELECT * FROM shared_rules WHERE updatedAt > :since")
+    suspend fun changedSince(since: Long): List<SharedRuleEntity>
 }

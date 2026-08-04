@@ -91,13 +91,32 @@ object BankRules {
      * Normalises "AD-HDFCBK", "VM-HDFCBK-S", "hdfcbk" to a known rule.
      * Returns null for unknown or personal-number senders.
      */
+    /**
+     * Headers taught through the sheet, on top of the compiled table.
+     *
+     * A header this app has never heard of is dropped before parsing even starts —
+     * which is how one missing line silently discarded 466 of this household's
+     * messages. Adding a row to the sheet's `rules` tab now fixes that on every phone
+     * without anybody installing a new APK.
+     */
+    @Volatile
+    private var taught: Map<String, String> = emptyMap()
+
+    fun setTaughtSenders(headerToBank: Map<String, String>) {
+        taught = headerToBank.mapKeys { it.key.uppercase().trim() }
+    }
+
     fun forSender(sender: String): BankRule? {
         val header = normaliseHeader(sender) ?: return null
         byHeader[header]?.let { return it }
+        taught[header]?.let { return BankRule(bank = it, headers = listOf(header)) }
         // Fall back to a prefix match — banks add suffixes like "HDFCBKS", "SBIINBA".
-        return byHeader.entries.firstOrNull { (key, _) ->
+        byHeader.entries.firstOrNull { (key, _) ->
             header.startsWith(key) || key.startsWith(header)
-        }?.value
+        }?.let { return it.value }
+        return taught.entries.firstOrNull { (key, _) ->
+            header.startsWith(key) || key.startsWith(header)
+        }?.let { BankRule(bank = it.value, headers = listOf(it.key)) }
     }
 
     /**

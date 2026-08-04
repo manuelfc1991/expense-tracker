@@ -38,6 +38,7 @@ class OursApp : Application(), Configuration.Provider {
     @Inject lateinit var repository: TransactionRepository
     @Inject lateinit var householdRepository: com.manuel.ours.data.repo.HouseholdRepository
     @Inject lateinit var database: AppDatabase
+    @Inject lateinit var rulesRepository: com.manuel.ours.data.repo.RulesRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -74,6 +75,9 @@ class OursApp : Application(), Configuration.Provider {
             // parser mistook for a payee, which a rescan cannot reach because dedup
             // returns before the merchant is reconsidered.
             repository.repairAccountLabelMerchants()
+            // Sender and category rules taught through the sheet, applied before the
+            // first message of this launch is parsed.
+            rulesRepository.apply()
             // Backfill the synchronous mirror for anyone who onboarded before it
             // existed, so they don't get sent back through onboarding once.
             if (prefs.onboarded.first() && !prefs.onboardedBlocking()) {

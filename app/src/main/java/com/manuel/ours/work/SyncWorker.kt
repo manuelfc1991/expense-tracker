@@ -38,6 +38,7 @@ class SyncWorker @AssistedInject constructor(
     private val engine: SyncEngine,
     private val nearbyTransport: NearbyTransport,
     private val sheetTransport: SheetTransport,
+    private val rulesRepository: com.manuel.ours.data.repo.RulesRepository,
 ) : CoroutineWorker(context, params) {
 
     /**
@@ -72,6 +73,10 @@ class SyncWorker @AssistedInject constructor(
             }
         }
 
+
+        // Rules ride along with the sheet, after the ledger has moved. Failure here is
+        // swallowed inside the repository: the ledger is the job, rules are a bonus.
+        if (sheetTransport.isAvailable()) rulesRepository.sync(sheetTransport)
 
         if (nearbyTransport.isAvailable()) {
             attempted++

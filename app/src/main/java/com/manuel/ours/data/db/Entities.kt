@@ -138,6 +138,29 @@ data class MerchantRuleEntity(
     val userDefined: Boolean,
 )
 
+/**
+ * A rule the phones teach each other through the sheet.
+ *
+ * Two kinds, keyed by [type]:
+ *  - `sender`  : a TRAI header the built-in table does not know, e.g. KGBANK ->
+ *                "Kerala Gramin Bank". An unrecognised header is dropped before
+ *                parsing, which is how one missing line once discarded 466 messages.
+ *  - `merchant`: a merchant substring to a category, so a correction made on one
+ *                phone stops being made again on the other.
+ *
+ * Deliberately *not* regexes. The parser's patterns are code and stay code; what
+ * travels here is the data a person could reasonably type into a spreadsheet.
+ */
+@Entity(tableName = "shared_rules", primaryKeys = ["type", "ruleKey"])
+data class SharedRuleEntity(
+    val type: String,
+    val ruleKey: String,
+    val value: String,
+    /** Last-write-wins. A phone offline for a week cannot undo a newer correction. */
+    val updatedAt: Long,
+    val deviceId: String,
+)
+
 @Entity(tableName = "budgets")
 data class BudgetEntity(
     /** Category name, or "__OVERALL__" for the monthly cap. */
