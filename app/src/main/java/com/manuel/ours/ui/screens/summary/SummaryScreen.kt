@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -31,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.MonthlyAggregator
+import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.export.ExportManager
@@ -42,10 +45,12 @@ import com.manuel.ours.ui.components.LabelOverValue
 import com.manuel.ours.ui.components.Meter
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.QuietEmpty
+import com.manuel.ours.ui.components.StatementEntry
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.MonthTitleStyle
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.colorForCategory
+import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -112,6 +117,10 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
             if (summary.excluded.isNotEmpty()) {
                 item { NotCounted(summary) }
+            }
+
+            if (state.recurring.isNotEmpty()) {
+                item { Committed(state.recurring, state.committedMonthlyPaise) }
             }
 
             item {
@@ -319,4 +328,58 @@ private fun Modifier.dashedBorder(color: Color, radius: Dp) = this.drawBehind {
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()), 0f),
         ),
     )
+}
+
+/**
+ * Money already spoken for — the charges that will arrive again whether or not anyone
+ * decides anything this month.
+ *
+ * It sits below the month's retrospective because it is the only forward-looking thing
+ * on the screen: everything above answers "where did it go", this answers "what is
+ * already committed". The header total reconciles cadences, so a quarterly charge and a
+ * monthly one can be read against each other rather than added as written.
+ *
+ * Nothing here is declared by a bank — it is all inferred from repetition, so the count
+ * of sightings is shown. Three is the fewest that can be told from a coincidence, and a
+ * reader deserves to know when a claim rests on exactly three.
+ */
+@Composable
+private fun Committed(
+    charges: List<RecurringCharge>,
+    monthlyTotalPaise: Long,
+    modifier: Modifier = Modifier,
+) {
+    val dateFormat = remember { DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()) }
+
+    Column(
+        modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        // "Committed", not "Every month" — the rows carry mixed cadences, so a header
+        // reading "every month" above a row reading "every week" makes the reader do
+        // arithmetic to work out whether the total is monthly. The unit goes on the
+        // total instead, where it is unambiguous.
+        TapeHeader(
+            "Committed",
+            trailing = "${Money.whole(monthlyTotalPaise)} a month",
+            modifier = Modifier.padding(horizontal = EDGE),
+        )
+        charges.forEachIndexed { index, charge ->
+            val next = remember(charge.nextExpectedAt) {
+                Instant.ofEpochMilli(charge.nextExpectedAt)
+                    .atZone(MonthlyAggregator.ZONE).toLocalDate().format(dateFormat)
+            }
+            StatementEntry(
+                title = charge.merchant,
+                caption = "${charge.cadence.label} · next $next · seen ${charge.occurrences}×",
+                paise = charge.typicalPaise,
+                category = charge.category,
+                divider = index != charges.lastIndex,
+                // The entry does not inset itself — the caller owns the edge, as on
+                // Home. Without this the avatar sits on the screen border and the
+                // amount is clipped.
+                modifier = Modifier.padding(horizontal = EDGE),
+            )
+        }
+    }
 }

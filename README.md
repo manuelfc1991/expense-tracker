@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 188 tests
+./gradlew testDebugUnitTest    # 203 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -96,6 +96,36 @@ Everything else still goes to the sheet in the clear — amounts, merchants, acc
 tails, who paid. That is inherent: a ledger you can open and repair is a ledger anyone
 holding the `/exec` URL can read. Only the bank's raw text is held back, because it is
 the one field that adds running balances and full account context on top.
+
+---
+
+## Recurring charges
+
+Nothing declares a subscription — no bank SMS says "this is one". So `RecurringDetector`
+infers it from repetition: the same payee, for about the same amount, at about the same
+interval, at least three times.
+
+Three is the floor because two of anything is a coincidence. Cadences are weekly,
+monthly, quarterly and yearly, each with its own tolerance — monthly needs the widest,
+since calendar months are 28–31 days. A gap of roughly twice the period is read as one
+missed sighting rather than a broken pattern, so a single unparsed message does not hide
+a subscription that has run for two years.
+
+**Amount consistency is the guard that matters.** Weekly groceries at one shop repeat as
+regularly as Netflix does, but for wildly different amounts — and they are not a
+commitment you could cancel. Requiring every amount within 25% of the median is what
+separates a subscription from a habit; the tolerance is wide enough to survive a utility
+bill's seasonal swing and the odd price rise. The figure shown is the median, so one
+price rise does not drag it to something never actually charged.
+
+The bias is deliberately conservative. A false positive is worse than a miss: claiming a
+₹4,000 monthly commitment that does not exist makes every other number in the app
+suspect, while missing one subscription costs the reader nothing they had before.
+
+Summary shows them under **Committed**, ranked by monthly equivalent so cadences can be
+read against one another — a ₹1,200 quarterly charge and a ₹400 monthly one are the same
+commitment. Detection needs history, so a household that has just set a tracking start
+date will see nothing until a few months have accrued.
 
 ---
 
@@ -180,28 +210,26 @@ you can get permanently stuck behind is worse than no lock.
 **Known gaps, honestly:**
 
 1. **Bulk multi-select** is not built.
-2. **No recurring or subscription detection.** A monthly Netflix debit is just another
-   row; the app never learns that it repeats or warns you before the next one.
-3. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
+2. **No two *phones* have exchanged a log.** `MergeConvergenceTest` proves the merge
    converges under adversarial ordering, and a phone and an emulator have exchanged
    ledgers bidirectionally through a live Sheet deployment — so device-to-device
    convergence has been observed, just never between two real handsets.
-4. **Nearby is unproven against a second device.** Its runtime permissions were declared
+3. **Nearby is unproven against a second device.** Its runtime permissions were declared
    but never requested until recently, so every entry point silently reported "no peers".
    The request now happens and the preconditions check out on one phone; a real exchange
    has not been seen.
-5. **Three or more people is supported and tested, but not on real phones.** The
+4. **Three or more people is supported and tested, but not on real phones.** The
    filter, the split bar, the merge and both transports all take an arbitrary number
    of members; `AggregationTest` covers a household of three, and a four-member
    household has been exercised end to end across one phone and three emulators. Only
    one of those four was a real handset.
-6. **A retired month is retired for the household, not just for you.** The tracking start
+5. **A retired month is retired for the household, not just for you.** The tracking start
    date bounds what syncs as well as what is drawn, so months before it never reach the
    other phone. That is deliberate — but it means a partner joining later receives only
    what is in scope, and the two settings pull against each other.
-7. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
+6. **Shared-folder sync has no UI.** The transport and its tests exist; nothing can
    choose a folder, so the path is dormant. See above.
-8. **Nearby sync is unproven against a second device.** Its runtime permissions were
+7. **Nearby sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
    happens when you enable it, and the preconditions check out on one phone, but a real

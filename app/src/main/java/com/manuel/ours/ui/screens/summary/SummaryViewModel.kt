@@ -5,23 +5,25 @@ import androidx.lifecycle.viewModelScope
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
+import com.manuel.ours.domain.RecurringCharge
+import com.manuel.ours.domain.RecurringDetector
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.domain.model.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import java.time.YearMonth
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
-import java.time.YearMonth
-import javax.inject.Inject
 
 data class SummaryUiState(
     val loading: Boolean = true,
@@ -29,7 +31,12 @@ data class SummaryUiState(
     val filter: MemberFilter = MemberFilter.Everyone,
     val summary: MonthSummary? = null,
     val transactions: List<Transaction> = emptyList(),
-)
+    /** Charges that repeat, inferred from history rather than declared anywhere. */
+    val recurring: List<RecurringCharge> = emptyList(),
+) {
+    /** What the recurring charges add up to per month, cadences reconciled. */
+    val committedMonthlyPaise: Long get() = recurring.sumOf { it.monthlyEquivalentPaise }
+}
 
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
@@ -49,7 +56,18 @@ class SummaryViewModel @Inject constructor(
             val prior = ym.minusMonths(1)
             val priorRange = MonthlyAggregator.monthRange(prior.year, prior.monthValue)
 
-            repository.observeBetween(priorRange.first, current.last + 1).map { all ->
+            // A pattern needs history to be visible at all: three monthly sightings is
+            // four months of data, and a yearly charge needs two years before it can be
+            // told apart from a coincidence. The window is anchored to the month being
+            // viewed rather than to today, so stepping back a year shows what was
+            // recurring *then* instead of what recurs now.
+            val lookback = ym.minusMonths(RECURRING_LOOKBACK_MONTHS)
+            val lookbackStart =
+                MonthlyAggregator.monthRange(lookback.year, lookback.monthValue).first
+
+            repository.observeBetween(
+                minOf(lookbackStart, priorRange.first), current.last + 1,
+            ).map { all ->
                 val currentTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in current }, memberFilter, selfUid,
                 )
@@ -64,6 +82,11 @@ class SummaryViewModel @Inject constructor(
                         ym.year, ym.monthValue, currentTxns, priorTxns,
                     ),
                     transactions = currentTxns,
+                    // Detected over the whole window, but through the same member
+                    // filter — "Aarav's commitments" has to mean Aarav's.
+                    recurring = RecurringDetector.detect(
+                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
+                    ),
                 )
             }
         }
@@ -83,6 +106,14 @@ class SummaryViewModel @Inject constructor(
         // looks like data loss.
         val now = YearMonth.from(LocalDate.now(MonthlyAggregator.ZONE))
         yearMonth.value = if (value.isAfter(now)) now else value
+    }
+
+    private companion object {
+        /**
+         * Two years. Enough for a yearly charge to be seen three times, which is the
+         * fewest that can be told apart from a coincidence.
+         */
+        const val RECURRING_LOOKBACK_MONTHS = 24L
     }
 
     fun previousMonth() = setMonth(yearMonth.value.minusMonths(1))
