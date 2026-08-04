@@ -246,6 +246,16 @@ class SmsParser {
         isCardBillPayment(lower) -> Kind.CARD_BILL_PAYMENT
         isSavingsDeposit(lower) -> Kind.SAVINGS_DEPOSIT
         "standing instruction" in lower || "scheduled payment" in lower -> Kind.TRANSFER
+        // A UPI debit is a payment, even when the bank names no payee.
+        //
+        // Kerala Gramin writes every one of them as "credited to a/c no. XXXX" with a
+        // UPI reference — the destination account, never the shop. Those are real
+        // purchases, and treating them as transfers would drop a household's largest
+        // single group of spending out of its own total. A transfer between your own
+        // accounts is worded differently: NEFT, IMPS, "transferred", a standing
+        // instruction, all of which are caught above or carry no UPI reference.
+        type == TxnType.DEBIT && merchant == null && UPI_REFERENCE.containsMatchIn(lower) ->
+            Kind.PURCHASE
         // A debit whose payee we could not name. Often moving money to your own
         // account — we cannot tell, so it gets flagged rather than silently counted
         // as though you spent it at a shop.
@@ -499,7 +509,13 @@ class SmsParser {
             "your", "you", "a/c", "ac", "acct", "account", "the", "my", "our",
             "this", "that", "it", "us", "me", "self", "card", "bank", "upi",
             "your a/c", "your account", "your card",
+            // Whole phrases, for the banks that write "credited to a/c no. XXXX".
+            "a/c no", "a/c no.", "ac no", "acct no", "account no", "a/c number",
         )
+
+        /** "UPI Ref no 5190…", "UPI/519012345678", "Ref no. 5190…" beside a UPI mention. */
+        val UPI_REFERENCE = Regex("upi[\\s/:-]*(?:ref(?:erence)?)?[\\s.no:-]*\\d{6,}|\\bupi\\b.*\\bref\\b",
+            RegexOption.IGNORE_CASE)
 
         val AMOUNT_LIKE_MERCHANT = Regex("^(?:rs|inr|₹)\\.?\\s*[0-9,.]+$", RegexOption.IGNORE_CASE)
 
@@ -541,8 +557,15 @@ class SmsParser {
                 RegexOption.IGNORE_CASE,
             ),
             // "to JOHN DOE on" / "towards ELECTRICITY BILL"
+            // The negative lookahead mirrors the one on the "from" pattern below.
+            // Kerala Gramin words every UPI debit as "credited to a/c no. XXXX",
+            // naming the destination *account* rather than the person — and without
+            // this guard that phrase yields a merchant literally called "a/c no",
+            // which is what 189 of one household's 460 transactions were filed under.
             Regex(
-                "\\b(?:to|towards|in favour of|favouring)\\s+([A-Za-z0-9][A-Za-z0-9 &._'*\\-/]{1,47}?)" +
+                "\\b(?:to|towards|in favour of|favouring)\\s+" +
+                    "(?!a/c\\b|ac\\b|acct\\b|account\\b|your\\b)" +
+                    "([A-Za-z0-9][A-Za-z0-9 &._'*\\-/]{1,47}?)" +
                     "(?=$MERCHANT_END)",
                 RegexOption.IGNORE_CASE,
             ),

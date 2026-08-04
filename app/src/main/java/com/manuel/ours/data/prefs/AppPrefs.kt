@@ -46,6 +46,7 @@ class AppPrefs @Inject constructor(
         val SHEET_CURSOR = longPreferencesKey("sheet_cursor")
         val TRACKING_START_AT = longPreferencesKey("tracking_start_at")
         val BARE_CREDITS_RELABELLED = booleanPreferencesKey("bare_credits_relabelled")
+        val ACCOUNT_LABELS_REPAIRED = booleanPreferencesKey("account_labels_repaired")
         val FIRED_BUDGET_ALERTS = stringSetPreferencesKey("fired_budget_alerts")
     }
 
@@ -87,6 +88,13 @@ class AppPrefs @Inject constructor(
 
     /** For the backfill worker, which runs outside a composition. */
     suspend fun trackingStartAtOnce(): Long = trackingStartAt.first()
+
+    suspend fun accountLabelsRepaired(): Boolean =
+        context.dataStore.data.map { it[Keys.ACCOUNT_LABELS_REPAIRED] ?: false }.first()
+
+    suspend fun setAccountLabelsRepaired() {
+        context.dataStore.edit { it[Keys.ACCOUNT_LABELS_REPAIRED] = true }
+    }
 
     suspend fun bareCreditsRelabelled(): Boolean =
         context.dataStore.data.map { it[Keys.BARE_CREDITS_RELABELLED] ?: false }.first()

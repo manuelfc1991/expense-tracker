@@ -379,6 +379,33 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
+     * Repairs rows whose merchant is an account label rather than a payee.
+     *
+     * Kerala Gramin words every UPI debit as "credited to a/c no. XXXX", and until the
+     * `to` pattern learned to refuse that, the phrase became the merchant. On the first
+     * real household it was 189 of 460 rows — all filed under a shop called "a/c no",
+     * all stranded in Other because no rule can ever match it, and all inflating one
+     * imaginary merchant into the biggest in the ledger.
+     *
+     * A rescan cannot fix these: dedup recognises the message and returns before the
+     * merchant is reconsidered. So it is a one-shot pass over the stored rows, and the
+     * honest replacement is the same placeholder an unnamed debit gets today.
+     */
+    suspend fun repairAccountLabelMerchants(): Int {
+        if (prefs.accountLabelsRepaired()) return 0
+        val stale = txnDao.withMerchantIn(ACCOUNT_LABELS)
+        for (row in stale) {
+            saveAndLog(
+                row.copy(merchant = UNKNOWN_PAYEE).toDomain(),
+                row.dedupeKey,
+                row.dedupeAt,
+            )
+        }
+        prefs.setAccountLabelsRepaired()
+        return stale.size
+    }
+
+    /**
      * Rebuilds this device's outbound log from the transactions table.
      *
      * "Re-upload everything" cannot simply un-mark events as unsent, because there may
@@ -441,6 +468,11 @@ class TransactionRepository @Inject constructor(
     suspend fun deleteMerchantRule(id: Long) = merchantRuleDao.delete(id)
 
     companion object {
+        /** Lower-cased and trimmed. Whatever a bank calls the destination account. */
+        val ACCOUNT_LABELS = listOf(
+            "a/c no", "a/c no.", "ac no", "acct no", "account no", "a/c number", "a/c",
+        )
+
         /** Shown when the bank's message names no payee at all. */
         const val UNKNOWN_PAYEE = "Unknown payee"
         const val MIN_RULE_LENGTH = 3

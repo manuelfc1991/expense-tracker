@@ -70,6 +70,10 @@ class OursApp : Application(), Configuration.Provider {
             // bank's name. A rescan cannot fix these — dedup recognises them and returns
             // before the merchant is reconsidered.
             repository.relabelBareCredits()
+            // Same shape of one-shot: rows whose merchant is an account label the
+            // parser mistook for a payee, which a rescan cannot reach because dedup
+            // returns before the merchant is reconsidered.
+            repository.repairAccountLabelMerchants()
             // Backfill the synchronous mirror for anyone who onboarded before it
             // existed, so they don't get sent back through onboarding once.
             if (prefs.onboarded.first() && !prefs.onboardedBlocking()) {

@@ -27,6 +27,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = 'CREDIT' AND merchant = :placeholder AND bank IS NOT NULL AND deleted = 0")
     suspend fun creditsWithPlaceholderPayee(placeholder: String): List<TransactionEntity>
 
+    /** Rows whose "merchant" is really an account label the parser mistook for a payee. */
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND LOWER(TRIM(merchant)) IN (:labels)")
+    suspend fun withMerchantIn(labels: List<String>): List<TransactionEntity>
+
     @Query(
         """
         SELECT * FROM transactions
