@@ -55,13 +55,25 @@ class SyncEngine @Inject constructor(
                 prefs.writeLamport(clock.current)
             }
 
-            // Push only what has not been sent. Transports are required to be
-            // idempotent, but re-uploading the whole history every round would make
-            // a spreadsheet grow without bound.
+            // Push only what has not been sent, in batches, marking each as it lands.
+            //
+            // One request for the whole backlog is fine until the backlog is large, and
+            // then it fails permanently: a re-upload of ~470 events took the Apps Script
+            // past the 40s read timeout, the push threw, `markPushed` never ran, and the
+            // next sync retried the identical 470. Every attempt failed the same way, so
+            // the sheet stayed frozen at whatever it held before while the app reported
+            // success. Nothing in the log said otherwise, because the failure is carried
+            // in the outcome rather than the worker result.
+            //
+            // Marking each batch as it lands is the other half. A failure now costs the
+            // remaining batches, not the ones already delivered, so a big first sync
+            // makes progress across several attempts instead of starting over.
             val unpushed = eventDao.unpushed().map { it.toSyncEvent() }
-            if (unpushed.isNotEmpty()) {
-                transport.push(deviceId, unpushed)
-                eventDao.markPushed(unpushed.map { it.eventId })
+            var pushed = 0
+            for (batch in unpushed.chunked(PUSH_BATCH)) {
+                transport.push(deviceId, batch)
+                eventDao.markPushed(batch.map { it.eventId })
+                pushed += batch.size
             }
 
             prefs.setLastSync(System.currentTimeMillis(), transport.name)
@@ -70,7 +82,7 @@ class SyncEngine @Inject constructor(
                 transport = transport.name,
                 pulledEvents = remote.size,
                 appliedEvents = applied,
-                pushedEvents = unpushed.size,
+                pushedEvents = pushed,
             )
         } catch (e: Exception) {
             SyncOutcome(transport.name, 0, 0, 0, e)
@@ -168,6 +180,13 @@ class SyncEngine @Inject constructor(
     )
 
     companion object {
+        /**
+         * Events per push request. Small enough that a batch completes well inside the
+         * transport's read timeout, large enough that a first sync is not hundreds of
+         * round trips against an Apps Script that cold-starts each one.
+         */
+        private const val PUSH_BATCH = 100
+
         private const val COMPACT_THRESHOLD = 2000
     }
 }

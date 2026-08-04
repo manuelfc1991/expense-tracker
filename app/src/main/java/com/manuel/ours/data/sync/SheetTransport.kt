@@ -43,10 +43,6 @@ class SheetTransport @Inject constructor(
         !prefs.sheetUrlString().isNullOrBlank()
 
     /**
-     * Empties the sheet so a rebuild replaces its contents instead of appending beside
-     * them. Only ever called from an explicit "re-upload everything".
-     */
-    /**
      * Why a clear failed, not merely that it did.
      *
      * A sheet deployed before `reset` existed answers "Unknown action: reset", which is
@@ -64,6 +60,10 @@ class SheetTransport @Inject constructor(
         data class Failed(val reason: String?) : ResetResult
     }
 
+    /**
+     * Empties the sheet so a rebuild replaces its contents instead of appending beside
+     * them. Only ever called from an explicit "re-upload everything".
+     */
     suspend fun reset(): ResetResult = withContext(Dispatchers.IO) {
         val url = prefs.sheetUrlString()
             ?: return@withContext ResetResult.Failed("no sheet URL is set")
@@ -94,8 +94,10 @@ class SheetTransport @Inject constructor(
                 event.copy(payload = event.payload?.copy(rawSms = null))
             }
 
-            // Batched into one request. A row-per-request design would take 170
-            // round-trips on a first sync, and Apps Script cold-starts each one.
+            // One request per call. SyncEngine decides how many events that is —
+            // a row-per-request design would take hundreds of round trips against a
+            // script that cold-starts each one, and the whole backlog in a single
+            // request runs past the read timeout once the history is large.
             val body = JSONObject()
                 .put("action", "push")
                 .put("deviceId", deviceId)
@@ -157,7 +159,10 @@ class SheetTransport @Inject constructor(
             requestMethod = "POST"
             doOutput = true
             connectTimeout = 20_000
-            readTimeout = 40_000
+            // Generous, because Apps Script cold-starts and takes a script lock before
+            // it writes a row. The engine batches pushes so no single request should come
+            // near this, but a cold deployment on a slow connection genuinely can.
+            readTimeout = 60_000
             setRequestProperty("Content-Type", "text/plain;charset=UTF-8")
             // Apps Script answers /exec with a 302 to a googleusercontent.com host
             // that actually carries the body. Without following it you get an empty
