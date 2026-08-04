@@ -273,6 +273,7 @@ class HomeViewModel @Inject constructor(
         merchant: String,
         category: Category,
         splitType: SplitType,
+        note: String,
     ) {
         viewModelScope.launch {
             transactionRepository.addManual(
@@ -281,7 +282,9 @@ class HomeViewModel @Inject constructor(
                 merchant = merchant,
                 category = category,
                 occurredAt = System.currentTimeMillis(),
-                note = null,
+                // Blank stays null, so an untouched field does not store an
+                // empty string that later reads as a note nobody wrote.
+                note = note.trim().takeIf { it.isNotEmpty() },
                 splitType = splitType,
             )
         }

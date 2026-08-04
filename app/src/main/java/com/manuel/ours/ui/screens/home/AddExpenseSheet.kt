@@ -5,6 +5,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,9 +21,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,15 +47,22 @@ import com.manuel.ours.ui.theme.Ours
  * Amount first and very large, on the numeric keypad: it is the only field you always
  * know, and it is also the only one that cannot be guessed later.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddExpenseSheet(
     onDismiss: () -> Unit,
-    onConfirm: (amountPaise: Long, merchant: String, category: Category, split: SplitType) -> Unit,
+    onConfirm: (
+        amountPaise: Long,
+        merchant: String,
+        category: Category,
+        split: SplitType,
+        note: String,
+    ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var amountText by remember { mutableStateOf("") }
     var merchant by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(Category.FOOD) }
     var splitType by remember { mutableStateOf(SplitType.SHARED) }
 
@@ -98,13 +107,17 @@ fun AddExpenseSheet(
             )
 
             TapeHeader("Category")
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()),
+            // Wrapped, like the detail screen and the capture sheet. A sideways strip
+            // showed five of these and gave no sign the rest existed, which is how a
+            // ledger fills up with Other.
+            FlowRow(
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Category.entries.filter { it != Category.INCOME }.forEach { option ->
                     OursChip(
-                        label = option.label,
+                        label = option.shortLabel,
                         selected = category == option,
                         icon = BiIcon.forCategory(option),
                         onClick = { category = option },
@@ -126,12 +139,25 @@ fun AddExpenseSheet(
                 )
             }
 
+            // Cash is the reason this screen exists — the one kind of spending no bank
+            // will ever text about — so the note carries what the missing message
+            // would have said.
+            Field(
+                value = note,
+                onValueChange = { note = it },
+                placeholder = "Add a note — optional",
+            )
+
             AccentButton(
                 label = if (amountPaise != null && amountPaise > 0) {
                     "Add ${Money.format(amountPaise)}"
                 } else "Add expense",
                 enabled = valid,
-                onClick = { onConfirm(amountPaise ?: 0L, merchant.trim(), category, splitType) },
+                onClick = {
+                    onConfirm(
+                        amountPaise ?: 0L, merchant.trim(), category, splitType, note.trim(),
+                    )
+                },
             )
         }
     }

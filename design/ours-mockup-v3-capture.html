@@ -278,7 +278,135 @@
 
 </div>
 
-<h2>2 · Why the grid, not the strip</h2>
+<h2>2 · Adding one by hand</h2>
+<p class="note">
+  The same sheet, asked in the other direction. A captured payment already knows its
+  amount and payee and only needs sorting; a manual one knows nothing and has to ask —
+  but it should ask in the same shape, with the same grid and the same optional note,
+  because it is the same job.
+  <br><br>
+  <b>The amount leads.</b> It is the only field that cannot be guessed, corrected later
+  from a message, or left out, so the keyboard opens on it and everything else is
+  optional. An expense with an amount and nothing else is still a true row; one with a
+  payee and no amount is not a row at all.
+</p>
+
+<div class="row">
+
+  <!-- add, empty -->
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>9:02</span><span>LTE 100%</span></div>
+      <div class="ui" style="gap:10px">
+        <div class="hd"><span class="mark">OURS</span></div>
+        <div style="height:120px"></div>
+      </div>
+      <div class="veil">
+        <div class="sheet">
+          <div class="grab"></div>
+          <span class="lbl">NEW EXPENSE</span>
+
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-family:var(--mono);font-size:30px;color:var(--lab)">₹</span>
+            <span class="cap-amt" style="color:var(--lab)">0</span>
+          </div>
+
+          <div class="field">
+            <span class="ph">Who did you pay?</span>
+            <span class="edit">OPTIONAL</span>
+          </div>
+
+          <span class="lbl">CATEGORY</span>
+          <div class="catgrid">
+            <span class="chip">Food</span><span class="chip">Groceries</span><span class="chip">Transport</span>
+            <span class="chip">Shopping</span><span class="chip">Bills</span><span class="chip">Rent</span>
+            <span class="chip">Health</span><span class="chip">Education</span><span class="chip">Fun</span>
+            <span class="chip">Travel</span><span class="chip">Savings</span><span class="chip">EMI</span>
+          </div>
+
+          <span class="lbl">COUNTS AS</span>
+          <div class="chiprow">
+            <span class="chip on">Household</span>
+            <span class="chip">Personal</span>
+          </div>
+
+          <div class="field">
+            <span class="ph">Add a note</span>
+            <span class="edit">OPTIONAL</span>
+          </div>
+
+          <div class="acts">
+            <span class="btn gho">Cancel</span>
+            <span class="btn pri" style="opacity:.45">Save</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      <b>Save is dim until there is an amount.</b> Nothing else is required, and the
+      sheet does not pretend otherwise by marking three fields optional and then
+      refusing to proceed.
+    </p>
+  </div>
+
+  <!-- add, filled -->
+  <div>
+    <div class="dev"><div class="scr">
+      <div class="sbar"><span>9:03</span><span>LTE 100%</span></div>
+      <div class="ui" style="gap:10px">
+        <div class="hd"><span class="mark">OURS</span></div>
+        <div style="height:120px"></div>
+      </div>
+      <div class="veil">
+        <div class="sheet">
+          <div class="grab"></div>
+          <span class="lbl">NEW EXPENSE</span>
+
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-family:var(--mono);font-size:30px">₹</span>
+            <span class="cap-amt">420</span>
+          </div>
+
+          <div class="field">
+            <span class="val">Auto to station</span>
+            <span class="edit">EDIT</span>
+          </div>
+
+          <span class="lbl">CATEGORY</span>
+          <div class="catgrid">
+            <span class="chip">Food</span><span class="chip">Groceries</span><span class="chip on">Transport</span>
+            <span class="chip">Shopping</span><span class="chip">Bills</span><span class="chip">Rent</span>
+            <span class="chip">Health</span><span class="chip">Education</span><span class="chip">Fun</span>
+            <span class="chip">Travel</span><span class="chip">Savings</span><span class="chip">EMI</span>
+          </div>
+
+          <span class="lbl">COUNTS AS</span>
+          <div class="chiprow">
+            <span class="chip">Household</span>
+            <span class="chip on">Personal</span>
+          </div>
+
+          <div class="field">
+            <span class="val">Cash, no message for this</span>
+            <span class="edit">NOTE</span>
+          </div>
+
+          <div class="acts">
+            <span class="btn gho">Cancel</span>
+            <span class="btn pri">Save</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note" style="margin-top:12px;max-width:330px">
+      Cash is the reason this screen exists — the one kind of spending no bank will ever
+      text about. The note carries what the missing message would have said.
+    </p>
+  </div>
+
+</div>
+
+<h2>3 · Why the grid, not the strip</h2>
 <p class="note">
   The detail screen scrolls its categories horizontally today, which shows five of
   fifteen. The two thirds off-screen are invisible: there is no scrollbar on Android and
@@ -291,7 +419,7 @@
   fix one thing and leave.
 </p>
 
-<h2>3 · The note</h2>
+<h2>4 · The note</h2>
 <p class="note">
   <b>Optional, and never in the way.</b> Empty, it is one dim line saying "Add a note".
   Filled, it sits under the amount where it explains it. It is the only field in this

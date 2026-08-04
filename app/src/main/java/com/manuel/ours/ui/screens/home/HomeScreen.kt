@@ -321,8 +321,8 @@ fun HomeScreen(
     if (showAddSheet) {
         AddExpenseSheet(
             onDismiss = { showAddSheet = false },
-            onConfirm = { amount, merchant, category, split ->
-                viewModel.addQuickExpense(amount, merchant, category, split)
+            onConfirm = { amount, merchant, category, split, note ->
+                viewModel.addQuickExpense(amount, merchant, category, split, note)
                 showAddSheet = false
             },
         )
