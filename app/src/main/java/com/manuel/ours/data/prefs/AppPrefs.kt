@@ -40,6 +40,7 @@ class AppPrefs @Inject constructor(
         val THEME = stringPreferencesKey("theme")
         val NEARBY_ALWAYS = booleanPreferencesKey("nearby_always")
         val APP_LOCK = booleanPreferencesKey("app_lock")
+        val CAPTURE_POPUP = booleanPreferencesKey("capture_popup")
         val INGEST_SOURCE = stringPreferencesKey("ingest_source")
         val BACKFILL_DONE = booleanPreferencesKey("backfill_done")
         val SEEDED = booleanPreferencesKey("seeded")
@@ -113,6 +114,16 @@ class AppPrefs @Inject constructor(
         context.dataStore.data.map { it[Keys.LAST_SYNC_TRANSPORT] }
     val nearbyAlways: Flow<Boolean> = context.dataStore.data.map { it[Keys.NEARBY_ALWAYS] ?: false }
     val appLock: Flow<Boolean> = context.dataStore.data.map { it[Keys.APP_LOCK] ?: false }
+
+    /**
+     * Show the capture prompt over other apps, rather than only inside this one.
+     *
+     * Off by default. It needs a permission the user has to grant by hand, and a prompt
+     * that appears over another app uninvited is the kind of thing that should be asked
+     * for rather than assumed.
+     */
+    val capturePopup: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.CAPTURE_POPUP] ?: false }
     val backfillDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.BACKFILL_DONE] ?: false }
 
     /**
@@ -291,6 +302,10 @@ class AppPrefs @Inject constructor(
 
     suspend fun setAppLock(value: Boolean) {
         context.dataStore.edit { it[Keys.APP_LOCK] = value }
+    }
+
+    suspend fun setCapturePopup(value: Boolean) {
+        context.dataStore.edit { it[Keys.CAPTURE_POPUP] = value }
     }
 
     suspend fun setIngestSource(source: IngestSource) {

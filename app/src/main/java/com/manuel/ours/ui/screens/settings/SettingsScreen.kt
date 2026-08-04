@@ -3,6 +3,7 @@ package com.manuel.ours.ui.screens.settings
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -658,6 +659,51 @@ fun SettingsScreen(
                 )
             }
 
+            // ─── Capture ─────────────────────────────────────────────────
+            item { Section("When a payment happens") }
+
+            item {
+                val context = LocalContext.current
+                // Asked on every recomposition, not stored: this permission lives in
+                // system settings and can be taken away there without telling the app.
+                val permitted = viewModel.canPopUp()
+
+                Panel {
+                    ToggleRow(
+                        title = "Popup over other apps",
+                        caption = "Asks for the category, the payee's name and a note the " +
+                            "moment a payment lands — over whatever you are doing, so it " +
+                            "works when Ours is closed. The notification still arrives " +
+                            "either way.",
+                        checked = state.capturePopup && permitted,
+                        onCheckedChange = { wanted ->
+                            viewModel.setCapturePopup(wanted)
+                            // Android has no runtime dialog for this one; the only way to
+                            // grant it is the system page, so send them straight there
+                            // rather than leaving a switch that turns itself back off.
+                            if (wanted && !permitted) {
+                                runCatching {
+                                    context.startActivity(
+                                        Intent(
+                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            Uri.parse("package:${context.packageName}"),
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                    )
+                    if (state.capturePopup && !permitted) {
+                        Note(
+                            "Android has not granted \"Display over other apps\" yet, so " +
+                                "only the notification will appear. Turn the switch on " +
+                                "again to open the system page.",
+                            tone = Ours.warning,
+                        )
+                    }
+                }
+            }
+
             // ─── Updates ─────────────────────────────────────────────────
             item { Section("Updates") }
 
@@ -812,6 +858,14 @@ fun SettingsScreen(
                             caption = "Shows the expense prompt for a made-up ₹151 " +
                                 "payment. Nothing is saved.",
                             onClick = viewModel::sendTestNotification,
+                        )
+                        SettingRow(
+                            title = "Test the popup",
+                            caption = "Press Home straight after tapping this. The popup " +
+                                "appears in three seconds, using your newest entry — it " +
+                                "stays away while Ours is in front, which is the part " +
+                                "worth testing.",
+                            onClick = viewModel::sendTestPopup,
                         )
                     }
                 }

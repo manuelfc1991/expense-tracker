@@ -14,6 +14,17 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      Draws the capture prompt over whatever you are doing when a payment lands.
+
+      Not for drawing a window of our own: this is what Android accepts as permission to
+      START AN ACTIVITY FROM THE BACKGROUND. Without it, an app woken by an incoming SMS
+      may post a notification and nothing else — the launch is silently dropped. The user
+      grants it by hand in system settings; there is no runtime dialog for it, and the app
+      falls back to the notification alone when it is not granted.
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!--
       Sideloaded by design: this app is not on Play, so it updates itself from its own
       public repository. Only ever used to open the system installer on a file the app
@@ -74,6 +85,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          The capture prompt as its own window.
+
+          excludeFromRecents and an empty taskAffinity keep it out of the recents list and
+          out of MainActivity's task, so dismissing the prompt returns you to whatever you
+          were doing rather than to a half-open copy of the app.
+        -->
+        <activity
+            android:name=".ui.capture.CaptureActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Ours.Capture" />
 
         <!-- Live SMS ingestion -->
         <receiver

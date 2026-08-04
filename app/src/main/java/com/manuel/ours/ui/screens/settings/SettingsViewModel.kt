@@ -26,6 +26,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -46,6 +47,7 @@ data class SettingsUiState(
     val sheetStatus: String? = null,
     val sheetTesting: Boolean = false,
     val appLock: Boolean = false,
+    val capturePopup: Boolean = false,
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val ingestSource: IngestSource = IngestSource.SMS,
     /** Epoch millis before which nothing is counted; 0 means the whole history. */
@@ -109,6 +111,27 @@ class SettingsViewModel @Inject constructor(
                 com.manuel.ours.domain.model.Category.TRANSPORT,
             ),
         )
+    }
+
+    /**
+     * Fires the real capture popup, after long enough to leave the app.
+     *
+     * The pause is the test. The popup deliberately does nothing while Ours is in front —
+     * the in-app sheet covers that case — so a version that appeared instantly would only
+     * prove the parts that were never in doubt. Three seconds is enough to press Home,
+     * which puts the app in exactly the state a real payment finds it in.
+     *
+     * It uses the newest real transaction rather than a made-up one, because the popup
+     * reads the row back from the database and would have nothing to draw otherwise.
+     * Nothing is written; the popup can only change a row you already have.
+     */
+    fun sendTestPopup() {
+        viewModelScope.launch {
+            val newest = transactionRepository.observeAll().first()
+                .maxByOrNull { it.occurredAt } ?: return@launch
+            kotlinx.coroutines.delay(3_000)
+            ingestNotifier.popUp(newest)
+        }
     }
 
     private val _update =
@@ -182,7 +205,8 @@ class SettingsViewModel @Inject constructor(
                 combine(
                     prefs.developerMode,
                     transactionRepository.observeAll(),
-                ) { dev, all -> dev to all.size },
+                    prefs.capturePopup,
+                ) { dev, all, popup -> Triple(dev, all.size, popup) },
             ) { sheet, start, owner, pending, dev ->
                 listOf(sheet, start, owner, pending, dev)
             },
@@ -201,7 +225,7 @@ class SettingsViewModel @Inject constructor(
         val isOwner = paths[2] as Boolean
         val pendingDeletes = paths[3] as Int
         @Suppress("UNCHECKED_CAST")
-        val dev = paths[4] as Pair<Boolean, Int>
+        val dev = paths[4] as Triple<Boolean, Int, Boolean>
 
         SettingsUiState(
             members = members,
@@ -226,6 +250,7 @@ class SettingsViewModel @Inject constructor(
             pendingDeleteRequests = pendingDeletes,
             developerMode = dev.first,
             transactionCount = dev.second,
+            capturePopup = dev.third,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -391,6 +416,19 @@ class SettingsViewModel @Inject constructor(
     fun setAppLock(value: Boolean) {
         viewModelScope.launch { prefs.setAppLock(value) }
     }
+
+    fun setCapturePopup(value: Boolean) {
+        viewModelScope.launch { prefs.setCapturePopup(value) }
+    }
+
+    /**
+     * Whether Android currently lets the popup appear.
+     *
+     * Read on every recomposition rather than stored, because it changes in system
+     * settings — outside this app entirely — and nothing tells us when it does.
+     */
+    fun canPopUp(): Boolean =
+        com.manuel.ours.ui.capture.CaptureActivity.permitted(getApplication())
 
     fun setIngestSource(source: IngestSource) {
         viewModelScope.launch { prefs.setIngestSource(source) }

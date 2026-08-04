@@ -1,7 +1,7 @@
 {
-  "versionCode": 21,
-  "versionName": "3.0",
-  "notes": "The new-expense notification now actually appears — it was being discarded by Android before anything was drawn.",
+  "versionCode": 22,
+  "versionName": "3.1",
+  "notes": "A payment can now open the capture prompt over whatever you are doing, so you can name and categorise it without opening Ours. Turn it on in Settings.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25378164
+  "sizeBytes": 25378476
 }

@@ -3,6 +3,7 @@ package com.manuel.ours
 import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
+import android.os.Bundle
 import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Build
@@ -60,6 +61,7 @@ class OursApp : Application(), Configuration.Provider {
         super.onCreate()
         createNotificationChannels()
         keepWidgetInStep()
+        trackForeground()
 
         scope.launch {
             // The clock must be restored before anything mints an event, or a restart
@@ -154,6 +156,51 @@ class OursApp : Application(), Configuration.Provider {
                 override fun onInvalidated(tables: Set<String>) {
                     widgetRefreshes.tryEmit(Unit)
                 }
+            }
+        )
+    }
+
+    /**
+     * Whether any screen of this app is currently in front of the user.
+     *
+     * Used to decide between the two capture prompts: with the app open the in-app sheet
+     * is already there and launching a second window over it would be absurd; with the
+     * app closed the popup is the only one that can appear. Counting started activities
+     * rather than adding the lifecycle-process dependency for one boolean.
+     */
+    @Volatile
+    var inForeground: Boolean = false
+        private set
+
+    private fun trackForeground() {
+        registerActivityLifecycleCallbacks(
+            object : android.app.Application.ActivityLifecycleCallbacks {
+                private var started = 0
+
+                override fun onActivityStarted(activity: android.app.Activity) {
+                    started++
+                    inForeground = true
+                }
+
+                override fun onActivityStopped(activity: android.app.Activity) {
+                    started--
+                    if (started <= 0) {
+                        started = 0
+                        inForeground = false
+                    }
+                }
+
+                override fun onActivityCreated(
+                    activity: android.app.Activity,
+                    savedInstanceState: Bundle?,
+                ) = Unit
+                override fun onActivityResumed(activity: android.app.Activity) = Unit
+                override fun onActivityPaused(activity: android.app.Activity) = Unit
+                override fun onActivitySaveInstanceState(
+                    activity: android.app.Activity,
+                    outState: Bundle,
+                ) = Unit
+                override fun onActivityDestroyed(activity: android.app.Activity) = Unit
             }
         )
     }

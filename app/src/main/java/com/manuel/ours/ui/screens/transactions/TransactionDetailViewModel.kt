@@ -12,6 +12,21 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Loading and not-found are different answers, and the screen has to tell them apart.
+ *
+ * Collecting a `Transaction?` could not: the flow's initial value before the query
+ * returns is null, and so is the value for a row that does not exist. The screen treated
+ * both as "nothing to draw" and rendered an empty page — which is what you got by tapping
+ * a notification for a row the other phone had since deleted, and what the test
+ * notification produced every time, since its transaction is never saved at all.
+ */
+sealed interface DetailState {
+    data object Loading : DetailState
+    data object Missing : DetailState
+    data class Found(val txn: Transaction) : DetailState
+}
+
 @HiltViewModel
 class TransactionDetailViewModel @Inject constructor(
     private val repository: TransactionRepository,
@@ -25,7 +40,8 @@ class TransactionDetailViewModel @Inject constructor(
      * meant decrypting and mapping the whole table each time the detail screen
      * opened — and again on every write anywhere in the app.
      */
-    fun observe(txnId: String): Flow<Transaction?> = repository.observeById(txnId)
+    fun observe(txnId: String): Flow<DetailState> = repository.observeById(txnId)
+        .map { txn -> if (txn == null) DetailState.Missing else DetailState.Found(txn) }
 
     fun recategorize(txnId: String, category: Category) {
         // learn = true writes a merchant rule, so this merchant lands correctly

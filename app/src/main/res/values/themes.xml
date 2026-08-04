@@ -5,4 +5,22 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/surface</item>
     </style>
+
+    <!--
+      The capture popup's window: no surface of its own, dimmed behind.
+
+      windowIsTranslucent is what lets the app underneath keep drawing, which is the whole
+      point — the prompt is a layer over what you were doing, not a screen you navigated
+      to. The sheet's own rounded panel is drawn in Compose.
+    -->
+    <style name="Theme.Ours.Capture" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>
+    </style>
 </resources>

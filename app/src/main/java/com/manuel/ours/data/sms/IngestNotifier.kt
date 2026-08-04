@@ -15,6 +15,9 @@ import com.manuel.ours.data.db.ReminderEntity
 import com.manuel.ours.domain.BudgetAlerter
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.Transaction
+import com.manuel.ours.ui.capture.CaptureActivity
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,6 +40,7 @@ class IngestNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
     private val reminderDao: ReminderDao,
     private val budgetAlerter: BudgetAlerter,
+    private val prefs: com.manuel.ours.data.prefs.AppPrefs,
 ) {
 
     /**
@@ -86,6 +90,29 @@ class IngestNotifier @Inject constructor(
     }
 
     /**
+     * Opens the capture prompt over whatever the phone is showing, when allowed.
+     *
+     * Four things all have to be true, and the last two cannot be cached: the popup is
+     * switched on, the row is one nobody has categorised, Android still grants the
+     * overlay permission (it is revocable in system settings at any time), and no screen
+     * of this app is already in front — with Ours open the in-app sheet is showing the
+     * same prompt, and a second window over it would be absurd.
+     *
+     * Never replaces the notification. If the launch is refused, or the user swipes the
+     * popup away without deciding, the notification is still in the tray.
+     */
+    fun popUp(txn: Transaction) {
+        val app = context.applicationContext as? OursApp ?: return
+        if (app.inForeground) return
+        if (!runBlocking { prefs.capturePopup.first() }) return
+        if (!CaptureActivity.permitted(context)) return
+
+        // Android can still refuse the launch — the permission is necessary, not
+        // sufficient — and it throws rather than returning false when it does.
+        runCatching { context.startActivity(CaptureActivity.intent(context, txn.id)) }
+    }
+
+    /**
      * Heads-up notification with up to three one-tap category buttons.
      *
      * Three is not a design preference — Android renders at most three notification
@@ -97,6 +124,10 @@ class IngestNotifier @Inject constructor(
      * on every purchase.
      */
     fun notifyExpense(txn: Transaction, suggestions: List<Category>) {
+        // Only for a row nobody has categorised. A payment the app already understands
+        // has nothing to ask, and a popup that appears anyway is just an interruption.
+        if (txn.needsReview) popUp(txn)
+
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
 

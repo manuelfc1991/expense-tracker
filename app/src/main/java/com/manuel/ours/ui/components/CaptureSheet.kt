@@ -45,7 +45,7 @@ import com.manuel.ours.ui.theme.SheetAmountStyle
  * category; an unnamed debit leads with the question nobody else can answer, and offers
  * the destination account, because naming that once names every payment to it.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaptureSheet(
     txn: Transaction,
@@ -56,6 +56,32 @@ fun CaptureSheet(
     onNote: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Ours.surface,
+    ) {
+        CaptureSheetContent(txn, suggestions, onDismiss, onCategorize, onRename, onNote)
+    }
+}
+
+/**
+ * The body of the capture prompt, with no window of its own.
+ *
+ * Split out because the same content is shown two ways: as a bottom sheet inside the app,
+ * and as a standalone popup over whatever you were doing when the app is closed. Those
+ * need different containers — one is a ModalBottomSheet, the other is an activity with a
+ * transparent window — but they must not become different prompts.
+ */
+@Composable
+fun CaptureSheetContent(
+    txn: Transaction,
+    suggestions: List<Category>,
+    onDismiss: () -> Unit,
+    onCategorize: (Category) -> Unit,
+    onRename: (name: String, rememberAccount: Boolean) -> Unit,
+    onNote: (String) -> Unit,
+) {
     var showAllCategories by remember { mutableStateOf(false) }
     var renaming by remember { mutableStateOf<String?>(null) }
     var noting by remember { mutableStateOf<String?>(null) }
@@ -90,92 +116,86 @@ fun CaptureSheet(
         )
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Ours.surface,
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 15.dp).padding(bottom = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = 15.dp).padding(bottom = 26.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(11.dp),
-            ) {
-                CategoryAvatar(txn.category, size = 34.dp)
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(
-                        txn.merchant,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Ours.text,
-                    )
-                    MicroLabel(listOfNotNull(txn.bank, "just now").joinToString(" · "))
-                }
+            CategoryAvatar(txn.category, size = 34.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    txn.merchant,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Ours.text,
+                )
+                MicroLabel(listOfNotNull(txn.bank, "just now").joinToString(" · "))
             }
+        }
 
-            Text(
-                Money.whole(txn.amountPaise),
-                style = SheetAmountStyle,
-                color = Ours.text,
-                maxLines = 1,
+        Text(
+            Money.whole(txn.amountPaise),
+            style = SheetAmountStyle,
+            color = Ours.text,
+            maxLines = 1,
+        )
+
+        // Only asked when the bank left it unanswered. A named merchant has nothing
+        // to correct, and drawing the question anyway would make every payment look
+        // like it needed attention.
+        if (unnamed) {
+            MicroLabel("Who was this?")
+            SheetTapRow(
+                text = txn.counterpartyTail
+                    ?.let { "Tap to name — account ····$it" }
+                    ?: "Tap to name",
+                tag = "Name",
+                onClick = { renaming = txn.merchant },
             )
+        }
 
-            // Only asked when the bank left it unanswered. A named merchant has nothing
-            // to correct, and drawing the question anyway would make every payment look
-            // like it needed attention.
-            if (unnamed) {
-                MicroLabel("Who was this?")
-                SheetTapRow(
-                    text = txn.counterpartyTail
-                        ?.let { "Tap to name — account ····$it" }
-                        ?: "Tap to name",
-                    tag = "Name",
-                    onClick = { renaming = txn.merchant },
+        MicroLabel("Category")
+        if (showAllCategories) {
+            CategoryGrid(selected = txn.category, onSelect = onCategorize)
+        } else {
+            // The guesses first, because they are right most of the time and this
+            // sheet exists to be dismissed in one tap. The grid is one tap further
+            // for when they are not.
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                suggestions.forEach { option ->
+                    OursChip(
+                        label = option.shortLabel,
+                        selected = txn.category == option,
+                        icon = BiIcon.forCategory(option),
+                        onClick = { onCategorize(option) },
+                    )
+                }
+                OursChip(
+                    label = "All ›",
+                    selected = false,
+                    onClick = { showAllCategories = true },
                 )
             }
+        }
 
-            MicroLabel("Category")
-            if (showAllCategories) {
-                CategoryGrid(selected = txn.category, onSelect = onCategorize)
-            } else {
-                // The guesses first, because they are right most of the time and this
-                // sheet exists to be dismissed in one tap. The grid is one tap further
-                // for when they are not.
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    suggestions.forEach { option ->
-                        OursChip(
-                            label = option.shortLabel,
-                            selected = txn.category == option,
-                            icon = BiIcon.forCategory(option),
-                            onClick = { onCategorize(option) },
-                        )
-                    }
-                    OursChip(
-                        label = "All ›",
-                        selected = false,
-                        onClick = { showAllCategories = true },
-                    )
-                }
+        SheetTapRow(
+            text = txn.note?.takeIf { it.isNotBlank() } ?: "Add a note",
+            tag = if (txn.note.isNullOrBlank()) "Optional" else "Note",
+            filled = !txn.note.isNullOrBlank(),
+            onClick = { noting = txn.note.orEmpty() },
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            Box(Modifier.weight(1f)) {
+                // Dismissing marks nothing. The row stays in Sort, which is where
+                // an undecided payment belongs.
+                GhostButton(label = "Later", onClick = onDismiss)
             }
-
-            SheetTapRow(
-                text = txn.note?.takeIf { it.isNotBlank() } ?: "Add a note",
-                tag = if (txn.note.isNullOrBlank()) "Optional" else "Note",
-                filled = !txn.note.isNullOrBlank(),
-                onClick = { noting = txn.note.orEmpty() },
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                Box(Modifier.weight(1f)) {
-                    // Dismissing marks nothing. The row stays in Sort, which is where
-                    // an undecided payment belongs.
-                    GhostButton(label = "Later", onClick = onDismiss)
-                }
-                Box(Modifier.weight(1f)) {
-                    AccentButton(label = "Save", onClick = onDismiss)
-                }
+            Box(Modifier.weight(1f)) {
+                AccentButton(label = "Save", onClick = onDismiss)
             }
         }
     }

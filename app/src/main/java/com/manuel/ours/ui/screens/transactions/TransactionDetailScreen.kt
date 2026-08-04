@@ -53,6 +53,7 @@ import com.manuel.ours.ui.components.BiIconView
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
+import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
@@ -80,7 +81,9 @@ fun TransactionDetailScreen(
     onBack: () -> Unit,
     viewModel: TransactionDetailViewModel = hiltViewModel(),
 ) {
-    val txn by viewModel.observe(txnId).collectAsStateWithLifecycle(initialValue = null)
+    val state by viewModel.observe(txnId)
+        .collectAsStateWithLifecycle(initialValue = DetailState.Loading)
+    val txn = (state as? DetailState.Found)?.txn
     /** Non-null while the rename dialog is open; holds the text being edited. */
     var renaming by remember { mutableStateOf<String?>(null) }
     var editingAmount by remember { mutableStateOf<String?>(null) }
@@ -122,6 +125,35 @@ fun TransactionDetailScreen(
     }
 
     Scaffold(containerColor = Ours.ink) { padding ->
+        // A row can vanish while its notification is still in the tray — the other
+        // phone deleted it, or an approved delete synced across. Rendering nothing
+        // left a blank page with no way to tell a slow load from a missing row.
+        if (state is DetailState.Missing) {
+            Column(
+                Modifier.fillMaxSize().padding(padding),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    BiIconView(
+                        BiIcon.Back,
+                        contentDescription = "Back",
+                        tint = Ours.textSecondary,
+                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
+                    )
+                    Text("ENTRY", style = WordmarkStyle, color = Ours.text)
+                }
+                QuietEmpty(
+                    text = "This entry is no longer here",
+                    icon = BiIcon.NoResults,
+                    modifier = Modifier.padding(top = 32.dp),
+                )
+            }
+            return@Scaffold
+        }
         val current = txn ?: return@Scaffold
 
         Column(
