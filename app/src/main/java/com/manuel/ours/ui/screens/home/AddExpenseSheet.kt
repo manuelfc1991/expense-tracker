@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
+import com.manuel.ours.ui.components.CategoryGrid
 import com.manuel.ours.ui.components.AccentButton
 import com.manuel.ours.ui.components.BiIcon
 import com.manuel.ours.ui.components.MicroLabel
@@ -107,23 +108,11 @@ fun AddExpenseSheet(
             )
 
             TapeHeader("Category")
-            // Wrapped, like the detail screen and the capture sheet. A sideways strip
-            // showed five of these and gave no sign the rest existed, which is how a
-            // ledger fills up with Other.
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Category.entries.filter { it != Category.INCOME }.forEach { option ->
-                    OursChip(
-                        label = option.shortLabel,
-                        selected = category == option,
-                        icon = BiIcon.forCategory(option),
-                        onClick = { category = option },
-                    )
-                }
-            }
+            CategoryGrid(
+                selected = category,
+                onSelect = { category = it },
+                options = Category.entries.filter { it != Category.INCOME },
+            )
 
             TapeHeader("Counts as")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

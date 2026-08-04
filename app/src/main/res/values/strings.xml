@@ -67,4 +67,5 @@
 
     <!-- Widget -->
     <string name="widget_description">This month\'s spending at a glance</string>
+    <string name="notif_new_expense">New expense</string>
 </resources>

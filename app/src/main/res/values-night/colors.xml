@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="surface">#0F1115</color>
-    <color name="widget_bg">#1A1B22</color>
-    <color name="widget_text">#ECE6F5</color>
-    <color name="widget_text_dim">#A09AAC</color>
+    <!-- The dark scheme, taken from the same source as the Compose palette. -->
+    <color name="notif_bg">#131318</color>
+    <color name="notif_text">#F2F2F7</color>
+    <color name="notif_dim">#7C7C99</color>
+    <color name="notif_hair">#2A2A34</color>
+    <color name="notif_accent">#2F5BFF</color>
 </resources>

@@ -33,7 +33,17 @@ enum class MoneyFlow {
  * so the domain model stays free of presentation and there is no second, stale set of
  * glyphs for someone to render by accident.
  */
-enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING) {
+enum class Category(
+    val label: String,
+    val flow: MoneyFlow = MoneyFlow.SPENDING,
+    /**
+     * Set only where chopping [label] at its first word produces nonsense.
+     *
+     * "Between our accounts" became "Between", which on a chip beside Food and Rent
+     * reads as an unfinished sentence rather than a category.
+     */
+    private val short: String? = null,
+) {
     FOOD("Food & Dining"),
     GROCERIES("Groceries"),
     TRANSPORT("Transport & Fuel"),
@@ -42,7 +52,7 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
     RENT("Rent"),
     HEALTH("Health"),
     EDUCATION("Education"),
-    ENTERTAINMENT("Entertainment"),
+    ENTERTAINMENT("Entertainment", short = "Fun"),
     TRAVEL("Travel"),
     // Savings and investments: an FD, RD or SIP moves money, it doesn't spend it.
     INVESTMENTS("Savings & Investments", MoneyFlow.SAVING),
@@ -74,12 +84,28 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
      * Identified by the pair, never by a single message — see
      * `TransactionRepository.markSelfTransfers`.
      */
-    SELF_TRANSFER("Between our accounts", MoneyFlow.NEUTRAL),
-    CARD_PAYMENT("Card bill payment"),
+    SELF_TRANSFER("Between our accounts", MoneyFlow.NEUTRAL, short = "Ours"),
+    CARD_PAYMENT("Card bill payment", short = "Card bill"),
     INCOME("Income", MoneyFlow.INCOMING),
     OTHER("Other");
 
     companion object {
+        /**
+         * What the category grid offers, in the order the design draws it.
+         *
+         * [INCOME] is absent because the grid only ever appears on a debit, and
+         * [OTHER] because it is where a row lands when nothing has been decided —
+         * offering it as a choice invites filing things there deliberately, which is
+         * the opposite of what the grid is for.
+         */
+        val PICKABLE: List<Category> = listOf(
+            FOOD, GROCERIES, TRANSPORT,
+            SHOPPING, BILLS, RENT,
+            HEALTH, EDUCATION, ENTERTAINMENT,
+            TRAVEL, INVESTMENTS, EMI,
+            TRANSFERS, CARD_PAYMENT, SELF_TRANSFER,
+        )
+
         fun fromNameOrOther(name: String?): Category =
             entries.firstOrNull { it.name == name } ?: OTHER
 
@@ -102,6 +128,8 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
 
     val countsAsSpending: Boolean get() = flow == MoneyFlow.SPENDING
 
+
+
     /**
      * The label without its qualifier — "Food", not "Food & Dining".
      *
@@ -109,7 +137,7 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
      * amount. "FOOD & DINING · 4:18 PM" spends a third of the line on a distinction
      * nobody is making at a glance.
      */
-    val shortLabel: String get() = label.substringBefore(" &").substringBefore(" ")
+    val shortLabel: String get() = short ?: label.substringBefore(" &").substringBefore(" ")
 }
 
 data class Transaction(

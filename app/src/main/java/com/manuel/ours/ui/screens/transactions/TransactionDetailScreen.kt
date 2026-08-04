@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
+import com.manuel.ours.ui.components.CategoryGrid
 import com.manuel.ours.ui.components.BiIcon
 import com.manuel.ours.ui.components.BiIconView
 import com.manuel.ours.ui.components.CategoryAvatar
@@ -214,27 +215,11 @@ fun TransactionDetailScreen(
             }
 
             TapeHeader("Category", modifier = Modifier.padding(horizontal = EDGE))
-            // Wrapped, not scrolled sideways.
-            //
-            // A horizontal strip showed five of fifteen categories, and Android draws
-            // no scrollbar — nothing indicated the row continued, so the ten off the
-            // right edge might as well not have existed. That is a large part of why
-            // 262 rows on a real ledger sat in Other: not because nothing fitted, but
-            // because nobody knew the rest were there.
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Category.entries.forEach { option ->
-                    OursChip(
-                        label = option.shortLabel,
-                        selected = current.category == option,
-                        icon = BiIcon.forCategory(option),
-                        onClick = { viewModel.recategorize(txnId, option) },
-                    )
-                }
-            }
+            CategoryGrid(
+                selected = current.category,
+                onSelect = { viewModel.recategorize(txnId, it) },
+                modifier = Modifier.padding(horizontal = EDGE),
+            )
 
             TapeHeader(
                 "Note",

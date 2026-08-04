@@ -4,4 +4,18 @@
     <color name="widget_bg">#FFFFFF</color>
     <color name="widget_text">#141019</color>
     <color name="widget_text_dim">#5D5A66</color>
+
+    <!--
+      The notification's own palette.
+
+      A notification is drawn by the system, not by Compose, so it cannot read the
+      theme the rest of the app is built from. These mirror the light scheme exactly,
+      with values-night carrying the dark one — otherwise the one surface the user sees
+      most often is the only one that looks like a different app.
+    -->
+    <color name="notif_bg">#FFFFFF</color>
+    <color name="notif_text">#101014</color>
+    <color name="notif_dim">#79798F</color>
+    <color name="notif_hair">#E3E3EA</color>
+    <color name="notif_accent">#2F5BFF</color>
 </resources>

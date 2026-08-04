@@ -139,23 +139,21 @@ fun CaptureSheet(
             }
 
             TapeHeader("Category")
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
+            if (showAllCategories) {
+                CategoryGrid(selected = txn.category, onSelect = onCategorize)
+            } else {
                 // The guesses first, because they are right most of the time and this
-                // whole screen exists to be dismissed in one tap.
-                val shown = if (showAllCategories) Category.entries.toList() else suggestions
-                shown.forEach { option ->
-                    OursChip(
-                        label = option.shortLabel,
-                        selected = txn.category == option,
-                        icon = BiIcon.forCategory(option),
-                        onClick = { onCategorize(option) },
-                    )
-                }
-                if (!showAllCategories) {
+                // sheet exists to be dismissed in one tap. The grid is one tap further
+                // for when they are not.
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    suggestions.forEach { option ->
+                        OursChip(
+                            label = option.shortLabel,
+                            selected = txn.category == option,
+                            icon = BiIcon.forCategory(option),
+                            onClick = { onCategorize(option) },
+                        )
+                    }
                     OursChip(
                         label = "All",
                         selected = false,
