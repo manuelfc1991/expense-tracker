@@ -84,6 +84,9 @@ class OursApp : Application(), Configuration.Provider {
             // One bill, two banks, two messages — the card's acknowledgement echoes a
             // debit the app already has.
             repository.repairCardBillEchoes()
+            // Not a one-shot: an accidental round trip can happen any week, and the
+            // pass costs nothing when there is no pair to find.
+            repository.markSelfTransfers()
             // Sender and category rules taught through the sheet, applied before the
             // first message of this launch is parsed.
             rulesRepository.apply()

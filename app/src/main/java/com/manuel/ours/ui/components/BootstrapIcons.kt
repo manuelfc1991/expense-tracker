@@ -90,6 +90,7 @@ object BiIcon {
         Category.INVESTMENTS -> R.drawable.bi_graph_up_arrow
         Category.EMI -> R.drawable.bi_bank
         Category.TRANSFERS -> R.drawable.bi_arrow_left_right
+        Category.SELF_TRANSFER -> R.drawable.bi_arrow_left_right
         Category.CARD_PAYMENT -> R.drawable.bi_credit_card
         Category.INCOME -> R.drawable.bi_cash_coin
         Category.OTHER -> R.drawable.bi_three_dots

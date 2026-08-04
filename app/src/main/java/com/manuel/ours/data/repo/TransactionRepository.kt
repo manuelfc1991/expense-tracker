@@ -550,6 +550,60 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
+     * Marks money that only moved between the household's own accounts.
+     *
+     * The signal is the account tail. This phone receives alerts for accounts the
+     * household owns, so the tail stored on a row is always *ours* — a debit carrying
+     * one tail and a credit carrying another, for the same amount minutes apart, is
+     * money that left one of your accounts and arrived in another. Nothing was earned
+     * and nothing was spent.
+     *
+     * Both legs are marked rather than deleted. They are real bank messages describing
+     * real movements, and a household that transferred by accident should be able to
+     * see that it happened; what they should not see is the month claiming they spent
+     * it. [Category.SELF_TRANSFER] is neutral on both sides of the ledger.
+     *
+     * Requires two *different*, non-blank tails. Same tail is a reversal, which the
+     * parser already rejects upstream, and a missing tail leaves no evidence the two
+     * accounts differ — guessing there would eventually pair a real expense with an
+     * unrelated credit of the same size.
+     */
+    suspend fun markSelfTransfers(): Int {
+        val live = txnDao.allLive()
+        val debits = live.filter {
+            it.type == TxnType.DEBIT.name && !it.accountTail.isNullOrBlank()
+        }
+        val credits = live.filter {
+            it.type == TxnType.CREDIT.name && !it.accountTail.isNullOrBlank()
+        }
+
+        var marked = 0
+        val used = mutableSetOf<String>()
+        for (debit in debits) {
+            if (debit.category == Category.SELF_TRANSFER.name) continue
+            val match = credits.firstOrNull { credit ->
+                credit.id !in used &&
+                    credit.category != Category.SELF_TRANSFER.name &&
+                    credit.amountPaise == debit.amountPaise &&
+                    credit.accountTail != debit.accountTail &&
+                    kotlin.math.abs(credit.occurredAt - debit.occurredAt) <= SELF_TRANSFER_WINDOW_MS
+            } ?: continue
+
+            used += match.id
+            for (row in listOf(debit, match)) {
+                saveAndLog(
+                    row.copy(category = Category.SELF_TRANSFER.name, needsReview = false)
+                        .toDomain(),
+                    row.dedupeKey,
+                    row.dedupeAt,
+                )
+                marked++
+            }
+        }
+        return marked
+    }
+
+    /**
      * Collapses card-bill pairs already in the database.
      *
      * One bill produces two messages from two banks — the account reports paying, the
@@ -752,6 +806,15 @@ class TransactionRepository @Inject constructor(
     suspend fun deleteMerchantRule(id: Long) = merchantRuleDao.delete(id)
 
     companion object {
+        /**
+         * How close the two legs of an own-account transfer must be.
+         *
+         * Wide enough for a bank to text the second leg late, narrow enough that a real
+         * expense and an unrelated credit of the same amount later that day are not
+         * quietly cancelled against each other.
+         */
+        const val SELF_TRANSFER_WINDOW_MS = 30 * 60 * 1000L
+
         /** Lower-cased and trimmed. Whatever a bank calls the destination account. */
         val ACCOUNT_LABELS = listOf(
             "a/c no", "a/c no.", "ac no", "acct no", "account no", "a/c number", "a/c",

@@ -62,6 +62,19 @@ enum class Category(val label: String, val flow: MoneyFlow = MoneyFlow.SPENDING)
     // rather than avoiding a double count. If a card whose purchases do arrive by SMS
     // is ever added, this is the line to revisit.
     TRANSFERS("Transfers"),
+    /**
+     * Money moved between two accounts the household owns.
+     *
+     * Distinct from [TRANSFERS], which counts, because the two are not the same event.
+     * A transfer with no named payee is overwhelmingly money sent to somebody else and
+     * is spending. Money that leaves one of your accounts and lands in another of your
+     * accounts minutes later is a wash: nothing was earned and nothing was spent, and
+     * counting either leg overstates both sides of the month.
+     *
+     * Identified by the pair, never by a single message — see
+     * `TransactionRepository.markSelfTransfers`.
+     */
+    SELF_TRANSFER("Between our accounts", MoneyFlow.NEUTRAL),
     CARD_PAYMENT("Card bill payment"),
     INCOME("Income", MoneyFlow.INCOMING),
     OTHER("Other");

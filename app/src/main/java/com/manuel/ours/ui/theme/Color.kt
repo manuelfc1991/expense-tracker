@@ -160,7 +160,8 @@ data class OursColors(
      */
     fun forCategory(category: Category): Color = when (category) {
         Category.INCOME -> positive
-        Category.TRANSFERS, Category.CARD_PAYMENT, Category.OTHER -> neutral
+        Category.TRANSFERS, Category.CARD_PAYMENT, Category.SELF_TRANSFER,
+        Category.OTHER -> neutral
         else -> categories[category] ?: neutral
     }
 }
