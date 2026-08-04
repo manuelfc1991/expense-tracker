@@ -28,8 +28,8 @@ android {
         applicationId = "com.manuel.ours"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -198,6 +198,10 @@ tasks.register("publishRelease") {
         val published = File(out, "Ours.apk")
         apk.copyTo(published, overwrite = true)
 
+        // raw.githubusercontent, not github.com/raw: the latter answers 404 for a
+        // binary blob served straight off a branch. Kept as a Kotlin comment — writing
+        // it inside the JSON produced a manifest no parser would accept, which broke
+        // the very check it was explaining.
         val code = android.defaultConfig.versionCode
         val name = android.defaultConfig.versionName
         File(out, "version.json").writeText(
@@ -206,9 +210,6 @@ tasks.register("publishRelease") {
               "versionCode": $code,
               "versionName": "$name",
               "notes": "",
-              // raw.githubusercontent, not github.com/raw: the latter answers 404 for
-              // a binary blob served straight off a branch, which is a very quiet way
-              // for an update to be found and never downloadable.
               "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
               "sizeBytes": ${published.length()}
             }

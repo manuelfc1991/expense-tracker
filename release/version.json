@@ -1,10 +1,7 @@
 {
-  "versionCode": 3,
-  "versionName": "1.2",
+  "versionCode": 4,
+  "versionName": "1.3",
   "notes": "",
-  // raw.githubusercontent, not github.com/raw: the latter answers 404 for
-  // a binary blob served straight off a branch, which is a very quiet way
-  // for an update to be found and never downloadable.
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25343004
 }

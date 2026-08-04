@@ -74,14 +74,20 @@ class SettingsViewModel @Inject constructor(
     private val _updateStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     val updateStatus: kotlinx.coroutines.flow.StateFlow<String?> = _updateStatus
 
+    /** True while a check or a download is in flight, so the UI can show it working. */
+    private val _updateBusy = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val updateBusy: kotlinx.coroutines.flow.StateFlow<Boolean> = _updateBusy
+
     private val _updateFile = kotlinx.coroutines.flow.MutableStateFlow<java.io.File?>(null)
     val updateFile: kotlinx.coroutines.flow.StateFlow<java.io.File?> = _updateFile
 
     fun checkForUpdate() {
         viewModelScope.launch {
+            _updateBusy.value = true
             _updateStatus.value = "Checking…"
             val result = updateChecker.check()
             _update.value = result
+            _updateBusy.value = false
             _updateStatus.value = when (result) {
                 is com.manuel.ours.data.update.UpdateChecker.Result.UpToDate ->
                     "You are on the latest build"
@@ -97,6 +103,7 @@ class SettingsViewModel @Inject constructor(
         val available = (_update.value as? com.manuel.ours.data.update.UpdateChecker.Result.Update)
             ?.available ?: return
         viewModelScope.launch {
+            _updateBusy.value = true
             _updateStatus.value = "Downloading…"
             updateChecker.download(available)
                 .onSuccess {
@@ -104,6 +111,7 @@ class SettingsViewModel @Inject constructor(
                     _updateStatus.value = "Ready to install"
                 }
                 .onFailure { _updateStatus.value = it.message ?: "Download failed" }
+            _updateBusy.value = false
         }
     }
 

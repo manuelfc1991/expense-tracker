@@ -660,6 +660,7 @@ fun SettingsScreen(
 
             item {
                 val updateStatus by viewModel.updateStatus.collectAsStateWithLifecycle()
+                val busy by viewModel.updateBusy.collectAsStateWithLifecycle()
                 val ready by viewModel.updateFile.collectAsStateWithLifecycle()
                 val result by viewModel.update.collectAsStateWithLifecycle()
 
@@ -696,7 +697,32 @@ fun SettingsScreen(
                         )
                     }
 
-                    updateStatus?.let { MicroLabel(it) }
+                    // Working, good news and bad news read differently at a glance.
+                    // A status line that is the same grey whether it found an update,
+                    // found nothing or failed makes the reader parse the sentence to
+                    // learn something the colour could have told them.
+                    updateStatus?.let { line ->
+                        val tone = when {
+                            busy -> Ours.accent
+                            line.startsWith("Could not") || line.contains("failed", true) ||
+                                line.contains("different key") -> Ours.negative
+                            line.startsWith("Ready") || line.contains("available") -> Ours.accent
+                            else -> Ours.positive
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (busy) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(12.dp),
+                                    strokeWidth = 1.5.dp,
+                                    color = Ours.accent,
+                                )
+                            }
+                            MicroLabel(line, color = tone)
+                        }
+                    }
                 }
             }
 
