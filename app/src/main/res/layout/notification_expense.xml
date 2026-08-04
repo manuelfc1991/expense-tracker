@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The expense notification, drawn to look like the app rather than like Android.
+  The **collapsed** expense notification — the one line you see without expanding.
 
-  RemoteViews, because a notification is inflated by the system process and cannot use
-  Compose. That constrains the vocabulary to a handful of classic views — which is fine,
-  since this layout is a caption, a figure and a rule, and those are the three things
-  every screen in this app is made of.
+  Android caps a custom collapsed view at 64dp and does not scroll, scale or warn: it
+  simply squeezes whatever it is given, so a taller layout loses its lower half and the
+  child straddling the cut is drawn as a sliver of glyph-bottoms. This is the shorter of
+  two layouts for that reason, not for taste. The full design lives in
+  notification_expense_big.xml, which the system uses when the notification is expanded.
+
+  No android:background. DecoratedCustomViewStyle draws the notification card itself, in
+  whatever colour the system's theme calls for; painting our own surface over it put a
+  hard black rectangle inside a grey card.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/notif_bg"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="13dp"
-    android:paddingBottom="13dp">
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <!-- Small caps over the value, never beside it: the eye lands on the figure and
          reads the caption only if it needs to. -->
@@ -30,43 +34,33 @@
         android:textColor="@color/notif_dim"
         android:text="@string/notif_new_expense" />
 
-    <TextView
-        android:id="@+id/notif_amount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:textSize="27sp"
-        android:fontFamily="@font/ours_mono_bold"
-        android:textColor="@color/notif_text"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/notif_merchant"
+    <!-- Figure and payee share a line here, baseline-aligned, because two stacked lines
+         would not survive the 64dp budget. Expanded, they get a line each. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:textSize="13sp"
-        android:textColor="@color/notif_text"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        android:orientation="horizontal"
+        android:layout_marginTop="2dp">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="10dp"
-        android:background="@color/notif_hair" />
+        <TextView
+            android:id="@+id/notif_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:fontFamily="@font/ours_mono_bold"
+            android:textColor="@color/notif_text"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/notif_hint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
-        android:textSize="9sp"
-        android:letterSpacing="0.16"
-        android:textAllCaps="true"
-        android:fontFamily="@font/ours_mono_medium"
-        android:textColor="@color/notif_accent"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        <TextView
+            android:id="@+id/notif_merchant"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="9dp"
+            android:textSize="13sp"
+            android:textColor="@color/notif_text"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
 </LinearLayout>

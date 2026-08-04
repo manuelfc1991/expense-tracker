@@ -807,6 +807,12 @@ fun SettingsScreen(
                                 "from. Tap the version again to switch it off.",
                             tone = Ours.warning,
                         )
+                        SettingRow(
+                            title = "Send a test notification",
+                            caption = "Shows the expense prompt for a made-up ₹151 " +
+                                "payment. Nothing is saved.",
+                            onClick = viewModel::sendTestNotification,
+                        )
                     }
                 }
             }

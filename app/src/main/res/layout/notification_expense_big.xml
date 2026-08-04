@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The **expanded** expense notification, drawn to look like the app rather than like
+  Android.
+
+  RemoteViews, because a notification is inflated by the system process and cannot use
+  Compose. That constrains the vocabulary to a handful of classic views — which is fine,
+  since this layout is a caption, a figure and a rule, and those are the three things
+  every screen in this app is made of.
+
+  Two constraints the collapsed layout does not share: this one gets about 256dp rather
+  than 64, so the figure can be full size and the rule and hint fit underneath.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/notif_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="9sp"
+        android:letterSpacing="0.16"
+        android:textAllCaps="true"
+        android:fontFamily="@font/ours_mono_medium"
+        android:textColor="@color/notif_dim"
+        android:text="@string/notif_new_expense" />
+
+    <TextView
+        android:id="@+id/notif_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="27sp"
+        android:fontFamily="@font/ours_mono_bold"
+        android:textColor="@color/notif_text"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/notif_merchant"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="13sp"
+        android:textColor="@color/notif_text"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!--
+      FrameLayout, not View, for a one-pixel rule.
+
+      RemoteViews will only inflate a fixed whitelist of classes, and plain
+      android.view.View is not on it. The system does not fall back or warn: it throws
+      "Class not allowed to be inflated" inside the system process, drops the whole
+      notification, and the app sees a successful notify() either way. That is why this
+      notification never once appeared on a phone — it posted correctly every time and
+      was discarded before anything was drawn.
+    -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="9dp"
+        android:background="@color/notif_hair" />
+
+    <TextView
+        android:id="@+id/notif_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="9sp"
+        android:letterSpacing="0.16"
+        android:textAllCaps="true"
+        android:fontFamily="@font/ours_mono_medium"
+        android:textColor="@color/notif_accent"
+        android:maxLines="1"
+        android:ellipsize="end" />
+</LinearLayout>

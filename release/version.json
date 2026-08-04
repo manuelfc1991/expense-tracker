@@ -1,7 +1,7 @@
 {
-  "versionCode": 20,
-  "versionName": "2.9",
-  "notes": "The Activity filter now lists only the categories your month actually contains, biggest first, with counts — and Untagged is finally one of them.",
+  "versionCode": 21,
+  "versionName": "3.0",
+  "notes": "The new-expense notification now actually appears — it was being discarded by Android before anything was drawn.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25377416
+  "sizeBytes": 25378164
 }

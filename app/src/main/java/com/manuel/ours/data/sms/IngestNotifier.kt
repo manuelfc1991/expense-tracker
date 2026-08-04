@@ -131,9 +131,17 @@ class IngestNotifier @Inject constructor(
         // DecoratedCustomViewStyle keeps Android's own action buttons and chrome around
         // the custom body, so the one-tap category chips still look and behave like
         // system buttons rather than something reinvented badly.
-        val body = RemoteViews(context.packageName, R.layout.notification_expense).apply {
+        // Two layouts, not one. Android gives a custom *collapsed* view 64dp and simply
+        // squeezes anything taller — no scroll, no scale, no warning — so sharing the
+        // full-size layout between both states cost the collapsed one its lower half and
+        // left the amount drawn as a row of glyph-bottoms.
+        fun view(layout: Int) = RemoteViews(context.packageName, layout).apply {
             setTextViewText(R.id.notif_amount, Money.format(txn.amountPaise))
             setTextViewText(R.id.notif_merchant, txn.merchant)
+        }
+
+        val collapsed = view(R.layout.notification_expense)
+        val expanded = view(R.layout.notification_expense_big).apply {
             setTextViewText(
                 R.id.notif_hint,
                 if (suggestions.isNotEmpty()) "Tap a category below" else txn.category.label,
@@ -145,8 +153,8 @@ class IngestNotifier @Inject constructor(
             // Kept for the lock screen, Wear and any surface that ignores custom views.
             .setContentTitle(title)
             .setContentText(subtitle)
-            .setCustomContentView(body)
-            .setCustomBigContentView(body)
+            .setCustomContentView(collapsed)
+            .setCustomBigContentView(expanded)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setContentIntent(contentIntent)
             .setAutoCancel(true)

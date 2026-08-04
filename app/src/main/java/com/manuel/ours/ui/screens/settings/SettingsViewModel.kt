@@ -65,7 +65,51 @@ class SettingsViewModel @Inject constructor(
     private val syncEventDao: com.manuel.ours.data.db.SyncEventDao,
     private val transactionRepository: com.manuel.ours.data.repo.TransactionRepository,
     private val updateChecker: com.manuel.ours.data.update.UpdateChecker,
+    private val ingestNotifier: com.manuel.ours.data.sms.IngestNotifier,
 ) : AndroidViewModel(application) {
+
+    /**
+     * Fires the real expense notification against a made-up transaction.
+     *
+     * The heads-up prompt is the surface the household sees most often and the only one
+     * that had never been looked at: Android refuses to let anything but the system
+     * broadcast an incoming SMS, so on a real phone there was no way to see it without
+     * waiting for the bank to send something. That made every change to the layout an
+     * unverified change.
+     *
+     * It calls [IngestNotifier.notifyExpense] rather than building a notification of its
+     * own, so what appears is exactly what a real payment produces — including the
+     * category buttons, which are the part most likely to break.
+     *
+     * Nothing is written to the database. The transaction exists only for the length of
+     * this call; its id is fixed so repeated taps replace the notification instead of
+     * stacking up, and it can never collide with a real row.
+     */
+    fun sendTestNotification() {
+        val now = System.currentTimeMillis()
+        ingestNotifier.notifyExpense(
+            txn = com.manuel.ours.domain.model.Transaction(
+                id = TEST_NOTIFICATION_ID,
+                amountPaise = 15_100,
+                type = com.manuel.ours.domain.model.TxnType.DEBIT,
+                merchant = "Keecheril St",
+                category = com.manuel.ours.domain.model.Category.FOOD,
+                occurredAt = now,
+                bank = "Federal Bank",
+                ownerUid = "test",
+                ownerName = "Me",
+                needsReview = true,
+            ),
+            // Three, because three is all Android will draw. Hard-coded rather than
+            // predicted: a test whose output depends on what the app has learned cannot
+            // tell you whether the notification is right.
+            suggestions = listOf(
+                com.manuel.ours.domain.model.Category.FOOD,
+                com.manuel.ours.domain.model.Category.GROCERIES,
+                com.manuel.ours.domain.model.Category.TRANSPORT,
+            ),
+        )
+    }
 
     private val _update =
         kotlinx.coroutines.flow.MutableStateFlow<com.manuel.ours.data.update.UpdateChecker.Result?>(null)
@@ -461,5 +505,14 @@ class SettingsViewModel @Inject constructor(
             Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888)
                 .also { cachedQr = content to it }
         }.getOrNull()
+    }
+
+    private companion object {
+        /**
+         * Fixed, and not a UUID, for two reasons: repeated taps replace the notification
+         * rather than stacking a dozen of them, and no real transaction can ever carry
+         * this id, so the category buttons find nothing to change.
+         */
+        const val TEST_NOTIFICATION_ID = "test-notification"
     }
 }
