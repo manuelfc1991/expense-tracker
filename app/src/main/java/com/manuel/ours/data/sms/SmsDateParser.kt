@@ -51,8 +51,17 @@ object SmsDateParser {
         "ddMMMyyyy", "ddMMMyy", "dMMMyyyy", "dMMMyy",
     ).map(::formatter)
 
-    private val timeFormats = listOf("HH:mm:ss", "H:mm:ss", "HH:mm", "H:mm")
-        .map(::formatter)
+    /**
+     * 24-hour first, then 12-hour with a meridiem.
+     *
+     * Kerala Gramin writes "10:48 PM"; Federal writes "22:57:32". Reading the first
+     * as 10:48 was silent and doubly damaging: the row got the wrong time, and a
+     * same-amount payment from that morning deduplicated against it and vanished.
+     */
+    private val timeFormats = listOf(
+        "HH:mm:ss", "H:mm:ss", "HH:mm", "H:mm",
+        "h:mm:ss a", "hh:mm:ss a", "h:mm a", "hh:mm a",
+    ).map(::formatter)
 
     fun parse(date: String, time: String? = null): Parsed? = combine(date, time, formats)
 
@@ -87,7 +96,13 @@ object SmsDateParser {
         return null
     }
 
-    private fun tryTime(text: String): LocalTime? {
+    private fun tryTime(raw: String): LocalTime? {
+        // "10:48 p.m." and "10:48PM" are the same instant as "10:48 PM"; only the
+        // last shape parses, so normalise before trying.
+        val text = raw.trim()
+            .replace(".", "")
+            .replace(Regex("\\s*([AaPp][Mm])$"), " $1")
+            .uppercase()
         for (fmt in timeFormats) {
             try {
                 return LocalTime.parse(text, fmt)

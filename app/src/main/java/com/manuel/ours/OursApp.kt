@@ -75,6 +75,9 @@ class OursApp : Application(), Configuration.Provider {
             // parser mistook for a payee, which a rescan cannot reach because dedup
             // returns before the merchant is reconsidered.
             repository.repairAccountLabelMerchants()
+            // Folds an earlier install's identity back onto this person, so a reinstall
+            // does not leave a second copy of them in the household filter.
+            repository.mergeOwnAliases()
             // Sender and category rules taught through the sheet, applied before the
             // first message of this launch is parsed.
             rulesRepository.apply()

@@ -14,7 +14,7 @@ import kotlin.math.abs
 object SmsDeduplicator {
 
     /** UPI refs are globally unique, so they win outright when present. */
-    private const val WINDOW_MS = 3 * 60 * 1000L
+    const val WINDOW_MS = 3 * 60 * 1000L
     private const val BUCKET_MS = WINDOW_MS
 
     /**

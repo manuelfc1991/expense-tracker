@@ -92,10 +92,28 @@ class TransactionRepository @Inject constructor(
         source: TxnSource = TxnSource.SMS,
     ): Transaction? {
         // Dedup: the bank and the UPI app both texted us about one payment.
-        for (key in SmsDeduplicator.candidateKeys(
-            parsed.amountPaise, parsed.dedupeAt, parsed.refNo,
-        )) {
-            val existing = txnDao.findByDedupeKey(key) ?: continue
+        //
+        // Candidates are gathered by value — same amount inside the window, plus
+        // anything sharing the UPI reference. The old lookup asked for one bucket key,
+        // and that key was built from the reference when a message carried one and from
+        // the amount and minute when it did not, so the two halves of a pair were
+        // filed under different keys and neither could find the other. On a real
+        // ledger that left 25 clusters of the same payment recorded two to four times.
+        val window = SmsDeduplicator.WINDOW_MS
+        val candidates = buildList {
+            parsed.refNo?.takeIf { it.isNotBlank() }?.let { ref ->
+                txnDao.findByRef(ref)?.let(::add)
+            }
+            addAll(
+                txnDao.findNearby(
+                    parsed.amountPaise,
+                    parsed.dedupeAt - window,
+                    parsed.dedupeAt + window,
+                )
+            )
+        }.distinctBy { it.id }
+
+        for (existing in candidates) {
             // Compare stored dedupeAt against incoming dedupeAt. Falling back to
             // occurredAt here is what let a rescan duplicate the whole history.
             if (!SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)) continue
@@ -376,6 +394,39 @@ class TransactionRepository @Inject constructor(
             )
         }
         return stale.size
+    }
+
+    /**
+     * Folds rows owned by an earlier identity of this same person back onto them.
+     *
+     * Reinstalling mints a new uid. Rows that come back from the sheet still carry the
+     * old one, and the household member list is built from distinct owner ids — so the
+     * same person appears twice in the filter chips, and one of them owns almost
+     * nothing. On the first real phone a single leftover row produced a phantom
+     * "Manuel" beside the real one.
+     *
+     * Matched on the display name, which is the only honest signal available: a
+     * different uid with *your* name is you, whereas a different uid with a different
+     * name is a genuine second member and must be left alone.
+     *
+     * Not a one-shot. A future reinstall creates the same situation again, and the
+     * query costs nothing when there is nothing to fold.
+     */
+    suspend fun mergeOwnAliases(): Int {
+        val self = prefs.snapshot()
+        val uid = self.selfUid ?: return 0
+        val name = self.selfName?.trim().orEmpty()
+        if (uid == "local" || name.isEmpty()) return 0
+
+        val strays = txnDao.rowsOwnedByAlias(uid, name)
+        for (row in strays) {
+            saveAndLog(
+                row.toDomain().copy(ownerUid = uid, ownerName = name),
+                row.dedupeKey,
+                row.dedupeAt,
+            )
+        }
+        return strays.size
     }
 
     /**

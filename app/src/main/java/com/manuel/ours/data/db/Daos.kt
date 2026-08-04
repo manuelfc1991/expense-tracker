@@ -62,6 +62,45 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE dedupeKey = :key AND deleted = 0 LIMIT 1")
     suspend fun findByDedupeKey(key: String): TransactionEntity?
 
+    /**
+     * Every stored row that could be the same payment, found by value rather than by
+     * whichever key shape happened to be used when it was written.
+     *
+     * The bucket key encodes a UPI ref when one exists and the amount and minute when
+     * it does not, so two messages about one payment — the bank naming no ref, the UPI
+     * app naming one — were stored under different keys and neither lookup could ever
+     * see the other.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deleted = 0 AND amountPaise = :amountPaise
+          AND dedupeAt BETWEEN :fromAt AND :toAt
+        """
+    )
+    suspend fun findNearby(amountPaise: Long, fromAt: Long, toAt: Long): List<TransactionEntity>
+
+    /** A UPI reference is globally unique, so it matches however far apart the two land. */
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND refNo = :refNo LIMIT 1")
+    suspend fun findByRef(refNo: String): TransactionEntity?
+
+    /**
+     * Rows carrying this person's name under some *other* id.
+     *
+     * A reinstall mints a fresh uid, and rows synced back from the sheet keep the old
+     * one. The household member list is derived from distinct owner ids, so the same
+     * human turns up twice — on the first real phone, one leftover row was enough to
+     * put a second "Manuel" in the filter chips.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deleted = 0 AND ownerUid != :selfUid
+          AND LOWER(TRIM(ownerName)) = LOWER(TRIM(:selfName))
+        """
+    )
+    suspend fun rowsOwnedByAlias(selfUid: String, selfName: String): List<TransactionEntity>
+
     @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1")
     fun observeNeedsReviewCount(): Flow<Int>
 

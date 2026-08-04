@@ -472,10 +472,17 @@ class SmsParser {
             RegexOption.IGNORE_CASE,
         )
 
-        /** Group 1 = date, group 2 = time when the bank bothered to include one. */
+        /**
+         * Group 1 = date, group 2 = time when the bank bothered to include one.
+         *
+         * The meridiem is part of the time group. Without it "10:48 PM" was read as
+         * 10:48, which put every evening transaction from a 12-hour bank twelve hours
+         * early — and, far worse, collapsed a morning and an evening payment of the
+         * same amount into one row, losing the second entirely.
+         */
         val DATE_AFTER_ON = Regex(
             "\\bon\\s+(\\d{1,2}[-/][A-Za-z0-9]{2,3}[-/]\\d{2,4})" +
-                "(?:\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?))?",
+                "(?:\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\s*[AaPp]\\.?[Mm]\\.?)?))?",
             RegexOption.IGNORE_CASE,
         )
 
@@ -488,7 +495,7 @@ class SmsParser {
         /** Federal Bank: "on 02JUL2026 22:57:32" and "on 01Jul26 07:48". */
         val DATE_COMPACT = Regex(
             "\\bon\\s+(\\d{1,2}[A-Za-z]{3}\\d{2,4})\\b" +
-                "(?:\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?))?",
+                "(?:\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\s*[AaPp]\\.?[Mm]\\.?)?))?",
             RegexOption.IGNORE_CASE,
         )
 
