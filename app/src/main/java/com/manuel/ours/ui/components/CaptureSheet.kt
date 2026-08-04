@@ -30,6 +30,7 @@ import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.SheetAmountStyle
 
 /**
  * The payment you just made, while you still remember what it was for.
@@ -116,7 +117,7 @@ fun CaptureSheet(
 
             Text(
                 Money.whole(txn.amountPaise),
-                style = MaterialTheme.typography.displayMedium,
+                style = SheetAmountStyle,
                 color = Ours.text,
                 maxLines = 1,
             )
@@ -125,20 +126,17 @@ fun CaptureSheet(
             // to correct, and drawing the question anyway would make every payment look
             // like it needed attention.
             if (unnamed) {
-                TapeHeader("Who was this?")
-                Box(
-                    Modifier.fillMaxWidth().clickable { renaming = txn.merchant }
-                ) {
-                    MicroLabel(
-                        txn.counterpartyTail
-                            ?.let { "Tap to name — account $it" }
-                            ?: "Tap to name",
-                        color = Ours.accent,
-                    )
-                }
+                MicroLabel("Who was this?")
+                SheetTapRow(
+                    text = txn.counterpartyTail
+                        ?.let { "Tap to name — account ····$it" }
+                        ?: "Tap to name",
+                    tag = "Name",
+                    onClick = { renaming = txn.merchant },
+                )
             }
 
-            TapeHeader("Category")
+            MicroLabel("Category")
             if (showAllCategories) {
                 CategoryGrid(selected = txn.category, onSelect = onCategorize)
             } else {
@@ -155,26 +153,19 @@ fun CaptureSheet(
                         )
                     }
                     OursChip(
-                        label = "All",
+                        label = "All ›",
                         selected = false,
                         onClick = { showAllCategories = true },
                     )
                 }
             }
 
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
-
-            Box(Modifier.fillMaxWidth().clickable { noting = txn.note.orEmpty() }) {
-                if (txn.note.isNullOrBlank()) {
-                    MicroLabel("Add a note — optional")
-                } else {
-                    Text(
-                        txn.note!!,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Ours.text,
-                    )
-                }
-            }
+            SheetTapRow(
+                text = txn.note?.takeIf { it.isNotBlank() } ?: "Add a note",
+                tag = if (txn.note.isNullOrBlank()) "Optional" else "Note",
+                filled = !txn.note.isNullOrBlank(),
+                onClick = { noting = txn.note.orEmpty() },
+            )
 
             Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 Box(Modifier.weight(1f)) {
@@ -183,7 +174,7 @@ fun CaptureSheet(
                     GhostButton(label = "Later", onClick = onDismiss)
                 }
                 Box(Modifier.weight(1f)) {
-                    AccentButton(label = "Done", onClick = onDismiss)
+                    AccentButton(label = "Save", onClick = onDismiss)
                 }
             }
         }

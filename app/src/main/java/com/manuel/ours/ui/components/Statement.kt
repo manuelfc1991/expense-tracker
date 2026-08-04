@@ -380,7 +380,10 @@ fun GhostButton(
             .clip(RoundedCornerShape(11.dp))
             .border(1.dp, Ours.hairline, RoundedCornerShape(11.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            // 13dp, not 12: this sits beside an [AccentButton] in a pair, and a one-pixel
+            // height difference between two buttons on the same row is the kind of thing
+            // you cannot name but can see.
+            .padding(vertical = 13.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -541,13 +544,33 @@ fun AccentButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     @DrawableRes icon: Int? = null,
+    /**
+     * Fade the accent instead of dropping to the hairline when disabled.
+     *
+     * The hairline treatment is right for a button standing alone: "not yet" should not
+     * look like a dimmer shade of "go". Beside a [GhostButton] it is wrong — the two
+     * become the same grey outline-ish block and the pair stops reading as
+     * secondary-then-primary. A faded accent keeps the hierarchy visible while still
+     * being obviously inactive.
+     */
+    dimWhenDisabled: Boolean = false,
 ) {
-    val fg = if (enabled) Color.White else Ours.textLabel
+    val fg = when {
+        enabled -> Color.White
+        dimWhenDisabled -> Color.White.copy(alpha = 0.55f)
+        else -> Ours.textLabel
+    }
     Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
-            .background(if (enabled) Ours.accent else Ours.hairline)
+            .background(
+                when {
+                    enabled -> Ours.accent
+                    dimWhenDisabled -> Ours.accent.copy(alpha = 0.45f)
+                    else -> Ours.hairline
+                }
+            )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 13.dp),
         contentAlignment = Alignment.Center,

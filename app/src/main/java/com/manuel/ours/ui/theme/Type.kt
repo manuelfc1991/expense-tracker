@@ -118,6 +118,23 @@ val MicroLabelStyle = TextStyle(
     letterSpacing = 1.6.sp,
 )
 
+/**
+ * The figure a bottom sheet leads with — the amount being captured or entered.
+ *
+ * A step below [Typography.displayMedium] because a sheet is not a screen: it sits over
+ * one, keeps its own top rule and grab handle above it, and still has a grid and two
+ * buttons to fit underneath. The detail screen's hero can be the largest thing in view;
+ * this one only has to be the largest thing in the sheet.
+ */
+val SheetAmountStyle = TextStyle(
+    fontFamily = OursMono,
+    fontWeight = FontWeight.Bold,
+    fontSize = 35.sp,
+    lineHeight = 38.sp,
+    letterSpacing = (-1.4).sp,
+    fontFeatureSettings = TABULAR,
+)
+
 /** The amount in the shared right-hand column. Bold, tabular, right-aligned. */
 val AmountTextStyle = TextStyle(
     fontFamily = OursMono,

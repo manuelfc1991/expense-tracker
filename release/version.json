@@ -1,7 +1,7 @@
 {
-  "versionCode": 18,
-  "versionName": "2.7",
-  "notes": "",
+  "versionCode": 19,
+  "versionName": "2.8",
+  "notes": "Adding an expense by hand now looks the way the design draws it — amount first, everything else optional.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25361032
+  "sizeBytes": 25377416
 }

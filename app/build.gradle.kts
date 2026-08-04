@@ -28,8 +28,8 @@ android {
         applicationId = "com.manuel.ours"
         minSdk = 26
         targetSdk = 34
-        versionCode = 18
-        versionName = "2.7"
+        versionCode = 19
+        versionName = "2.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -204,12 +204,21 @@ tasks.register("publishRelease") {
         // the very check it was explaining.
         val code = android.defaultConfig.versionCode
         val name = android.defaultConfig.versionName
+
+        // `-PreleaseNotes="..."` — one line, shown in the update prompt on the other
+        // phone. Escaped rather than interpolated raw: an apostrophe is fine but a
+        // quote or a newline would produce a manifest that parses as nothing, and the
+        // failure mode is silent (no update ever offered again).
+        val notes = (project.findProperty("releaseNotes") as String? ?: "")
+            .replace("\\", "\\\\").replace("\"", "\\\"")
+            .replace("\n", " ").trim()
+
         File(out, "version.json").writeText(
             """
             {
               "versionCode": $code,
               "versionName": "$name",
-              "notes": "",
+              "notes": "$notes",
               "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
               "sizeBytes": ${published.length()}
             }

@@ -106,6 +106,21 @@ enum class Category(
             TRANSFERS, CARD_PAYMENT, SELF_TRANSFER,
         )
 
+        /**
+         * What a person can be *entering by hand*: the twelve kinds of spending.
+         *
+         * [TRANSFERS], [CARD_PAYMENT] and [SELF_TRANSFER] are deliberately absent. All
+         * three describe money moving between accounts, which is something a bank always
+         * messages about — you never sit down and type in a card bill you just paid.
+         * Offering them here would only invite a hand-typed row that duplicates the
+         * parsed one an hour later, and a duplicate is worse than a missing category.
+         * They stay available on the detail screen, where the parsed row already exists
+         * and the job is to correct it.
+         */
+        val SPENDING: List<Category> = PICKABLE.filter {
+            it != TRANSFERS && it != CARD_PAYMENT && it != SELF_TRANSFER
+        }
+
         fun fromNameOrOther(name: String?): Category =
             entries.firstOrNull { it.name == name } ?: OTHER
 
