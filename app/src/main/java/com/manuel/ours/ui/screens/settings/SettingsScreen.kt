@@ -124,6 +124,7 @@ fun SettingsScreen(
     // code. A single repeated tap is something a thumb can do by accident on a screen
     // people scroll; this cannot happen without meaning it.
     var versionTaps by remember { mutableIntStateOf(0) }
+    var unlockRefused by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -709,23 +710,57 @@ fun SettingsScreen(
                         label = "Version",
                         value = version,
                         onClick = {
-                            versionTaps++
-                            if (state.developerMode) viewModel.setDeveloperMode(false)
+                            if (state.developerMode) {
+                                viewModel.setDeveloperMode(false)
+                                versionTaps = 0
+                            } else {
+                                versionTaps++
+                            }
                         },
                     )
                     DetailLine(
                         label = "Household code",
                         value = state.inviteSecret ?: "—",
                         onClick = {
-                            // Only counts as the second half of the sequence, and only
-                            // for the owner: editing an amount is an owner's call.
-                            if (versionTaps >= VERSION_TAPS_TO_UNLOCK && state.isHouseholdOwner) {
-                                viewModel.setDeveloperMode(true)
+                            if (versionTaps >= VERSION_TAPS_TO_UNLOCK) {
+                                // Refusing in silence is what made this feel broken:
+                                // the sequence completed, nothing happened, and there
+                                // was no way to tell a miscount from a refusal.
+                                if (state.isHouseholdOwner) viewModel.setDeveloperMode(true)
+                                else unlockRefused = true
                             }
                             versionTaps = 0
                         },
                     )
                     DetailLine("Expenses", state.transactionCount.toString())
+
+                    // Android's own settings count down out loud, and for the same
+                    // reason: a hidden sequence with no feedback is indistinguishable
+                    // from one that does not work.
+                    val remaining = VERSION_TAPS_TO_UNLOCK - versionTaps
+                    when {
+                        state.developerMode -> Unit
+                        unlockRefused -> Note(
+                            "Only the household owner can unlock this. Turn on \"I own " +
+                                "this household\" below if that is you.",
+                            tone = Ours.warning,
+                        )
+                        versionTaps in 1 until VERSION_TAPS_TO_UNLOCK && remaining <= 4 ->
+                            MicroLabel("$remaining more taps on the version", color = Ours.accent)
+                        versionTaps >= VERSION_TAPS_TO_UNLOCK ->
+                            MicroLabel("Now tap the household code", color = Ours.accent)
+                        else -> Unit
+                    }
+
+                    if (state.developerMode) {
+                        Note(
+                            "Developer mode is on. Amounts can be edited on a transaction, " +
+                                "and any row you change is stamped as hand-edited — an " +
+                                "edited figure no longer matches the bank message it came " +
+                                "from. Tap the version again to switch it off.",
+                            tone = Ours.warning,
+                        )
+                    }
                 }
             }
 
@@ -735,7 +770,10 @@ fun SettingsScreen(
                     caption = "Other members' deletions come to you for approval, and " +
                         "developer mode is yours to unlock",
                     checked = state.isHouseholdOwner,
-                    onCheckedChange = { viewModel.setHouseholdOwner(it) },
+                    onCheckedChange = {
+                        viewModel.setHouseholdOwner(it)
+                        unlockRefused = false
+                    },
                 )
             }
 
