@@ -206,7 +206,10 @@ tasks.register("publishRelease") {
               "versionCode": $code,
               "versionName": "$name",
               "notes": "",
-              "apkUrl": "https://github.com/manuelfc1991/expense-tracker/raw/master/release/Ours.apk",
+              // raw.githubusercontent, not github.com/raw: the latter answers 404 for
+              // a binary blob served straight off a branch, which is a very quiet way
+              // for an update to be found and never downloadable.
+              "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
               "sizeBytes": ${published.length()}
             }
             """.trimIndent() + "\n"
