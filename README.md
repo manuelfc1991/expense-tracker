@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 203 tests
+./gradlew testDebugUnitTest    # 213 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -100,6 +100,83 @@ Everything else still goes to the sheet in the clear — amounts, merchants, acc
 tails, who paid. That is inherent: a ledger you can open and repair is a ledger anyone
 holding the `/exec` URL can read. Only the bank's raw text is held back, because it is
 the one field that adds running balances and full account context on top.
+
+---
+
+## What else travels between phones
+
+Two kinds of knowledge ride alongside the ledger, in a `rules` tab of the same sheet,
+three meaningful columns and editable by hand:
+
+```
+type      | key       | value
+sender    | KGBANK    | Kerala Gramin Bank
+merchant  | keecheril | FOOD
+```
+
+Sender rules are the ones that have cost real money. An unrecognised TRAI header is
+discarded *before* parsing begins, silently — one missing line threw away 466 messages
+on the first real phone, and the fix was a single string that nonetheless needed a new
+build on every device. Merchant rules ride along so a correction made on one phone is
+not made again on the other forever.
+
+The boundary is deliberate: **the parser's patterns stay code.** A regex that reads
+"credited to a/c no." as a payee cannot be repaired from a spreadsheet and should not
+be, because a bad pattern from a shared sheet would break parsing everywhere at once.
+What travels is data a person could reasonably type.
+
+Rules degrade to doing nothing against a sheet running an older script, which answers
+`Unknown action: pullRules`. The ledger is the job; rules are a bonus and must never
+take a sync down with them.
+
+---
+
+## Deleting needs the owner
+
+A delete is the one change nobody can inspect afterwards. An edit leaves a value to
+disagree with; a deletion leaves nothing at all. In a shared ledger that makes it the
+one action worth a second pair of eyes.
+
+A member's delete becomes a **request**, and the row stays visible *and counted* until
+the household owner answers — a request is not a decision, and no total should move on
+the strength of one. The owner sees who asked and what for, and either deletes it or
+keeps it. Their own delete is immediate; asking yourself for permission is theatre.
+
+This is the only authority in the app. The merge rule is otherwise deliberately
+symmetric — last writer wins, no privileged device — so ownership is recorded once,
+when the household is created, and does nothing else. A creator who reinstalls and
+joins by code becomes a member, which is a real limitation rather than something the
+app can detect.
+
+---
+
+## Updating itself
+
+Not on Play, so it updates from this repository. `./gradlew publishRelease` writes the
+signed APK and a small manifest into `release/`; `git push` is the rest of the release
+process. Phones compare `versionCode` against their own and offer the download only
+when something is genuinely newer.
+
+Three limits on a feature that downloads and opens an executable:
+
+- The downloaded APK's **signing certificate is checked against the running app's**
+  before the installer is offered. Android would refuse a mismatch anyway, but only
+  after a 25 MB download and with a message that explains nothing.
+- The manifest URL is **hard-coded**. A configurable one is a setting that lets anyone
+  who reaches the phone point it at their own build.
+- **Nothing is silent.** Check when asked, download when asked, and the install is
+  Android's own installer showing what is about to happen.
+
+`apkUrl` is data in the manifest rather than code in the app, so where updates come
+from can change without shipping a build to change it.
+
+**Developer mode** hides in Settings ▸ About: seven taps on the version, then one on
+the household code — two targets in order, because a single repeated tap is something a
+thumb does by accident. Owner only. It unlocks editing an amount, which is the one
+field worth locking: a category is the app's guess and a payee is often missing
+entirely, but the figure came from the bank. Overwriting it is irreversible, so an
+edited row is stamped with the date it was changed and says so under the amount. A row
+that quietly disagrees with the bank is worse than one that explains itself.
 
 ---
 
@@ -193,15 +270,17 @@ prove no drift.
 **Working end to end:** SMS parsing and backfill, live SMS receiver, notification
 listener as an alternative source, categorization with learned user corrections,
 editable auto-assign rules, bulk sorting by merchant, manual entry, transactions with
-search/filter/grouping and swipe-to-delete with undo, monthly summary, budgets, a
-tracking start date that retires older months without deleting them, CSV + PDF export,
-home-screen widget, theming, QR invite generation and scanning, and the sync core with
-its convergence tests.
+search/filter/grouping, swipe-to-delete with undo and multi-select for acting on many
+rows at once, renaming a payee the bank never named, recurring-charge detection,
+monthly summary, budgets, a tracking start date that retires older months without
+deleting them, CSV + PDF export, a home-screen widget that redraws when the numbers
+move, theming, QR invite generation and scanning, and the sync core with its
+convergence tests.
 
-**Verified on one phone, not yet on two.** Everything above was exercised against a
-real inbox. The sync *transports* have not been: `MergeConvergenceTest` proves the merge
-converges under adversarial ordering, but no pair of phones has actually exchanged a log
-in the field. Treat "sync works" as tested-in-theory until you have run it.
+**Verified on two phones.** Everything above was exercised against a real inbox, and
+the Sheet transport has now carried a household: one phone wrote 460 events spanning
+six months and the other pulled the lot. Bluetooth is the transport still untested
+against a second device — see the gaps below.
 
 **On-device security**
 
@@ -275,22 +354,47 @@ Settings — same information, no restricted permission.
 ## Tests
 
 ```
-SmsParserTest          47   bank shapes, OTP/promo/failed rejection, edge cases
-RegionalBankTest        8   regional/small-finance sender coverage, bare-credit labels
-SmsParserRealWorldTest 19   real messages, kept as a regression corpus
-AggregationTest        14   month math, Both/Me/Partner filtering, insights
-MergeConvergenceTest   13   sync convergence under adversarial ordering
-CategoryPredictorTest  12   one-tap category guesses
-CryptoAndCodecTest     11   key derivation, tamper detection, corrupt-line recovery
-MoneyTest              11   lakh/crore formatting, paise arithmetic, bare amounts
-MoneyFlowTest          10   spending vs saving vs moving
-InvestmentLedgerTest    9   FD/RD/SIP handling
-SafFolderNamingTest     7   one file per device, never a shared one
-DedupeTimeTest          7   bank + UPI-app double messages
-BillReminderTest        6   money owed, not money spent
-SheetRowFormatTest      8   Apps Script row shape, raw-message redaction
-RescanIdempotencyTest   4   a backfill never duplicates
-CorpusReportTest        1   parser coverage over the whole corpus
-                       ―――
-                      187
+SmsParserTest             47   bank shapes, OTP/promo/failed rejection, edge cases
+SmsParserRealWorldTest    19   real messages, kept as a regression corpus
+AggregationTest           17   month math, member filtering, insights
+CryptoAndCodecTest        15   key derivation, tamper detection, corrupt-line recovery
+RecurringDetectorTest     15   what repeats, and what only looks like it
+MergeConvergenceTest      14   sync convergence under adversarial ordering
+CategoryPredictorTest     12   one-tap category guesses
+MoneyTest                 11   lakh/crore formatting, paise arithmetic, bare amounts
+MoneyFlowTest             10   spending vs saving vs moving
+InvestmentLedgerTest       9   FD/RD/SIP handling
+RegionalBankTest           8   regional/small-finance sender coverage, bare-credit labels
+SheetRowFormatTest         8   Apps Script row shape, raw-message redaction
+DedupeTimeTest             7   bank + UPI-app double messages
+AccountNumberMerchantTest  6   an account number is not a payee
+BillReminderTest           6   money owed, not money spent
+MixedReferenceDedupeTest   4   one payment, two texts, only one with a reference
+RescanIdempotencyTest      4   a backfill never duplicates
+CorpusReportTest           1   parser coverage over the whole corpus
+                         ―――
+                         213
 ```
+
+The suites worth knowing about are the ones that exist because something went wrong.
+
+`DedupeTimeTest` and `MixedReferenceDedupeTest` both guard deduplication, from opposite
+directions. The first exists because a compact date parser kept the day and discarded
+the clock time, so two different payments the same day merged into one and a
+transaction was silently lost. The second exists because the two halves of a paired
+message — the bank's text and the UPI app's — were filed under different lookup keys
+and could never find each other, so one payment was recorded twice. Losing a
+transaction is far worse than keeping a duplicate: a duplicate is visible and one tap
+removes it, a missing row is invisible forever.
+
+`AccountNumberMerchantTest` pins a fix that could easily have been a regression. Kerala
+Gramin words every UPI debit as "credited to a/c no. XXXX", which the merchant pattern
+read as a payee — 189 of 460 real rows were filed under a shop called "a/c no". But an
+unnamed debit is classified as a transfer, so removing the fake merchant would have
+dropped the household's largest group of real spending out of its own total. The suite
+asserts both halves: the name goes, and the money stays counted.
+
+`RecurringDetectorTest` spends more of its cases on what must *not* be detected than on
+what must. Weekly groceries at one shop repeat as reliably as a subscription does; the
+amounts are what tell them apart. A false positive there would claim a commitment that
+does not exist, and that makes every other number in the app suspect.
