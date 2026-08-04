@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 213 tests
+./gradlew testDebugUnitTest    # 238 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -180,6 +180,40 @@ that quietly disagrees with the bank is worse than one that explains itself.
 
 ---
 
+## What counts as spending
+
+Only debits, and not all of them. The distinction is the difference between a month
+that reads honestly and one that flatters or alarms.
+
+| | Counts | Why |
+|---|---|---|
+| Ordinary purchases | yes | money gone |
+| **Transfers** | **yes** | an unnamed debit is overwhelmingly money sent to someone else |
+| **Card bills** | **yes** | on this household not one of 460 rows was an individual card purchase, so the bill is the only record of that money |
+| Savings and deposits | no | an FD is still yours afterwards |
+| **Between our accounts** | no | it never left the household |
+
+Transfers and card bills used to be excluded as "money moved, not spent". Both were
+wrong here. A card bill is only a double count if the purchases inside it arrived
+separately as messages, and they never do — excluding it hid ₹56,461. Transfers were
+83 unnamed payees, an IMPS charge and an ATM fee: all of it gone.
+
+**Own-account transfers are the exception, and they are identified by the pair.** A
+debit carrying one account tail and a credit carrying another, for the same amount
+within half an hour, is a round trip. The tail is the evidence: this phone only
+receives alerts for accounts the household owns, so a stored tail is always one of
+theirs. Both legs are marked neutral rather than deleted, because they are real
+messages about real movements — what a household should not see is the month claiming
+it spent the money.
+
+A maturing deposit is a case the parser cannot win. `Rs.10000 credited to your A/c
+XXXX. BAL-...` says nothing about a deposit, and is indistinguishable from a salary.
+Recategorising it to Savings & Investments removes it from the month's income, and the
+app deliberately learns no rule from that — bare credits are labelled with the bank's
+name, so learning would file every future credit from that bank as savings.
+
+---
+
 ## Recurring charges
 
 Nothing declares a subscription — no bank SMS says "this is one". So `RecurringDetector`
@@ -268,7 +302,8 @@ prove no drift.
 ## What works, and what still needs you
 
 **Working end to end:** SMS parsing and backfill, live SMS receiver, notification
-listener as an alternative source, categorization with learned user corrections,
+listener as an alternative source, duplicate collapsing across the several messages a
+bank sends for one payment, categorization with learned user corrections,
 editable auto-assign rules, bulk sorting by merchant, manual entry, transactions with
 search/filter/grouping, swipe-to-delete with undo and multi-select for acting on many
 rows at once, renaming a payee the bank never named, recurring-charge detection,
@@ -354,47 +389,49 @@ Settings — same information, no restricted permission.
 ## Tests
 
 ```
-SmsParserTest             47   bank shapes, OTP/promo/failed rejection, edge cases
-SmsParserRealWorldTest    19   real messages, kept as a regression corpus
-AggregationTest           17   month math, member filtering, insights
-CryptoAndCodecTest        15   key derivation, tamper detection, corrupt-line recovery
-RecurringDetectorTest     15   what repeats, and what only looks like it
-MergeConvergenceTest      14   sync convergence under adversarial ordering
-CategoryPredictorTest     12   one-tap category guesses
-MoneyTest                 11   lakh/crore formatting, paise arithmetic, bare amounts
-MoneyFlowTest             10   spending vs saving vs moving
-InvestmentLedgerTest       9   FD/RD/SIP handling
-RegionalBankTest           8   regional/small-finance sender coverage, bare-credit labels
-SheetRowFormatTest         8   Apps Script row shape, raw-message redaction
-DedupeTimeTest             7   bank + UPI-app double messages
-AccountNumberMerchantTest  6   an account number is not a payee
-BillReminderTest           6   money owed, not money spent
-MixedReferenceDedupeTest   4   one payment, two texts, only one with a reference
-RescanIdempotencyTest      4   a backfill never duplicates
-CorpusReportTest           1   parser coverage over the whole corpus
-                         ―――
-                         213
+SmsParserTest              47   bank shapes, OTP/promo/failed rejection, edge cases
+SmsParserRealWorldTest     19   real messages, kept as a regression corpus
+AggregationTest            17   month math, member filtering, insights
+CryptoAndCodecTest         15   key derivation, tamper detection, corrupt-line recovery
+RecurringDetectorTest      15   what repeats, and what only looks like it
+MergeConvergenceTest       14   sync convergence under adversarial ordering
+CategoryPredictorTest      12   one-tap category guesses
+MeridiemTwinTest           11   the duplicates that fixing AM/PM created
+MoneyTest                  11   lakh/crore formatting, paise arithmetic, bare amounts
+MoneyFlowTest              10   spending vs saving vs moving
+InvestmentLedgerTest        9   FD/RD/SIP handling
+RegionalBankTest            8   regional/small-finance sender coverage, bare-credit labels
+SheetRowFormatTest          8   Apps Script row shape, raw-message redaction
+CardBillEchoTest            7   one bill, two banks, two messages
+DedupeTimeTest              7   bank + UPI-app double messages
+SelfTransferTest            7   a round trip is not a purchase and a windfall
+AccountNumberMerchantTest   6   an account number is not a payee
+BillReminderTest            6   money owed, not money spent
+MixedReferenceDedupeTest    4   one payment, two texts, only one with a reference
+RescanIdempotencyTest       4   a backfill never duplicates
+CorpusReportTest            1   parser coverage over the whole corpus
+                          ―――
+                          238
 ```
 
-The suites worth knowing about are the ones that exist because something went wrong.
+**Most of the newer suites are refusals.** Four of them decide whether two rows are
+the same event, and all four can delete or neutralise real money if they say yes when
+they should say no. So they are written from the direction of what must survive.
 
-`DedupeTimeTest` and `MixedReferenceDedupeTest` both guard deduplication, from opposite
-directions. The first exists because a compact date parser kept the day and discarded
-the clock time, so two different payments the same day merged into one and a
-transaction was silently lost. The second exists because the two halves of a paired
-message — the bank's text and the UPI app's — were filed under different lookup keys
-and could never find each other, so one payment was recorded twice. Losing a
-transaction is far worse than keeping a duplicate: a duplicate is visible and one tap
-removes it, a missing row is invisible forever.
+The case that shaped them came from the household, not from a test: two ₹10,000
+movements on 2 August, one minute apart, from the same bank — a fixed deposit maturing
+and rent paid to a person. Same amount, same day, same bank, both real. Any rule
+matching on amount and time alone destroys one of them. What saves it is the account
+tail: one account, so two events, not a round trip.
 
-`AccountNumberMerchantTest` pins a fix that could easily have been a regression. Kerala
-Gramin words every UPI debit as "credited to a/c no. XXXX", which the merchant pattern
-read as a payee — 189 of 460 real rows were filed under a shop called "a/c no". But an
-unnamed debit is classified as a transfer, so removing the fake merchant would have
-dropped the household's largest group of real spending out of its own total. The suite
-asserts both halves: the name goes, and the money stays counted.
+`DedupeTimeTest` and `MixedReferenceDedupeTest` guard deduplication from opposite
+directions, because it has failed in both. Once it merged two real payments and lost
+one; once it recorded a single payment twice because the bank's message and the UPI
+app's were filed under different lookup keys. Losing a transaction is far worse than
+keeping a duplicate: a duplicate is visible and one tap removes it, a missing row is
+invisible forever.
 
-`RecurringDetectorTest` spends more of its cases on what must *not* be detected than on
-what must. Weekly groceries at one shop repeat as reliably as a subscription does; the
-amounts are what tell them apart. A false positive there would claim a commitment that
-does not exist, and that makes every other number in the app suspect.
+`RecurringDetectorTest` spends more cases on what must *not* be detected than on what
+must. Weekly groceries at one shop repeat as reliably as a subscription; the amounts
+are what tell them apart. Claiming a commitment that does not exist makes every other
+number in the app suspect.
