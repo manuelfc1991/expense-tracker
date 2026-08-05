@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -82,6 +84,7 @@ fun TransactionsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var bulkCategorize by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    var confirmingDelete by remember { mutableStateOf(false) }
 
     // Back should close the selection, not the screen. Leaving a selection open while
     // navigating away is how a bulk delete gets aimed at rows the reader forgot about.
@@ -117,6 +120,53 @@ fun TransactionsScreen(
             duration = SnackbarDuration.Short,
         )
         viewModel.clearDeleteRequestNotice()
+    }
+
+    // Asked before the batch goes, not just offered back afterwards. Undo covers a delete
+    // you noticed; this covers the one you did not — Delete sits between Categorize and
+    // Done in a row of identical labels, and the snackbar is gone in four seconds. What
+    // the owner loses that way is unrecoverable: manual entries and hand-made category
+    // corrections live in this database and nowhere else.
+    val isOwner by viewModel.isOwner.collectAsStateWithLifecycle()
+    if (confirmingDelete && state.selectionMode) {
+        val n = state.selected.size
+        val rows = if (n == 1) "1 transaction" else "$n transactions"
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            containerColor = Ours.surface,
+            title = {
+                Text(
+                    if (isOwner) "Delete $rows?" else "Ask to remove $rows?",
+                    color = Ours.text,
+                )
+            },
+            text = {
+                Text(
+                    if (isOwner) {
+                        "They go from both phones. Undo is offered for a few seconds " +
+                            "afterwards, and then they are gone for good."
+                    } else {
+                        "The household owner has to agree to each one, and they still " +
+                            "count until they do."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmingDelete = false
+                        viewModel.deleteSelectedWithUndo()
+                    },
+                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.negative) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingDelete = false }) {
+                    Text("Cancel", color = Ours.textSecondary)
+                }
+            },
+        )
     }
 
     // The Scaffold stays for the snackbar host, but its padding is deliberately not
@@ -156,7 +206,7 @@ fun TransactionsScreen(
                         MicroLabel(
                             "Delete",
                             color = Ours.negative,
-                            modifier = Modifier.clickable { viewModel.deleteSelectedWithUndo() },
+                            modifier = Modifier.clickable { confirmingDelete = true },
                         )
                         MicroLabel(
                             "Done",

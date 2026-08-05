@@ -90,6 +90,16 @@ Blank the value of its row in the sheet's `rules` tab (`member` /
 `c8513f5e-93a5-4212-bbe3-4ddc27411aa0`) and bump that row's `updatedAt`, then sync both
 phones. 5.6 and later read an emptied member as "no longer in the household".
 
+**Do the sheet edit and it stays done.** Ours has been uninstalled from the `ours-api36`
+AVD, which is what made this safe: the tombstone only survives while nothing republishes
+it. `RulesRepository.publishSelf()` writes this phone's member row whenever the stored
+value differs from its own name — so an emulator that still held the household would have
+pulled the blank, noticed the disagreement, and put TEST-EMULATOR straight back on the
+next sync. The row was the symptom; a joined test device is the cause.
+
+The AVD itself is intact. Rejoin it by QR when you next need a second device — and expect
+a *new* member row, under a new uid, to clean up the same way afterwards.
+
 ---
 
 ## What to report back

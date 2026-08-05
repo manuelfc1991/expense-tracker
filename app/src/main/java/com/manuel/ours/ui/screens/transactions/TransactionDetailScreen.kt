@@ -88,6 +88,7 @@ fun TransactionDetailScreen(
     var renaming by remember { mutableStateOf<String?>(null) }
     var editingAmount by remember { mutableStateOf<String?>(null) }
     var editingNote by remember { mutableStateOf<String?>(null) }
+    var confirmingDelete by remember { mutableStateOf(false) }
 
     editingNote?.let { draft ->
         NoteDialog(
@@ -101,6 +102,60 @@ fun TransactionDetailScreen(
     }
     val canEditAmount by viewModel.canEditAmount.collectAsStateWithLifecycle(initialValue = false)
     val awaitingApproval by viewModel.deleteAwaitingApproval.collectAsStateWithLifecycle()
+    val isOwner by viewModel.isOwner.collectAsStateWithLifecycle(initialValue = false)
+
+    // The one destructive button on this screen, and the only one in the app with no undo
+    // behind it: the bulk delete on Activity offers one, but this path closes the screen,
+    // so there is nowhere left to offer it from. A trash icon 15dp square sits a thumb's
+    // width from Back, and the row it removes may be a hand-made entry that exists in no
+    // backup — the sheet carries sync events, not history.
+    if (confirmingDelete && txn != null) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            containerColor = Ours.surface,
+            title = {
+                Text(
+                    if (isOwner) "Delete this entry?" else "Ask to remove this?",
+                    color = Ours.text,
+                )
+            },
+            text = {
+                Text(
+                    // Name the row. A confirmation that does not say what it is about is
+                    // answered from memory of which one was tapped, which is the mistake
+                    // it exists to catch — and it has to be the same figure the screen
+                    // behind it shows. Money.whole read ₹450 off a row printed ₹450.75,
+                    // which invites a second look at whether this is the right entry.
+                    // Paise everywhere else are wrong; here they are the identifier.
+                    if (isOwner) {
+                        "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
+                            "It goes from both phones and cannot be brought back."
+                    } else {
+                        "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
+                            "The household owner has to agree, and it still counts until they do."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmingDelete = false
+                        // Back only on a delete that happened. A member's becomes a
+                        // request, and closing the screen on it left the row sitting in
+                        // the list with nothing to explain why.
+                        viewModel.delete(txnId) { onBack() }
+                    },
+                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.negative) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingDelete = false }) {
+                    Text("Cancel", color = Ours.textSecondary)
+                }
+            },
+        )
+    }
 
     editingAmount?.let { draft ->
         AmountDialog(
@@ -188,10 +243,7 @@ fun TransactionDetailScreen(
                     tint = Ours.negative,
                     modifier = Modifier
                         .size(15.dp)
-                        // Back only on a delete that happened. A member's becomes a
-                        // request, and closing the screen on it left the row sitting in
-                        // the list with nothing to explain why.
-                        .clickable { viewModel.delete(txnId) { onBack() } },
+                        .clickable { confirmingDelete = true },
                 )
             }
 

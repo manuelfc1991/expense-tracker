@@ -111,6 +111,16 @@ class TransactionsViewModel @Inject constructor(
     private val requestedDeletes = MutableStateFlow(0)
     val deleteRequestNotice: StateFlow<Int> = requestedDeletes.asStateFlow()
 
+    /**
+     * Whether this phone's deletes go through or turn into requests.
+     *
+     * The confirmation asks a different question of each, and it has to ask it before the
+     * tap — after it, [deleteRequestNotice] is already saying the same thing too late.
+     * Kept out of [uiState] because that combine is at its five-flow limit.
+     */
+    val isOwner: StateFlow<Boolean> = prefs.householdOwner
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     /** Everything that is not a filter, bundled so the outer combine stays within five. */
     private data class Aux(
         val selfUid: String,

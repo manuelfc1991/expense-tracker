@@ -52,6 +52,15 @@ class TransactionDetailViewModel @Inject constructor(
         viewModelScope.launch { repository.recategorize(txnId, category, learn = true) }
     }
 
+    /**
+     * Whether this phone's delete goes through or turns into a request.
+     *
+     * The confirmation needs it before the tap, not after: "this cannot be undone" is a
+     * lie to a member, whose delete the owner can still refuse, and "the owner has to
+     * agree" is nonsense to the owner. Same button, two honest sentences.
+     */
+    val isOwner: Flow<Boolean> = prefs.householdOwner
+
     /** True only for a household owner with developer mode on. */
     val canEditAmount: kotlinx.coroutines.flow.Flow<Boolean> =
         kotlinx.coroutines.flow.combine(

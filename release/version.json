@@ -1,7 +1,7 @@
 {
-  "versionCode": 50,
-  "versionName": "5.9",
-  "notes": "Amounts show paise, and every total agrees with the rows beneath it. Activity and Budgets get back the space they were losing, and a delete from an entry now says it is waiting on the owner.",
+  "versionCode": 51,
+  "versionName": "5.10",
+  "notes": "Deleting an entry now asks first, and says which entry and what happens to it — a member sees that the owner has to agree.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25464834
 }
