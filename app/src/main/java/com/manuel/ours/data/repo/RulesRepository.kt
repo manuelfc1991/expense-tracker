@@ -3,6 +3,8 @@ package com.manuel.ours.data.repo
 import com.manuel.ours.data.db.BudgetDao
 import com.manuel.ours.data.db.BudgetEntity
 import com.manuel.ours.data.db.MerchantRuleDao
+import com.manuel.ours.data.db.MemberDao
+import com.manuel.ours.data.db.MemberEntity
 import com.manuel.ours.data.db.MerchantRuleEntity
 import com.manuel.ours.data.db.SharedRuleDao
 import com.manuel.ours.data.db.SharedRuleEntity
@@ -35,6 +37,7 @@ class RulesRepository @Inject constructor(
     private val sharedRuleDao: SharedRuleDao,
     private val merchantRuleDao: MerchantRuleDao,
     private val budgetDao: BudgetDao,
+    private val memberDao: MemberDao,
     private val prefs: AppPrefs,
     private val transactionRepository: TransactionRepository,
 ) {
@@ -77,12 +80,51 @@ class RulesRepository @Inject constructor(
             )
         }
 
+        publishSelf()
         apply()
 
         val mine = localRules(remoteByKey)
         if (mine.isNotEmpty()) transport.pushRules(mine)
         remote.size
     }.getOrDefault(0)
+
+    /**
+     * Announces this phone's owner to the household.
+     *
+     * Membership had no way of travelling at all. [HouseholdRepository.addMember] exists,
+     * is the only thing that writes a second row to `members`, and is called from
+     * nowhere — so the table only ever held the person holding the phone. The Household
+     * screen counted those rows, which is why it read "Invite your partner" forever, on
+     * both phones, however many times they successfully synced.
+     *
+     * The Both/Me/Partner chips did not have the bug because they derive people from the
+     * transactions instead — but that is a worse rule wearing a disguise: it makes
+     * *existing* conditional on *spending*, so a partner who has joined and not yet paid
+     * for anything is indistinguishable from a partner who was never there. This
+     * household is in exactly that state.
+     *
+     * Written only when it actually changes. Rewriting every sync would bump `updatedAt`
+     * and force a push every round for a value nobody edited.
+     */
+    private suspend fun publishSelf() {
+        val snapshot = prefs.snapshot()
+        val uid = snapshot.selfUid?.takeIf { it.isNotBlank() } ?: return
+        val value = "${snapshot.selfName.orEmpty()}|${snapshot.selfEmail.orEmpty()}"
+        val existing = sharedRuleDao.all()
+            .firstOrNull { it.type == TYPE_MEMBER && it.ruleKey == uid }
+        if (existing?.value == value) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = TYPE_MEMBER,
+                    ruleKey = uid,
+                    value = value,
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
 
     /**
      * Makes the stored rules take effect.
@@ -93,6 +135,24 @@ class RulesRepository @Inject constructor(
      */
     suspend fun apply() {
         val all = sharedRuleDao.all()
+        val selfUid = prefs.snapshot().selfUid
+
+        // Everyone else in the household, so the Household screen can name them before
+        // they have spent a rupee.
+        for (rule in all.filter { it.type == TYPE_MEMBER }) {
+            if (rule.ruleKey.isBlank() || rule.ruleKey == selfUid) continue
+            val parts = rule.value.split('|')
+            memberDao.upsert(
+                MemberEntity(
+                    uid = rule.ruleKey,
+                    // A member with no name is still a member. Skipping them would put
+                    // the household back to not knowing somebody is there.
+                    displayName = parts.getOrNull(0)?.takeIf(String::isNotBlank) ?: "Partner",
+                    email = parts.getOrNull(1).orEmpty(),
+                    isSelf = false,
+                )
+            )
+        }
 
         BankRules.setTaughtSenders(
             all.filter { it.type == TYPE_SENDER && it.value.isNotBlank() }
@@ -199,6 +259,7 @@ class RulesRepository @Inject constructor(
         const val TYPE_BALANCE = "balance"
         const val TYPE_MIN_BALANCE = "minbal"
         const val TYPE_BUDGET = "budget"
+        const val TYPE_MEMBER = "member"
 
         /**
          * Everything in `shared_rules` that is worth sending, merchant rules excepted —
@@ -206,6 +267,7 @@ class RulesRepository @Inject constructor(
          */
         private val SHAREABLE_TYPES = setOf(
             TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
+            TYPE_MEMBER,
         )
     }
 }

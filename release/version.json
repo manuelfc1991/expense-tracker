@@ -1,7 +1,7 @@
 {
-  "versionCode": 44,
-  "versionName": "5.3",
-  "notes": "Where it went now lists every category instead of the top six — it was silently dropping the smallest one, so the bars added up to less than Spent. Also corrects the Not counted caption, which described a card-bill rule the app no longer follows.",
+  "versionCode": 45,
+  "versionName": "5.4",
+  "notes": "Household membership now syncs. A partner who has joined but not yet spent anything was indistinguishable from no partner at all — the members table only ever held the person holding the phone.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25419217
+  "sizeBytes": 25419213
 }
