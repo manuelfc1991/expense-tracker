@@ -126,6 +126,7 @@ fun SettingsScreen(
     // people scroll; this cannot happen without meaning it.
     var versionTaps by remember { mutableIntStateOf(0) }
     var unlockRefused by remember { mutableStateOf(false) }
+    var showInvite by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -139,6 +140,38 @@ fun SettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // What is silently broken, in the order it costs you.
+    //
+    // Recomputed every pass rather than held in state: two of these three live in
+    // system settings, where they can be revoked without this app being told.
+    val problems = buildList {
+        if (!notificationsAllowed) {
+            add(
+                Problem("Notifications are blocked — nothing reaches you") {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    )
+                }
+            )
+        }
+        if (state.ingestSource == IngestSource.NOTIFICATION && !listenerEnabled) {
+            add(
+                Problem("Notification access is off — no expenses are being read") {
+                    context.startActivity(
+                        Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            )
+        }
+        if (state.capturePopup && !viewModel.canPopUp()) {
+            add(Problem("Popup permission not granted") { context.openOverlaySettings() })
+        }
+    }
+
     Scaffold(containerColor = Ours.ink) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -148,6 +181,7 @@ fun SettingsScreen(
             contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
@@ -164,7 +198,31 @@ fun SettingsScreen(
                 }
             }
 
+            // ─── Anything that is silently broken ────────────────────────
+            //
+            // Every failure this app has actually had was a permission that was off
+            // while everything else looked fine: POST_NOTIFICATIONS never requested,
+            // notification access never granted, and now the overlay permission, which
+            // Android can revoke at any time without telling anyone. A screen that only
+            // reveals that once you scroll to the right section will not catch it.
+            //
+            // Drawn only when something is wrong, and absent entirely when nothing is —
+            // a banner that is always there stops being read.
+            if (problems.isNotEmpty()) {
+                item {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        problems.forEach { problem ->
+                            NeedsYouRow(text = problem.text, onClick = problem.fix)
+                        }
+                    }
+                }
+            }
+
             // ─── Household ───────────────────────────────────────────────
+
             item { Section("Household") }
 
             item {
@@ -190,15 +248,20 @@ fun SettingsScreen(
                     // Always available. This used to hide once two people existed,
                     // which made a third member impossible to add — there is no other
                     // route to the code, so the household was silently capped at two.
-                    run {
-                        Hairline()
-                        Text(
-                            if (state.members.size < 2) "Invite your partner"
-                            else "Add someone else",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Ours.text,
-                        )
+                    // Behind a tap.
+                    //
+                    // The QR is a 180dp white square needed exactly once per person, and
+                    // drawn always it made Household the tallest section in the app —
+                    // every visit paid for a thing you use on one day.
+                    Hairline()
+                    DisclosureRow(
+                        title = if (state.members.size < 2) "Invite your partner"
+                        else "Add someone else",
+                        caption = "Show the code and QR",
+                        expanded = showInvite,
+                        onClick = { showInvite = !showInvite },
+                    )
+                    if (showInvite) {
                         Note(
                             "Have them install Ours and scan this code, or type it in. It " +
                                 "carries the household key — anyone who has it can read " +
@@ -237,7 +300,19 @@ fun SettingsScreen(
                 }
             }
 
-            // ─── Sync ────────────────────────────────────────────────────
+            // Only the owner can answer these, and only worth a row when some exist.
+            if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
+                item {
+                    SettingRow(
+                        title = "Delete requests",
+                        caption = "${state.pendingDeleteRequests} waiting on you · they still count until you decide",
+                        onClick = onOpenDeleteRequests,
+                    )
+                }
+            }
+
+            // ─── Sync ───────────────────────────────────────────────────
+
             item { Section("Sync") }
 
             item {
@@ -391,107 +466,14 @@ fun SettingsScreen(
                 }
             }
 
-            // ─── Message scanning ────────────────────────────────────────
-            item { Section("Message scanning") }
+            // ─── What becomes an entry ──────────────────────────────────
 
-            item {
-                var granted by remember { mutableStateOf(viewModel.hasSmsPermission()) }
-                val progress by viewModel.observeScanProgress()
-                    .collectAsStateWithLifecycle(initialValue = null)
-
-                val permissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestMultiplePermissions()
-                ) { result ->
-                    granted = result[Manifest.permission.READ_SMS] == true
-                    // Granting late is exactly the case that used to leave the app
-                    // permanently empty — scan straight away rather than waiting for the
-                    // next incoming message.
-                    if (granted) viewModel.rescanMessages()
-                }
-
-                val running = progress?.let { !it.finished && it.total > 0 } == true
-
-                Panel {
-                    PanelTitle(if (granted) "Reading your bank SMS" else "SMS access is off")
-                    Note(
-                        if (granted) {
-                            "New bank messages are picked up automatically. Rescan if you " +
-                                "think something was missed."
-                        } else {
-                            "Nothing is being tracked automatically. Grant access and your " +
-                                "last 6 months will be imported — message text never " +
-                                "leaves this phone."
-                        }
-                    )
-                    if (running) {
-                        val p = progress!!
-                        LinearProgressIndicator(
-                            progress = { p.fraction },
-                            color = Ours.accent,
-                            trackColor = Ours.hairline,
-                            modifier = Modifier.fillMaxWidth().height(3.dp),
-                        )
-                        MicroLabel(
-                            "${p.scanned} of ${p.total} messages · ${p.imported} found"
-                        )
-                    }
-                    GhostButton(
-                        label = when {
-                            !granted -> "Turn on SMS access"
-                            running -> "Scanning…"
-                            else -> "Rescan messages"
-                        },
-                        onClick = {
-                            if (running) return@GhostButton
-                            if (granted) viewModel.rescanMessages()
-                            else permissionLauncher.launch(viewModel.smsPermissions)
-                        },
-                    )
-                }
-            }
-
-            // Only ever drawn when the app genuinely cannot post anything.
             //
-            // POST_NOTIFICATIONS became a runtime permission in Android 13, and this
-            // app declared it without ever asking for it — so on any recent phone
-            // every alert it raised was dropped silently: the new-expense ping, the
-            // one-tap categorize prompt, the budget warning. Onboarding now asks, but
-            // that only helps a fresh install; anyone already set up needs this.
-            if (!notificationsAllowed) {
-                item { Section("Notifications") }
-                item {
-                    Column(
-                        Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        SettingRow(
-                            title = "Turn on notifications",
-                            caption = "Android is blocking them, so nothing is reaching you",
-                            onClick = {
-                                context.startActivity(
-                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                )
-                            },
-                        )
-                        // SettingRow insets itself; Note does not, so it needs the
-                        // edge explicitly or it runs flush to the screen border.
-                        Box(Modifier.padding(horizontal = EDGE)) {
-                            Note(
-                                "New expenses, the one-tap categorize prompt and budget " +
-                                    "warnings all arrive as notifications. Until this is " +
-                                    "on, none of them appear.",
-                                tone = Ours.warning,
-                            )
-                        }
-                    }
-                }
-            }
+            // Message scanning, Where expenses come from and Tracking were three
+            // sections with an unrelated one between them, all answering the same
+            // question: which payments turn into rows.
 
-            // ─── Source ──────────────────────────────────────────────────
-            item { Section("Where expenses come from") }
+            item { Section("What becomes an entry") }
 
             item {
                 Column(
@@ -549,35 +531,61 @@ fun SettingsScreen(
                 }
             }
 
-            // Only the owner can answer these, and only worth a row when some exist.
-            if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
-                item {
-                    SettingRow(
-                        title = "Delete requests",
-                        caption = "${state.pendingDeleteRequests} waiting on you · they still count until you decide",
-                        onClick = onOpenDeleteRequests,
+            item {
+                var granted by remember { mutableStateOf(viewModel.hasSmsPermission()) }
+                val progress by viewModel.observeScanProgress()
+                    .collectAsStateWithLifecycle(initialValue = null)
+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { result ->
+                    granted = result[Manifest.permission.READ_SMS] == true
+                    // Granting late is exactly the case that used to leave the app
+                    // permanently empty — scan straight away rather than waiting for the
+                    // next incoming message.
+                    if (granted) viewModel.rescanMessages()
+                }
+
+                val running = progress?.let { !it.finished && it.total > 0 } == true
+
+                Panel {
+                    PanelTitle(if (granted) "Reading your bank SMS" else "SMS access is off")
+                    Note(
+                        if (granted) {
+                            "New bank messages are picked up automatically. Rescan if you " +
+                                "think something was missed."
+                        } else {
+                            "Nothing is being tracked automatically. Grant access and your " +
+                                "last 6 months will be imported — message text never " +
+                                "leaves this phone."
+                        }
+                    )
+                    if (running) {
+                        val p = progress!!
+                        LinearProgressIndicator(
+                            progress = { p.fraction },
+                            color = Ours.accent,
+                            trackColor = Ours.hairline,
+                            modifier = Modifier.fillMaxWidth().height(3.dp),
+                        )
+                        MicroLabel(
+                            "${p.scanned} of ${p.total} messages · ${p.imported} found"
+                        )
+                    }
+                    GhostButton(
+                        label = when {
+                            !granted -> "Turn on SMS access"
+                            running -> "Scanning…"
+                            else -> "Rescan messages"
+                        },
+                        onClick = {
+                            if (running) return@GhostButton
+                            if (granted) viewModel.rescanMessages()
+                            else permissionLauncher.launch(viewModel.smsPermissions)
+                        },
                     )
                 }
             }
-
-            item {
-                SettingRow(
-                    title = "Auto-assign rules",
-                    caption = "Decide what counts as Food, Rent, Groceries — once",
-                    onClick = onOpenRules,
-                )
-            }
-
-            item {
-                SettingRow(
-                    title = "Parser tester",
-                    caption = "Paste a bank SMS and see exactly what it parses to",
-                    onClick = onOpenParserTester,
-                )
-            }
-
-            // ─── Tracking window ─────────────────────────────────────────
-            item { Section("Tracking") }
 
             item {
                 var picking by remember { mutableStateOf(false) }
@@ -627,8 +635,89 @@ fun SettingsScreen(
                 }
             }
 
-            // ─── Appearance ──────────────────────────────────────────────
-            item { Section("Appearance") }
+            // The tools, below the settings. These are for when something went
+            // wrong, not things you set.
+
+            item {
+                SettingRow(
+                    title = "Auto-assign rules",
+                    caption = "Decide what counts as Food, Rent, Groceries — once",
+                    onClick = onOpenRules,
+                )
+            }
+
+            item {
+                SettingRow(
+                    title = "Parser tester",
+                    caption = "Paste a bank SMS and see exactly what it parses to",
+                    onClick = onOpenParserTester,
+                )
+            }
+
+            // ─── When a payment happens ──────────────────────────────────
+            //
+            // The notification and the popup were five sections apart, which meant you
+            // could switch the popup on without ever noticing notifications were
+            // blocked. They are one decision made twice, so they are one panel.
+            item { Section("When a payment happens") }
+
+            item {
+                val permitted = viewModel.canPopUp()
+
+                Panel {
+                    PanelTitle("Notification")
+                    Note(
+                        "The amount, the payee and three one-tap categories, a second " +
+                            "after the bank messages you."
+                    )
+                    PermissionRow(
+                        title = "Notifications",
+                        granted = notificationsAllowed,
+                        onClick = {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            )
+                        },
+                    )
+
+                    Hairline()
+
+                    ToggleRow(
+                        title = "Popup over other apps",
+                        caption = "Asks for the category, the payee's name and a note the " +
+                            "moment a payment lands — over whatever you are doing, so it " +
+                            "works when Ours is closed. The notification still arrives " +
+                            "either way.",
+                        checked = state.capturePopup && permitted,
+                        onCheckedChange = { wanted ->
+                            viewModel.setCapturePopup(wanted)
+                            // Android has no runtime dialog for this one; the only way to
+                            // grant it is the system page, so send them straight there
+                            // rather than leaving a switch that turns itself back off.
+                            if (wanted && !permitted) context.openOverlaySettings()
+                        },
+                        padded = false,
+                    )
+                    // Always drawn, granted or not.
+                    //
+                    // It used to appear only while the permission was missing, so once
+                    // granted there was no way to see it from inside the app, and no way
+                    // back to the system page to change your mind. A permission the app
+                    // depends on should be visible in the app that depends on it.
+                    PermissionRow(
+                        title = "Display over other apps",
+                        granted = permitted,
+                        onClick = { context.openOverlaySettings() },
+                    )
+                }
+            }
+
+            // ─── This app ────────────────────────────────────────────────
+
+            item { Section("This app") }
 
             item {
                 Row(
@@ -645,9 +734,6 @@ fun SettingsScreen(
                 }
             }
 
-            // ─── Privacy ─────────────────────────────────────────────────
-            item { Section("Privacy") }
-
             item {
                 ToggleRow(
                     title = "Require unlock",
@@ -658,54 +744,6 @@ fun SettingsScreen(
                     onCheckedChange = viewModel::setAppLock,
                 )
             }
-
-            // ─── Capture ─────────────────────────────────────────────────
-            item { Section("When a payment happens") }
-
-            item {
-                val context = LocalContext.current
-                // Asked on every recomposition, not stored: this permission lives in
-                // system settings and can be taken away there without telling the app.
-                val permitted = viewModel.canPopUp()
-
-                Panel {
-                    ToggleRow(
-                        title = "Popup over other apps",
-                        caption = "Asks for the category, the payee's name and a note the " +
-                            "moment a payment lands — over whatever you are doing, so it " +
-                            "works when Ours is closed. The notification still arrives " +
-                            "either way.",
-                        checked = state.capturePopup && permitted,
-                        onCheckedChange = { wanted ->
-                            viewModel.setCapturePopup(wanted)
-                            // Android has no runtime dialog for this one; the only way to
-                            // grant it is the system page, so send them straight there
-                            // rather than leaving a switch that turns itself back off.
-                            if (wanted && !permitted) {
-                                runCatching {
-                                    context.startActivity(
-                                        Intent(
-                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                            Uri.parse("package:${context.packageName}"),
-                                        )
-                                    )
-                                }
-                            }
-                        },
-                    )
-                    if (state.capturePopup && !permitted) {
-                        Note(
-                            "Android has not granted \"Display over other apps\" yet, so " +
-                                "only the notification will appear. Turn the switch on " +
-                                "again to open the system page.",
-                            tone = Ours.warning,
-                        )
-                    }
-                }
-            }
-
-            // ─── Updates ─────────────────────────────────────────────────
-            item { Section("Updates") }
 
             item {
                 val updateStatus by viewModel.updateStatus.collectAsStateWithLifecycle()
@@ -775,8 +813,6 @@ fun SettingsScreen(
                 }
             }
 
-            item { Section("About") }
-
             item {
                 Panel {
                     val version = "Ours ${com.manuel.ours.BuildConfig.VERSION_NAME} " +
@@ -845,29 +881,6 @@ fun SettingsScreen(
                         else -> Unit
                     }
 
-                    if (state.developerMode) {
-                        Note(
-                            "Developer mode is on. Amounts can be edited on a transaction, " +
-                                "and any row you change is stamped as hand-edited — an " +
-                                "edited figure no longer matches the bank message it came " +
-                                "from. Tap the version again to switch it off.",
-                            tone = Ours.warning,
-                        )
-                        SettingRow(
-                            title = "Send a test notification",
-                            caption = "Shows the expense prompt for a made-up ₹151 " +
-                                "payment. Nothing is saved.",
-                            onClick = viewModel::sendTestNotification,
-                        )
-                        SettingRow(
-                            title = "Test the popup",
-                            caption = "Press Home straight after tapping this. The popup " +
-                                "appears in three seconds, using your newest entry — it " +
-                                "stays away while Ours is in front, which is the part " +
-                                "worth testing.",
-                            onClick = viewModel::sendTestPopup,
-                        )
-                    }
                 }
             }
 
@@ -882,6 +895,44 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            // ─── Developer ───────────────────────────────────────────────
+            //
+            // Its own panel, below the encryption note, rather than rows in the middle
+            // of a panel about which version you are running. For anyone who has not
+            // unlocked it the screen has already ended here.
+            if (state.developerMode) {
+                item { Section("Developer") }
+
+                item {
+                    Panel {
+                        Note(
+                            "Amounts can be edited on a transaction, and any row you " +
+                                "change is stamped as hand-edited — an edited figure no " +
+                                "longer matches the bank message it came from. Tap the " +
+                                "version again to switch this off.",
+                            tone = Ours.warning,
+                        )
+                        Hairline()
+                        SettingRow(
+                            title = "Send a test notification",
+                            caption = "Shows the expense prompt for a made-up ₹151 " +
+                                "payment. Nothing is saved.",
+                            onClick = viewModel::sendTestNotification,
+                            padded = false,
+                        )
+                        SettingRow(
+                            title = "Test the popup",
+                            caption = "Press Home straight after tapping this. The popup " +
+                                "appears in three seconds, using your newest entry — it " +
+                                "stays away while Ours is in front, which is the part " +
+                                "worth testing.",
+                            onClick = viewModel::sendTestPopup,
+                            padded = false,
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -889,6 +940,114 @@ fun SettingsScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 // Pieces
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Something that is off and stops part of the app working, with the way to fix it. */
+private data class Problem(val text: String, val fix: () -> Unit)
+
+/** Opens the system page for "Display over other apps". There is no other route. */
+private fun Context.openOverlaySettings() {
+    runCatching {
+        startActivity(
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName"),
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+}
+
+/**
+ * One thing that needs the reader, at the top of the screen.
+ *
+ * Amber rather than red: nothing is lost, something is merely not running. Red is for
+ * a figure that is wrong, and none of these make the ledger wrong.
+ */
+@Composable
+private fun NeedsYouRow(text: String, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(Ours.warning.copy(alpha = 0.13f))
+            .border(1.dp, Ours.warning.copy(alpha = 0.4f), shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 11.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        MicroLabel("Needs you", color = Ours.warning)
+        Text(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = Ours.textSecondary,
+            modifier = Modifier.weight(1f),
+        )
+        Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.warning)
+    }
+}
+
+/**
+ * A permission, stated where the switch that needs it lives.
+ *
+ * Drawn whether or not it is granted. Shown only while missing, it disappeared the
+ * moment it started working — so there was no way to check it later, and no way back to
+ * the system page to change your mind. Both of these permissions are revocable outside
+ * this app, which makes "currently granted" a fact worth being able to look up.
+ */
+@Composable
+private fun PermissionRow(title: String, granted: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.bodySmall,
+            color = Ours.textSecondary,
+            modifier = Modifier.weight(1f),
+        )
+        StatePill(
+            text = if (granted) "Granted" else "Not granted",
+            tone = if (granted) PillTone.Ok else PillTone.Warn,
+        )
+        Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+    }
+}
+
+/** A row that opens something below itself, with a chevron that turns. */
+@Composable
+private fun DisclosureRow(
+    title: String,
+    caption: String,
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ours.text,
+            )
+            MicroLabel(caption)
+        }
+        Text(
+            if (expanded) "⌃" else "›",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ours.textLabel,
+        )
+    }
+}
 
 @Composable
 private fun Section(label: String) {
@@ -931,12 +1090,18 @@ private fun Hairline() {
 }
 
 @Composable
-private fun SettingRow(title: String, caption: String?, onClick: () -> Unit) {
+private fun SettingRow(
+    title: String,
+    caption: String?,
+    onClick: () -> Unit,
+    /** False inside a [Panel], which has already paid the edge inset. */
+    padded: Boolean = true,
+) {
     Row(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = EDGE, vertical = 9.dp),
+            .padding(horizontal = if (padded) EDGE else 0.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {

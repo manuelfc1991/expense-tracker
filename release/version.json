@@ -1,7 +1,7 @@
 {
-  "versionCode": 22,
-  "versionName": "3.1",
-  "notes": "A payment can now open the capture prompt over whatever you are doing, so you can name and categorise it without opening Ours. Turn it on in Settings.",
+  "versionCode": 23,
+  "versionName": "3.2",
+  "notes": "Settings is five groups instead of eleven sections, and anything that is silently switched off now says so at the top.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25378476
 }
