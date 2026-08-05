@@ -785,28 +785,6 @@ fun SettingsScreen(
             }
         }
 
-        item {
-            Panel {
-                MicroLabel("Settings layout")
-                Note(
-                    "Two designs for this screen. One page is everything in one scroll; " +
-                        "Index is five rows that each open their own page. Try both — " +
-                        "whichever you don't want will be deleted."
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OursChip(
-                        label = "One page",
-                        selected = !state.settingsIndex,
-                        onClick = { viewModel.setSettingsIndex(false) },
-                    )
-                    OursChip(
-                        label = "Index",
-                        selected = state.settingsIndex,
-                        onClick = { viewModel.setSettingsIndex(true) },
-                    )
-                }
-            }
-        }
         // Loose, not panelled. It is the fine print, and a border around it would
         // make it look like another group of settings.
         item {
@@ -842,6 +820,33 @@ fun SettingsScreen(
                         "seconds, using your newest entry.",
                     onClick = viewModel::sendTestPopup,
                 )
+            }
+        }
+
+        // Both layouts are kept, so this is not a decision waiting to be made — but it
+        // is also not a choice worth putting in front of someone who only wants to turn
+        // sync on. Behind the developer unlock it stays available without becoming a
+        // question the screen asks everybody.
+        item {
+            Panel {
+                MicroLabel("Settings layout")
+                Note(
+                    "One page is everything in one scroll. Index is five rows that each " +
+                        "open their own page — quicker to read, one tap further to change " +
+                        "anything."
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OursChip(
+                        label = "One page",
+                        selected = !state.settingsIndex,
+                        onClick = { viewModel.setSettingsIndex(false) },
+                    )
+                    OursChip(
+                        label = "Index",
+                        selected = state.settingsIndex,
+                        onClick = { viewModel.setSettingsIndex(true) },
+                    )
+                }
             }
         }
     }

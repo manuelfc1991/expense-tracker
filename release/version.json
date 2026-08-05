@@ -1,7 +1,7 @@
 {
-  "versionCode": 25,
-  "versionName": "3.4",
-  "notes": "Settings can now be drawn two ways — one long page, or an index of five pages. Pick one under Settings layout; the other will be removed.",
+  "versionCode": 26,
+  "versionName": "3.5",
+  "notes": "Both Settings layouts are here to stay. The switch between them now lives in Developer.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25378476
 }
