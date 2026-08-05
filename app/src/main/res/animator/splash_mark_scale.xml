@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A settle, not an entrance.
+
+  The splash is on screen for as long as the app takes to start and no longer, so
+  anything with a wind-up gets truncated on a fast launch and looks broken. This starts
+  most of the way there and eases the last of it, which reads as intentional at any
+  duration it happens to get.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator
+        android:propertyName="scaleX"
+        android:valueFrom="0.86"
+        android:valueTo="1.0"
+        android:duration="420"
+        android:interpolator="@android:interpolator/decelerate_quint" />
+    <objectAnimator
+        android:propertyName="scaleY"
+        android:valueFrom="0.86"
+        android:valueTo="1.0"
+        android:duration="420"
+        android:interpolator="@android:interpolator/decelerate_quint" />
+</set>

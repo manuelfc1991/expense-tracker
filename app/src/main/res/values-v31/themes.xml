@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The splash, from Android 12 onwards.
+
+  A separate file rather than an attribute on the base theme, because these four
+  attributes do not exist below API 31 and a single themes.xml carrying them would fail
+  to resolve there. The base items are repeated because a style cannot inherit from
+  another of the same name.
+
+  Always dark, with no night variant. The mark is white line art, and on a light ground
+  white on near-white is nothing at all — so rather than ship a second icon for a screen
+  that is visible for half a second, the splash keeps the same near-black the launcher
+  icon now uses. It reads as that icon opening up.
+-->
+<resources>
+    <style name="Theme.Ours" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/surface</item>
+
+        <item name="android:windowSplashScreenBackground">#FF0F0F14</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">420</item>
+    </style>
+</resources>
