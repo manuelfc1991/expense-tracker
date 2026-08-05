@@ -1,7 +1,7 @@
 {
-  "versionCode": 43,
-  "versionName": "5.2",
-  "notes": "The budget and your bank balance now meet: a 'Safe to spend' figure that is the smaller of what the budget allows and what the accounts actually hold. Also fixes the budget never syncing to the other phone, and account balances never being pushed at all.",
+  "versionCode": 44,
+  "versionName": "5.3",
+  "notes": "Where it went now lists every category instead of the top six — it was silently dropping the smallest one, so the bars added up to less than Spent. Also corrects the Not counted caption, which described a card-bill rule the app no longer follows.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25419217
 }

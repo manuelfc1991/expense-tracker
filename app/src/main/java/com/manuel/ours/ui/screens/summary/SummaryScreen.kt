@@ -54,6 +54,7 @@ import com.manuel.ours.domain.model.BalanceSource
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.model.CategoryTotal
+import com.manuel.ours.domain.model.MoneyFlow
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.export.ExportManager
 import com.manuel.ours.ui.components.AmountColumn
@@ -805,7 +806,20 @@ private fun WhatsLeft(
  */
 @Composable
 private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
-    val top = summary.byCategory.take(6)
+    // Every category, not the top six.
+    //
+    // It used to take(6), silently. On a month with seven categories that dropped
+    // Groceries — ₹292 of a ₹28,663 month — with nothing on screen to say a row was
+    // missing, so the bars added up to less than the Spent figure directly above them
+    // and the section looked simply wrong. "Where it went" is a claim to account for
+    // the money; a truncated list either has to say what it left out or not leave
+    // anything out. There are sixteen categories and a month rarely touches half of
+    // them, so showing all of them costs a few compact rows and makes the section
+    // checkable against the total.
+    //
+    // Rows are whole rupees while the total is exact, so the sum can still sit a rupee
+    // or two under the headline. That is rounding, not a missing row.
+    val entries = summary.byCategory
     // The month total, not the biggest category. See [RankedBar].
     val total = summary.totalSpentPaise.takeIf { it > 0 } ?: 1L
     Column(
@@ -815,8 +829,8 @@ private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
         // A rule under it, as in the mockup: this is a section head like "Today" on
         // Home, not a caption over a value. Without the rule the ranked bars float
         // free of anything and the eye has no line to start from.
-        TapeHeader("Where it went")
-        top.forEach { entry -> RankedBar(entry, total) }
+        TapeHeader("Where it went", trailing = Money.whole(summary.totalSpentPaise))
+        entries.forEach { entry -> RankedBar(entry, total) }
     }
 }
 
@@ -904,9 +918,23 @@ private fun NotCounted(summary: MonthSummary, modifier: Modifier = Modifier) {
                 AmountColumn(entry.totalPaise, dim = true)
             }
         }
+        // Said about what is actually in the box.
+        //
+        // This was one hard-coded sentence about credit-card bills, written when card
+        // bills were excluded. They count as spending now — a household whose card
+        // purchases never reach the app has to count the bill or lose them entirely —
+        // so the box holds savings and self-transfers, and the caption was explaining a
+        // rule the app had stopped following.
         Text(
-            "A card bill pays for purchases already in the list above. " +
-                "Counting both would show them twice.",
+            buildString {
+                if (summary.excluded.any { it.category.flow == MoneyFlow.SAVING }) {
+                    append("Money put aside is still yours, so it is not spending. ")
+                }
+                if (summary.excluded.any { it.category.flow == MoneyFlow.NEUTRAL }) {
+                    append("Money moved between our own accounts never left the household. ")
+                }
+                append("Both still come off your balance.")
+            }.trim(),
             style = MaterialTheme.typography.bodySmall,
             color = Ours.textSecondary,
         )
