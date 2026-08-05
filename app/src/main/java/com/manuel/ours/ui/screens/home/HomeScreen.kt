@@ -331,7 +331,7 @@ fun HomeScreen(
             item {
                 TapeHeader(
                     label = if (isToday) "Today" else "Recent",
-                    trailing = if (isToday) Money.whole(state.spentToday) else "See all",
+                    trailing = if (isToday) Money.exact(state.spentToday) else "See all",
                     trailingColor = if (isToday) Ours.textSecondary else Ours.accent,
                     modifier = Modifier
                         .padding(horizontal = EDGE)
@@ -545,7 +545,7 @@ private fun DailyColumns(days: List<DayTotal>, modifier: Modifier = Modifier) {
             Text(
                 // Whole rupees on the axis too — paise on a chart label is precision
                 // nobody asked a chart for.
-                "${peak.dayOfMonth} · ${Money.whole(peak.totalPaise)}",
+                "${peak.dayOfMonth} · ${Money.exact(peak.totalPaise)}",
                 style = AxisLabelStyle,
                 color = Ours.textLabel,
             )
@@ -617,7 +617,7 @@ private fun HouseholdSplit(
                         color = Ours.textSecondary,
                     )
                     Text(
-                        text = Money.bare(member.totalPaise),
+                        text = Money.bare(member.totalPaise, withDecimals = true),
                         style = com.manuel.ours.ui.theme.ValueTextStyle.copy(fontSize = 12.sp),
                         color = Ours.text,
                     )

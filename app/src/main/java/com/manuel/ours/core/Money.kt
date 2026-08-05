@@ -26,15 +26,28 @@ object Money {
     }
 
     /**
-     * "₹1,23,456" — rounded down to whole rupees, never showing paise.
+     * "₹1,23,456" — rounded **down** to whole rupees, never showing paise.
      *
-     * Every figure the UI presents as a total, subtotal or headline uses this. Paise
-     * belong on a single transaction you are reconciling against a bank statement; on a
-     * month total they are two digits of noise, and in a column of totals they are
-     * worse than noise, because some rows have them and some don't and the decimal
-     * points stop lining up.
+     * For what you are allowed or able to spend: a budget, what is left of one, what the
+     * accounts can produce. Down rather than nearest is deliberate and is the safe
+     * direction — a capacity that rounds up promises 99 paise the household does not
+     * have, and this figure exists to be trusted before a payment, not after.
+     *
+     * Not for sums of transactions. Use [exact] there: since the rows themselves print
+     * paise, a floored total sits above a column that visibly adds up to more than it,
+     * and the page stops reconciling.
      */
     fun whole(paise: Long): String = format(paise - paise % 100)
+
+    /**
+     * "₹1,23,456.78" — the full figure, two places always.
+     *
+     * For anything that is the sum of transactions the reader can also see: a day's
+     * total over its rows, a group's total, a month's spend. These have to agree with
+     * the column beneath them to the paise, because now that the rows print paise, any
+     * disagreement is arithmetic the reader can do and watch fail.
+     */
+    fun exact(paise: Long): String = format(paise, withDecimals = true)
 
     /**
      * "1,23,456" — the same grouping with no currency mark.

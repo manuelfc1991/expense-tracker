@@ -71,9 +71,12 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
     val anyBudgetSet = state.overallLimit != null ||
         state.categoryProgress.any { it.limitPaise != null }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    // No Scaffold: nothing here needs one, and nesting it inside the nav host — which
+    // already carries the outer Scaffold's innerPadding — applied the system bar inset
+    // a second time and cost the screen ~73dp against Home and Summary.
+    Box(Modifier.fillMaxSize().background(Ours.ink)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize(),
             // 96dp is Home's allowance for the floating add button, and Activity's
             // for the undo snackbar. Nothing floats over this list, so the same figure
             // was simply a screen-height of blank below the last panel.
@@ -203,7 +206,7 @@ private fun OverallBudget(spentPaise: Long, limitPaise: Long?, modifier: Modifie
     ) {
         MicroLabel("Spent this month")
         Text(
-            text = Money.whole(spentPaise),
+            text = Money.exact(spentPaise),
             style = MaterialTheme.typography.displayLarge,
             color = Ours.text,
             maxLines = 1,
@@ -280,7 +283,7 @@ private fun CategoryBudgetRow(
                 )
             }
             Text(
-                text = Money.bare(progress.spentPaise - progress.spentPaise % 100),
+                text = Money.bare(progress.spentPaise, withDecimals = true),
                 style = ValueTextStyle,
                 color = Ours.text,
                 maxLines = 1,

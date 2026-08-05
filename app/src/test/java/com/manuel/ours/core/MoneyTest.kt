@@ -5,6 +5,27 @@ import org.junit.Test
 
 class MoneyTest {
 
+    /**
+     * The statement rows print paise, so a total above them has to as well.
+     *
+     * `whole` floors, which is right for a budget or a spendable balance and wrong for
+     * a sum: a day of 450.75 and 1250.50 headed by "₹1,701" sits over a column that
+     * visibly adds to 1,701.25, and the reader can watch the arithmetic fail.
+     */
+    @Test
+    fun `exact keeps the paise a floored total would drop`() {
+        assertThat(Money.exact(1_70_125)).isEqualTo("₹1,701.25")
+        assertThat(Money.whole(1_70_125)).isEqualTo("₹1,701")
+        // Two places even when there is no fraction, so the decimal point stays put
+        // down the column.
+        assertThat(Money.exact(45_000)).isEqualTo("₹450.00")
+        assertThat(Money.exact(0)).isEqualTo("₹0.00")
+        assertThat(Money.exact(-45_075)).isEqualTo("-₹450.75")
+        // The worst case a floored total can understate a sum by.
+        assertThat(Money.exact(99)).isEqualTo("₹0.99")
+        assertThat(Money.whole(99)).isEqualTo("₹0")
+    }
+
     @Test
     fun `indian grouping uses lakh and crore not thousands`() {
         assertThat(Money.groupIndian(100)).isEqualTo("100")

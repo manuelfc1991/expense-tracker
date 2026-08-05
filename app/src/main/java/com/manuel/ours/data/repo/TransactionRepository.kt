@@ -264,7 +264,11 @@ class TransactionRepository @Inject constructor(
         // Zero used to mean that too, which left a zero-balance account with no way to
         // say so — typing 0 erased the entry instead of recording it. An empty string is
         // the tombstone; "0" is a figure like any other.
-        val amount = paise?.coerceAtLeast(0L)?.toString().orEmpty()
+        // Negatives are stored, not clamped. Coercing them to 0 would report an overdrawn
+        // account as merely empty — the one direction a balance must never be wrong in,
+        // since "safe to spend" is computed off it. Nothing can type one today; this is
+        // so that when something can, it does not quietly round the debt away.
+        val amount = paise?.toString().orEmpty()
         sharedRuleDao.upsertAll(
             listOf(
                 SharedRuleEntity(

@@ -83,6 +83,23 @@ class ZeroBalanceAccountTest {
     }
 
     @Test
+    fun `an overdrawn account stays negative rather than reading as empty`() {
+        // Clamping to zero here would be the one direction a balance must never be wrong
+        // in: "safe to spend" is computed off this figure, and an account ₹500 overdrawn
+        // reported as empty offers money that has to be repaid before it can be spent.
+        val result = MonthlyAggregator.accountBalances(
+            transactions = emptyList(),
+            manual = mapOf(
+                "4657" to ManualBalance(paise = -rupees(500), setAt = 2_000L, bank = "Federal"),
+            ),
+        )
+
+        val federal = result.single { it.key == "4657" }
+        assertThat(federal.balancePaise).isEqualTo(-rupees(500))
+        assertThat(federal.source).isEqualTo(BalanceSource.HAND)
+    }
+
+    @Test
     fun `a typed zero outranks an older bank figure`() {
         // The bank said ₹2,500 yesterday; the account has since been emptied and somebody
         // typed that in. The newer hand figure wins, exactly as a non-zero one would.

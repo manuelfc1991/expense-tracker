@@ -218,11 +218,15 @@ fun AmountColumn(
     signed: Boolean = false,
     color: Color = if (dim) Ours.textSecondary else Ours.text,
 ) {
-    // Whole rupees, always. A column where some rows carry paise and others don't has
-    // no shared decimal point, so the digits stop lining up and the column stops being
-    // one — which was the entire reason for putting the amounts here. The exact figure,
-    // paise included, is on the entry's own screen, where you go to reconcile.
-    val text = Money.bare(paise - paise % 100)
+    // Paise, always — two places on every row, never "only when there are some".
+    //
+    // Dropping them read as wrong, because it was: a ₹450.75 payment printed as 450 and
+    // the 75 paise were simply gone from the page. The reason they were dropped still
+    // holds, though — a column where some rows carry paise and others don't has no
+    // shared decimal point and stops lining up. Printing .00 on the round ones keeps
+    // the point in the same place on every row, so the column survives and the figure
+    // is the real one.
+    val text = Money.bare(paise, withDecimals = true)
     Text(
         text = if (signed && paise > 0) "+$text" else text,
         style = AmountTextStyle.copy(

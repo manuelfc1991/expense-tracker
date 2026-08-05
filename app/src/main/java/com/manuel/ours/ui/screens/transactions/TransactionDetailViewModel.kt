@@ -7,6 +7,9 @@ import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -82,8 +85,23 @@ class TransactionDetailViewModel @Inject constructor(
         viewModelScope.launch { repository.setSplitType(txnId, splitType) }
     }
 
-    fun delete(txnId: String) {
-        viewModelScope.launch { repository.deleteOrRequest(txnId) }
+    /**
+     * True once this row's delete turned into a request the owner has yet to answer.
+     *
+     * The screen used to delete and navigate back in the same breath, so a member got a
+     * closed screen and an unchanged list — the row was still there, nothing said why,
+     * and the obvious read was that the button had not worked. Leaving the screen open
+     * with a line of explanation is the only place the answer can be shown, since going
+     * back lands on a different view model.
+     */
+    private val awaitingApproval = MutableStateFlow(false)
+    val deleteAwaitingApproval: StateFlow<Boolean> = awaitingApproval.asStateFlow()
+
+    /** [onRemoved] runs only for a delete that actually happened — the owner's. */
+    fun delete(txnId: String, onRemoved: () -> Unit = {}) {
+        viewModelScope.launch {
+            if (repository.deleteOrRequest(txnId)) onRemoved() else awaitingApproval.value = true
+        }
     }
 
     /** Marks the row for review so it surfaces in the needs-review inbox. */

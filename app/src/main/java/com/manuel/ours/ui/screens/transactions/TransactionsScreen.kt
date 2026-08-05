@@ -119,11 +119,15 @@ fun TransactionsScreen(
         viewModel.clearDeleteRequestNotice()
     }
 
+    // The Scaffold stays for the snackbar host, but its padding is deliberately not
+    // applied: `Navigation.kt` already gives the NavHost this Scaffold's outer
+    // innerPadding, so consuming it again inset the screen twice and cost ~73dp — the
+    // list stopped short of the tab bar with a dead band under the last row.
     Scaffold(
         containerColor = Ours.ink,
         snackbarHost = { SnackbarHost(snackbarHost) },
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+    ) { _ ->
+        Column(Modifier.fillMaxSize()) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,7 +233,7 @@ fun TransactionsScreen(
                     detail = buildString {
                         append(state.shownCount)
                         append(if (state.shownCount == 1) " entry · " else " entries · ")
-                        append(Money.whole(state.filteredTotalPaise))
+                        append(Money.exact(state.filteredTotalPaise))
                     },
                     tint = if (state.categoryFilter == CategoryFilter.Untagged) {
                         Ours.warning
@@ -298,7 +302,7 @@ fun TransactionsScreen(
                             Box(Modifier.background(Ours.ink)) {
                                 TapeHeader(
                                     label = group.label,
-                                    trailing = Money.whole(group.totalPaise),
+                                    trailing = Money.exact(group.totalPaise),
                                     modifier = Modifier.padding(
                                         horizontal = EDGE,
                                         vertical = 8.dp,

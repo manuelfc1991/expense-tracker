@@ -289,7 +289,7 @@ private fun CategorySheet(
             MicroLabel(group.merchant)
             Text(
                 "${group.count} ${if (group.count == 1) "payment" else "payments"} · " +
-                    Money.whole(group.totalPaise),
+                    Money.exact(group.totalPaise),
                 style = MaterialTheme.typography.titleMedium,
                 color = Ours.text,
             )

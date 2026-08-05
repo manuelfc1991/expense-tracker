@@ -263,7 +263,7 @@ private fun NetHeadline(summary: MonthSummary, modifier: Modifier = Modifier) {
         MicroLabel("Net this month")
         Text(
             // Whole rupees. Paise on a headline this size is noise.
-            text = (if (net > 0) "+" else "") + Money.whole(net),
+            text = (if (net > 0) "+" else "") + Money.exact(net),
             style = MaterialTheme.typography.displayMedium,
             color = color,
             maxLines = 1,
@@ -279,15 +279,15 @@ private fun EarnedSpentSaved(summary: MonthSummary, modifier: Modifier = Modifie
             Modifier.fillMaxWidth().padding(top = 11.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            LabelOverValue("Earned", Money.whole(summary.totalReceivedPaise))
+            LabelOverValue("Earned", Money.exact(summary.totalReceivedPaise))
             LabelOverValue(
                 label = "Spent",
-                value = Money.whole(summary.totalSpentPaise),
+                value = Money.exact(summary.totalSpentPaise),
                 alignment = Alignment.CenterHorizontally,
             )
             LabelOverValue(
                 label = "Saved",
-                value = Money.whole(summary.totalSavedPaise),
+                value = Money.exact(summary.totalSavedPaise),
                 valueColor = if (summary.totalSavedPaise > 0) Ours.positive else Ours.text,
                 alignment = Alignment.End,
             )
@@ -862,7 +862,7 @@ private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
         // A rule under it, as in the mockup: this is a section head like "Today" on
         // Home, not a caption over a value. Without the rule the ranked bars float
         // free of anything and the eye has no line to start from.
-        TapeHeader("Where it went", trailing = Money.whole(summary.totalSpentPaise))
+        TapeHeader("Where it went", trailing = Money.exact(summary.totalSpentPaise))
         entries.forEach { entry -> RankedBar(entry, total) }
     }
 }

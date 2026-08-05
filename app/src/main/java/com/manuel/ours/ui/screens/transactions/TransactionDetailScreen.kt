@@ -100,6 +100,7 @@ fun TransactionDetailScreen(
         )
     }
     val canEditAmount by viewModel.canEditAmount.collectAsStateWithLifecycle(initialValue = false)
+    val awaitingApproval by viewModel.deleteAwaitingApproval.collectAsStateWithLifecycle()
 
     editingAmount?.let { draft ->
         AmountDialog(
@@ -187,7 +188,18 @@ fun TransactionDetailScreen(
                     tint = Ours.negative,
                     modifier = Modifier
                         .size(15.dp)
-                        .clickable { viewModel.delete(txnId); onBack() },
+                        // Back only on a delete that happened. A member's becomes a
+                        // request, and closing the screen on it left the row sitting in
+                        // the list with nothing to explain why.
+                        .clickable { viewModel.delete(txnId) { onBack() } },
+                )
+            }
+
+            if (awaitingApproval) {
+                MicroLabel(
+                    "Asked the household owner to remove this — it still counts until they agree",
+                    color = Ours.warning,
+                    modifier = Modifier.padding(horizontal = EDGE),
                 )
             }
 

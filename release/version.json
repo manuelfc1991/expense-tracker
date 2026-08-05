@@ -1,7 +1,7 @@
 {
-  "versionCode": 49,
-  "versionName": "5.8",
-  "notes": "Budgets can be cleared one at a time or reset together, a zero balance can finally be typed in, and the add button floats again.",
+  "versionCode": 50,
+  "versionName": "5.9",
+  "notes": "Amounts show paise, and every total agrees with the rows beneath it. Activity and Budgets get back the space they were losing, and a delete from an entry now says it is waiting on the owner.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25464834
 }

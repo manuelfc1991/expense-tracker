@@ -45,10 +45,17 @@ fun AnimatedAmount(
     }
 
     Text(
-        // Whole rupees. Paise on a ₹21,979.19 headline is visual noise, and it also
-        // makes the count-up flicker through two extra digits the whole way there.
+        // Whole rupees while it counts, the real figure once it lands.
+        //
+        // Paise all the way up made the count-up flicker through two extra digits the
+        // whole journey, which is why this was floored. But the sole caller is the
+        // month's spend, sitting directly above a day total and a column of rows that
+        // now print paise — floored, it was the one number on the page that disagreed
+        // with the ones under it. Settling on the exact figure keeps the animation
+        // quiet and the arithmetic honest.
         text = when {
             compact -> Money.formatCompact(displayed)
+            displayed == paise -> Money.exact(displayed)
             else -> Money.whole(displayed)
         },
         style = style,
