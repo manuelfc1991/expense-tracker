@@ -51,6 +51,15 @@ data class SummaryUiState(
      * gone from the account and still ours.
      */
     val leftAccountsPaise: Long = 0L,
+    /**
+     * Whether this phone claims to own the household, which is what gates the balances.
+     *
+     * A curtain, not a lock — the flag is self-declared in Settings and the figures still
+     * cross the sync either way. It keeps account balances off a screen the rest of the
+     * household reads over your shoulder; it does not keep them from someone who goes
+     * looking.
+     */
+    val isHouseholdOwner: Boolean = false,
 ) {
     /** What the recurring charges add up to per month, cadences reconciled. */
     val committedMonthlyPaise: Long get() = recurring.sumOf { it.monthlyEquivalentPaise }
@@ -62,14 +71,24 @@ class SummaryViewModel @Inject constructor(
     private val prefs: AppPrefs,
 ) : ViewModel() {
 
+    /** What the whole screen is scoped to: a month, a member, a viewer. */
+    private data class Scope(
+        val yearMonth: YearMonth,
+        val filter: MemberFilter,
+        val selfUid: String,
+        val owner: Boolean,
+    )
+
     private val yearMonth = MutableStateFlow(YearMonth.now(MonthlyAggregator.ZONE))
     private val filter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<SummaryUiState> =
-        combine(yearMonth, filter, prefs.selfUid) { ym, memberFilter, selfUid ->
-            Triple(ym, memberFilter, selfUid.orEmpty())
-        }.flatMapLatest { (ym, memberFilter, selfUid) ->
+        combine(
+            yearMonth, filter, prefs.selfUid, prefs.householdOwner,
+        ) { ym, memberFilter, selfUid, owner ->
+            Scope(ym, memberFilter, selfUid.orEmpty(), owner)
+        }.flatMapLatest { (ym, memberFilter, selfUid, owner) ->
             val current = MonthlyAggregator.monthRange(ym.year, ym.monthValue)
             val prior = ym.minusMonths(1)
             val priorRange = MonthlyAggregator.monthRange(prior.year, prior.monthValue)
@@ -115,6 +134,7 @@ class SummaryViewModel @Inject constructor(
                         minimums,
                     ),
                     leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
+                    isHouseholdOwner = owner,
                 )
             }
         }

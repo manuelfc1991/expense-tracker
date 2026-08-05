@@ -139,7 +139,10 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 item { NotCounted(summary) }
             }
 
-            if (state.balances.isNotEmpty()) {
+            // Owner only. Balances are the one thing here that is nobody else's
+            // business by default — the rest of this screen is the household's shared
+            // spending, and this is what sits in each person's account.
+            if (state.isHouseholdOwner && state.balances.isNotEmpty()) {
                 item { WhatsLeft(state.balances, onSet = { settingBalance = it }) }
             }
 

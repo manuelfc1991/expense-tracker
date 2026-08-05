@@ -1,7 +1,7 @@
 {
-  "versionCode": 35,
-  "versionName": "4.4",
-  "notes": "What is left now takes off each account's minimum balance, so the figure is what you can actually spend.",
+  "versionCode": 36,
+  "versionName": "4.5",
+  "notes": "Account balances are now shown only to the household owner.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25396232
 }
