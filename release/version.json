@@ -1,7 +1,7 @@
 {
-  "versionCode": 23,
-  "versionName": "3.2",
-  "notes": "Settings is five groups instead of eleven sections, and anything that is silently switched off now says so at the top.",
+  "versionCode": 24,
+  "versionName": "3.3",
+  "notes": "Settings now matches the design: one panel per group, status on every heading, and captions that read as sentences instead of shouting.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25378476
 }

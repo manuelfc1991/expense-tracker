@@ -127,6 +127,7 @@ fun SettingsScreen(
     var versionTaps by remember { mutableIntStateOf(0) }
     var unlockRefused by remember { mutableStateOf(false) }
     var showInvite by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -202,7 +203,7 @@ fun SettingsScreen(
             //
             // Every failure this app has actually had was a permission that was off
             // while everything else looked fine: POST_NOTIFICATIONS never requested,
-            // notification access never granted, and now the overlay permission, which
+            // notification access never granted, and the overlay permission, which
             // Android can revoke at any time without telling anyone. A screen that only
             // reveals that once you scroll to the right section will not catch it.
             //
@@ -222,37 +223,34 @@ fun SettingsScreen(
             }
 
             // ─── Household ───────────────────────────────────────────────
-
-            item { Section("Household") }
+            item {
+                Section(
+                    "Household",
+                    trailing = if (state.members.size == 1) "1 person"
+                    else "${state.members.size} people",
+                )
+            }
 
             item {
                 Panel {
-                    state.members.forEach { member ->
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(
-                                    member.displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Ours.text,
-                                )
-                                MicroLabel(member.email)
-                            }
-                            if (member.isSelf) StatePill("You", PillTone.Ok)
-                        }
-                    }
-
-                    // Always available. This used to hide once two people existed,
-                    // which made a third member impossible to add — there is no other
-                    // route to the code, so the household was silently capped at two.
-                    // Behind a tap.
+                    // One line for the household, not a row each.
                     //
-                    // The QR is a 180dp white square needed exactly once per person, and
-                    // drawn always it made Household the tallest section in the app —
-                    // every visit paid for a thing you use on one day.
+                    // A member row carrying a name, an email and a pill is a lot of
+                    // furniture for a fact that never changes and that you already know:
+                    // who lives here. The names are the answer; the addresses were only
+                    // ever there because the data had them.
+                    Text(
+                        state.members.joinToString("  ·  ") { it.displayName }
+                            .ifBlank { "Just you" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Ours.text,
+                    )
+                    MicroLabel(
+                        if (state.isHouseholdOwner) "You own this household"
+                        else "You joined this household",
+                    )
+
                     Hairline()
                     DisclosureRow(
                         title = if (state.members.size < 2) "Invite your partner"
@@ -293,137 +291,37 @@ fun SettingsScreen(
                                 color = Ours.text,
                             )
                         }
-                        Hairline()
                         Note("Joining instead? Scan the code on their phone.")
                         GhostButton("Scan their code", onClick = onScanInvite)
                     }
-                }
-            }
 
-            // Only the owner can answer these, and only worth a row when some exist.
-            if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
-                item {
-                    SettingRow(
-                        title = "Delete requests",
-                        caption = "${state.pendingDeleteRequests} waiting on you · they still count until you decide",
-                        onClick = onOpenDeleteRequests,
-                    )
-                }
-            }
-
-            // ─── Sync ───────────────────────────────────────────────────
-
-            item { Section("Sync") }
-
-            item {
-                val progress by viewModel.syncProgress.collectAsStateWithLifecycle()
-                val running = progress == "Syncing…"
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !running) { SyncWorker.syncNow(context) }
-                        .padding(horizontal = EDGE, vertical = 9.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(
-                            "Sync now",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Ours.text,
-                        )
-                        // The result of the last run wins over "synced 4m ago": what it
-                        // did is more useful than when it happened.
-                        MicroLabel(
-                            text = progress ?: state.lastSyncLabel,
-                            color = when {
-                                running -> Ours.accent
-                                progress == "Sync failed" ||
-                                    progress == "Could not reach anything to sync with" -> Ours.warning
-                                else -> Ours.textLabel
+                    // Only the owner can answer these, and only worth a row when some
+                    // exist — but inside the panel, because an approval queue between
+                    // two people is a household matter.
+                    if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
+                        Hairline()
+                        PanelRow(
+                            title = "Delete requests",
+                            caption = "They still count until you decide",
+                            onClick = onOpenDeleteRequests,
+                            trailing = {
+                                StatePill("${state.pendingDeleteRequests} waiting", PillTone.Warn)
                             },
                         )
                     }
-                    if (running) {
-                        CircularProgressIndicator(
-                            color = Ours.accent,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    } else {
-                        BiIconView(
-                            BiIcon.Sync,
-                            contentDescription = null,
-                            tint = Ours.textLabel,
-                            modifier = Modifier.size(13.dp),
-                        )
-                    }
                 }
             }
+
+            // ─── Sync ────────────────────────────────────────────────────
+            item { Section("Sync", trailing = state.lastSyncLabel) }
 
             item {
                 var draft by remember(state.sheetUrl) { mutableStateOf(state.sheetUrl) }
                 val status by viewModel.sheetStatus.collectAsStateWithLifecycle()
                 val testing by viewModel.sheetTesting.collectAsStateWithLifecycle()
+                val progress by viewModel.syncProgress.collectAsStateWithLifecycle()
+                val running = progress == "Syncing…"
 
-                Panel {
-                    PanelTitle(
-                        if (state.sheetUrl.isNotBlank()) "Sheet sync is on" else "Sheet sync"
-                    )
-                    Note(
-                        "Paste the Apps Script URL from your Google Sheet. Use the same " +
-                            "URL on your partner's phone and you'll both see every " +
-                            "expense, wherever you are."
-                    )
-                    GhostButton(
-                        label = "How do I set this up?",
-                        onClick = onOpenSheetSetup,
-                    )
-                    HairlineField(
-                        value = draft,
-                        onValueChange = { draft = it },
-                        placeholder = "https://script.google.com/macros/s/…/exec",
-                        enabled = !testing,
-                    )
-                    status?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (it.startsWith("Connected")) Ours.positive
-                            else Ours.negative,
-                        )
-                    }
-                    GhostButton(
-                        label = when {
-                            testing -> "Checking…"
-                            draft.isBlank() -> "Turn off sheet sync"
-                            else -> "Connect"
-                        },
-                        onClick = { if (!testing) viewModel.saveSheetUrl(draft) },
-                    )
-                    if (state.sheetUrl.isNotBlank()) {
-                        GhostButton(
-                            label = "Re-upload everything",
-                            onClick = { viewModel.reuploadEverything() },
-                        )
-                        Note(
-                            "For a sheet you recreated or cleared. The phone otherwise " +
-                                "believes it already sent everything, and only new " +
-                                "expenses would appear."
-                        )
-                    }
-                    Note(
-                        "Anyone with this URL can read and change your expenses — treat it " +
-                            "like a password. Amounts, merchants and account tails are " +
-                            "stored in the clear; the original bank messages are stripped " +
-                            "before they are sent.",
-                        tone = Ours.warning,
-                    )
-                }
-            }
-
-            item {
                 val nearbyPermissions = remember { NearbyTransport.requiredPermissions() }
                 var nearbyDenied by remember { mutableStateOf(false) }
                 val nearbyLauncher = rememberLauncherForActivityResult(
@@ -436,7 +334,83 @@ fun SettingsScreen(
                     if (granted) viewModel.setNearbyAlways(true)
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Panel {
+                    // The setup form behind a row, like the invite QR.
+                    //
+                    // It is a URL field, three buttons and two warnings — correct on the
+                    // day you connect a sheet and pure noise on every day after, which is
+                    // most of them. The row states whether it is on; opening it is for
+                    // changing that.
+                    DisclosureRow(
+                        title = "Sheet sync",
+                        caption = if (state.sheetUrl.isNotBlank()) {
+                            "On — both phones read the same sheet"
+                        } else {
+                            "Off — set up a Google Sheet to sync anywhere"
+                        },
+                        expanded = showSheet,
+                        onClick = { showSheet = !showSheet },
+                        trailing = {
+                            StatePill(
+                                text = if (state.sheetUrl.isNotBlank()) "On" else "Off",
+                                tone = if (state.sheetUrl.isNotBlank()) PillTone.Ok
+                                else PillTone.Neutral,
+                            )
+                        },
+                    )
+                    if (showSheet) {
+                        Note(
+                            "Paste the Apps Script URL from your Google Sheet. Use the " +
+                                "same URL on your partner's phone and you'll both see " +
+                                "every expense, wherever you are."
+                        )
+                        GhostButton(
+                            label = "How do I set this up?",
+                            onClick = onOpenSheetSetup,
+                        )
+                        HairlineField(
+                            value = draft,
+                            onValueChange = { draft = it },
+                            placeholder = "https://script.google.com/macros/s/…/exec",
+                            enabled = !testing,
+                        )
+                        status?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (it.startsWith("Connected")) Ours.positive
+                                else Ours.negative,
+                            )
+                        }
+                        GhostButton(
+                            label = when {
+                                testing -> "Checking…"
+                                draft.isBlank() -> "Turn off sheet sync"
+                                else -> "Connect"
+                            },
+                            onClick = { if (!testing) viewModel.saveSheetUrl(draft) },
+                        )
+                        if (state.sheetUrl.isNotBlank()) {
+                            GhostButton(
+                                label = "Re-upload everything",
+                                onClick = { viewModel.reuploadEverything() },
+                            )
+                            Note(
+                                "For a sheet you recreated or cleared. The phone otherwise " +
+                                    "believes it already sent everything, and only new " +
+                                    "expenses would appear."
+                            )
+                        }
+                        Note(
+                            "Anyone with this URL can read and change your expenses — " +
+                                "treat it like a password. Amounts, merchants and account " +
+                                "tails are stored in the clear; the original bank messages " +
+                                "are stripped before they are sent.",
+                            tone = Ours.warning,
+                        )
+                    }
+
+                    Hairline()
                     ToggleRow(
                         title = "Keep syncing when nearby",
                         caption = "Instant sync the moment you're in the same room, over " +
@@ -453,33 +427,87 @@ fun SettingsScreen(
                                 nearbyLauncher.launch(nearbyPermissions.toTypedArray())
                             }
                         },
+                        padded = false,
                     )
                     if (nearbyDenied) {
-                        Box(Modifier.padding(horizontal = EDGE)) {
-                            Note(
-                                "Nearby sync needs Bluetooth permission. Without it the " +
-                                    "two phones cannot see each other, so this stays off.",
-                                tone = Ours.warning,
-                            )
-                        }
+                        Note(
+                            "Nearby sync needs Bluetooth permission. Without it the two " +
+                                "phones cannot see each other, so this stays off.",
+                            tone = Ours.warning,
+                        )
                     }
+
+                    Hairline()
+                    PanelRow(
+                        title = "Sync now",
+                        // The result of the last run wins over "synced 4m ago": what it
+                        // did is more useful than when it happened.
+                        caption = progress ?: state.lastSyncLabel,
+                        captionColor = when {
+                            running -> Ours.accent
+                            progress == "Sync failed" ||
+                                progress == "Could not reach anything to sync with" -> Ours.warning
+                            else -> Ours.textLabel
+                        },
+                        onClick = { if (!running) SyncWorker.syncNow(context) },
+                        trailing = {
+                            if (running) {
+                                CircularProgressIndicator(
+                                    color = Ours.accent,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                            } else {
+                                BiIconView(
+                                    BiIcon.Sync,
+                                    contentDescription = null,
+                                    tint = Ours.textLabel,
+                                    modifier = Modifier.size(13.dp),
+                                )
+                            }
+                        },
+                        chevron = false,
+                    )
                 }
             }
 
-            // ─── What becomes an entry ──────────────────────────────────
-
+            // ─── What becomes an entry ───────────────────────────────────
             //
             // Message scanning, Where expenses come from and Tracking were three
             // sections with an unrelated one between them, all answering the same
             // question: which payments turn into rows.
-
-            item { Section("What becomes an entry") }
+            item {
+                Section(
+                    "What becomes an entry",
+                    trailing = when (state.ingestSource) {
+                        IngestSource.SMS -> "From SMS"
+                        IngestSource.NOTIFICATION -> "From notifications"
+                        IngestSource.MANUAL_ONLY -> "By hand"
+                    },
+                )
+            }
 
             item {
-                Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
-                    verticalArrangement = Arrangement.spacedBy(9.dp),
-                ) {
+                var granted by remember { mutableStateOf(viewModel.hasSmsPermission()) }
+                val scan by viewModel.observeScanProgress()
+                    .collectAsStateWithLifecycle(initialValue = null)
+                val scanning = scan?.let { !it.finished && it.total > 0 } == true
+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { result ->
+                    granted = result[Manifest.permission.READ_SMS] == true
+                    // Granting late is exactly the case that used to leave the app
+                    // permanently empty — scan straight away rather than waiting for the
+                    // next incoming message.
+                    if (granted) viewModel.rescanMessages()
+                }
+
+                var picking by remember { mutableStateOf(false) }
+                val start = state.trackingStartAt
+
+                Panel {
+                    MicroLabel("Read from")
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         IngestSource.entries.forEach { source ->
                             OursChip(
@@ -507,19 +535,21 @@ fun SettingsScreen(
                         }
                     )
 
-                    // Picking Notifications without this grant is a no-op: the listener
-                    // is never bound, so nothing is read and the app looks broken in a
-                    // way that offers no explanation. There is no runtime dialog for
-                    // notification access — the only route is this system page.
-                    if (state.ingestSource == IngestSource.NOTIFICATION && !listenerEnabled) {
-                        Note(
-                            "Notification access is off, so nothing is being read. " +
-                                "Ours needs permission to see other apps' notifications " +
-                                "before this source does anything.",
-                            tone = Ours.warning,
+                    // The permission each source depends on, stated where the source is
+                    // chosen. Picking Notifications without the grant is a no-op: the
+                    // listener is never bound, so nothing is read and the app looks
+                    // broken in a way that offers no explanation.
+                    when (state.ingestSource) {
+                        IngestSource.SMS -> PermissionRow(
+                            title = "Read your bank SMS",
+                            granted = granted,
+                            onClick = {
+                                if (!granted) permissionLauncher.launch(viewModel.smsPermissions)
+                            },
                         )
-                        GhostButton(
-                            label = "Grant notification access",
+                        IngestSource.NOTIFICATION -> PermissionRow(
+                            title = "Notification access",
+                            granted = listenerEnabled,
                             onClick = {
                                 context.startActivity(
                                     Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
@@ -527,100 +557,66 @@ fun SettingsScreen(
                                 )
                             },
                         )
+                        IngestSource.MANUAL_ONLY -> Unit
                     }
-                }
-            }
 
-            item {
-                var granted by remember { mutableStateOf(viewModel.hasSmsPermission()) }
-                val progress by viewModel.observeScanProgress()
-                    .collectAsStateWithLifecycle(initialValue = null)
-
-                val permissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestMultiplePermissions()
-                ) { result ->
-                    granted = result[Manifest.permission.READ_SMS] == true
-                    // Granting late is exactly the case that used to leave the app
-                    // permanently empty — scan straight away rather than waiting for the
-                    // next incoming message.
-                    if (granted) viewModel.rescanMessages()
-                }
-
-                val running = progress?.let { !it.finished && it.total > 0 } == true
-
-                Panel {
-                    PanelTitle(if (granted) "Reading your bank SMS" else "SMS access is off")
-                    Note(
-                        if (granted) {
-                            "New bank messages are picked up automatically. Rescan if you " +
-                                "think something was missed."
+                    Hairline()
+                    PanelRow(
+                        title = if (start > 0L) "From ${formatDay(start)}" else "Tracking everything",
+                        caption = if (start > 0L) {
+                            "Nothing before this date is counted — move it back and those months return"
                         } else {
-                            "Nothing is being tracked automatically. Grant access and your " +
-                                "last 6 months will be imported — message text never " +
-                                "leaves this phone."
-                        }
+                            "Every message the scan finds, as far back as six months"
+                        },
+                        onClick = { picking = true },
                     )
-                    if (running) {
-                        val p = progress!!
-                        LinearProgressIndicator(
-                            progress = { p.fraction },
-                            color = Ours.accent,
-                            trackColor = Ours.hairline,
-                            modifier = Modifier.fillMaxWidth().height(3.dp),
-                        )
-                        MicroLabel(
-                            "${p.scanned} of ${p.total} messages · ${p.imported} found"
+                    if (start > 0L) {
+                        GhostButton(
+                            label = "Show everything",
+                            onClick = { viewModel.setTrackingStartAt(0L) },
                         )
                     }
-                    GhostButton(
-                        label = when {
-                            !granted -> "Turn on SMS access"
-                            running -> "Scanning…"
+
+                    Hairline()
+                    PanelRow(
+                        title = when {
+                            !granted && state.ingestSource == IngestSource.SMS ->
+                                "Turn on SMS access"
+                            scanning -> "Scanning…"
                             else -> "Rescan messages"
                         },
+                        caption = scan
+                            ?.takeIf { scanning }
+                            ?.let { "${it.scanned} of ${it.total} · ${it.imported} found" }
+                            ?: "If you think something was missed",
                         onClick = {
-                            if (running) return@GhostButton
+                            if (scanning) return@PanelRow
                             if (granted) viewModel.rescanMessages()
                             else permissionLauncher.launch(viewModel.smsPermissions)
                         },
                     )
-                }
-            }
-
-            item {
-                var picking by remember { mutableStateOf(false) }
-                val start = state.trackingStartAt
-
-                Panel {
-                    PanelTitle(
-                        if (start > 0L) "Tracking from ${formatDay(start)}" else "Tracking everything"
-                    )
-                    Note(
-                        if (start > 0L) {
-                            "Nothing before this date is counted or re-imported. The older " +
-                                "messages are still on this phone and still in the database — " +
-                                "move the date back and they return."
-                        } else {
-                            "Every message the scan finds is counted, as far back as six " +
-                                "months. Set a start date to retire the months before it."
-                        }
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                        Box(Modifier.weight(1f)) {
-                            GhostButton(
-                                label = if (start > 0L) "Change date" else "Set a start date",
-                                onClick = { picking = true },
-                            )
-                        }
-                        if (start > 0L) {
-                            Box(Modifier.weight(1f)) {
-                                GhostButton(
-                                    label = "Show everything",
-                                    onClick = { viewModel.setTrackingStartAt(0L) },
-                                )
-                            }
-                        }
+                    if (scanning) {
+                        LinearProgressIndicator(
+                            progress = { scan!!.fraction },
+                            color = Ours.accent,
+                            trackColor = Ours.hairline,
+                            modifier = Modifier.fillMaxWidth().height(3.dp),
+                        )
                     }
+
+                    // The tools, below a rule. These are for when something went wrong,
+                    // not things you set.
+                    Hairline()
+                    PanelRow(
+                        title = "Auto-assign rules",
+                        caption = "Decide what counts as Food, Rent, Groceries — once",
+                        onClick = onOpenRules,
+                    )
+                    PanelRow(
+                        title = "Parser tester",
+                        caption = "Paste a bank SMS and see exactly what it parses to",
+                        onClick = onOpenParserTester,
+                    )
                 }
 
                 if (picking) {
@@ -633,25 +629,6 @@ fun SettingsScreen(
                         onDismiss = { picking = false },
                     )
                 }
-            }
-
-            // The tools, below the settings. These are for when something went
-            // wrong, not things you set.
-
-            item {
-                SettingRow(
-                    title = "Auto-assign rules",
-                    caption = "Decide what counts as Food, Rent, Groceries — once",
-                    onClick = onOpenRules,
-                )
-            }
-
-            item {
-                SettingRow(
-                    title = "Parser tester",
-                    caption = "Paste a bank SMS and see exactly what it parses to",
-                    onClick = onOpenParserTester,
-                )
             }
 
             // ─── When a payment happens ──────────────────────────────────
@@ -716,32 +693,10 @@ fun SettingsScreen(
             }
 
             // ─── This app ────────────────────────────────────────────────
-
-            item { Section("This app") }
-
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    ThemeMode.entries.forEach { mode ->
-                        OursChip(
-                            label = mode.name.lowercase().replaceFirstChar { it.uppercase() },
-                            selected = state.theme == mode,
-                            onClick = { viewModel.setTheme(mode) },
-                        )
-                    }
-                }
-            }
-
-            item {
-                ToggleRow(
-                    title = "Require unlock",
-                    caption = "Fingerprint, face or screen lock when you open Ours. Stays " +
-                        "unlocked for a minute if you switch away, so it doesn't nag on " +
-                        "every glance.",
-                    checked = state.appLock,
-                    onCheckedChange = viewModel::setAppLock,
+                Section(
+                    "This app",
+                    trailing = "Ours ${com.manuel.ours.BuildConfig.VERSION_NAME}",
                 )
             }
 
@@ -750,76 +705,49 @@ fun SettingsScreen(
                 val busy by viewModel.updateBusy.collectAsStateWithLifecycle()
                 val ready by viewModel.updateFile.collectAsStateWithLifecycle()
                 val result by viewModel.update.collectAsStateWithLifecycle()
+                val pending = result as? com.manuel.ours.data.update.UpdateChecker.Result.Update
 
-                Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
-                    verticalArrangement = Arrangement.spacedBy(9.dp),
-                ) {
-                    Note(
-                        "Ours is not on Play, so it updates itself from its own " +
-                            "repository. Nothing downloads until you ask, and a build " +
-                            "signed by a different key is refused."
+                Panel {
+                    MicroLabel("Appearance")
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        ThemeMode.entries.forEach { mode ->
+                            OursChip(
+                                label = mode.name.lowercase().replaceFirstChar { it.uppercase() },
+                                selected = state.theme == mode,
+                                onClick = { viewModel.setTheme(mode) },
+                            )
+                        }
+                    }
+
+                    Hairline()
+                    ToggleRow(
+                        title = "Require unlock",
+                        caption = "Fingerprint, face or screen lock when you open Ours. " +
+                            "Stays unlocked for a minute if you switch away, so it " +
+                            "doesn't nag on every glance.",
+                        checked = state.appLock,
+                        onCheckedChange = viewModel::setAppLock,
+                        padded = false,
                     )
 
-                    val pending = result as? com.manuel.ours.data.update.UpdateChecker.Result.Update
-                    if (pending != null && pending.available.notes.isNotBlank()) {
-                        Note(pending.available.notes, tone = Ours.text)
-                    }
-
-                    when {
-                        ready != null -> AccentButton(
-                            label = "Install now",
-                            onClick = {
-                                context.installApk(ready!!)
-                                viewModel.clearUpdateFile()
-                            },
-                        )
-                        pending != null -> AccentButton(
-                            label = "Download ${pending.available.versionName}",
-                            onClick = { viewModel.downloadUpdate() },
-                        )
-                        else -> GhostButton(
-                            label = "Check for updates",
-                            onClick = { viewModel.checkForUpdate() },
-                        )
-                    }
-
-                    // Working, good news and bad news read differently at a glance.
-                    // A status line that is the same grey whether it found an update,
-                    // found nothing or failed makes the reader parse the sentence to
-                    // learn something the colour could have told them.
-                    updateStatus?.let { line ->
-                        val tone = when {
+                    Hairline()
+                    PanelRow(
+                        title = "Ours ${com.manuel.ours.BuildConfig.VERSION_NAME} " +
+                            "(${com.manuel.ours.BuildConfig.VERSION_CODE})",
+                        caption = updateStatus ?: "Updates come from its own repository",
+                        captionColor = when {
                             busy -> Ours.accent
-                            line.startsWith("Could not") || line.contains("failed", true) ||
-                                line.contains("different key") -> Ours.negative
-                            line.startsWith("Ready") || line.contains("available") -> Ours.accent
+                            updateStatus == null -> Ours.textLabel
+                            updateStatus!!.startsWith("Could not") ||
+                                updateStatus!!.contains("failed", true) ||
+                                updateStatus!!.contains("different key") -> Ours.negative
+                            updateStatus!!.startsWith("Ready") ||
+                                updateStatus!!.contains("available") -> Ours.accent
                             else -> Ours.positive
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            if (busy) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(12.dp),
-                                    strokeWidth = 1.5.dp,
-                                    color = Ours.accent,
-                                )
-                            }
-                            MicroLabel(line, color = tone)
-                        }
-                    }
-                }
-            }
-
-            item {
-                Panel {
-                    val version = "Ours ${com.manuel.ours.BuildConfig.VERSION_NAME} " +
-                        "(${com.manuel.ours.BuildConfig.VERSION_CODE})"
-                    DetailLine(
-                        label = "Version",
-                        value = version,
+                        },
+                        // Seven taps here, then the household code, unlocks developer
+                        // mode. A single repeated tap is something a thumb can do by
+                        // accident on a screen people scroll; this cannot.
                         onClick = {
                             if (state.developerMode) {
                                 viewModel.setDeveloperMode(false)
@@ -828,23 +756,59 @@ fun SettingsScreen(
                                 versionTaps++
                             }
                         },
+                        trailing = {
+                            if (busy) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(12.dp),
+                                    strokeWidth = 1.5.dp,
+                                    color = Ours.accent,
+                                )
+                            }
+                        },
+                        chevron = false,
                     )
+                    when {
+                        ready != null -> AccentButton(
+                            label = "Install now",
+                            onClick = {
+                                context.installApk(ready!!)
+                                viewModel.clearUpdateFile()
+                            },
+                        )
+                        pending != null -> {
+                            if (pending.available.notes.isNotBlank()) {
+                                Note(pending.available.notes, tone = Ours.text)
+                            }
+                            AccentButton(
+                                label = "Download ${pending.available.versionName}",
+                                onClick = { viewModel.downloadUpdate() },
+                            )
+                        }
+                        else -> GhostButton(
+                            label = "Check for updates",
+                            onClick = { viewModel.checkForUpdate() },
+                        )
+                    }
+                    Note("A build signed by a different key is refused.")
+
+                    Hairline()
                     DetailLine(
                         label = "Household code",
                         value = state.inviteSecret ?: "—",
                         onClick = {
                             if (versionTaps >= VERSION_TAPS_TO_UNLOCK) {
-                                // Refusing in silence is what made this feel broken:
-                                // the sequence completed, nothing happened, and there
-                                // was no way to tell a miscount from a refusal.
+                                // Refusing in silence is what made this feel broken: the
+                                // sequence completed, nothing happened, and there was no
+                                // way to tell a miscount from a refusal.
                                 if (state.isHouseholdOwner) viewModel.setDeveloperMode(true)
                                 else unlockRefused = true
                             }
                             versionTaps = 0
                         },
                     )
-                    DetailLine("Expenses", state.transactionCount.toString())
+                    DetailLine("Entries", state.transactionCount.toString())
 
+                    Hairline()
                     ToggleRow(
                         title = "I own this household",
                         caption = "Other members' deletions come to you for approval, " +
@@ -856,12 +820,6 @@ fun SettingsScreen(
                         },
                         padded = false,
                     )
-                    Note(
-                        "Nothing recorded who created this household — the app was not " +
-                            "keeping that when yours was made, and cannot work it out " +
-                            "afterwards, so it asks. A speed bump against an accidental " +
-                            "delete among people who trust each other, not a lock."
-                    )
 
                     // Android's own settings count down out loud, and for the same
                     // reason: a hidden sequence with no feedback is indistinguishable
@@ -871,7 +829,7 @@ fun SettingsScreen(
                         state.developerMode -> Unit
                         unlockRefused -> Note(
                             "Only the household owner can unlock this. Turn on \"I own " +
-                                "this household\" below if that is you.",
+                                "this household\" above if that is you.",
                             tone = Ours.warning,
                         )
                         versionTaps in 1 until VERSION_TAPS_TO_UNLOCK && remaining <= 4 ->
@@ -880,12 +838,13 @@ fun SettingsScreen(
                             MicroLabel("Now tap the household code", color = Ours.accent)
                         else -> Unit
                     }
-
                 }
             }
 
+            // Loose, not panelled. It is the fine print, and a border around it would
+            // make it look like another group of settings.
             item {
-                Panel {
+                Box(Modifier.padding(horizontal = EDGE)) {
                     Note(
                         "The database on this phone is encrypted with a key held in the " +
                             "Android Keystore. Bluetooth sync is encrypted end to end. " +
@@ -898,9 +857,9 @@ fun SettingsScreen(
 
             // ─── Developer ───────────────────────────────────────────────
             //
-            // Its own panel, below the encryption note, rather than rows in the middle
-            // of a panel about which version you are running. For anyone who has not
-            // unlocked it the screen has already ended here.
+            // Its own panel, below the fine print, rather than rows in the middle of a
+            // panel about which version you are running. For anyone who has not unlocked
+            // it the screen has already ended here.
             if (state.developerMode) {
                 item { Section("Developer") }
 
@@ -914,21 +873,17 @@ fun SettingsScreen(
                             tone = Ours.warning,
                         )
                         Hairline()
-                        SettingRow(
+                        PanelRow(
                             title = "Send a test notification",
-                            caption = "Shows the expense prompt for a made-up ₹151 " +
-                                "payment. Nothing is saved.",
+                            caption = "The expense prompt for a made-up ₹151 payment. " +
+                                "Nothing is saved.",
                             onClick = viewModel::sendTestNotification,
-                            padded = false,
                         )
-                        SettingRow(
+                        PanelRow(
                             title = "Test the popup",
-                            caption = "Press Home straight after tapping this. The popup " +
-                                "appears in three seconds, using your newest entry — it " +
-                                "stays away while Ours is in front, which is the part " +
-                                "worth testing.",
+                            caption = "Press Home straight after tapping. It appears in " +
+                                "three seconds, using your newest entry.",
                             onClick = viewModel::sendTestPopup,
-                            padded = false,
                         )
                     }
                 }
@@ -1026,6 +981,7 @@ private fun DisclosureRow(
     caption: String,
     expanded: Boolean,
     onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
@@ -1039,8 +995,13 @@ private fun DisclosureRow(
                 fontWeight = FontWeight.SemiBold,
                 color = Ours.text,
             )
-            MicroLabel(caption)
+            Text(
+                caption,
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.textSecondary,
+            )
         }
+        trailing?.invoke()
         Text(
             if (expanded) "⌃" else "›",
             style = MaterialTheme.typography.bodyLarge,
@@ -1050,8 +1011,64 @@ private fun DisclosureRow(
 }
 
 @Composable
-private fun Section(label: String) {
-    TapeHeader(label, modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp))
+private fun Section(label: String, trailing: String? = null) {
+    TapeHeader(
+        label,
+        trailing = trailing,
+        modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+    )
+}
+
+/**
+ * A row inside a [Panel]: title, one line of caption, optional trailing thing.
+ *
+ * The panels used to be built from whatever each setting happened to need — a
+ * PanelTitle here, a GhostButton there, a bare Row somewhere else — so two settings that
+ * read the same on paper looked nothing alike on screen. One row shape means a panel can
+ * be scanned down its left edge.
+ */
+@Composable
+private fun PanelRow(
+    title: String,
+    caption: String? = null,
+    onClick: (() -> Unit)? = null,
+    captionColor: Color = Ours.textSecondary,
+    chevron: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ours.text,
+            )
+            // Sentence case and wrapping, not a MicroLabel.
+            //
+            // MicroLabel uppercases and clips to one line, which is right for a caption
+            // over a figure and wrong for a sentence: half of these read as SHOUTING AND
+            // THEN STOPPING MID-…
+            if (caption != null) {
+                Text(
+                    caption,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = captionColor,
+                )
+            }
+        }
+        trailing?.invoke()
+        if (chevron && onClick != null) {
+            Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+        }
+    }
 }
 
 /** A bordered group. The border is what separates topics; there are no cards here. */
