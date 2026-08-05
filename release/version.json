@@ -1,7 +1,7 @@
 {
-  "versionCode": 42,
-  "versionName": "5.1",
-  "notes": "Fixes the white flash on launch — the window behind the app had no dark value, and in dark mode the splash settings were being ignored entirely.",
+  "versionCode": 43,
+  "versionName": "5.2",
+  "notes": "The budget and your bank balance now meet: a 'Safe to spend' figure that is the smaller of what the budget allows and what the accounts actually hold. Also fixes the budget never syncing to the other phone, and account balances never being pushed at all.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25402833
+  "sizeBytes": 25419217
 }

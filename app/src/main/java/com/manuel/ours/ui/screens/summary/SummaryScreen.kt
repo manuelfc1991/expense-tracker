@@ -48,6 +48,7 @@ import androidx.compose.runtime.mutableStateOf
 import java.time.temporal.ChronoUnit
 import java.time.ZoneId
 import java.time.LocalDate
+import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.BalanceSource
 import com.manuel.ours.domain.MonthlyAggregator
@@ -138,6 +139,22 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
             if (summary.excluded.isNotEmpty()) {
                 item { NotCounted(summary) }
+            }
+
+            // The budget and the balances reconciled, directly above the per-account
+            // detail that backs the capacity half of it.
+            state.affordability?.let { afford ->
+                item {
+                    SafeToSpend(
+                        state = afford,
+                        savedPaise = summary.totalSavedPaise,
+                        movedPaise = (
+                            state.leftAccountsPaise -
+                                summary.totalSpentPaise -
+                                summary.totalSavedPaise
+                            ).coerceAtLeast(0L),
+                    )
+                }
             }
 
             // Everyone sees their own accounts; the owner sees all of them. The list
@@ -495,6 +512,170 @@ private fun BalanceDialog(
             TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
         },
     )
+}
+
+/**
+ * The budget and the bank, in one figure.
+ *
+ * This is the panel that answers a question the app used to duck. A ₹40,000 budget sat
+ * on Home and a "What is left" total sat here, both of them saying some version of
+ * *left*, neither aware the other existed — so "how much can I spend" had two answers
+ * and no way to choose between them.
+ *
+ * They are not rival estimates. The budget is **permission** and the balance is
+ * **capacity**, and you can only spend the smaller. Which one that is gets said in
+ * words, because the number alone does not tell you what to do about it: a budget that
+ * runs past the balance means the plan was optimistic, while a balance that runs past
+ * the budget means there is money there you have decided not to spend. Opposite
+ * situations, identical-looking figure.
+ *
+ * The gap between them is spelled out too. That gap is the whole reason the two numbers
+ * were confusing: money put into savings, or shifted between our own accounts, leaves
+ * the balance and never touches the budget — so the two drift apart during any month
+ * where the household does either, which for this household is every month.
+ */
+@Composable
+private fun SafeToSpend(
+    state: Affordability,
+    savedPaise: Long,
+    movedPaise: Long,
+    modifier: Modifier = Modifier,
+) {
+    val safe = state.safeToSpendPaise ?: return
+    val budgetLeft = state.budgetLeftPaise
+    val usable = state.usablePaise
+
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        TapeHeader("Safe to spend", trailing = Money.whole(safe))
+
+        // Which constraint is doing the work, in a sentence. Named rather than implied:
+        // the figure is the same either way and the response to it is not.
+        Text(
+            text = when {
+                state.overBudget && usable != null ->
+                    "You are ${Money.whole(-(budgetLeft ?: 0L))} over budget. " +
+                        "The accounts still hold ${Money.whole(usable)}, so this is a " +
+                        "decision rather than a wall."
+                state.overBudget ->
+                    "You are ${Money.whole(-(budgetLeft ?: 0L))} over budget."
+                state.limit == Affordability.Limit.BALANCE && budgetLeft != null ->
+                    "Your balance is the limit. The budget would allow " +
+                        "${Money.whole(state.gapPaise ?: 0L)} more than the accounts hold."
+                state.limit == Affordability.Limit.BUDGET && usable != null ->
+                    "Your budget is the limit. The accounts hold " +
+                        "${Money.whole(state.gapPaise ?: 0L)} more than it allows."
+                state.limit == Affordability.Limit.BUDGET ->
+                    "What the budget still allows. No account balance is recorded yet, " +
+                        "so nothing is checking it against real money."
+                else ->
+                    "What the accounts hold, less what must stay in them. " +
+                        "No budget is set, so nothing is capping it."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = if (state.overBudget) Ours.negative else Ours.textSecondary,
+        )
+
+        HairlineRule()
+
+        // The arithmetic, so the figure above is checkable rather than magic.
+        if (budgetLeft != null) {
+            LedgerLine(
+                label = "Budget left",
+                value = Money.whole(budgetLeft),
+                dim = state.limit != Affordability.Limit.BUDGET,
+                negative = budgetLeft < 0,
+            )
+        }
+        if (usable != null) {
+            LedgerLine(
+                label = "In the accounts",
+                value = Money.whole(usable),
+                dim = state.limit != Affordability.Limit.BALANCE,
+            )
+        }
+        if (state.committedPaise > 0) {
+            LedgerLine(
+                label = "Still due this month",
+                value = "−${Money.whole(state.committedPaise)}",
+                dim = state.limit != Affordability.Limit.BALANCE,
+            )
+        }
+
+        // Why the two sides disagree, said only when they actually do. Without this the
+        // household is left to work out for itself why the money fell further than the
+        // budget did — and the answer is money that is still theirs.
+        if (savedPaise > 0 || movedPaise > 0) {
+            Text(
+                buildString {
+                    append("The budget counts spending only. ")
+                    if (savedPaise > 0) append("${Money.whole(savedPaise)} put aside")
+                    if (savedPaise > 0 && movedPaise > 0) append(" and ")
+                    if (movedPaise > 0) append("${Money.whole(movedPaise)} moved between our accounts")
+                    append(" left the accounts this month without touching it.")
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.textLabel,
+            )
+        }
+
+        if (state.unknownAccounts > 0) {
+            Text(
+                if (state.unknownAccounts == 1) {
+                    "One account has no balance recorded, so the real figure is higher."
+                } else {
+                    "${state.unknownAccounts} accounts have no balance recorded, " +
+                        "so the real figure is higher."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.warning,
+            )
+        }
+
+        // A partner sees their own accounts and no one else's, so their capacity figure
+        // is a floor. Saying so is the difference between a partial view and a wrong one.
+        if (state.partialView) {
+            Text(
+                "Counting your accounts only.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.textLabel,
+            )
+        }
+    }
+}
+
+/** One line of the reckoning: what it is on the left, what it is worth on the right. */
+@Composable
+private fun LedgerLine(
+    label: String,
+    value: String,
+    dim: Boolean,
+    negative: Boolean = false,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            // The binding constraint is the one that matters; the other is context.
+            color = if (dim) Ours.textSecondary else Ours.text,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (dim) FontWeight.Normal else FontWeight.SemiBold,
+            color = when {
+                negative -> Ours.negative
+                dim -> Ours.textSecondary
+                else -> Ours.text
+            },
+        )
+    }
 }
 
 /**

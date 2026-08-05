@@ -3,8 +3,11 @@ package com.manuel.ours.ui.screens.summary
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.manuel.ours.data.prefs.AppPrefs
+import com.manuel.ours.data.repo.BudgetRepository
 import com.manuel.ours.data.repo.TransactionRepository
+import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.MonthlyAggregator
+import com.manuel.ours.domain.affordability
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.RecurringDetector
 import com.manuel.ours.domain.model.AccountBalance
@@ -60,6 +63,13 @@ data class SummaryUiState(
      * looking.
      */
     val isHouseholdOwner: Boolean = false,
+    /**
+     * The budget and the balances in one figure, for the month being lived through.
+     *
+     * Null for any month but the current one: balances are what the banks hold today, and
+     * setting today's money against a budget that ran out in June answers nothing.
+     */
+    val affordability: Affordability? = null,
 ) {
     /** What the recurring charges add up to per month, cadences reconciled. */
     val committedMonthlyPaise: Long get() = recurring.sumOf { it.monthlyEquivalentPaise }
@@ -68,6 +78,7 @@ data class SummaryUiState(
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     private val repository: TransactionRepository,
+    private val budgetRepository: BudgetRepository,
     private val prefs: AppPrefs,
 ) : ViewModel() {
 
@@ -106,15 +117,37 @@ class SummaryViewModel @Inject constructor(
                 repository.observeBetween(
                     minOf(lookbackStart, priorRange.first), current.last + 1,
                 ),
-                repository.observeManualBalances(),
-                repository.observeAccountMinimums(),
-            ) { all, manual, minimums ->
+                repository.observeBalances(selfUid, owner),
+                budgetRepository.observeOverall(),
+            ) { all, balances, budget ->
                 val currentTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in current }, memberFilter, selfUid,
                 )
                 val priorTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in priorRange }, memberFilter, selfUid,
                 )
+                // Detected over the whole window, but through the same member filter —
+                // "Aarav's commitments" has to mean Aarav's.
+                val recurring = RecurringDetector.detect(
+                    MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
+                )
+
+                // Household-wide and for the month on screen, matching the budget it is
+                // measured against. Stepping back to July asks what was affordable in
+                // July, so the spend has to come from July too.
+                val householdSpent = MonthlyAggregator.totalSpent(
+                    all.filter { txn -> txn.occurredAt in current }
+                )
+
+                // Only a live month can have money still to come out of it. Looking back
+                // at a finished month, everything that was going to happen has, and
+                // charging the household again for a subscription it already paid would
+                // make every past month look poorer than it was.
+                val viewingNow = ym == YearMonth.now(MonthlyAggregator.ZONE)
+                val committed = if (viewingNow) {
+                    MonthlyAggregator.committedRemaining(recurring)
+                } else 0L
+
                 SummaryUiState(
                     loading = false,
                     yearMonth = ym,
@@ -123,20 +156,21 @@ class SummaryViewModel @Inject constructor(
                         ym.year, ym.monthValue, currentTxns, priorTxns,
                     ),
                     transactions = currentTxns,
-                    // Detected over the whole window, but through the same member
-                    // filter — "Aarav's commitments" has to mean Aarav's.
-                    recurring = RecurringDetector.detect(
-                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
-                    ),
-                    balances = MonthlyAggregator.accountBalances(
-                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid),
-                        manual,
-                        minimums,
-                        viewerUid = selfUid,
-                        isOwner = owner,
-                    ),
+                    recurring = recurring,
+                    balances = balances,
                     leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
                     isHouseholdOwner = owner,
+                    // Balances are what the accounts hold *now*, so this only means
+                    // anything about the month actually being lived through.
+                    affordability = if (viewingNow) {
+                        affordability(
+                            budgetPaise = budget,
+                            householdSpentPaise = householdSpent,
+                            balances = balances,
+                            committedRemainingPaise = committed,
+                            partialView = !owner,
+                        )
+                    } else null,
                 )
             }
         }

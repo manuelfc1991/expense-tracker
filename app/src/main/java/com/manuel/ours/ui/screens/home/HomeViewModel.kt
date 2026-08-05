@@ -6,7 +6,9 @@ import com.manuel.ours.data.db.SyncEventDao
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.BudgetRepository
 import com.manuel.ours.data.repo.TransactionRepository
+import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.MonthlyAggregator
+import com.manuel.ours.domain.affordability
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
@@ -35,7 +37,25 @@ data class HomeUiState(
     val loading: Boolean = true,
     val filter: MemberFilter = MemberFilter.Everyone,
     val spentThisMonth: Long = 0,
+    /**
+     * Spending this month across the whole household, ignoring the Both/Me/Partner chip.
+     *
+     * The budget is one cap over one household, so this is the only figure that can
+     * honestly be measured against it. [spentThisMonth] follows the chip and is what the
+     * rest of the screen is about; the ruler used it too, which meant tapping "Me" made
+     * the household look further from its limit than it was — the more you narrowed the
+     * view, the more budget the app claimed you had left. It also disagreed with the
+     * widget and the over-budget alert, both of which have always counted everyone.
+     */
+    val householdSpentThisMonth: Long = 0,
     val budgetPaise: Long? = null,
+    /**
+     * What the accounts actually hold, set against what the budget still permits.
+     *
+     * Home shows only the collision — the full reckoning, commitments included, is on
+     * Summary where the recurring charges are already worked out.
+     */
+    val affordability: Affordability? = null,
     val vsLastMonthPercent: Float? = null,
     val spentToday: Long = 0,
     val spentThisWeek: Long = 0,
@@ -152,15 +172,15 @@ class HomeViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
-        combine(prefs.selfUid, prefs.selfName) { uid, name ->
-            uid.orEmpty() to name.orEmpty()
+        combine(prefs.selfUid, prefs.selfName, prefs.householdOwner) { uid, name, owner ->
+            Triple(uid.orEmpty(), name.orEmpty(), owner)
         },
         filter,
         budgetRepository.observeOverall(),
         syncEventDao.observeUnpushedCount(),
         prefs.lastSyncAt,
     ) { self, memberFilter, budget, pending, lastSync ->
-        Params(self.first, self.second, memberFilter, budget, pending, lastSync)
+        Params(self.first, self.second, self.third, memberFilter, budget, pending, lastSync)
     }.flatMapLatest { params ->
         val today = LocalDate.now(MonthlyAggregator.ZONE)
         val thisMonth = MonthlyAggregator.monthRange(today.year, today.monthValue)
@@ -171,7 +191,8 @@ class HomeViewModel @Inject constructor(
             transactionRepository.observeBetween(lastMonth.first, thisMonth.last + 1),
             transactionRepository.observeNeedsReviewCount(),
             reminderDao.observeUpcoming(System.currentTimeMillis() - DAY_MS),
-        ) { allTxns, reviewCount, reminders ->
+            transactionRepository.observeBalances(params.selfUid, params.owner),
+        ) { allTxns, reviewCount, reminders, balances ->
             val current = MonthlyAggregator.applyFilter(
                 allTxns.filter { it.occurredAt in thisMonth },
                 params.filter,
@@ -185,6 +206,13 @@ class HomeViewModel @Inject constructor(
 
             val spent = MonthlyAggregator.totalSpent(current)
             val priorSpent = MonthlyAggregator.totalSpent(prior)
+
+            // Unfiltered on purpose: one cap over one household. See [householdSpent-
+            // ThisMonth]. This is also what the widget and the over-budget alert have
+            // always counted, so all three now say the same thing.
+            val householdSpent = MonthlyAggregator.totalSpent(
+                allTxns.filter { it.occurredAt in thisMonth }
+            )
 
             // Look across both months, not just the current one: a partner who
             // spent nothing so far this month is still a partner.
@@ -206,7 +234,18 @@ class HomeViewModel @Inject constructor(
                 loading = false,
                 filter = params.filter,
                 spentThisMonth = spent,
+                householdSpentThisMonth = householdSpent,
                 budgetPaise = params.budget,
+                // Commitments are left out here and counted on Summary, where the
+                // recurring charges are already detected over two years of history.
+                // Home would need that whole window for a single line of caption, and a
+                // figure that disagreed with Summary's would be worse than no figure.
+                affordability = affordability(
+                    budgetPaise = params.budget,
+                    householdSpentPaise = householdSpent,
+                    balances = balances,
+                    partialView = !params.owner,
+                ),
                 vsLastMonthPercent = if (priorSpent > 0) {
                     (spent - priorSpent) * 100f / priorSpent
                 } else null,
@@ -297,6 +336,7 @@ class HomeViewModel @Inject constructor(
     private data class Params(
         val selfUid: String,
         val selfName: String,
+        val owner: Boolean,
         val filter: MemberFilter,
         val budget: Long?,
         val pending: Int,

@@ -298,6 +298,40 @@ class TransactionRepository @Inject constructor(
             rules.mapNotNull { r -> r.value.toLongOrNull()?.let { r.ruleKey to it } }.toMap()
         }
 
+    /**
+     * What every account is known to hold, in one place.
+     *
+     * Defined here rather than in each ViewModel because two screens were computing it
+     * from different inputs and could not help but disagree: Summary fed it two years of
+     * member-*filtered* rows, Home would have fed it two months of unfiltered ones, and
+     * the same account could then show a different figure on each — with no way for
+     * anyone to tell which was right.
+     *
+     * Deliberately **not** member-filtered. A bank account is a property of the
+     * household, not of the Both/Me/Partner chip; running the chip over it meant that
+     * viewing "Me" silently dropped a partner's accounts out of a panel still headed
+     * "What is left", which reads as a household total and would then quietly be one
+     * person's. Who may see which account is decided by [isOwner] and [viewerUid], which
+     * is the rule that was actually designed for it.
+     */
+    fun observeBalances(
+        viewerUid: String,
+        isOwner: Boolean,
+    ): kotlinx.coroutines.flow.Flow<List<com.manuel.ours.domain.model.AccountBalance>> =
+        combine(
+            observeAll(),
+            observeManualBalances(),
+            observeAccountMinimums(),
+        ) { all, manual, minimums ->
+            com.manuel.ours.domain.MonthlyAggregator.accountBalances(
+                transactions = all,
+                manual = manual,
+                minimums = minimums,
+                viewerUid = viewerUid,
+                isOwner = isOwner,
+            )
+        }
+
     /** Hand-entered balances, keyed by account, as the household currently has them. */
     fun observeManualBalances(): kotlinx.coroutines.flow.Flow<Map<String, ManualBalance>> =
         sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->

@@ -45,6 +45,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.MemberFilter
@@ -189,8 +190,14 @@ fun HomeScreen(
             // measure against, and the screen loses the shape the mockup gives it.
             item {
                 BudgetRuler(
-                    spent = state.spentThisMonth,
+                    // The household's spending, not the chip's. One cap over one
+                    // household: measuring a single member against it made "Left" grow
+                    // every time the view was narrowed, which is the one direction a
+                    // budget figure must never move for free.
+                    spent = state.householdSpentThisMonth,
                     budget = state.budgetPaise,
+                    affordability = state.affordability,
+                    filtered = state.filter != MemberFilter.Everyone,
                     onSetBudget = onSetBudget,
                 )
             }
@@ -345,6 +352,8 @@ fun HomeScreen(
 private fun BudgetRuler(
     spent: Long,
     budget: Long?,
+    affordability: Affordability?,
+    filtered: Boolean,
     onSetBudget: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -406,6 +415,38 @@ private fun BudgetRuler(
                 valueColor = if (over) Ours.negative else Ours.positive,
                 alignment = Alignment.End,
             )
+        }
+
+        // The reality check the budget cannot perform on itself.
+        //
+        // "Left" here means only *permitted*, and permission is not money. With ₹18,000
+        // of budget still to run and ₹10,149 actually in the accounts, the honest figure
+        // is the smaller one — and until this line existed the screen showed the larger
+        // one with nothing to qualify it.
+        //
+        // Said only when the accounts are the tighter of the two. When the budget binds,
+        // the ruler above is already the whole truth and a second sentence repeating it
+        // would be noise on the screen that has to stay glanceable.
+        if (affordability != null && affordability.budgetOutrunsMoney) {
+            Text(
+                text = buildString {
+                    append("Your accounts hold ")
+                    append(Money.whole(affordability.usablePaise ?: 0L))
+                    if (affordability.partialView) append(" of yours")
+                    append(" — less than the budget still allows. ")
+                    append("Safe to spend: ")
+                    append(Money.whole(affordability.safeToSpendPaise ?: 0L))
+                    append(".")
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.warning,
+            )
+        }
+
+        // The ruler counts everybody, so a narrowed view must say so rather than let
+        // the hero figure above and the ruler below look like the same measurement.
+        if (filtered) {
+            MicroLabel("Budget counts the whole household")
         }
     }
 }

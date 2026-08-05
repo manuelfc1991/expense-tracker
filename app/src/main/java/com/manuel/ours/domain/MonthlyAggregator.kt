@@ -189,6 +189,31 @@ object MonthlyAggregator {
         )
     }
 
+    /**
+     * Recurring charges still expected before this month is out.
+     *
+     * Money that is in the account and is not available: the rent standing order due on
+     * the 30th is spent in every sense but the technical one. Counted against *capacity*
+     * rather than against the budget — the budget will count it when it is actually
+     * paid, and subtracting it from both would charge the household twice.
+     *
+     * Only what is genuinely still to come. A charge whose expected date has already
+     * passed this month has almost certainly gone through and been counted as spending,
+     * so counting it again here would quietly shrink the household's money every time a
+     * subscription renewed.
+     */
+    fun committedRemaining(
+        recurring: List<RecurringCharge>,
+        now: Long = System.currentTimeMillis(),
+    ): Long {
+        val today = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate()
+        val monthEnd = YearMonth.from(today).plusMonths(1)
+            .atDay(1).atStartOfDay(ZONE).toInstant().toEpochMilli()
+        return recurring
+            .filter { it.nextExpectedAt in now until monthEnd }
+            .sumOf { it.typicalPaise }
+    }
+
     fun byCategory(
         current: List<Transaction>,
         previous: List<Transaction> = emptyList(),

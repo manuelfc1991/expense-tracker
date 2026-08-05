@@ -46,9 +46,15 @@ class BudgetsViewModel @Inject constructor(
         budgetRepository.observeBudgets(),
         prefs.selfUid,
     ) { transactions, budgets, selfUid ->
-        val visible = MonthlyAggregator.applyFilter(
-            transactions, MemberFilter.Everyone, selfUid.orEmpty(),
-        )
+        // Everything, personal rows included.
+        //
+        // This ran through the member filter, which keeps my own personal spending and
+        // drops everybody else's — so a partner's personal payments left the household's
+        // accounts without ever appearing against the household's cap. The over-budget
+        // alert has always counted them, which meant the warning could fire quoting a
+        // figure larger than the one this screen was showing, with no way to reconcile
+        // the two. One cap over one household: everything that leaves counts.
+        val visible = transactions
         val overall = budgets.firstOrNull { it.category == null }?.limitPaise
         val limits = budgets.filter { it.category != null }
             .associate { it.category!! to it.limitPaise }

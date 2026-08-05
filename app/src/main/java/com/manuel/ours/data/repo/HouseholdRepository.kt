@@ -135,9 +135,25 @@ class HouseholdRepository @Inject constructor(
     }
 }
 
+/**
+ * The household's caps.
+ *
+ * Every write goes to two places: the `budgets` table, which is what the ruler, the
+ * widget and the alerter read, and `shared_rules`, which is what actually crosses to the
+ * other phone. The budget had been local-only — a ₹40,000 cap set on one phone was
+ * invisible on the other, so a household with one budget in fact had two, and the
+ * partner spent against a limit they could neither see nor be warned about. A shared cap
+ * that only one person can see is not a shared cap.
+ *
+ * Written through rather than read through: the table stays the single source for
+ * everything downstream, so none of it has to learn about sync, and an incoming rule is
+ * folded back into the table by [RulesRepository.apply].
+ */
 @Singleton
 class BudgetRepository @Inject constructor(
     private val budgetDao: BudgetDao,
+    private val sharedRuleDao: com.manuel.ours.data.db.SharedRuleDao,
+    private val prefs: AppPrefs,
 ) {
     fun observeBudgets(): Flow<List<Budget>> = budgetDao.observeAll().map { list ->
         list.map { entity ->
@@ -155,17 +171,39 @@ class BudgetRepository @Inject constructor(
 
     suspend fun setOverall(limitPaise: Long) {
         budgetDao.upsert(BudgetEntity(OVERALL, limitPaise))
+        share(OVERALL, limitPaise)
     }
 
     suspend fun setCategoryBudget(category: Category, limitPaise: Long) {
         budgetDao.upsert(BudgetEntity(category.name, limitPaise))
+        share(category.name, limitPaise)
     }
 
     suspend fun clear(category: Category?) {
-        budgetDao.delete(category?.name ?: OVERALL)
+        val key = category?.name ?: OVERALL
+        budgetDao.delete(key)
+        // Zero is the tombstone. Deleting the rule outright would leave the other phone
+        // holding the old cap with nothing to tell it the household had dropped it —
+        // there is no row to carry the news, so the removal would never travel.
+        share(key, 0L)
+    }
+
+    private suspend fun share(key: String, limitPaise: Long) {
+        sharedRuleDao.upsertAll(
+            listOf(
+                com.manuel.ours.data.db.SharedRuleEntity(
+                    type = TYPE_BUDGET,
+                    ruleKey = key,
+                    value = limitPaise.coerceAtLeast(0L).toString(),
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
     }
 
     companion object {
         const val OVERALL = "__OVERALL__"
+        const val TYPE_BUDGET = "budget"
     }
 }

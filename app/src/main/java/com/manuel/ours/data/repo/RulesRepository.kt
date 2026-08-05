@@ -1,5 +1,7 @@
 package com.manuel.ours.data.repo
 
+import com.manuel.ours.data.db.BudgetDao
+import com.manuel.ours.data.db.BudgetEntity
 import com.manuel.ours.data.db.MerchantRuleDao
 import com.manuel.ours.data.db.MerchantRuleEntity
 import com.manuel.ours.data.db.SharedRuleDao
@@ -32,6 +34,7 @@ import javax.inject.Singleton
 class RulesRepository @Inject constructor(
     private val sharedRuleDao: SharedRuleDao,
     private val merchantRuleDao: MerchantRuleDao,
+    private val budgetDao: BudgetDao,
     private val prefs: AppPrefs,
     private val transactionRepository: TransactionRepository,
 ) {
@@ -46,9 +49,23 @@ class RulesRepository @Inject constructor(
      */
     suspend fun sync(transport: SheetTransport): Int = runCatching {
         val remote = transport.pullRules()
-        if (remote.isNotEmpty()) {
+        val remoteByKey = remote.associateBy { it.type to it.key }
+        val localByKey = sharedRuleDao.all().associateBy { it.type to it.ruleKey }
+
+        // Only what is genuinely newer than what this phone already holds.
+        //
+        // This used to upsert every pulled row unconditionally, which quietly made the
+        // sheet authoritative over the phone regardless of age: a balance typed in a
+        // minute ago was overwritten by a three-day-old copy of the same rule, and the
+        // fresh figure was gone before anyone could read it. The sheet has always done
+        // last-write-wins on its side; the app was the half that did not.
+        val fresher = remote.filter { rule ->
+            val mine = localByKey[rule.type to rule.key]
+            mine == null || rule.updatedAt > mine.updatedAt
+        }
+        if (fresher.isNotEmpty()) {
             sharedRuleDao.upsertAll(
-                remote.map {
+                fresher.map {
                     SharedRuleEntity(
                         type = it.type,
                         ruleKey = it.key,
@@ -62,7 +79,7 @@ class RulesRepository @Inject constructor(
 
         apply()
 
-        val mine = localRules()
+        val mine = localRules(remoteByKey)
         if (mine.isNotEmpty()) transport.pushRules(mine)
         remote.size
     }.getOrDefault(0)
@@ -90,6 +107,16 @@ class RulesRepository @Inject constructor(
             transactionRepository.applyAccountName(rule.ruleKey, rule.value)
         }
 
+        // The household's caps, folded back into the table the ruler, the widget and the
+        // alerter all read — so a budget set on one phone becomes the budget on both.
+        for (rule in all.filter { it.type == TYPE_BUDGET }) {
+            // A malformed value does nothing rather than clearing the cap: a typo in a
+            // hand-edited spreadsheet must not silently remove the household's budget.
+            val paise = rule.value.toLongOrNull() ?: continue
+            if (paise <= 0L) budgetDao.delete(rule.ruleKey)
+            else budgetDao.upsert(BudgetEntity(rule.ruleKey, paise))
+        }
+
         val merchantRules = all.filter { it.type == TYPE_MERCHANT }
         for (rule in merchantRules) {
             // An unknown category name is ignored rather than filed as Other: a typo in
@@ -107,16 +134,52 @@ class RulesRepository @Inject constructor(
         }
     }
 
-    /** What this phone has learned that is worth teaching: the user's own corrections. */
-    private suspend fun localRules(): List<SheetTransport.Rule> {
+    /**
+     * What this phone knows that the sheet does not.
+     *
+     * This used to return merchant corrections and **nothing else**, which meant every
+     * other kind of shared rule was write-only: account balances, the minimums each bank
+     * demands, the names given to accounts and the household budget were all faithfully
+     * written to `shared_rules` — with a comment promising they would reach the other
+     * phone — and then never pushed anywhere. The partner's phone could receive such a
+     * rule if somebody typed it into the spreadsheet by hand, and by no other route.
+     *
+     * A household has one set of accounts and one budget. A figure only one phone knows
+     * is a figure the other is missing, and the whole point of the shared-rule table is
+     * that it is the thing both phones agree on.
+     *
+     * @param remote what the sheet answered with this round, so a rule is only pushed
+     *   when it is actually newer than the copy already up there. Without the comparison
+     *   every phone would re-push its entire table on every sync.
+     */
+    private suspend fun localRules(
+        remote: Map<Pair<String, String>, SheetTransport.Rule>,
+    ): List<SheetTransport.Rule> {
         val deviceId = prefs.deviceId()
-        val known = sharedRuleDao.all().associateBy { it.type to it.ruleKey }
+        val out = mutableListOf<SheetTransport.Rule>()
 
-        return merchantRuleDao.userDefined().mapNotNull { rule ->
-            val existing = known[TYPE_MERCHANT to rule.pattern]
+        for (rule in sharedRuleDao.all()) {
+            // Merchant rules are authored in their own table and pushed below; the
+            // copies in here arrived *from* the sheet, so sending them back is noise.
+            if (rule.type !in SHAREABLE_TYPES) continue
+            val theirs = remote[rule.type to rule.ruleKey]
+            if (theirs != null && theirs.updatedAt >= rule.updatedAt) continue
+            out += SheetTransport.Rule(
+                type = rule.type,
+                key = rule.ruleKey,
+                value = rule.value,
+                updatedAt = rule.updatedAt,
+                // Keep whoever actually wrote it. Stamping this phone's id on a rule it
+                // merely relayed would lose the only record of where a figure came from.
+                deviceId = rule.deviceId.ifBlank { deviceId },
+            )
+        }
+
+        for (rule in merchantRuleDao.userDefined()) {
+            val theirs = remote[TYPE_MERCHANT to rule.pattern]
             // Already on the sheet with the same answer — nothing to say.
-            if (existing != null && existing.value.equals(rule.category, true)) return@mapNotNull null
-            SheetTransport.Rule(
+            if (theirs != null && theirs.value.equals(rule.category, true)) continue
+            out += SheetTransport.Rule(
                 type = TYPE_MERCHANT,
                 key = rule.pattern,
                 value = rule.category,
@@ -124,6 +187,8 @@ class RulesRepository @Inject constructor(
                 deviceId = deviceId,
             )
         }
+
+        return out
     }
 
     companion object {
@@ -131,5 +196,16 @@ class RulesRepository @Inject constructor(
 
         const val TYPE_SENDER = "sender"
         const val TYPE_MERCHANT = "merchant"
+        const val TYPE_BALANCE = "balance"
+        const val TYPE_MIN_BALANCE = "minbal"
+        const val TYPE_BUDGET = "budget"
+
+        /**
+         * Everything in `shared_rules` that is worth sending, merchant rules excepted —
+         * those are pushed from the table they are authored in.
+         */
+        private val SHAREABLE_TYPES = setOf(
+            TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
+        )
     }
 }
