@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The splash, in dark mode.
+
+  This file exists because of a resource-qualifier trap. `values-night` and `values-v31`
+  can both match a dark-mode Android 13 phone, and night mode outranks platform version
+  in Android's precedence order — so `values-night/themes.xml`, which knows nothing about
+  the splash, won outright and the configuration in `values-v31` was never applied. The
+  splash fell back to the system default, which paints `windowBackground`.
+
+  The attributes have to be repeated wherever `Theme.Ours` is redefined. A style cannot
+  inherit from another of its own name, so there is no way to state them once.
+-->
+<resources>
+    <style name="Theme.Ours" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/surface</item>
+
+        <item name="android:windowSplashScreenBackground">#FF0F0F14</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">420</item>
+    </style>
+</resources>

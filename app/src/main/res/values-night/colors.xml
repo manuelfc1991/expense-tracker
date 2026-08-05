@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+      The window behind everything, before Compose has drawn a pixel.
+
+      This had no night value at all, so `windowBackground` resolved to the light
+      #FBF9FE on every device including a dark-mode one — which is the white flash on
+      launch. It was always there; adding a dark splash in front of it is what finally
+      made it obvious, because the hand-off went from near-black to near-white and back.
+
+      Matches Ours.ink, so the frame before the first composition looks like the frame
+      after it.
+    -->
+    <color name="surface">#0B0B0F</color>
+
     <!-- The dark scheme, taken from the same source as the Compose palette. -->
     <color name="notif_bg">#131318</color>
     <color name="notif_text">#F2F2F7</color>
