@@ -1,7 +1,7 @@
 {
-  "versionCode": 34,
-  "versionName": "4.3",
-  "notes": "You can now set a balance by hand for accounts your bank never quotes one for. It is marked as yours, and the bank overrules it automatically.",
+  "versionCode": 35,
+  "versionName": "4.4",
+  "notes": "What is left now takes off each account's minimum balance, so the figure is what you can actually spend.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25379848
+  "sizeBytes": 25396232
 }

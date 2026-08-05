@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.manuel.ours.core.Money
 import com.manuel.ours.ui.theme.SheetAmountStyle
 import androidx.compose.ui.graphics.SolidColor
@@ -175,8 +177,9 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         BalanceDialog(
             account = account,
             onDismiss = { settingBalance = null },
-            onConfirm = { paise ->
-                viewModel.setAccountBalance(account.key, paise, account.bank)
+            onConfirm = { paise, minimum ->
+                paise?.let { viewModel.setAccountBalance(account.key, it, account.bank) }
+                minimum?.let { viewModel.setAccountMinimum(account.key, it) }
                 settingBalance = null
             },
         )
@@ -279,17 +282,45 @@ private fun LeftAccounts(
  * Deliberately spare: one figure, no name field. The account already has a name — the
  * bank's — and the only thing missing is the number.
  */
+/** One rupee field, sized for a dialog rather than a hero. */
+@Composable
+private fun MoneyField(value: String, onChange: (String) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("₹", style = MaterialTheme.typography.headlineSmall, color = Ours.textLabel)
+        BasicTextField(
+            value = value,
+            onValueChange = { onChange(it.filter { c -> c.isDigit() || c == '.' }.take(12)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            textStyle = LocalTextStyle.current
+                .merge(MaterialTheme.typography.headlineSmall)
+                .copy(color = Ours.text),
+            cursorBrush = SolidColor(Ours.accent),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BalanceDialog(
     account: AccountBalance,
     onDismiss: () -> Unit,
-    onConfirm: (Long) -> Unit,
+    onConfirm: (balance: Long?, minimum: Long?) -> Unit,
 ) {
-    var text by remember {
-        mutableStateOf(account.balancePaise?.let { (it / 100).toString() }.orEmpty())
+    // The figure as it opened, so an untouched field is not re-saved as though somebody
+    // typed it. Saving a minimum used to overwrite a bank-quoted balance with an
+    // identical hand-entered one, silently downgrading "the bank said" to "you said".
+    val opening = remember { account.balancePaise?.let { (it / 100).toString() }.orEmpty() }
+    var text by remember { mutableStateOf(opening) }
+    var minText by remember {
+        mutableStateOf(account.minimumPaise.takeIf { it > 0 }?.let { (it / 100).toString() }.orEmpty())
     }
     val paise = Money.parseToPaise(text)
+    val minPaise = Money.parseToPaise(minText)
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Ours.surface,
@@ -301,34 +332,42 @@ private fun BalanceDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            // Scrollable, and deliberately compact. A Material dialog caps the height of
+            // this slot and clips rather than scrolls, so an earlier, wordier version of
+            // this simply lost its second field off the bottom with no sign it was there.
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                MicroLabel("Balance now")
+                MoneyField(text) { text = it }
+                MicroLabel("Minimum balance")
+                MoneyField(minText) { minText = it }
                 Text(
-                    "What is in it now? This is yours, not the bank's — it will be " +
-                        "replaced automatically the next time a message quotes a real " +
-                        "balance for this account.",
+                    "A balance you type is yours, not the bank's — a real one from a " +
+                        "message replaces it, and clearing the field hands it back. The " +
+                        "minimum is what must stay in the account, and comes off the " +
+                        "figure on the summary.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.textSecondary,
                 )
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("₹", style = SheetAmountStyle, color = Ours.textLabel)
-                    BasicTextField(
-                        value = text,
-                        onValueChange = { text = it.filter { c -> c.isDigit() || c == '.' }.take(12) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        textStyle = LocalTextStyle.current.merge(SheetAmountStyle)
-                            .copy(color = Ours.text),
-                        cursorBrush = SolidColor(Ours.accent),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
             }
         },
         confirmButton = {
+            // Either field alone is a complete answer: a bank-quoted balance needs only
+            // a floor, and a zero-balance account needs only a figure.
+            val touched = text != opening || minPaise != null
             TextButton(
-                enabled = paise != null,
-                onClick = { paise?.let(onConfirm) },
-            ) { Text("Save", color = if (paise != null) Ours.accent else Ours.textLabel) }
+                enabled = touched,
+                // null balance means "leave it alone"; blank means "forget what I said
+                // and go back to the bank's figure".
+                onClick = {
+                    onConfirm(
+                        if (text == opening) null else if (text.isBlank()) 0L else paise,
+                        minPaise,
+                    )
+                },
+            ) { Text("Save", color = if (touched) Ours.accent else Ours.textLabel) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
@@ -357,12 +396,12 @@ private fun WhatsLeft(
     modifier: Modifier = Modifier,
 ) {
     val today = remember { LocalDate.now() }
-    val known = balances.mapNotNull { it.balancePaise }.sum()
+    val usable = balances.mapNotNull { it.usablePaise }.sum()
     Column(
         modifier.fillMaxWidth().padding(horizontal = EDGE),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
-        TapeHeader("What is left", trailing = Money.whole(known))
+        TapeHeader("What is left", trailing = Money.whole(usable))
         balances.forEach { account ->
             Row(
                 Modifier.fillMaxWidth().clickable { onSet(account) },
@@ -408,9 +447,17 @@ private fun WhatsLeft(
                         color = if (account.source == BalanceSource.HAND) Ours.warning
                         else Ours.textLabel,
                     )
+                    // The held floor, spelled out, because the figure on the right is
+                    // the balance minus this and that difference is otherwise invisible.
+                    if (account.minimumPaise > 0 && account.balancePaise != null) {
+                        MicroLabel(
+                            "of ${Money.whole(account.balancePaise)} · " +
+                                "${Money.whole(account.minimumPaise)} must stay",
+                        )
+                    }
                 }
-                if (account.balancePaise != null) {
-                    AmountColumn(account.balancePaise)
+                if (account.usablePaise != null) {
+                    AmountColumn(account.usablePaise!!)
                 } else {
                     MicroLabel("—")
                 }

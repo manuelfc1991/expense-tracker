@@ -88,7 +88,8 @@ class SummaryViewModel @Inject constructor(
                     minOf(lookbackStart, priorRange.first), current.last + 1,
                 ),
                 repository.observeManualBalances(),
-            ) { all, manual ->
+                repository.observeAccountMinimums(),
+            ) { all, manual, minimums ->
                 val currentTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in current }, memberFilter, selfUid,
                 )
@@ -111,6 +112,7 @@ class SummaryViewModel @Inject constructor(
                     balances = MonthlyAggregator.accountBalances(
                         MonthlyAggregator.applyFilter(all, memberFilter, selfUid),
                         manual,
+                        minimums,
                     ),
                     leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
                 )
@@ -130,6 +132,10 @@ class SummaryViewModel @Inject constructor(
     /** Records what somebody says is in an account the bank never quotes a balance for. */
     fun setAccountBalance(key: String, paise: Long, bank: String?) {
         viewModelScope.launch { repository.setAccountBalance(key, paise, bank) }
+    }
+
+    fun setAccountMinimum(key: String, paise: Long) {
+        viewModelScope.launch { repository.setAccountMinimum(key, paise) }
     }
 
     fun setMonth(value: YearMonth) {

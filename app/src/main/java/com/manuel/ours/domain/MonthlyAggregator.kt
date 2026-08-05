@@ -139,6 +139,7 @@ object MonthlyAggregator {
     fun accountBalances(
         transactions: List<Transaction>,
         manual: Map<String, ManualBalance> = emptyMap(),
+        minimums: Map<String, Long> = emptyMap(),
     ): List<AccountBalance> {
         val own = transactions.filter { !it.accountTail.isNullOrBlank() || it.bank != null }
         val byAccount = own.groupBy { it.accountTail?.takeIf(String::isNotBlank) ?: it.bank!! }
@@ -163,10 +164,11 @@ object MonthlyAggregator {
                     else -> null
                 },
                 ownerName = latest?.ownerName.orEmpty(),
+                minimumPaise = minimums[key] ?: 0L,
             )
         }.sortedWith(
             compareByDescending<AccountBalance> { it.balancePaise != null }
-                .thenByDescending { it.balancePaise ?: 0L }
+                .thenByDescending { it.usablePaise ?: 0L }
         )
     }
 

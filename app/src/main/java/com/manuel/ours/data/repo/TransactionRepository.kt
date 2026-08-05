@@ -258,6 +258,9 @@ class TransactionRepository @Inject constructor(
      */
     suspend fun setAccountBalance(key: String, paise: Long, bank: String?) {
         if (key.isBlank()) return
+        // Zero means "forget what I typed": the rule is kept but emptied, so the reader
+        // skips it and whatever the bank last said takes over again.
+        val amount = if (paise <= 0L) "" else paise.toString()
         sharedRuleDao.upsertAll(
             listOf(
                 SharedRuleEntity(
@@ -265,13 +268,34 @@ class TransactionRepository @Inject constructor(
                     ruleKey = key,
                     // bank alongside the figure, so an account known only by a typed
                     // balance still has a name to show.
-                    value = "$paise|${bank.orEmpty()}",
+                    value = "$amount|${bank.orEmpty()}",
                     updatedAt = System.currentTimeMillis(),
                     deviceId = prefs.deviceId(),
                 )
             )
         )
     }
+
+    /** The floor each account must not go under, as the household has recorded it. */
+    suspend fun setAccountMinimum(key: String, paise: Long) {
+        if (key.isBlank()) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = TYPE_MIN_BALANCE,
+                    ruleKey = key,
+                    value = paise.toString(),
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
+    fun observeAccountMinimums(): kotlinx.coroutines.flow.Flow<Map<String, Long>> =
+        sharedRuleDao.observeOfType(TYPE_MIN_BALANCE).map { rules ->
+            rules.mapNotNull { r -> r.value.toLongOrNull()?.let { r.ruleKey to it } }.toMap()
+        }
 
     /** Hand-entered balances, keyed by account, as the household currently has them. */
     fun observeManualBalances(): kotlinx.coroutines.flow.Flow<Map<String, ManualBalance>> =
@@ -988,6 +1012,9 @@ class TransactionRepository @Inject constructor(
          * phone knows about is a figure the other phone is missing.
          */
         const val TYPE_BALANCE = "balance"
+
+        /** What a bank insists stays in an account. Zero for a zero-balance account. */
+        const val TYPE_MIN_BALANCE = "minbal"
 
         /**
          * How close the two legs of an own-account transfer must be.

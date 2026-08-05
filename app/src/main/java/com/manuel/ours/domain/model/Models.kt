@@ -232,7 +232,18 @@ data class AccountBalance(
     val asOf: Long?,
     val source: BalanceSource?,
     val ownerName: String,
-)
+    /**
+     * What the bank makes you keep in the account, which is not yours to spend.
+     *
+     * Zero for a zero-balance account. Breaching it costs a penalty, so money below
+     * this line is the bank's hostage rather than the household's savings — this
+     * household already moves money about specifically to avoid it.
+     */
+    val minimumPaise: Long = 0L,
+) {
+    /** What can actually be taken out before the bank starts charging for it. */
+    val usablePaise: Long? get() = balancePaise?.let { (it - minimumPaise).coerceAtLeast(0L) }
+}
 
 /**
  * Where a balance came from, which the screen has to say out loud.
