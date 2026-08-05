@@ -132,11 +132,7 @@ fun AddExpenseSheet(
             )
 
             MicroLabel("Category")
-            CategoryGrid(
-                selected = category,
-                onSelect = { category = it },
-                options = Category.SPENDING,
-            )
+            CategoryGrid(selected = category, onSelect = { category = it })
 
             MicroLabel("Counts as")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

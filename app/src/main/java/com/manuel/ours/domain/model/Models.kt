@@ -96,49 +96,37 @@ enum class Category(
 
     companion object {
         /**
-         * What the category grid offers, in the order the design draws it.
+         * Every category you can put a row into, in one order, on every screen.
          *
-         * [INCOME] is absent because the grid only ever appears on a debit, and
-         * [OTHER] because it is where a row lands when nothing has been decided —
-         * offering it as a choice invites filing things there deliberately, which is
-         * the opposite of what the grid is for.
+         * There used to be three of these. The grids offered [PICKABLE] — fifteen,
+         * without Income, on the reasoning that they only ever open on a debit and
+         * offering Income there is offering a wrong answer. The add sheet offered a
+         * narrower twelve still, dropping Transfers, Card bill and Ours on the reasoning
+         * that the bank always messages about those, so hand-typing one only invites a
+         * duplicate. Rules and the filter offered all sixteen.
+         *
+         * Both arguments were about what someone *ought* to want, and neither survived
+         * contact with wanting it: the reason a debit is sitting on the detail screen at
+         * all is usually that the app got it wrong, and "this credit was misread as a
+         * payment" is exactly the correction the grid was refusing to allow. Guessing
+         * which of sixteen answers a person is not allowed to give costs more than the
+         * occasional odd choice, and every one of them is one tap to undo.
+         *
+         * Marking a debit as Income is safe: every total gates on [Transaction.type]
+         * before it looks at the category, so such a row simply drops out of spending
+         * the way Transfers and Card bill already do. It is never added to income.
+         *
+         * [OTHER] stays out. It is not a choice — it is the absence of one, which is why
+         * the filter offers it as "Untagged" instead.
          */
-        val PICKABLE: List<Category> = listOf(
+        val EVERY: List<Category> = listOf(
             FOOD, GROCERIES, TRANSPORT,
             SHOPPING, BILLS, RENT,
             HEALTH, EDUCATION, ENTERTAINMENT,
             TRAVEL, INVESTMENTS, EMI,
             TRANSFERS, CARD_PAYMENT, SELF_TRANSFER,
+            INCOME,
         )
-
-        /**
-         * What a person can be *entering by hand*: the twelve kinds of spending.
-         *
-         * [TRANSFERS], [CARD_PAYMENT] and [SELF_TRANSFER] are deliberately absent. All
-         * three describe money moving between accounts, which is something a bank always
-         * messages about — you never sit down and type in a card bill you just paid.
-         * Offering them here would only invite a hand-typed row that duplicates the
-         * parsed one an hour later, and a duplicate is worse than a missing category.
-         * They stay available on the detail screen, where the parsed row already exists
-         * and the job is to correct it.
-         */
-        val SPENDING: List<Category> = PICKABLE.filter {
-            it != TRANSFERS && it != CARD_PAYMENT && it != SELF_TRANSFER
-        }
-
-        /**
-         * Everything a category can be set *to*, in one order.
-         *
-         * Rules, Sort's full picker and the Activity filter each built their own list —
-         * two of them as `entries` minus [OTHER], one as [PICKABLE] plus [INCOME]. Those
-         * are the same sixteen categories, but in two different orders, so the same
-         * screen-full appeared twice with Card bill and Ours swapped.
-         *
-         * [INCOME] belongs here and not in [PICKABLE]: a rule may well file a merchant as
-         * income — a salary, an FD maturing — but the grids that use [PICKABLE] only ever
-         * open on a debit, where offering Income is offering a wrong answer.
-         */
-        val EVERY: List<Category> = PICKABLE + INCOME
 
         fun fromNameOrOther(name: String?): Category =
             entries.firstOrNull { it.name == name } ?: OTHER

@@ -70,7 +70,7 @@ fun CategoryGrid(
     selected: Category?,
     onSelect: (Category) -> Unit,
     modifier: Modifier = Modifier,
-    options: List<Category> = Category.PICKABLE,
+    options: List<Category> = Category.EVERY,
     columns: Int = 3,
     counts: Map<Category, Int>? = null,
     extras: List<GridExtra> = emptyList(),
