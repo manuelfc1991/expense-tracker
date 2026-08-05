@@ -186,7 +186,8 @@ class SummaryViewModel @Inject constructor(
         )
 
     /** Records what somebody says is in an account the bank never quotes a balance for. */
-    fun setAccountBalance(key: String, paise: Long, bank: String?) {
+    /** [paise] null forgets the typed figure and hands the account back to the bank's. */
+    fun setAccountBalance(key: String, paise: Long?, bank: String?) {
         viewModelScope.launch { repository.setAccountBalance(key, paise, bank) }
     }
 

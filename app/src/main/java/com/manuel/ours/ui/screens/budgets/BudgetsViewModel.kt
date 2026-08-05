@@ -102,4 +102,21 @@ class BudgetsViewModel @Inject constructor(
     fun clearBudget(category: Category?) {
         viewModelScope.launch { budgetRepository.clear(category) }
     }
+
+    /**
+     * Every cap the household has set, dropped in one go.
+     *
+     * Only what is actually set is cleared. Looping over [Category.entries] instead would
+     * write a tombstone for all fifteen, and every one of those travels to the other
+     * phone as a shared rule — fourteen rows saying nothing changed.
+     */
+    fun resetAllBudgets() {
+        viewModelScope.launch {
+            val state = uiState.value
+            if (state.overallLimit != null) budgetRepository.clear(null)
+            state.categoryProgress
+                .filter { it.limitPaise != null }
+                .forEach { budgetRepository.clear(it.category) }
+        }
+    }
 }

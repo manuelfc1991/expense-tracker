@@ -102,6 +102,23 @@ fun TransactionsScreen(
         else viewModel.clearBulkUndo()
     }
 
+    // A member's delete is a request, and the row stays put until the owner agrees. Say
+    // so: an unchanged list after pressing delete otherwise reads as a broken button,
+    // and the person tries again rather than waiting for an answer that is on its way.
+    val requested by viewModel.deleteRequestNotice.collectAsStateWithLifecycle()
+    LaunchedEffect(requested) {
+        if (requested <= 0) return@LaunchedEffect
+        snackbarHost.showSnackbar(
+            message = if (requested == 1) {
+                "Asked the household owner to remove it"
+            } else {
+                "Asked the household owner to remove $requested transactions"
+            },
+            duration = SnackbarDuration.Short,
+        )
+        viewModel.clearDeleteRequestNotice()
+    }
+
     Scaffold(
         containerColor = Ours.ink,
         snackbarHost = { SnackbarHost(snackbarHost) },

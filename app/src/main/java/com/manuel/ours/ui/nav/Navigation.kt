@@ -196,6 +196,7 @@ fun OursNavHost(
                             restoreState = true
                         }
                     },
+                    onOpenDeleteRequests = { navController.navigate(Routes.DELETE_REQUESTS) },
                 )
             }
 

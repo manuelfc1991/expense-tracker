@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -96,6 +97,19 @@ class TransactionsViewModel @Inject constructor(
     private val categoryFilter = MutableStateFlow<CategoryFilter>(CategoryFilter.All)
     private val selection = MutableStateFlow<Set<String>>(emptySet())
     private val lastBulkDeleted = MutableStateFlow<List<String>>(emptyList())
+
+    /**
+     * How many deletes became requests instead of removals, waiting to be told about.
+     *
+     * A member's delete deliberately leaves the row on screen until the owner agrees.
+     * Without a word saying so that is indistinguishable from a tap that did nothing —
+     * which is exactly how it read on the partner's phone: press delete, nothing moves,
+     * no message, and no way to know the owner had been asked.
+     *
+     * Kept outside [uiState] because that combine is already at its five-flow limit.
+     */
+    private val requestedDeletes = MutableStateFlow(0)
+    val deleteRequestNotice: StateFlow<Int> = requestedDeletes.asStateFlow()
 
     /** Everything that is not a filter, bundled so the outer combine stays within five. */
     private data class Aux(
@@ -249,6 +263,8 @@ class TransactionsViewModel @Inject constructor(
             selection.value = emptySet()
             // Only what actually went is undoable; the rest are now requests.
             lastBulkDeleted.value = removed
+            val asked = ids.size - removed.size
+            if (asked > 0) requestedDeletes.value += asked
         }
     }
 
@@ -268,8 +284,13 @@ class TransactionsViewModel @Inject constructor(
     }
 
     fun delete(txnId: String) {
-        viewModelScope.launch { repository.deleteOrRequest(txnId) }
+        viewModelScope.launch {
+            if (!repository.deleteOrRequest(txnId)) requestedDeletes.value += 1
+        }
     }
+
+    /** Acknowledged — the notice has been shown and should not fire again on recompose. */
+    fun clearDeleteRequestNotice() { requestedDeletes.value = 0 }
 
     companion object {
         private val dayFormatter = DateTimeFormatter.ofPattern("EEE, d MMM")

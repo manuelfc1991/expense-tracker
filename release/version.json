@@ -1,7 +1,7 @@
 {
-  "versionCode": 48,
-  "versionName": "5.7",
-  "notes": "The launcher icon is now the colour handshake when themed icons are off. Themed icons keep the monochrome clasp.",
+  "versionCode": 49,
+  "versionName": "5.8",
+  "notes": "Budgets can be cleared one at a time or reset together, a zero balance can finally be typed in, and the add button floats again.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25464834
 }

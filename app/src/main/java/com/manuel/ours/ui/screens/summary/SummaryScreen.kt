@@ -206,8 +206,10 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             onConfirm = { key, bank, balance, minimum ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
-                // own screen as "tap to set" rather than only on the owner's.
-                viewModel.setAccountBalance(key, balance ?: 0L, bank)
+                // own screen as "tap to set" rather than only on the owner's. A null
+                // balance writes exactly that — the account, with nothing claimed about
+                // what is in it.
+                viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
                 addingAccount = false
             },
@@ -218,13 +220,34 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         BalanceDialog(
             account = account,
             onDismiss = { settingBalance = null },
-            onConfirm = { paise, minimum ->
-                paise?.let { viewModel.setAccountBalance(account.key, it, account.bank) }
+            onConfirm = { edit, minimum ->
+                when (edit) {
+                    // Untouched: not the same as cleared. Saving only a minimum must not
+                    // wipe a balance the person never went near.
+                    null -> Unit
+                    is BalanceEdit.Forget ->
+                        viewModel.setAccountBalance(account.key, null, account.bank)
+                    is BalanceEdit.Set ->
+                        viewModel.setAccountBalance(account.key, edit.paise, account.bank)
+                }
                 minimum?.let { viewModel.setAccountMinimum(account.key, it) }
                 settingBalance = null
             },
         )
     }
+}
+
+/**
+ * What the balance field is asking for, which "a nullable Long" cannot say.
+ *
+ * Three answers are possible and all three are different: leave it alone (null), forget
+ * the typed figure and go back to the bank's ([Forget]), or record this number — zero
+ * included ([Set]). Collapsing the last two onto 0L is what made a zero-balance account
+ * impossible to enter.
+ */
+private sealed interface BalanceEdit {
+    data object Forget : BalanceEdit
+    data class Set(val paise: Long) : BalanceEdit
 }
 
 @Composable
@@ -449,7 +472,7 @@ private fun MoneyField(value: String, onChange: (String) -> Unit) {
 private fun BalanceDialog(
     account: AccountBalance,
     onDismiss: () -> Unit,
-    onConfirm: (balance: Long?, minimum: Long?) -> Unit,
+    onConfirm: (balance: BalanceEdit?, minimum: Long?) -> Unit,
 ) {
     // The figure as it opened, so an untouched field is not re-saved as though somebody
     // typed it. Saving a minimum used to overwrite a bank-quoted balance with an
@@ -485,9 +508,11 @@ private fun BalanceDialog(
                 MoneyField(minText) { minText = it }
                 Text(
                     "A balance you type is yours, not the bank's — a real one from a " +
-                        "message replaces it, and clearing the field hands it back. The " +
-                        "minimum is what must stay in the account, and comes off the " +
-                        "figure on the summary.",
+                        "message replaces it, and emptying the field hands it back. A " +
+                        "zero is a figure, not an empty field: type 0 for an account " +
+                        "that really is empty. The minimum is what must stay in the " +
+                        "account, and comes off the figure on the summary — 0 for a " +
+                        "zero-balance account.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.textSecondary,
                 )
@@ -499,11 +524,19 @@ private fun BalanceDialog(
             val touched = text != opening || minPaise != null
             TextButton(
                 enabled = touched,
-                // null balance means "leave it alone"; blank means "forget what I said
-                // and go back to the bank's figure".
                 onClick = {
                     onConfirm(
-                        if (text == opening) null else if (text.isBlank()) 0L else paise,
+                        when {
+                            // Never went near the field — leave whatever is stored.
+                            text == opening -> null
+                            // Emptied on purpose: drop the typed figure, let the bank's
+                            // last word stand again.
+                            text.isBlank() -> BalanceEdit.Forget
+                            // Anything that parses, zero included. An unparseable string
+                            // is not a figure, so it is treated as no answer rather than
+                            // silently saved as one.
+                            else -> paise?.let { BalanceEdit.Set(it) }
+                        },
                         minPaise,
                     )
                 },

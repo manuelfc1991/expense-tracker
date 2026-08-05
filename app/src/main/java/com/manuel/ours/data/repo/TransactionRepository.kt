@@ -256,11 +256,15 @@ class TransactionRepository @Inject constructor(
      * The timestamp is the point — it is what lets a real bank balance outrank this the
      * moment one arrives, without anybody having to clear it.
      */
-    suspend fun setAccountBalance(key: String, paise: Long, bank: String?) {
+    suspend fun setAccountBalance(key: String, paise: Long?, bank: String?) {
         if (key.isBlank()) return
-        // Zero means "forget what I typed": the rule is kept but emptied, so the reader
+        // Null means "forget what I typed": the rule is kept but emptied, so the reader
         // skips it and whatever the bank last said takes over again.
-        val amount = if (paise <= 0L) "" else paise.toString()
+        //
+        // Zero used to mean that too, which left a zero-balance account with no way to
+        // say so — typing 0 erased the entry instead of recording it. An empty string is
+        // the tombstone; "0" is a figure like any other.
+        val amount = paise?.coerceAtLeast(0L)?.toString().orEmpty()
         sharedRuleDao.upsertAll(
             listOf(
                 SharedRuleEntity(
@@ -337,10 +341,11 @@ class TransactionRepository @Inject constructor(
         sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->
             rules.mapNotNull { rule ->
                 val parts = rule.value.split('|')
-                // Zero means "this account exists and nobody has said what is in it".
-                // Dropping the row instead would take the account with it, along with
-                // the record of who added it.
-                val paise = parts.firstOrNull()?.toLongOrNull() ?: 0L
+                // An empty amount means "this account exists and nobody has said what is
+                // in it". Dropping the row instead would take the account with it, along
+                // with the record of who added it. A present "0" is a real zero, and has
+                // to stay distinguishable from the empty case.
+                val paise = parts.firstOrNull()?.takeIf(String::isNotBlank)?.toLongOrNull()
                 rule.ruleKey to ManualBalance(
                     paise = paise,
                     setAt = rule.updatedAt,

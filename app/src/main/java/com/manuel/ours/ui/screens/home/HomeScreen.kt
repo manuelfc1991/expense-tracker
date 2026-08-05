@@ -1,5 +1,12 @@
 package com.manuel.ours.ui.screens.home
 
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -98,6 +105,7 @@ fun HomeScreen(
     onSeeAll: () -> Unit,
     onSort: () -> Unit,
     onSetBudget: () -> Unit,
+    onOpenDeleteRequests: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -133,22 +141,32 @@ fun HomeScreen(
         )
     }
 
-    Scaffold { padding ->
-      // A column, not a box: the add button gets a strip of its own rather than
-      // floating over the statement.
+      // No Scaffold here. The nav host is already inside one — `Navigation.kt` applies
+      // that Scaffold's innerPadding to the NavHost, which reserves the tab bar and the
+      // system navigation bar. A second Scaffold nested in that region worked the inset
+      // out again from where it now sat, and Home applied it twice: the statement
+      // stopped ~49dp above the tab bar and left a dead band under the last row, which
+      // read as the add button pushing the list up.
       //
-      // Floating, it sat on the right-hand amount column — and the amount column is the
-      // whole layout. Bottom padding on the list fixed only the *end* of the list, and
-      // Home rests at the top, where the row under the button is a perfectly ordinary
-      // one whose figure you cannot read. Hiding the button while scrolling would not
-      // have helped either: it is visible exactly when the list is at rest.
+      // Floating bottom-right, and out of the way when it would be in it.
       //
-      // The strip costs 64dp that the button was already occupying visually. Nothing
-      // can scroll underneath it, so no amount is ever covered.
-      Column(Modifier.fillMaxSize().padding(padding)) {
+      // The strip this replaces cost 64dp to guarantee the button never covered an
+      // amount, because the amount column is the whole layout. Floating brings that
+      // risk back, so two things hold it off: the button disappears the moment the
+      // list moves, and the list carries enough bottom padding that its end always
+      // clears the button's corner. Between them, any row the button sits on can be
+      // scrolled out from under it — which is what bottom padding alone could not do,
+      // since Home rests at the top and the covered row was an ordinary one.
+      val listState = rememberLazyListState()
+      // derivedStateOf, not a plain read: isScrollInProgress changes on every frame of
+      // a fling, and recomposing the whole statement that often to move one button is
+      // how a scroll starts dropping frames.
+      val addVisible by remember { derivedStateOf { !listState.isScrollInProgress } }
+      Box(Modifier.fillMaxSize().background(Ours.ink)) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            contentPadding = PaddingValues(bottom = 14.dp),
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -271,6 +289,33 @@ fun HomeScreen(
                 }
             }
 
+            // Above the bills: somebody is waiting on an answer, and until it comes their
+            // delete looks to them like a button that does nothing. A pill buried in
+            // Settings was not enough — nobody opens Settings to check for a question
+            // they have not been told was asked.
+            if (state.isHouseholdOwner && state.pendingDeleteRequests > 0) {
+                item {
+                    Notice(
+                        tone = Ours.warning,
+                        title = if (state.pendingDeleteRequests == 1) {
+                            "A delete is waiting for you"
+                        } else {
+                            "${state.pendingDeleteRequests} deletes are waiting for you"
+                        },
+                        body = if (state.pendingDeleteRequests == 1) {
+                            "Someone in the household asked to remove a transaction. " +
+                                "It still counts until you decide."
+                        } else {
+                            "Someone in the household asked to remove " +
+                                "${state.pendingDeleteRequests} transactions. They still " +
+                                "count until you decide."
+                        },
+                        actionLabel = "Review",
+                        onAction = onOpenDeleteRequests,
+                    )
+                }
+            }
+
             if (state.upcomingBills.isNotEmpty()) {
                 item {
                     UpcomingBills(
@@ -310,26 +355,31 @@ fun HomeScreen(
 
         }
 
-        // Bottom-right, in its own strip below the statement.
-        Box(
-            Modifier
-                .align(Alignment.End)
-                .padding(end = EDGE, top = 6.dp, bottom = 14.dp)
-                .size(44.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(Ours.accent)
-                .clickable { showAddSheet = true },
-            contentAlignment = Alignment.Center,
+        // Bottom-right, over the statement, and gone while the list is moving.
+        AnimatedVisibility(
+            visible = addVisible,
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 0.8f),
+            modifier = Modifier.align(Alignment.BottomEnd),
         ) {
-            BiIconView(
-                BiIcon.Add,
-                contentDescription = "Add expense",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp),
-            )
+            Box(
+                Modifier
+                    .padding(end = EDGE, bottom = 14.dp)
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Ours.accent)
+                    .clickable { showAddSheet = true },
+                contentAlignment = Alignment.Center,
+            ) {
+                BiIconView(
+                    BiIcon.Add,
+                    contentDescription = "Add expense",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
       }
-    }
 
     if (showAddSheet) {
         AddExpenseSheet(

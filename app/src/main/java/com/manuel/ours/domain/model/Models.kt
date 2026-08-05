@@ -257,7 +257,14 @@ enum class BalanceSource { BANK, HAND }
 
 /** A balance somebody typed in, and when — so the bank can outrank it later. */
 data class ManualBalance(
-    val paise: Long,
+    /**
+     * Null when the row marks that the account exists without claiming a figure for it.
+     *
+     * Zero used to carry that meaning, which made a genuinely empty account impossible
+     * to record: a zero-balance current account typed as 0 was read back as "nobody has
+     * said", and the figure never stuck. Unknown is never zero.
+     */
+    val paise: Long?,
     val setAt: Long,
     val bank: String?,
     /**

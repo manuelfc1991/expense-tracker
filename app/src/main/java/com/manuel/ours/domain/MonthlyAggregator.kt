@@ -164,8 +164,10 @@ object MonthlyAggregator {
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
             val typed = manual[key]
-            // A zero entry marks the account without claiming a figure for it.
-            val useTyped = typed != null && typed.paise > 0 &&
+            // A null figure marks the account without claiming a balance for it. Zero is
+            // a claim like any other — a zero-balance account is empty, not unknown.
+            val typedPaise = typed?.paise
+            val useTyped = typedPaise != null &&
                 (quoted == null || typed.setAt > quoted.occurredAt)
             val latest = rows.maxByOrNull { it.occurredAt }
             AccountBalance(
@@ -173,7 +175,7 @@ object MonthlyAggregator {
                 accountTail = latest?.accountTail?.takeIf(String::isNotBlank)
                     ?: key.takeIf { it.all(Char::isDigit) },
                 bank = latest?.bank ?: typed?.bank,
-                balancePaise = if (useTyped) typed!!.paise else quoted?.balancePaise,
+                balancePaise = if (useTyped) typedPaise else quoted?.balancePaise,
                 asOf = if (useTyped) typed!!.setAt else quoted?.occurredAt,
                 source = when {
                     useTyped -> BalanceSource.HAND

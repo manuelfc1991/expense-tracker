@@ -79,6 +79,16 @@ data class HomeUiState(
     val untaggedCount: Int = 0,
     val untaggedGroups: Int = 0,
     val needsReviewCount: Int = 0,
+    /**
+     * Rows a member has asked the owner to remove, waiting on an answer.
+     *
+     * Surfaced on Home because it was previously reachable only by opening Settings and
+     * noticing a pill — so a request sat unanswered while the person who made it saw
+     * nothing happen and assumed the app was broken.
+     */
+    val pendingDeleteRequests: Int = 0,
+    /** Only the owner can act on a delete request, so only the owner is told about one. */
+    val isHouseholdOwner: Boolean = false,
     val pendingSyncCount: Int = 0,
     val lastSyncAt: Long = 0,
     val lastSyncTransport: String? = null,
@@ -192,7 +202,8 @@ class HomeViewModel @Inject constructor(
             transactionRepository.observeNeedsReviewCount(),
             reminderDao.observeUpcoming(System.currentTimeMillis() - DAY_MS),
             transactionRepository.observeBalances(params.selfUid, params.owner),
-        ) { allTxns, reviewCount, reminders, balances ->
+            transactionRepository.observeDeleteRequestCount(),
+        ) { allTxns, reviewCount, reminders, balances, deleteRequests ->
             val current = MonthlyAggregator.applyFilter(
                 allTxns.filter { it.occurredAt in thisMonth },
                 params.filter,
@@ -268,6 +279,8 @@ class HomeViewModel @Inject constructor(
                 untaggedCount = unsorted.size,
                 untaggedGroups = unsorted.distinctBy { it.merchant.lowercase() }.size,
                 needsReviewCount = reviewCount,
+                pendingDeleteRequests = deleteRequests,
+                isHouseholdOwner = params.owner,
                 upcomingBills = reminders
                     .filter { it.dueAt - System.currentTimeMillis() < 14 * DAY_MS }
                     .map { reminder ->

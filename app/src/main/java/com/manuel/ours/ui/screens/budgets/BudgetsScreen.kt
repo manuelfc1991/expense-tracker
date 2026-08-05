@@ -15,10 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +65,11 @@ private val EDGE = 15.dp
 fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var editingOverall by remember { mutableStateOf(false) }
+    var confirmingReset by remember { mutableStateOf(false) }
+    // Nothing to reset when the household has never set a cap, and an action that would
+    // do nothing is worse than no action: it reads as broken rather than as inapplicable.
+    val anyBudgetSet = state.overallLimit != null ||
+        state.categoryProgress.any { it.limitPaise != null }
 
     Scaffold(containerColor = Ours.ink) { padding ->
         LazyColumn(
@@ -113,6 +120,10 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                             editingOverall = false
                         },
                         onCancel = { editingOverall = false },
+                        onClear = {
+                            viewModel.clearBudget(null)
+                            editingOverall = false
+                        },
                     )
                 }
             }
@@ -130,9 +141,57 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                     onSetLimit = { limit ->
                         viewModel.setCategoryBudget(state.categoryProgress[index].category, limit)
                     },
+                    onClearLimit = {
+                        viewModel.clearBudget(state.categoryProgress[index].category)
+                    },
                 )
             }
+
+            if (anyBudgetSet) {
+                item {
+                    MicroLabel(
+                        "Reset all budgets",
+                        color = Ours.negative,
+                        modifier = Modifier
+                            .padding(horizontal = EDGE, vertical = 12.dp)
+                            .clickable { confirmingReset = true },
+                    )
+                }
+            }
         }
+    }
+
+    // Confirmed, unlike the single-budget clear: this drops the overall cap and every
+    // category at once, it travels to the other phone, and retyping them is not one
+    // number but all of them.
+    if (confirmingReset) {
+        AlertDialog(
+            onDismissRequest = { confirmingReset = false },
+            containerColor = Ours.surface,
+            title = { Text("Reset all budgets?", color = Ours.text) },
+            text = {
+                Text(
+                    "The monthly budget and every category limit are dropped, on both " +
+                        "phones. Spending itself is untouched — only the caps go.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.resetAllBudgets()
+                        editingOverall = false
+                        confirmingReset = false
+                    },
+                ) { Text("Reset", color = Ours.negative) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingReset = false }) {
+                    Text("Cancel", color = Ours.textSecondary)
+                }
+            },
+        )
     }
 }
 
@@ -180,6 +239,7 @@ private fun OverallBudget(spentPaise: Long, limitPaise: Long?, modifier: Modifie
 private fun CategoryBudgetRow(
     progress: CategoryBudgetProgress,
     onSetLimit: (Long) -> Unit,
+    onClearLimit: () -> Unit,
 ) {
     var editing by remember { mutableStateOf(false) }
     val limit = progress.limitPaise
@@ -238,6 +298,7 @@ private fun CategoryBudgetRow(
                 onSave = { onSetLimit(it); editing = false },
                 onCancel = { editing = false },
                 inset = false,
+                onClear = { onClearLimit(); editing = false },
             )
         }
     }
@@ -256,8 +317,11 @@ private fun BudgetEditor(
     onSave: (Long) -> Unit,
     onCancel: () -> Unit,
     inset: Boolean = true,
+    /** Offered only where there is a cap to drop — a budget that is not set has none. */
+    onClear: (() -> Unit)? = null,
 ) {
     var text by remember { mutableStateOf(initial?.let { (it / 100).toString() } ?: "") }
+    var confirmingClear by remember { mutableStateOf(false) }
     val rupees = text.toLongOrNull()
     val valid = rupees != null && rupees > 0
 
@@ -298,5 +362,46 @@ private fun BudgetEditor(
                 )
             }
         }
+        // Below the pair rather than beside them: removing a cap is not the third of
+        // three equal choices, and a full-width red button next to Save invites the
+        // wrong one.
+        if (onClear != null && initial != null) {
+            MicroLabel(
+                "Clear this budget",
+                color = Ours.negative,
+                modifier = Modifier.clickable { confirmingClear = true },
+            )
+        }
+    }
+
+    // Confirmed like the reset is. The label sits directly under Save, so a thumb aiming
+    // for one can reach the other, and the two do opposite things — a mis-tap that
+    // silently drops the cap looks identical to a save that quietly failed.
+    if (confirmingClear && onClear != null) {
+        AlertDialog(
+            onDismissRequest = { confirmingClear = false },
+            containerColor = Ours.surface,
+            title = { Text("Clear this budget?", color = Ours.text) },
+            text = {
+                Text(
+                    "The limit is dropped on both phones. Spending itself is untouched.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmingClear = false
+                        onClear()
+                    },
+                ) { Text("Clear", color = Ours.negative) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingClear = false }) {
+                    Text("Cancel", color = Ours.textSecondary)
+                }
+            },
+        )
     }
 }
