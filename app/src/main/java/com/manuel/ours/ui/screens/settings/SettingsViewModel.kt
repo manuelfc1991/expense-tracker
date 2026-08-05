@@ -289,6 +289,17 @@ class SettingsViewModel @Inject constructor(
         initialValue = SettingsUiState(),
     )
 
+    /**
+     * How many expenses the tracking cutoff is holding back from the sheet right now.
+     *
+     * Read before "Re-upload everything" is pressed rather than inferred from the count
+     * afterwards. Kept out of [uiState] deliberately: that combine is already five deep
+     * and nested three levels to get there, and one more flow through it would cost more
+     * in unchecked casts than this whole disclosure is worth.
+     */
+    val retiredCount: StateFlow<Int> = transactionRepository.observeRetiredCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     /** Live permission state — the user can revoke it in system settings at any time. */
     fun hasSmsPermission(): Boolean = ContextCompat.checkSelfPermission(
         getApplication(), Manifest.permission.READ_SMS,
@@ -400,9 +411,16 @@ class SettingsViewModel @Inject constructor(
                 }
             }
             _sheetStatus.value = "Rebuilding…"
-            val count = transactionRepository.rebuildOwnLog()
+            val tally = transactionRepository.rebuildOwnLog()
             prefs.setSheetCursor(0L)
-            _sheetStatus.value = "Queued $count expenses to upload"
+            // Say what stayed behind. The cutoff bounding a re-upload is deliberate, but
+            // "Queued 214 expenses" for a household holding 460 of them read as success
+            // and was half a story — and the half it left out is the one somebody would
+            // go looking for on the other phone.
+            val startAt = prefs.trackingStartAtOnce()
+            _sheetStatus.value = tally.statusLine(
+                cutoffLabel = if (startAt > 0L) formatDay(startAt) else null,
+            )
             SyncWorker.syncNow(getApplication())
         }
     }

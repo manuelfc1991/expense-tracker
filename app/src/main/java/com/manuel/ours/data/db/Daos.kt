@@ -46,6 +46,19 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE deleted = 0")
     suspend fun allLive(): List<TransactionEntity>
 
+    /**
+     * How many live rows sit before the tracking cutoff — retired, and never synced.
+     *
+     * Counted in SQL rather than by loading and filtering: this is asked on the Settings
+     * screen and again on every re-upload, and the history it walks is the part of the
+     * table nothing else reads.
+     */
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND occurredAt < :before")
+    suspend fun countBefore(before: Long): Int
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND occurredAt < :before")
+    fun observeCountBefore(before: Long): Flow<Int>
+
     /** Rows whose "merchant" is really an account label the parser mistook for a payee. */
     @Query("SELECT * FROM transactions WHERE deleted = 0 AND LOWER(TRIM(merchant)) IN (:labels)")
     suspend fun withMerchantIn(labels: List<String>): List<TransactionEntity>

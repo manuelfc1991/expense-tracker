@@ -17,6 +17,7 @@ import com.manuel.ours.data.sms.SmsParser
 import com.manuel.ours.data.sync.LamportClock
 import com.manuel.ours.data.sync.SyncOp
 import com.manuel.ours.data.sync.SyncPayload
+import com.manuel.ours.domain.ReuploadTally
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.SplitType
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import java.util.UUID
@@ -995,14 +997,18 @@ class TransactionRepository @Inject constructor(
      * and until recently it deleted rather more than that. The transactions table is the
      * source of truth and survives all of it, so the log is regenerated from there.
      *
-     * Returns how many events were minted.
+     * Returns what was minted *and* what the cutoff held back, so the caller can say so.
      */
-    suspend fun rebuildOwnLog(): Int {
+    suspend fun rebuildOwnLog(): ReuploadTally {
         // Respects the tracking cutoff. Retiring a month is a statement about what the
         // household counts as theirs, not merely about what this screen draws — so a
         // month you have retired is not shipped to the sheet or to the other phone
         // either. Without this the sheet held every row the app had stopped showing.
         val startAt = prefs.trackingStartAtOnce()
+        // Counted before the rebuild, and reported by the caller. The rule is deliberate;
+        // being quiet about it was not. A button that says "everything" and uploads a
+        // fraction has to name the fraction, or the success message is a false one.
+        val retired = if (startAt > 0L) txnDao.countBefore(startAt) else 0
         val transactions = txnDao.getBetween(startAt, Long.MAX_VALUE).filterNot { it.deleted }
         // Drop the old log first, or every transaction ends up with two events saying
         // the same thing and the sheet grows a duplicate of its entire history.
@@ -1010,7 +1016,17 @@ class TransactionRepository @Inject constructor(
         for (row in transactions) {
             saveAndLog(row.toDomain(), row.dedupeKey, row.dedupeAt)
         }
-        return transactions.size
+        return ReuploadTally(queued = transactions.size, retired = retired)
+    }
+
+    /**
+     * How many stored expenses the tracking cutoff is currently holding back.
+     *
+     * Read by Settings so the reach of the cutoff is visible *before* a re-upload rather
+     * than inferred from the count afterwards. Zero when no cutoff is set.
+     */
+    fun observeRetiredCount(): Flow<Int> = prefs.trackingStartAt.flatMapLatest { startAt ->
+        if (startAt <= 0L) flowOf(0) else txnDao.observeCountBefore(startAt)
     }
 
     suspend fun seedMerchantRulesIfNeeded() {

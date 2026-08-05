@@ -340,11 +340,20 @@ you can get permanently stuck behind is worse than no lock.
    most that has ever run at once.
 3. **A retired month is retired for the household, not just for you.** The tracking
    start date bounds what *syncs* as well as what is drawn, so months before it never
-   reach the other phone. That is deliberate, and it is also the single most confusing
-   thing in the app: a partner who joins later receives only what is in scope, and
-   "Re-upload everything" silently honours the cutoff too, so it can report success
-   having queued a fraction of the history. The number in "Queued N" is the only place
-   the cutoff's reach is visible, and it is easy to miss.
+   reach the other phone. That is deliberate, and it used to be the single most
+   confusing thing in the app, because nothing said so: "Re-upload everything" honoured
+   the cutoff in silence and reported success having queued a fraction of the history.
+
+   It now says what it withholds. The button reads "Re-upload everything **in scope**"
+   once anything is retired, a warning above it counts what will not be sent and dates
+   it, and the result names both halves — *"Queued 214 expenses. 246 from before
+   1 Feb 2026 stayed behind — those months are retired."* A cutoff later than every
+   stored row no longer reports "Queued 0", which read as a broken sheet rather than as
+   a date the household chose. `ReuploadScopeTest` covers the wording.
+
+   What remains, and is not a bug: a partner who joins later still receives only what is
+   in scope, and moving the date back does not retroactively push the months it
+   readmits — a re-upload does that.
 
 ---
 

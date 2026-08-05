@@ -352,8 +352,15 @@ fun SettingsScreen(
                         onClick = { if (!testing) viewModel.saveSheetUrl(draft) },
                     )
                     if (state.sheetUrl.isNotBlank()) {
+                        // "Everything" is a promise the cutoff does not keep, so the
+                        // button stops making it as soon as there is something retired to
+                        // leave out. The count came from observeRetiredCount rather than
+                        // from the result, because the moment to learn a re-upload will
+                        // skip four months is before pressing it, not after.
+                        val retired by viewModel.retiredCount.collectAsStateWithLifecycle()
                         GhostButton(
-                            label = "Re-upload everything",
+                            label = if (retired > 0) "Re-upload everything in scope"
+                            else "Re-upload everything",
                             onClick = { viewModel.reuploadEverything() },
                         )
                         Note(
@@ -361,6 +368,15 @@ fun SettingsScreen(
                                 "believes it already sent everything, and only new " +
                                 "expenses would appear."
                         )
+                        if (retired > 0 && state.trackingStartAt > 0L) {
+                            Note(
+                                "${if (retired == 1) "1 expense" else "$retired expenses"} " +
+                                    "from before ${formatDay(state.trackingStartAt)} will " +
+                                    "not be sent. Retiring a month keeps it off the sheet " +
+                                    "and off the other phone, not just off this screen.",
+                                tone = Ours.warning,
+                            )
+                        }
                     }
                     Note(
                         "Anyone with this URL can read and change your expenses — " +
@@ -1552,7 +1568,8 @@ private fun TrackingStartPicker(
     }
 }
 
-private fun formatDay(epochMillis: Long): String =
+/** Internal, like [relativeSyncLabel]: the view model dates the cutoff the same way. */
+internal fun formatDay(epochMillis: Long): String =
     Instant.ofEpochMilli(epochMillis)
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
