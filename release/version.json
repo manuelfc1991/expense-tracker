@@ -1,7 +1,7 @@
 {
-  "versionCode": 51,
-  "versionName": "5.10",
-  "notes": "Deleting an entry now asks first, and says which entry and what happens to it — a member sees that the owner has to agree.",
+  "versionCode": 52,
+  "versionName": "5.11",
+  "notes": "Re-upload now says what it leaves behind — retired months are counted and dated instead of silently skipped, and a re-upload with nothing in scope no longer looks like a broken sheet.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25464834
 }

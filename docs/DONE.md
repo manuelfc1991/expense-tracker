@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **5 August 2026** from `9e012a2`, covering **91 commits** from the first one
-on 3 August 2026 to **5.10 (51)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `b903f2c`, covering **93 commits** from the first one
+on 3 August 2026 to **5.11 (52)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,14 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.11 (52) — 6 Aug 2026
+
+> Re-upload now says what it leaves behind — retired months are counted and dated instead
+> of silently skipped, and a re-upload with nothing in scope no longer looks like a broken
+> sheet.
+
+- `b903f2c` Say what a re-upload leaves behind
 
 ## 5.10 (51) — 5 Aug 2026
 
