@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.manuel.ours.ui.theme.AccentColor
+import com.manuel.ours.ui.theme.ThemeTone
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -42,6 +44,8 @@ class AppPrefs @Inject constructor(
         val APP_LOCK = booleanPreferencesKey("app_lock")
         val CAPTURE_POPUP = booleanPreferencesKey("capture_popup")
         val SETTINGS_INDEX = booleanPreferencesKey("settings_index")
+        val THEME_TONE = stringPreferencesKey("theme_tone")
+        val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val INGEST_SOURCE = stringPreferencesKey("ingest_source")
         val BACKFILL_DONE = booleanPreferencesKey("backfill_done")
         val SEEDED = booleanPreferencesKey("seeded")
@@ -135,6 +139,17 @@ class AppPrefs @Inject constructor(
      * argue it, both are built and this decides. Whichever is left unused should be
      * deleted; a settings screen with a setting for how it looks is a smell.
      */
+    /** How hard the palette is on the eyes. Crisp is the printed original. */
+    val themeTone: Flow<ThemeTone> = context.dataStore.data.map { p ->
+        runCatching { ThemeTone.valueOf(p[Keys.THEME_TONE] ?: "") }.getOrDefault(ThemeTone.CRISP)
+    }
+
+    /** The one colour that is a matter of taste. */
+    val accentColor: Flow<AccentColor> = context.dataStore.data.map { p ->
+        runCatching { AccentColor.valueOf(p[Keys.ACCENT_COLOR] ?: "") }
+            .getOrDefault(AccentColor.BLUE)
+    }
+
     val settingsIndex: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.SETTINGS_INDEX] ?: true }
     val backfillDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.BACKFILL_DONE] ?: false }
@@ -326,6 +341,14 @@ class AppPrefs @Inject constructor(
 
     suspend fun setCapturePopup(value: Boolean) {
         context.dataStore.edit { it[Keys.CAPTURE_POPUP] = value }
+    }
+
+    suspend fun setThemeTone(value: ThemeTone) {
+        context.dataStore.edit { it[Keys.THEME_TONE] = value.name }
+    }
+
+    suspend fun setAccentColor(value: AccentColor) {
+        context.dataStore.edit { it[Keys.ACCENT_COLOR] = value.name }
     }
 
     suspend fun setSettingsIndex(value: Boolean) {

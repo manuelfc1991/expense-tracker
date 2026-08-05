@@ -28,6 +28,8 @@ import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.ui.components.CaptureSheetContent
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.AccentColor
+import com.manuel.ours.ui.theme.ThemeTone
 import com.manuel.ours.ui.theme.OursTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -67,7 +69,10 @@ class CaptureActivity : ComponentActivity() {
 
         setContent {
             val theme by prefs.theme.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
-            OursTheme(themeMode = theme) {
+            val tone by prefs.themeTone.collectAsStateWithLifecycle(initialValue = ThemeTone.CRISP)
+            val accent by prefs.accentColor
+                .collectAsStateWithLifecycle(initialValue = AccentColor.BLUE)
+            OursTheme(themeMode = theme, tone = tone, accent = accent) {
                 CaptureOverlay(txnId = txnId, onClose = ::finish)
             }
         }

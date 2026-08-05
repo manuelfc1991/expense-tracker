@@ -14,6 +14,8 @@ import androidx.lifecycle.viewModelScope
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.prefs.ThemeMode
+import com.manuel.ours.ui.theme.ThemeTone
+import com.manuel.ours.ui.theme.AccentColor
 import com.manuel.ours.data.repo.HouseholdRepository
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -50,6 +52,8 @@ data class SettingsUiState(
     val capturePopup: Boolean = false,
     val settingsIndex: Boolean = false,
     val theme: ThemeMode = ThemeMode.SYSTEM,
+    val tone: ThemeTone = ThemeTone.CRISP,
+    val accent: AccentColor = AccentColor.BLUE,
     val ingestSource: IngestSource = IngestSource.SMS,
     /** Epoch millis before which nothing is counted; 0 means the whole history. */
     val trackingStartAt: Long = 0L,
@@ -197,6 +201,8 @@ class SettingsViewModel @Inject constructor(
         val transactionCount: Int,
         val capturePopup: Boolean,
         val settingsIndex: Boolean,
+        val tone: ThemeTone,
+        val accent: AccentColor,
     )
 
     val uiState: StateFlow<SettingsUiState> = combine(
@@ -216,7 +222,19 @@ class SettingsViewModel @Inject constructor(
                     transactionRepository.observeAll(),
                     prefs.capturePopup,
                     prefs.settingsIndex,
-                ) { dev, all, popup, index -> Flags(dev, all.size, popup, index) },
+                    combine(prefs.themeTone, prefs.accentColor) { t, a -> t to a },
+                ) { dev, all, popup, index, look ->
+                    @Suppress("UNCHECKED_CAST")
+                    val pair = look as Pair<ThemeTone, AccentColor>
+                    Flags(
+                        developerMode = dev as Boolean,
+                        transactionCount = (all as List<*>).size,
+                        capturePopup = popup as Boolean,
+                        settingsIndex = index as Boolean,
+                        tone = pair.first,
+                        accent = pair.second,
+                    )
+                },
             ) { sheet, start, owner, pending, dev ->
                 listOf(sheet, start, owner, pending, dev)
             },
@@ -262,6 +280,8 @@ class SettingsViewModel @Inject constructor(
             transactionCount = dev.transactionCount,
             capturePopup = dev.capturePopup,
             settingsIndex = dev.settingsIndex,
+            tone = dev.tone,
+            accent = dev.accent,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -430,6 +450,14 @@ class SettingsViewModel @Inject constructor(
 
     fun setCapturePopup(value: Boolean) {
         viewModelScope.launch { prefs.setCapturePopup(value) }
+    }
+
+    fun setThemeTone(value: ThemeTone) {
+        viewModelScope.launch { prefs.setThemeTone(value) }
+    }
+
+    fun setAccentColor(value: AccentColor) {
+        viewModelScope.launch { prefs.setAccentColor(value) }
     }
 
     fun setSettingsIndex(value: Boolean) {

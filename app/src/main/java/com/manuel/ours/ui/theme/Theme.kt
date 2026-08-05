@@ -87,6 +87,8 @@ val LocalSpendColors = staticCompositionLocalOf {
 @Composable
 fun OursTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    tone: ThemeTone = ThemeTone.CRISP,
+    accent: AccentColor = AccentColor.BLUE,
     content: @Composable () -> Unit,
 ) {
     // No Material You. Wallpaper colours would repaint the one accent that carries all
@@ -98,8 +100,8 @@ fun OursTheme(
         ThemeMode.DARK -> true
     }
 
-    val colors = oursColors(dark)
-    val scheme = remember(dark) { schemeFor(colors) }
+    val colors = oursColors(dark, tone, accent)
+    val scheme = remember(dark, tone, accent) { schemeFor(colors) }
 
     // Status-bar icons follow *this* theme, not the system's.
     //
@@ -121,7 +123,7 @@ fun OursTheme(
         }
     }
 
-    val spendColors = remember(dark) {
+    val spendColors = remember(dark, tone, accent) {
         SpendColors(
             positive = colors.positive,
             negative = colors.negative,

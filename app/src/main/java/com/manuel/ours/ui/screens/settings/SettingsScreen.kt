@@ -76,6 +76,9 @@ import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.StatePill
 import com.manuel.ours.ui.components.TapeHeader
+import androidx.compose.foundation.shape.CircleShape
+import com.manuel.ours.ui.theme.AccentColor
+import com.manuel.ours.ui.theme.ThemeTone
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.ValueTextStyle
@@ -662,6 +665,50 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                // How hard the palette is, kept separate from which one it is. The
+                // printed original runs about 18:1, which is right for a receipt and a
+                // lot to read for an hour.
+                MicroLabel("Contrast")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ThemeTone.entries.forEach { t ->
+                        OursChip(
+                            label = if (t == ThemeTone.CRISP) "Crisp" else "Soft",
+                            selected = state.tone == t,
+                            onClick = { viewModel.setThemeTone(t) },
+                        )
+                    }
+                }
+                Note(
+                    if (state.tone == ThemeTone.CRISP) {
+                        "Printed contrast — near-black on near-white. Sharpest, and the " +
+                            "most tiring over a long sitting."
+                    } else {
+                        "The ground and the ink brought toward each other, and the paper " +
+                            "warmed. Easier for a long read, and still well clear of the " +
+                            "legibility floor."
+                    }
+                )
+
+                MicroLabel("Accent")
+                // Swatches, not names: the colour is the thing being chosen, and a row
+                // of words would make you tap one to find out what it looks like.
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    AccentColor.entries.forEach { a ->
+                        AccentSwatch(
+                            colour = a.on(Ours.isDark),
+                            selected = state.accent == a,
+                            label = a.label,
+                            onClick = { viewModel.setAccentColor(a) },
+                        )
+                    }
+                }
+                Note(
+                    "Only the blue-to-violet arc and teal are offered. Green means money " +
+                        "arriving here, amber a warning and red a loss — an accent taken " +
+                        "from any of those would make the interface say something it does " +
+                        "not mean."
+                )
 
                 Hairline()
                 ToggleRow(
@@ -1265,6 +1312,42 @@ private fun PanelRow(
         trailing?.invoke()
         if (chevron && onClick != null) {
             Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+        }
+    }
+}
+
+/** One accent option: the colour itself, ringed when chosen. */
+@Composable
+private fun AccentSwatch(
+    colour: Color,
+    selected: Boolean,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            // The ring sits outside the fill rather than over it, so the colour being
+            // judged is never the colour with a line through it.
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) Ours.text else Ours.hairline,
+                shape = CircleShape,
+            )
+            .padding(if (selected) 4.dp else 3.dp)
+            .clip(CircleShape)
+            .background(colour)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            BiIconView(
+                BiIcon.Done,
+                contentDescription = label,
+                tint = Color.White,
+                modifier = Modifier.size(13.dp),
+            )
         }
     }
 }

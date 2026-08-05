@@ -200,7 +200,82 @@ private val LightColors = OursColors(
     isDark = false,
 )
 
-fun oursColors(dark: Boolean): OursColors = if (dark) DarkColors else LightColors
+/**
+ * How hard the theme is on the eyes.
+ *
+ * The palette this app started with is deliberately high contrast — near-black paper,
+ * near-white ink, about 18:1 — because a statement is machine-printed and that is what
+ * printed looks like. It is also a lot to read for an hour.
+ *
+ * [SOFT] lifts the ground and drops the ink toward each other. It stays well clear of
+ * the 4.5:1 floor for body text; what it gives up is the glare, not the legibility.
+ * Nothing else moves — the category hues are contrast-validated against these surfaces
+ * and re-tinting them would invalidate that work for the sake of a preference.
+ */
+enum class ThemeTone { CRISP, SOFT }
+
+/**
+ * The one colour that carries meaning, and the only one that is a matter of taste.
+ *
+ * Constrained on purpose to the blue-through-violet arc plus teal. Green means money
+ * arriving here, amber means a warning and red means a loss, so an accent borrowed from
+ * any of those would make the interface say something it does not mean. That rules out
+ * most of the wheel, and what is left is what is offered.
+ */
+enum class AccentColor(val label: String, val dark: Color, val light: Color) {
+    BLUE("Blue", Color(0xFF2F5BFF), Color(0xFF2F5BFF)),
+    INDIGO("Indigo", Color(0xFF5B4BE0), Color(0xFF4E3FD0)),
+    VIOLET("Violet", Color(0xFF8A4BD8), Color(0xFF7B3DC8)),
+    PLUM("Plum", Color(0xFFA8459B), Color(0xFF97388B)),
+    TEAL("Teal", Color(0xFF0E9C93), Color(0xFF0B7E77)),
+    SKY("Sky", Color(0xFF1E86D6), Color(0xFF1A76C0));
+
+    fun on(isDark: Boolean): Color = if (isDark) dark else light
+}
+
+/** A mix, for deriving the soft accent and the softened surfaces. */
+private fun mix(a: Color, b: Color, t: Float) = Color(
+    red = a.red + (b.red - a.red) * t,
+    green = a.green + (b.green - a.green) * t,
+    blue = a.blue + (b.blue - a.blue) * t,
+    alpha = 1f,
+)
+
+fun oursColors(
+    dark: Boolean,
+    tone: ThemeTone = ThemeTone.CRISP,
+    accent: AccentColor = AccentColor.BLUE,
+): OursColors {
+    val base = if (dark) DarkColors else LightColors
+    val hue = accent.on(dark)
+    val withAccent = base.copy(
+        accent = hue,
+        // Derived rather than hand-picked: on dark it is the accent sunk almost into the
+        // ground, on paper it is the accent lifted almost to white. Either way it is a
+        // tint of the same hue, so a new accent cannot leave a stale container behind.
+        accentSoft = if (dark) mix(hue, base.ink, 0.78f) else mix(hue, Color.White, 0.88f),
+    )
+    if (tone == ThemeTone.CRISP) return withAccent
+
+    // Soft: bring ground and ink toward each other, and warm the paper slightly. The
+    // steps are small deliberately — enough to take the glare off, not enough to make
+    // the hairlines disappear, which is what carries every layout in this app.
+    return if (dark) withAccent.copy(
+        ink = Color(0xFF16161C),
+        surface = Color(0xFF1D1D24),
+        surfaceHigh = Color(0xFF23232B),
+        hairline = Color(0xFF32323D),
+        text = Color(0xFFE0E0E8),
+        textSecondary = Color(0xFF9494A6),
+    ) else withAccent.copy(
+        ink = Color(0xFFF2EFE9),
+        surface = Color(0xFFFBF9F5),
+        surfaceHigh = Color(0xFFF0EDE6),
+        hairline = Color(0xFFE0DCD2),
+        text = Color(0xFF23211D),
+        textSecondary = Color(0xFF615E57),
+    )
+}
 
 val LocalOursColors = staticCompositionLocalOf { DarkColors }
 

@@ -12,6 +12,8 @@ import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.ui.lock.AppLockGate
 import com.manuel.ours.ui.nav.OursNavHost
 import com.manuel.ours.ui.nav.Routes
+import com.manuel.ours.ui.theme.AccentColor
+import com.manuel.ours.ui.theme.ThemeTone
 import com.manuel.ours.ui.theme.OursTheme
 import com.manuel.ours.work.SyncWorker
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,8 +40,10 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             val theme by prefs.theme.collectAsState(initial = ThemeMode.SYSTEM)
+            val tone by prefs.themeTone.collectAsState(initial = ThemeTone.CRISP)
+            val accent by prefs.accentColor.collectAsState(initial = AccentColor.BLUE)
             val appLock by prefs.appLock.collectAsState(initial = false)
-            OursTheme(themeMode = theme) {
+            OursTheme(themeMode = theme, tone = tone, accent = accent) {
                 AppLockGate(enabled = appLock) {
                     OursNavHost(
                         initialTransactionId = openTxnId,
