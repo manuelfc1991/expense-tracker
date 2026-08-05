@@ -1,0 +1,4 @@
+- [Partner phone runs Android 16](partner-phone-android-16.md) — the two-phone sync pair is not homogeneous; app targets SDK 34.
+- [Ours v2 design approved and built](ours-v2-design-approved.md) — build against `design/ours-mockup-v2.html`; a row is a printed statement line.
+- [Household banks with Kerala Gramin](household-banks-with-kerala-gramin.md) — main account + why sender coverage is the parser's real failure mode.
+- [Never uninstall Ours — live data](never-uninstall-ours-live-data.md) — always `adb install -r`; the phone's data is not fully reproducible.
