@@ -1,7 +1,7 @@
 {
-  "versionCode": 24,
-  "versionName": "3.3",
-  "notes": "Settings now matches the design: one panel per group, status on every heading, and captions that read as sentences instead of shouting.",
+  "versionCode": 25,
+  "versionName": "3.4",
+  "notes": "Settings can now be drawn two ways — one long page, or an index of five pages. Pick one under Settings layout; the other will be removed.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25378476
 }

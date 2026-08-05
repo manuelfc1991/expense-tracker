@@ -41,6 +41,7 @@ class AppPrefs @Inject constructor(
         val NEARBY_ALWAYS = booleanPreferencesKey("nearby_always")
         val APP_LOCK = booleanPreferencesKey("app_lock")
         val CAPTURE_POPUP = booleanPreferencesKey("capture_popup")
+        val SETTINGS_INDEX = booleanPreferencesKey("settings_index")
         val INGEST_SOURCE = stringPreferencesKey("ingest_source")
         val BACKFILL_DONE = booleanPreferencesKey("backfill_done")
         val SEEDED = booleanPreferencesKey("seeded")
@@ -124,6 +125,17 @@ class AppPrefs @Inject constructor(
      */
     val capturePopup: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.CAPTURE_POPUP] ?: false }
+
+    /**
+     * Draw Settings as an index of five pages rather than one scroll.
+     *
+     * Two designs were drawn for the same screen and neither is obviously right — the
+     * index is faster to read and slower to use, the one page the reverse. Rather than
+     * argue it, both are built and this decides. Whichever is left unused should be
+     * deleted; a settings screen with a setting for how it looks is a smell.
+     */
+    val settingsIndex: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.SETTINGS_INDEX] ?: false }
     val backfillDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.BACKFILL_DONE] ?: false }
 
     /**
@@ -306,6 +318,10 @@ class AppPrefs @Inject constructor(
 
     suspend fun setCapturePopup(value: Boolean) {
         context.dataStore.edit { it[Keys.CAPTURE_POPUP] = value }
+    }
+
+    suspend fun setSettingsIndex(value: Boolean) {
+        context.dataStore.edit { it[Keys.SETTINGS_INDEX] = value }
     }
 
     suspend fun setIngestSource(source: IngestSource) {

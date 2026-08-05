@@ -48,6 +48,7 @@ data class SettingsUiState(
     val sheetTesting: Boolean = false,
     val appLock: Boolean = false,
     val capturePopup: Boolean = false,
+    val settingsIndex: Boolean = false,
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val ingestSource: IngestSource = IngestSource.SMS,
     /** Epoch millis before which nothing is counted; 0 means the whole history. */
@@ -190,6 +191,14 @@ class SettingsViewModel @Inject constructor(
     private val _sheetTesting = kotlinx.coroutines.flow.MutableStateFlow(false)
     val sheetTesting: kotlinx.coroutines.flow.StateFlow<Boolean> = _sheetTesting
 
+    /** Bundled so the outer combine stays within the five arities Flow offers. */
+    private data class Flags(
+        val developerMode: Boolean,
+        val transactionCount: Int,
+        val capturePopup: Boolean,
+        val settingsIndex: Boolean,
+    )
+
     val uiState: StateFlow<SettingsUiState> = combine(
         householdRepository.observeMembers(),
         prefs.inviteSecret,
@@ -206,7 +215,8 @@ class SettingsViewModel @Inject constructor(
                     prefs.developerMode,
                     transactionRepository.observeAll(),
                     prefs.capturePopup,
-                ) { dev, all, popup -> Triple(dev, all.size, popup) },
+                    prefs.settingsIndex,
+                ) { dev, all, popup, index -> Flags(dev, all.size, popup, index) },
             ) { sheet, start, owner, pending, dev ->
                 listOf(sheet, start, owner, pending, dev)
             },
@@ -225,7 +235,7 @@ class SettingsViewModel @Inject constructor(
         val isOwner = paths[2] as Boolean
         val pendingDeletes = paths[3] as Int
         @Suppress("UNCHECKED_CAST")
-        val dev = paths[4] as Triple<Boolean, Int, Boolean>
+        val dev = paths[4] as Flags
 
         SettingsUiState(
             members = members,
@@ -248,9 +258,10 @@ class SettingsViewModel @Inject constructor(
             trackingStartAt = trackingStartAt,
             isHouseholdOwner = isOwner,
             pendingDeleteRequests = pendingDeletes,
-            developerMode = dev.first,
-            transactionCount = dev.second,
-            capturePopup = dev.third,
+            developerMode = dev.developerMode,
+            transactionCount = dev.transactionCount,
+            capturePopup = dev.capturePopup,
+            settingsIndex = dev.settingsIndex,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -419,6 +430,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setCapturePopup(value: Boolean) {
         viewModelScope.launch { prefs.setCapturePopup(value) }
+    }
+
+    fun setSettingsIndex(value: Boolean) {
+        viewModelScope.launch { prefs.setSettingsIndex(value) }
     }
 
     /**
