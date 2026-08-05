@@ -1,7 +1,7 @@
 {
-  "versionCode": 28,
-  "versionName": "3.7",
-  "notes": "Every category now has one name and one coloured icon, the same on every screen.",
+  "versionCode": 29,
+  "versionName": "3.8",
+  "notes": "Sort now picks a category from the same grid every other screen uses.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25377892
 }

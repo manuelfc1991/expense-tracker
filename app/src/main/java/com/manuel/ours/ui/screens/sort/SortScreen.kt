@@ -39,6 +39,7 @@ import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.ui.components.AmountColumn
 import com.manuel.ours.ui.components.BiIcon
+import com.manuel.ours.ui.components.CategoryGrid
 import com.manuel.ours.ui.components.BiIconView
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.MicroLabel
@@ -255,6 +256,7 @@ private fun GroupCard(
                         // six decisions only if each decision is already half-made.
                         selected = index == 0,
                         icon = BiIcon.forCategory(category),
+                        iconTint = Ours.forCategory(category),
                         onClick = { onAssign(category) },
                     )
                 }
@@ -291,19 +293,17 @@ private fun CategorySheet(
                 style = MaterialTheme.typography.titleMedium,
                 color = Ours.text,
             )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Category.EVERY.forEach { category ->
-                    OursChip(
-                        label = category.label,
-                        selected = false,
-                        icon = BiIcon.forCategory(category),
-                        onClick = { onPick(category) },
-                    )
-                }
-            }
+            // The same grid as the detail screen, the add sheet and the filter.
+            //
+            // This was the last wrapped flow of chips left: variable widths, a ragged
+            // right edge, and a different row length whenever the list changed, so the
+            // one screen where you categorise dozens of rows in a row was the one screen
+            // where the categories were never in the same place twice.
+            CategoryGrid(
+                selected = null,
+                onSelect = onPick,
+                options = Category.EVERY,
+            )
         }
     }
 }
