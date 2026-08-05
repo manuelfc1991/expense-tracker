@@ -268,12 +268,23 @@ fun oursColors(
         text = Color(0xFFE0E0E8),
         textSecondary = Color(0xFF9494A6),
     ) else withAccent.copy(
-        ink = Color(0xFFF2EFE9),
-        surface = Color(0xFFFBF9F5),
-        surfaceHigh = Color(0xFFF0EDE6),
-        hairline = Color(0xFFE0DCD2),
-        text = Color(0xFF23211D),
-        textSecondary = Color(0xFF615E57),
+        // Paper, not a warmed sheet of white.
+        //
+        // The first attempt only shifted the hue — F4F4F7 to F2EFE9 — which is 244 to
+        // 240 in luminance and no relief at all. Glare on a light theme comes from the
+        // sheer area of lit pixels, so this steps the ground down about 6% and the
+        // panels with it. Any further and it stops reading as paper and starts reading
+        // as a screen that needs cleaning.
+        ink = Color(0xFFEAE6DD),
+        surface = Color(0xFFF5F2EA),
+        surfaceHigh = Color(0xFFEFEBE1),
+        hairline = Color(0xFFD6D1C4),
+        text = Color(0xFF262420),
+        textSecondary = Color(0xFF63605A),
+        // 4.9:1 rather than the 3.9:1 the crisp paper gives its captions. A mode whose
+        // whole purpose is comfort should not be the one that fails the contrast floor,
+        // and 9sp small-caps is exactly the text that needs the help.
+        textLabel = Color(0xFF66625A),
     )
 }
 

@@ -1,7 +1,7 @@
 {
-  "versionCode": 39,
-  "versionName": "4.8",
-  "notes": "A softer contrast setting for long sittings, and six accent colours. Settings, This app, Appearance.",
+  "versionCode": 40,
+  "versionName": "4.9",
+  "notes": "Soft mode now genuinely dims the light theme rather than only warming it, and the icon drops its blue for the app's own ink.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25396232
 }
