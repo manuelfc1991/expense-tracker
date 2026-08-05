@@ -1,7 +1,7 @@
 {
-  "versionCode": 29,
-  "versionName": "3.8",
-  "notes": "Sort now picks a category from the same grid every other screen uses.",
+  "versionCode": 30,
+  "versionName": "3.9",
+  "notes": "The add button no longer sits on top of an amount.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25377892
 }

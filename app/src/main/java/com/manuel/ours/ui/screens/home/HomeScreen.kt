@@ -133,13 +133,21 @@ fun HomeScreen(
     }
 
     Scaffold { padding ->
-      Box(Modifier.fillMaxSize().padding(padding)) {
+      // A column, not a box: the add button gets a strip of its own rather than
+      // floating over the statement.
+      //
+      // Floating, it sat on the right-hand amount column — and the amount column is the
+      // whole layout. Bottom padding on the list fixed only the *end* of the list, and
+      // Home rests at the top, where the row under the button is a perfectly ordinary
+      // one whose figure you cannot read. Hiding the button while scrolling would not
+      // have helped either: it is visible exactly when the list is at rest.
+      //
+      // The strip costs 64dp that the button was already occupying visually. Nothing
+      // can scroll underneath it, so no amount is ever covered.
+      Column(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            // Room for the floating button to sit over. Without this the last row of
-            // the statement can never be scrolled clear of it — and that is exactly
-            // the row you just added.
-            contentPadding = PaddingValues(bottom = 96.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(bottom = 14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -295,13 +303,11 @@ fun HomeScreen(
 
         }
 
-        // Anchored bottom-right, floating over the list rather than riding along in
-        // it. The list carries 96dp of bottom padding so the last entry can still be
-        // scrolled out from under it.
+        // Bottom-right, in its own strip below the statement.
         Box(
             Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = EDGE, bottom = 20.dp)
+                .align(Alignment.End)
+                .padding(end = EDGE, top = 6.dp, bottom = 14.dp)
                 .size(44.dp)
                 .clip(RoundedCornerShape(15.dp))
                 .background(Ours.accent)
