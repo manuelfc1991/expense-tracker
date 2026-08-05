@@ -1,0 +1,620 @@
+<meta charset="utf-8">
+<title>Ours — logo studies, second set</title>
+<style>
+  :root{--bg:#F5F5F8;--fg:#15151C;--mut:#5E5E72;--line:#E0E0E8;--acc:#2F5BFF;
+        --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,monospace;
+        --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif}
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 80px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 30px;max-width:70ch;line-height:1.6}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
+     margin:44px 0 14px;font-family:var(--mono);font-weight:600}
+  .grid{display:flex;flex-wrap:wrap;gap:20px}
+  .card{border:1px solid var(--line);border-radius:16px;padding:16px;width:360px;
+        position:relative;background:rgb(128 128 128/.03)}
+  .num{position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:10px;
+       letter-spacing:.16em;color:var(--mut)}
+  h3{margin:0 0 12px;font-size:15px;font-weight:600}
+  .row{display:flex;align-items:center;gap:12px}
+  .stack{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .tile{display:grid;place-items:center;border-radius:22%;flex:none}
+  .tile.acc{background:var(--acc)}
+  .tile.ink{background:#0B0B0F;border:1px solid var(--line)}
+  .tile svg{display:block}
+  .tile:not(.sm):not(.xs):not([class*=m-]){width:96px;height:96px}
+  .sm{width:48px;height:48px;border-radius:24%}
+  .xs{width:28px;height:28px;border-radius:26%}
+  .circ{border-radius:50%}
+  .note{color:var(--mut);font-size:12.5px;line-height:1.6;margin:12px 0 0}
+  .note b{color:var(--fg);font-weight:600}
+  .m-circle,.m-squircle,.m-rounded,.m-square{width:72px;height:72px}
+  .m-circle{border-radius:50%}
+  .m-squircle{border-radius:38%}
+  .m-rounded{border-radius:20%}
+  .m-square{border-radius:4%}
+  .maskset{margin-bottom:18px}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--mut);
+       display:block;margin-bottom:8px}
+  table{border-collapse:collapse;font-size:13px;margin:8px 0 0;max-width:900px}
+  th,td{text-align:left;padding:8px 18px 8px 0;border-bottom:1px solid var(--line);
+        vertical-align:top}
+  th{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--mut);font-weight:600}
+</style>
+
+<div class="wrap">
+<h1>Ours — logo studies, second set</h1>
+<p class="sub">
+  Fifteen more, none repeating the first six — twelve marks, then three built on two hands. Each is shown filled on the accent, drawn on
+  ink, and at <b>48px and 28px</b> — because the launcher and the notification tray are
+  where it actually lives, not at 96. The right-hand pair is the same mark under a
+  <b>circular crop</b>, which is what a good half of Android launchers will do to it.
+</p>
+
+<h2>The twelve</h2>
+<div class="grid">
+  <div class="card">
+    <div class="num">07</div>
+    <h3>The fold</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#FFFFFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#2F5BFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#FFFFFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#FFFFFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#FFFFFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M26 20h28l16 16v40H26z" fill="#FFFFFF"/>
+     <path d="M54 20l16 16H54z" fill="#2F5BFF"/>
+     <path d="M54 20v16h16" fill="none" stroke="#2F5BFF" stroke-width="5" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+    <p class="note">A statement with its corner turned. The only mark here that says <b>paper</b> outright, which is the whole conceit of the app — everything else is geometry that happens to be printed.</p>
+  </div>
+  <div class="card">
+    <div class="num">08</div>
+    <h3>Two into one</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#2F5BFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#2F5BFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="52" y="31" width="22" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="22" y="57" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Two figures above, one total below. Literally what the app does with two people's money, and it survives being 28px better than anything with a curve in it.</p>
+  </div>
+  <div class="card">
+    <div class="num">09</div>
+    <h3>Equal shares</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#2F5BFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="23" y="38" width="50" height="8" rx="4" fill="#FFFFFF"/>
+     <rect x="23" y="55" width="50" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">An equals sign, read as a household rather than as arithmetic. Two rules of identical weight: neither person's column is the important one.</p>
+  </div>
+  <div class="card">
+    <div class="num">10</div>
+    <h3>The ledger row</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#2F5BFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#2F5BFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#2F5BFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#2F5BFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#2F5BFF" opacity=".28"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+      </div>
+    </div>
+    <p class="note">The app's actual signature: a name on the left, a figure flush right, twice. It is the one mark here that could only belong to this app.</p>
+  </div>
+  <div class="card">
+    <div class="num">11</div>
+    <h3>The ring, halved</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#2F5BFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#2F5BFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M52 20a28 28 0 0 1 0 56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+     <path d="M44 76a28 28 0 0 1 0-56" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity=".5"/></svg></div>
+      </div>
+    </div>
+    <p class="note">One O of OURS, drawn as two arcs that do not quite touch. Two people making one round number; the gaps are what stop it reading as a loading spinner.</p>
+  </div>
+  <div class="card">
+    <div class="num">12</div>
+    <h3>Roof and rule</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">A household over a ledger line. The most literal mark of the set and the most immediately readable — you know what it is before you know what the app is.</p>
+  </div>
+  <div class="card">
+    <div class="num">13</div>
+    <h3>Held between</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M40 24H26v48h14" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M56 24h14v48H56" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Two brackets and the space they enclose. What is ours is the gap, not the marks — which is either the cleverest thing here or the least legible, depending on the size.</p>
+  </div>
+  <div class="card">
+    <div class="num">14</div>
+    <h3>In and out</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#2F5BFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#2F5BFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M35 66V32m0 0l-9 9m9-9l9 9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M61 30v34m0 0l-9-9m9 9l9-9" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Money arriving and money leaving, the two things every row in the app is. Reads instantly; risks looking like a transfer utility rather than a ledger.</p>
+  </div>
+  <div class="card">
+    <div class="num">15</div>
+    <h3>The share</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#FFFFFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#FFFFFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#2F5BFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#2F5BFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#2F5BFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#FFFFFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#FFFFFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#FFFFFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#FFFFFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#FFFFFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#FFFFFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><circle cx="34" cy="34" r="7.5" fill="#FFFFFF"/>
+     <circle cx="62" cy="62" r="7.5" fill="#FFFFFF" opacity=".5"/>
+     <path d="M67 29L29 67" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/></svg></div>
+      </div>
+    </div>
+    <p class="note">A percent mark with its slash turned into a rule. Says *proportion* — which is what the summary screen is about — without drawing a single pie chart.</p>
+  </div>
+  <div class="card">
+    <div class="num">16</div>
+    <h3>The split</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 48h20c10 0 10-16 20-16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <path d="M38 48c10 0 10 16 20 16h20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".5"/></svg></div>
+      </div>
+    </div>
+    <p class="note">One line becoming two. The gesture of a shared expense, drawn once — and the only mark here with any movement in it.</p>
+  </div>
+  <div class="card">
+    <div class="num">17</div>
+    <h3>The month</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#FFFFFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#FFFFFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#FFFFFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#FFFFFF" opacity=".3"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#2F5BFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#2F5BFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#2F5BFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#2F5BFF" opacity=".3"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#FFFFFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#FFFFFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#FFFFFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#FFFFFF" opacity=".3"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#FFFFFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#FFFFFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#FFFFFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#FFFFFF" opacity=".3"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#FFFFFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#FFFFFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#FFFFFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#FFFFFF" opacity=".3"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="52" width="10" height="23" rx="3" fill="#FFFFFF" opacity=".45"/>
+     <rect x="38" y="34" width="10" height="41" rx="3" fill="#FFFFFF"/>
+     <rect x="54" y="45" width="10" height="30" rx="3" fill="#FFFFFF" opacity=".7"/>
+     <rect x="70" y="60" width="10" height="15" rx="3" fill="#FFFFFF" opacity=".3"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Four days of a daily chart. Lifted straight from the Home screen, so the icon and the first thing you see after tapping it are the same drawing.</p>
+  </div>
+  <div class="card">
+    <div class="num">18</div>
+    <h3>The corner</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#2F5BFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M24 22v50h50" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M38 58l12-14 10 10 14-20" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg></div>
+      </div>
+    </div>
+    <p class="note">A rule turning a right angle, with the figure it carries. The quietest mark of the twelve; also the one that reads as a mark rather than a picture at 28px.</p>
+  </div>
+</div>
+
+<h2>Two hands</h2>
+<p class="sub" style="margin-bottom:18px">
+  One constraint before the drawings: <b>a hand with fingers does not survive 28px</b>. At
+  the size this icon actually lives, four fingers become one grey smudge with a notch. So
+  every hand here is a silhouette or an arc — a palm implied by its outline, never drawn
+  in detail. The disc in the middle of each is the money; it is what stops two arcs from
+  reading as a pair of brackets.
+</p>
+<div class="grid">
+  <div class="card">
+    <div class="num">19</div>
+    <h3>Cupped</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#2F5BFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#2F5BFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 48 72A30 30 0 0 0 78 42" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Two palms making a bowl, thumbs up at the ends, with a note laid across the top. The most elegant of the hand studies and the least literal — at 28px it reads as a basket as often as it reads as hands.</p>
+  </div>
+  <div class="card">
+    <div class="num">20</div>
+    <h3>Cupped, solid</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#2F5BFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#2F5BFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#2F5BFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">The same bowl as a mass, split down the middle so it reads as two hands rather than one dish. The heaviest mark in either set — it keeps its silhouette at 28px and under a circular crop, which most of these do not.</p>
+  </div>
+  <div class="card">
+    <div class="num">21</div>
+    <h3>Palm to palm</h3>
+    <div class="row">
+      <div class="tile acc"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#FFFFFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#FFFFFF"/></svg></div>
+      <div class="tile ink"><svg viewBox="0 0 96 96" width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#2F5BFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#2F5BFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#2F5BFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#2F5BFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#2F5BFF"/></svg></div>
+      <div class="stack">
+        <div class="tile acc sm"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#FFFFFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#FFFFFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#FFFFFF"/></svg></div>
+      </div>
+      <div class="stack">
+        <div class="tile acc sm circ"><svg viewBox="0 0 96 96" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#FFFFFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc xs circ"><svg viewBox="0 0 96 96" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M22 78V46a11 11 0 0 1 22 0v32z" fill="#FFFFFF"/>
+     <path d="M22 54c-7-5-12-1-10 6l5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+     <path d="M74 78V46a11 11 0 0 0-22 0v32z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M74 54c7-5 12-1 10 6l-5 12" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" opacity=".55"/>
+     <rect x="30" y="22" width="36" height="11" rx="5.5" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <p class="note">Two hands proper, thumbs out, a note held between them. The only one of the three that reads as *hands* and not as a container — and the price is that it is the least refined. The thumb is the single detail that survives shrinking, so it is the only one drawn.</p>
+  </div>
+</div>
+
+<h2>What the launcher will do to it</h2>
+<p class="sub" style="margin-bottom:18px">
+  An adaptive icon is handed to the launcher as a square and masked to whatever shape that
+  launcher likes — circle, squircle, rounded square, square. A mark that only works in one
+  of them is a mark that looks broken on somebody's phone. These three survive all four.
+</p>
+
+    <div class="maskset">
+      <span class="lbl">10 · The ledger row</span>
+      <div class="row">
+        <div class="tile acc m-circle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+        <div class="tile acc m-squircle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+        <div class="tile acc m-rounded"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+        <div class="tile acc m-square"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="33" width="27" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="58" y="33" width="17" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="50" width="21" height="7" rx="3.5" fill="#FFFFFF" opacity=".5"/>
+     <rect x="52" y="50" width="23" height="7" rx="3.5" fill="#FFFFFF"/>
+     <rect x="21" y="67" width="54" height="4" rx="2" fill="#FFFFFF" opacity=".28"/></svg></div>
+      </div>
+    </div>
+    <div class="maskset">
+      <span class="lbl">12 · Roof and rule</span>
+      <div class="row">
+        <div class="tile acc m-circle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-squircle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-rounded"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-square"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M20 46L48 24l28 22" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M29 50v22M67 50v22" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+     <rect x="22" y="68" width="52" height="8" rx="4" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+    <div class="maskset">
+      <span class="lbl">20 · Cupped, solid</span>
+      <div class="row">
+        <div class="tile acc m-circle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-squircle"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-rounded"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+        <div class="tile acc m-square"><svg viewBox="0 0 96 96" width="72" height="72" xmlns="http://www.w3.org/2000/svg"><path d="M18 42A30 30 0 0 0 46 72V42Z" fill="#FFFFFF"/>
+     <path d="M78 42A30 30 0 0 1 50 72V42Z" fill="#FFFFFF" opacity=".55"/>
+     <path d="M18 42l-3-13M78 42l3-13" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+     <rect x="30" y="14" width="36" height="12" rx="6" fill="#FFFFFF"/></svg></div>
+      </div>
+    </div>
+
+<h2>Where I would land</h2>
+<table>
+  <tr><th>Mark</th><th>Case for it</th><th>Case against</th></tr>
+  <tr><td><b>10 · The ledger row</b></td>
+      <td>The only one that could belong to no other app. Name left, figure right, twice —
+          it <i>is</i> the Home screen, shrunk.</td>
+      <td>Busiest of the twelve. The third rule has to go at 28px.</td></tr>
+  <tr><td><b>12 · Roof and rule</b></td>
+      <td>Legible before you know what the app is. A household over a ledger line, and it
+          holds at 28px and under every mask.</td>
+      <td>House icons are common. It says <i>home</i> more loudly than it says <i>money</i>.</td></tr>
+  <tr><td><b>08 · Two into one</b></td>
+      <td>Says the actual idea — two people, one total — in three rectangles. Nothing to
+          break at any size.</td>
+      <td>Reads as a bar chart until someone explains it.</td></tr>
+  <tr><td><b>20 · Cupped, solid</b></td>
+      <td>The warmest mark of the set, and the only one about the people rather than the
+          paperwork. Solid enough to keep its shape at 28px and under a circular mask.</td>
+      <td>Cupped hands are the house style of every charity and savings app there is.</td></tr>
+</table>
+<p class="sub" style="margin-top:18px">
+  Among the hands, take <b>20</b> if you want the better <i>icon</i> and <b>21</b> if you
+  want it to be read as <i>hands</i>. 19 is the prettiest at full size and the vaguest at
+  launcher size.
+  <br><br>
+  One caution worth stating plainly: hands are the house style of every charity, insurance
+  and savings app there is, and they speak a different visual language from the rest of
+  this app, which is hairlines, mono type and printed rules. That is not a reason not to
+  use them — a household ledger has a decent claim on the gesture — but the icon would be
+  the one thing in Ours that does not look like the rest of Ours.
+  <br><br>
+  My pick overall is still <b>10, the ledger row</b>, with <b>12</b> as the safe choice if you want
+  something a stranger can name at a glance. Both beat my earlier recommendation
+  (<b>06, the shared line</b>) for the same reason: two dots over a rule is elegant and
+  says nothing, and at 28px it is three grey marks.
+  <br><br>
+  Tell me a number and I will cut the adaptive icon — foreground, background, monochrome
+  for Android 13 themed icons — and put it on the phone.
+</p>
+</div>
