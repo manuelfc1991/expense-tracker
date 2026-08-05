@@ -1,7 +1,7 @@
 {
-  "versionCode": 47,
-  "versionName": "5.6",
-  "notes": "Household members now sync, and a budget set before this feature existed is published rather than silently ignored. Found by putting a second device on the sheet and looking.",
+  "versionCode": 48,
+  "versionName": "5.7",
+  "notes": "The launcher icon is now the colour handshake when themed icons are off. Themed icons keep the monochrome clasp.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25419213
+  "sizeBytes": 25464834
 }
