@@ -139,10 +139,11 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 item { NotCounted(summary) }
             }
 
-            // Owner only. Balances are the one thing here that is nobody else's
-            // business by default — the rest of this screen is the household's shared
-            // spending, and this is what sits in each person's account.
-            if (state.isHouseholdOwner && state.balances.isNotEmpty()) {
+            // Everyone sees their own accounts; the owner sees all of them. The list
+            // itself is filtered, rather than the panel being hidden — a partner has to
+            // be able to record their own balances even if the household's full position
+            // is not theirs to read.
+            if (state.balances.isNotEmpty()) {
                 item { WhatsLeft(state.balances, onSet = { settingBalance = it }) }
             }
 

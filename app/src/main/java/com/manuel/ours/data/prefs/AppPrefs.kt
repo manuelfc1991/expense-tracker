@@ -136,7 +136,7 @@ class AppPrefs @Inject constructor(
      * deleted; a settings screen with a setting for how it looks is a smell.
      */
     val settingsIndex: Flow<Boolean> =
-        context.dataStore.data.map { it[Keys.SETTINGS_INDEX] ?: false }
+        context.dataStore.data.map { it[Keys.SETTINGS_INDEX] ?: true }
     val backfillDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.BACKFILL_DONE] ?: false }
 
     /**

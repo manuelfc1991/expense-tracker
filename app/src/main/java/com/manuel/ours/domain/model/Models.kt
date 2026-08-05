@@ -260,6 +260,11 @@ data class ManualBalance(
     val paise: Long,
     val setAt: Long,
     val bank: String?,
+    /**
+     * Who typed it. Null for entries made before this was recorded — those show only to
+     * the household owner, who could see every account anyway.
+     */
+    val ownerUid: String? = null,
 )
 
 data class CategoryTotal(

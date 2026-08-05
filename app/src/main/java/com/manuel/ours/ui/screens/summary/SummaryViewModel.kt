@@ -132,6 +132,8 @@ class SummaryViewModel @Inject constructor(
                         MonthlyAggregator.applyFilter(all, memberFilter, selfUid),
                         manual,
                         minimums,
+                        viewerUid = selfUid,
+                        isOwner = owner,
                     ),
                     leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
                     isHouseholdOwner = owner,

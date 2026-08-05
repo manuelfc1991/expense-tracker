@@ -135,16 +135,31 @@ object MonthlyAggregator {
      *   the moment it was entered. A hand-typed figure is used only while it is *newer*
      *   than anything the bank has said — the moment a real balance arrives for that
      *   account, the bank wins and the marker goes away by itself.
+     * @param viewerUid whose screen this is.
+     * @param isOwner when false, only the viewer's own accounts are returned.
+     *
+     * Everyone sees their own accounts; the household owner sees all of them. The rows
+     * for a partner's spending sync to both phones and carry *their* account number, so
+     * without this filter each person's screen would list the other's accounts. Hiding
+     * the panel outright was the first attempt and was worse: it left the non-owner
+     * unable to record their own balances at all.
      */
     fun accountBalances(
         transactions: List<Transaction>,
         manual: Map<String, ManualBalance> = emptyMap(),
         minimums: Map<String, Long> = emptyMap(),
+        viewerUid: String = "",
+        isOwner: Boolean = true,
     ): List<AccountBalance> {
         val own = transactions.filter { !it.accountTail.isNullOrBlank() || it.bank != null }
         val byAccount = own.groupBy { it.accountTail?.takeIf(String::isNotBlank) ?: it.bank!! }
 
-        val keys = byAccount.keys + manual.keys
+        val visible: (String) -> Boolean = { key ->
+            isOwner ||
+                byAccount[key].orEmpty().any { it.ownerUid == viewerUid } ||
+                manual[key]?.ownerUid == viewerUid
+        }
+        val keys = (byAccount.keys + manual.keys).filter(visible)
         return keys.map { key ->
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }

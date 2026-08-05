@@ -268,7 +268,8 @@ class TransactionRepository @Inject constructor(
                     ruleKey = key,
                     // bank alongside the figure, so an account known only by a typed
                     // balance still has a name to show.
-                    value = "$amount|${bank.orEmpty()}",
+                    // amount | bank | who typed it
+                    value = "$amount|${bank.orEmpty()}|${prefs.selfUid.first().orEmpty()}",
                     updatedAt = System.currentTimeMillis(),
                     deviceId = prefs.deviceId(),
                 )
@@ -302,10 +303,12 @@ class TransactionRepository @Inject constructor(
         sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->
             rules.mapNotNull { rule ->
                 val paise = rule.value.substringBefore('|').toLongOrNull() ?: return@mapNotNull null
+                val parts = rule.value.split('|')
                 rule.ruleKey to ManualBalance(
                     paise = paise,
                     setAt = rule.updatedAt,
-                    bank = rule.value.substringAfter('|', "").takeIf(String::isNotBlank),
+                    bank = parts.getOrNull(1)?.takeIf(String::isNotBlank),
+                    ownerUid = parts.getOrNull(2)?.takeIf(String::isNotBlank),
                 )
             }.toMap()
         }

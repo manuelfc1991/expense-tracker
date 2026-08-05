@@ -1,7 +1,7 @@
 {
-  "versionCode": 36,
-  "versionName": "4.5",
-  "notes": "Account balances are now shown only to the household owner.",
+  "versionCode": 37,
+  "versionName": "4.6",
+  "notes": "Each of you now sees your own account balances; the household owner sees them all. Settings opens as an index.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25396232
 }
