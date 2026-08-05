@@ -1,7 +1,7 @@
 {
-  "versionCode": 45,
-  "versionName": "5.4",
-  "notes": "Household membership now syncs. A partner who has joined but not yet spent anything was indistinguishable from no partner at all — the members table only ever held the person holding the phone.",
+  "versionCode": 47,
+  "versionName": "5.6",
+  "notes": "Household members now sync, and a budget set before this feature existed is published rather than silently ignored. Found by putting a second device on the sheet and looking.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25419213
 }

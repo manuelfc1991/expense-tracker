@@ -81,6 +81,7 @@ class RulesRepository @Inject constructor(
         }
 
         publishSelf()
+        publishExistingBudgets()
         apply()
 
         val mine = localRules(remoteByKey)
@@ -127,6 +128,43 @@ class RulesRepository @Inject constructor(
     }
 
     /**
+     * Gives a budget that predates rule-syncing a rule of its own.
+     *
+     * Making [BudgetRepository] write a shared rule fixed budgets set from then on and
+     * silently did nothing for the one already there — the write only happens when
+     * somebody *changes* the figure. This household's ₹40,000 was set months ago, so the
+     * table had a budget, the sheet had no rule for it, and the partner's phone
+     * cheerfully offered to "Set a monthly budget" while the household had had one all
+     * along. Caught by putting a second device on the sheet and looking, which is the
+     * only way this class of bug ever shows up.
+     *
+     * Only fills gaps. A budget with a rule already is left alone, whatever it says:
+     * that rule may be newer than this table, or a deliberate zero meaning the household
+     * cleared the cap — and republishing the old figure over either would be this phone
+     * quietly undoing somebody else's decision.
+     */
+    private suspend fun publishExistingBudgets() {
+        val known = sharedRuleDao.all()
+            .filter { it.type == TYPE_BUDGET }
+            .map { it.ruleKey }
+            .toSet()
+        val missing = budgetDao.all()
+            .filter { it.limitPaise > 0 && it.categoryKey !in known }
+        if (missing.isEmpty()) return
+        sharedRuleDao.upsertAll(
+            missing.map {
+                SharedRuleEntity(
+                    type = TYPE_BUDGET,
+                    ruleKey = it.categoryKey,
+                    value = it.limitPaise.toString(),
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            }
+        )
+    }
+
+    /**
      * Makes the stored rules take effect.
      *
      * Sender rules go into [BankRules] as an overlay on the compiled table. Merchant
@@ -141,6 +179,19 @@ class RulesRepository @Inject constructor(
         // they have spent a rupee.
         for (rule in all.filter { it.type == TYPE_MEMBER }) {
             if (rule.ruleKey.isBlank() || rule.ruleKey == selfUid) continue
+            // An emptied value means "this person is no longer in the household", the
+            // same tombstone the balances and the budget use. A household that can add
+            // people and never remove them accumulates every phone that ever touched it
+            // — a replaced handset, a device someone was testing with — and there would
+            // be no way to take one out short of editing the database by hand.
+            //
+            // Blanked rather than deleted, because a deleted row simply stops being
+            // pulled and the other phones keep the member they already have. The row has
+            // to survive in order to carry the news.
+            if (rule.value.isBlank()) {
+                memberDao.delete(rule.ruleKey)
+                continue
+            }
             val parts = rule.value.split('|')
             memberDao.upsert(
                 MemberEntity(
