@@ -128,6 +128,7 @@ class RulesRepository @Inject constructor(
 
     companion object {
         const val TYPE_ACCOUNT = "account"
+
         const val TYPE_SENDER = "sender"
         const val TYPE_MERCHANT = "merchant"
     }

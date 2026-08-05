@@ -2,6 +2,8 @@ package com.manuel.ours.domain
 
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.domain.model.BalanceSource
+import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
@@ -115,25 +117,58 @@ object MonthlyAggregator {
      * Fed from every transaction the household has, not from the month being viewed:
      * an account nobody touched in August still has whatever July left in it.
      */
-    fun accountBalances(transactions: List<Transaction>): List<AccountBalance> =
-        transactions
-            // A balance with no account number is still a balance. Some banks name the
-            // account in every message and some name it in none — Kerala Gramin quotes
-            // one on a credit and omits it on a transfer — so an account known only by
-            // its bank is grouped under that, rather than dropped for lacking an id.
-            .filter { it.balancePaise != null }
-            .groupBy { it.accountTail?.takeIf(String::isNotBlank) ?: it.bank ?: "Account" }
-            .map { (_, rows) ->
-                val latest = rows.maxBy { it.occurredAt }
-                AccountBalance(
-                    accountTail = latest.accountTail?.takeIf(String::isNotBlank),
-                    bank = latest.bank,
-                    balancePaise = latest.balancePaise!!,
-                    asOf = latest.occurredAt,
-                    ownerName = latest.ownerName,
-                )
-            }
-            .sortedByDescending { it.balancePaise }
+    /**
+     * Every account the household transacts through, and what it was last known to hold.
+     *
+     * Listed whether or not a balance is known. An account the app has seen payments
+     * from but never a balance for still belongs on this screen — Kerala Gramin quotes
+     * one on a credit and omits it on a transfer, so the account exists in the ledger
+     * and its figure does not. Showing it blank is what makes it obvious you can fill
+     * it in; dropping it would make the app look like it had never heard of the account.
+     *
+     * Never a running total. The app never sees a cash deposit or a silent interest
+     * credit, so a balance computed by adding up transactions would drift from the truth
+     * and never find its way back. Both sources here are quoted, not derived: one by the
+     * bank, one by a person.
+     *
+     * @param manual balances typed in by the household, keyed the same way, each with
+     *   the moment it was entered. A hand-typed figure is used only while it is *newer*
+     *   than anything the bank has said — the moment a real balance arrives for that
+     *   account, the bank wins and the marker goes away by itself.
+     */
+    fun accountBalances(
+        transactions: List<Transaction>,
+        manual: Map<String, ManualBalance> = emptyMap(),
+    ): List<AccountBalance> {
+        val own = transactions.filter { !it.accountTail.isNullOrBlank() || it.bank != null }
+        val byAccount = own.groupBy { it.accountTail?.takeIf(String::isNotBlank) ?: it.bank!! }
+
+        val keys = byAccount.keys + manual.keys
+        return keys.map { key ->
+            val rows = byAccount[key].orEmpty()
+            val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
+            val typed = manual[key]
+            val useTyped = typed != null && (quoted == null || typed.setAt > quoted.occurredAt)
+            val latest = rows.maxByOrNull { it.occurredAt }
+            AccountBalance(
+                key = key,
+                accountTail = latest?.accountTail?.takeIf(String::isNotBlank)
+                    ?: key.takeIf { it.all(Char::isDigit) },
+                bank = latest?.bank ?: typed?.bank,
+                balancePaise = if (useTyped) typed!!.paise else quoted?.balancePaise,
+                asOf = if (useTyped) typed!!.setAt else quoted?.occurredAt,
+                source = when {
+                    useTyped -> BalanceSource.HAND
+                    quoted != null -> BalanceSource.BANK
+                    else -> null
+                },
+                ownerName = latest?.ownerName.orEmpty(),
+            )
+        }.sortedWith(
+            compareByDescending<AccountBalance> { it.balancePaise != null }
+                .thenByDescending { it.balancePaise ?: 0L }
+        )
+    }
 
     fun byCategory(
         current: List<Transaction>,

@@ -222,12 +222,33 @@ data class Budget(
  * date is the app claiming to know something it does not.
  */
 data class AccountBalance(
+    /** Stable identity: the account number when the bank gives one, else its name. */
+    val key: String,
     /** Null when the bank never named the account — then [bank] is the whole identity. */
     val accountTail: String?,
     val bank: String?,
-    val balancePaise: Long,
-    val asOf: Long,
+    /** Null for an account the app knows exists but has never been told the balance of. */
+    val balancePaise: Long?,
+    val asOf: Long?,
+    val source: BalanceSource?,
     val ownerName: String,
+)
+
+/**
+ * Where a balance came from, which the screen has to say out loud.
+ *
+ * A figure the bank quoted corrects itself: the next message from that account brings a
+ * newer one. A figure somebody typed does not — it sits there looking equally
+ * authoritative while the real balance moves underneath it. Mixing the two without
+ * marking which is which would make the honest number and the guess indistinguishable.
+ */
+enum class BalanceSource { BANK, HAND }
+
+/** A balance somebody typed in, and when — so the bank can outrank it later. */
+data class ManualBalance(
+    val paise: Long,
+    val setAt: Long,
+    val bank: String?,
 )
 
 data class CategoryTotal(

@@ -32,10 +32,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.ui.theme.SheetAmountStyle
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import java.time.temporal.ChronoUnit
 import java.time.ZoneId
 import java.time.LocalDate
 import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.domain.model.BalanceSource
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.model.CategoryTotal
@@ -70,6 +82,7 @@ private val EDGE = 15.dp
 @Composable
 fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var settingBalance by remember { mutableStateOf<AccountBalance?>(null) }
     val context = LocalContext.current
     val summary = state.summary
 
@@ -125,7 +138,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             }
 
             if (state.balances.isNotEmpty()) {
-                item { WhatsLeft(state.balances) }
+                item { WhatsLeft(state.balances, onSet = { settingBalance = it }) }
             }
 
             if (state.recurring.isNotEmpty()) {
@@ -156,6 +169,17 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 }
             }
         }
+    }
+
+    settingBalance?.let { account ->
+        BalanceDialog(
+            account = account,
+            onDismiss = { settingBalance = null },
+            onConfirm = { paise ->
+                viewModel.setAccountBalance(account.key, paise, account.bank)
+                settingBalance = null
+            },
+        )
     }
 }
 
@@ -250,55 +274,146 @@ private fun LeftAccounts(
 }
 
 /**
- * What is actually in each account, according to the bank.
+ * Type in what an account holds, for the banks that never say.
  *
- * The only figure on this screen that is not arithmetic on transactions. Everything
- * else here is derived; this is quoted — the closing balance the bank put in its own
- * message, which is why it carries the date it was said. The app never sees a cash
- * deposit or a silent interest credit, so a balance it calculated itself would drift
- * away from the truth and never find its way back.
+ * Deliberately spare: one figure, no name field. The account already has a name — the
+ * bank's — and the only thing missing is the number.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BalanceDialog(
+    account: AccountBalance,
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit,
+) {
+    var text by remember {
+        mutableStateOf(account.balancePaise?.let { (it / 100).toString() }.orEmpty())
+    }
+    val paise = Money.parseToPaise(text)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surface,
+        title = {
+            Text(
+                account.bank ?: "This account",
+                style = MaterialTheme.typography.titleMedium,
+                color = Ours.text,
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Text(
+                    "What is in it now? This is yours, not the bank's — it will be " +
+                        "replaced automatically the next time a message quotes a real " +
+                        "balance for this account.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("₹", style = SheetAmountStyle, color = Ours.textLabel)
+                    BasicTextField(
+                        value = text,
+                        onValueChange = { text = it.filter { c -> c.isDigit() || c == '.' }.take(12) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        textStyle = LocalTextStyle.current.merge(SheetAmountStyle)
+                            .copy(color = Ours.text),
+                        cursorBrush = SolidColor(Ours.accent),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = paise != null,
+                onClick = { paise?.let(onConfirm) },
+            ) { Text("Save", color = if (paise != null) Ours.accent else Ours.textLabel) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+        },
+    )
+}
+
+/**
+ * What is actually in each account, according to the bank — or to whoever typed it.
+ *
+ * The only figures on this screen that are not arithmetic on transactions. Everything
+ * else here is derived; these are quoted, and the row says by whom. That distinction is
+ * the whole design: a bank's figure corrects itself when the next message arrives, and a
+ * typed one sits there looking equally certain while the real balance moves underneath
+ * it. Marked as **you said**, and outranked automatically the moment the bank quotes a
+ * newer number for that account.
+ *
+ * Accounts with no balance at all are still listed. Kerala Gramin quotes one on a credit
+ * and omits it on a transfer, so the account is in the ledger and its figure is not —
+ * showing it blank is what makes it obvious it can be filled in.
  */
 @Composable
-private fun WhatsLeft(balances: List<AccountBalance>, modifier: Modifier = Modifier) {
+private fun WhatsLeft(
+    balances: List<AccountBalance>,
+    onSet: (AccountBalance) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val today = remember { LocalDate.now() }
+    val known = balances.mapNotNull { it.balancePaise }.sum()
     Column(
         modifier.fillMaxWidth().padding(horizontal = EDGE),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
-        TapeHeader("What is left", trailing = Money.whole(balances.sumOf { it.balancePaise }))
+        TapeHeader("What is left", trailing = Money.whole(known))
         balances.forEach { account ->
-            val days = ChronoUnit.DAYS.between(
-                Instant.ofEpochMilli(account.asOf).atZone(ZoneId.systemDefault()).toLocalDate(),
-                today,
-            )
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().clickable { onSet(account) },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Column(
+                    Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
                     Text(
                         account.bank ?: "Account",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Ours.text,
                     )
-                    // The age is the point. A balance with no date is the app claiming
-                    // to know something it does not.
+                    val age = account.asOf?.let { at ->
+                        when (
+                            val days = ChronoUnit.DAYS.between(
+                                Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault())
+                                    .toLocalDate(),
+                                today,
+                            )
+                        ) {
+                            0L -> "today"
+                            1L -> "yesterday"
+                            else -> "$days days ago"
+                        }
+                    }
                     MicroLabel(
                         buildString {
-                            account.accountTail?.let { append("···· $it · ") }
-                            append(
-                                when (days) {
-                                    0L -> "today"
-                                    1L -> "yesterday"
-                                    else -> "$days days ago"
-                                }
-                            )
-                        }
+                            account.accountTail?.let { append("···· $it") }
+                            if (age != null) {
+                                if (isNotEmpty()) append(" · ")
+                                if (account.source == BalanceSource.HAND) append("you said, ")
+                                append(age)
+                            } else {
+                                if (isNotEmpty()) append(" · ")
+                                append("tap to set")
+                            }
+                        },
+                        // Amber for a figure nobody's bank stands behind.
+                        color = if (account.source == BalanceSource.HAND) Ours.warning
+                        else Ours.textLabel,
                     )
                 }
-                AmountColumn(account.balancePaise)
+                if (account.balancePaise != null) {
+                    AmountColumn(account.balancePaise)
+                } else {
+                    MicroLabel("—")
+                }
             }
         }
     }

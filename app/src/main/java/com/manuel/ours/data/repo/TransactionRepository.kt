@@ -18,6 +18,7 @@ import com.manuel.ours.data.sync.LamportClock
 import com.manuel.ours.data.sync.SyncOp
 import com.manuel.ours.data.sync.SyncPayload
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.domain.model.TxnSource
@@ -247,6 +248,44 @@ class TransactionRepository @Inject constructor(
     }
 
     /** Names an account, so every future payment to it carries the name. */
+    /**
+     * Records what somebody says is in an account, for the banks that never quote it.
+     *
+     * Written as a shared rule so it reaches the other phone: the household has one set
+     * of accounts, and a figure only one of them knows is a figure the other is missing.
+     * The timestamp is the point — it is what lets a real bank balance outrank this the
+     * moment one arrives, without anybody having to clear it.
+     */
+    suspend fun setAccountBalance(key: String, paise: Long, bank: String?) {
+        if (key.isBlank()) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = TYPE_BALANCE,
+                    ruleKey = key,
+                    // bank alongside the figure, so an account known only by a typed
+                    // balance still has a name to show.
+                    value = "$paise|${bank.orEmpty()}",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
+    /** Hand-entered balances, keyed by account, as the household currently has them. */
+    fun observeManualBalances(): kotlinx.coroutines.flow.Flow<Map<String, ManualBalance>> =
+        sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->
+            rules.mapNotNull { rule ->
+                val paise = rule.value.substringBefore('|').toLongOrNull() ?: return@mapNotNull null
+                rule.ruleKey to ManualBalance(
+                    paise = paise,
+                    setAt = rule.updatedAt,
+                    bank = rule.value.substringAfter('|', "").takeIf(String::isNotBlank),
+                )
+            }.toMap()
+        }
+
     suspend fun nameAccount(tail: String, name: String) {
         val clean = name.trim()
         if (tail.isBlank() || clean.isEmpty()) return
@@ -940,6 +979,15 @@ class TransactionRepository @Inject constructor(
     companion object {
         /** Shared-rule type for an account the household has named. */
         const val TYPE_ACCOUNT = "account"
+
+        /**
+         * A balance somebody typed in, for the banks that never quote one.
+         *
+         * Shared rather than device-local, for the same reason the account names are:
+         * the household has one set of accounts between them, and a figure only one
+         * phone knows about is a figure the other phone is missing.
+         */
+        const val TYPE_BALANCE = "balance"
 
         /**
          * How close the two legs of an own-account transfer must be.

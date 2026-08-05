@@ -338,6 +338,9 @@ interface SharedRuleDao {
     @Query("SELECT * FROM shared_rules WHERE type = :type")
     suspend fun ofType(type: String): List<SharedRuleEntity>
 
+    @Query("SELECT * FROM shared_rules WHERE type = :type")
+    fun observeOfType(type: String): kotlinx.coroutines.flow.Flow<List<SharedRuleEntity>>
+
     @Query("SELECT * FROM shared_rules WHERE updatedAt > :since")
     suspend fun changedSince(since: Long): List<SharedRuleEntity>
 }

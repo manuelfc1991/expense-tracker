@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class SummaryUiState(
     val loading: Boolean = true,
@@ -82,9 +83,12 @@ class SummaryViewModel @Inject constructor(
             val lookbackStart =
                 MonthlyAggregator.monthRange(lookback.year, lookback.monthValue).first
 
-            repository.observeBetween(
-                minOf(lookbackStart, priorRange.first), current.last + 1,
-            ).map { all ->
+            kotlinx.coroutines.flow.combine(
+                repository.observeBetween(
+                    minOf(lookbackStart, priorRange.first), current.last + 1,
+                ),
+                repository.observeManualBalances(),
+            ) { all, manual ->
                 val currentTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in current }, memberFilter, selfUid,
                 )
@@ -105,7 +109,8 @@ class SummaryViewModel @Inject constructor(
                         MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
                     ),
                     balances = MonthlyAggregator.accountBalances(
-                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
+                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid),
+                        manual,
                     ),
                     leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
                 )
@@ -121,6 +126,11 @@ class SummaryViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SummaryUiState(),
         )
+
+    /** Records what somebody says is in an account the bank never quotes a balance for. */
+    fun setAccountBalance(key: String, paise: Long, bank: String?) {
+        viewModelScope.launch { repository.setAccountBalance(key, paise, bank) }
+    }
 
     fun setMonth(value: YearMonth) {
         // Never let the pager run into the future — an empty "next month" chart

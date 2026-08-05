@@ -1,7 +1,7 @@
 {
-  "versionCode": 33,
-  "versionName": "4.2",
-  "notes": "Summary now shows what left your accounts, and what the bank last said was left in them.",
+  "versionCode": 34,
+  "versionName": "4.3",
+  "notes": "You can now set a balance by hand for accounts your bank never quotes one for. It is marked as yours, and the bank overrules it automatically.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25379848
 }
