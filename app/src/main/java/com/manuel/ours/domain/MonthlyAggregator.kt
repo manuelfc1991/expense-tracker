@@ -159,12 +159,14 @@ object MonthlyAggregator {
                 byAccount[key].orEmpty().any { it.ownerUid == viewerUid } ||
                 manual[key]?.ownerUid == viewerUid
         }
-        val keys = (byAccount.keys + manual.keys).filter(visible)
+        val keys = (byAccount.keys + manual.keys + minimums.keys).filter(visible)
         return keys.map { key ->
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
             val typed = manual[key]
-            val useTyped = typed != null && (quoted == null || typed.setAt > quoted.occurredAt)
+            // A zero entry marks the account without claiming a figure for it.
+            val useTyped = typed != null && typed.paise > 0 &&
+                (quoted == null || typed.setAt > quoted.occurredAt)
             val latest = rows.maxByOrNull { it.occurredAt }
             AccountBalance(
                 key = key,

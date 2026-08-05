@@ -85,6 +85,7 @@ private val EDGE = 15.dp
 fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var settingBalance by remember { mutableStateOf<AccountBalance?>(null) }
+    var addingAccount by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val summary = state.summary
 
@@ -143,8 +144,12 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             // itself is filtered, rather than the panel being hidden — a partner has to
             // be able to record their own balances even if the household's full position
             // is not theirs to read.
-            if (state.balances.isNotEmpty()) {
-                item { WhatsLeft(state.balances, onSet = { settingBalance = it }) }
+            item {
+                WhatsLeft(
+                    balances = state.balances,
+                    onSet = { settingBalance = it },
+                    onAdd = { addingAccount = true },
+                )
             }
 
             if (state.recurring.isNotEmpty()) {
@@ -175,6 +180,20 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 }
             }
         }
+    }
+
+    if (addingAccount) {
+        AddAccountDialog(
+            onDismiss = { addingAccount = false },
+            onConfirm = { key, bank, balance, minimum ->
+                // Always written, even with no figure: the entry is what records that
+                // the account exists and who added it, which is what keeps it on their
+                // own screen as "tap to set" rather than only on the owner's.
+                viewModel.setAccountBalance(key, balance ?: 0L, bank)
+                minimum?.let { viewModel.setAccountMinimum(key, it) }
+                addingAccount = false
+            },
+        )
     }
 
     settingBalance?.let { account ->
@@ -286,6 +305,105 @@ private fun LeftAccounts(
  * Deliberately spare: one figure, no name field. The account already has a name — the
  * bank's — and the only thing missing is the number.
  */
+/**
+ * Record an account before any payment has touched it.
+ *
+ * The dialog that edits a balance can only edit one that already exists, and an account
+ * exists only once something references it — so a person with no rows of their own had
+ * an empty panel and no way to fill it. This is the way in.
+ *
+ * The last four digits are optional but worth asking for: they are what lets this entry
+ * merge with the real thing later, when a bank message finally names the account. Give
+ * only a bank name and the two stay separate until somebody tidies up.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddAccountDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (key: String, bank: String, balance: Long?, minimum: Long?) -> Unit,
+) {
+    var bank by remember { mutableStateOf("") }
+    var tail by remember { mutableStateOf("") }
+    var balance by remember { mutableStateOf("") }
+    var minimum by remember { mutableStateOf("") }
+
+    val cleanBank = bank.trim()
+    val cleanTail = tail.filter(Char::isDigit).takeLast(4)
+    val ready = cleanBank.isNotEmpty()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surface,
+        title = {
+            Text("Add an account", style = MaterialTheme.typography.titleMedium, color = Ours.text)
+        },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                MicroLabel("Bank")
+                PlainField(bank, "Kerala Gramin Bank") { bank = it }
+                MicroLabel("Last four digits — optional")
+                PlainField(tail, "3062") { tail = it.filter(Char::isDigit).take(4) }
+                MicroLabel("Balance now")
+                MoneyField(balance) { balance = it }
+                MicroLabel("Minimum balance")
+                MoneyField(minimum) { minimum = it }
+                Text(
+                    "The balance is yours, not the bank's — a real one from a message " +
+                        "replaces it once this account starts sending them.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.textSecondary,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = ready,
+                onClick = {
+                    onConfirm(
+                        cleanTail.ifEmpty { cleanBank },
+                        cleanBank,
+                        Money.parseToPaise(balance),
+                        Money.parseToPaise(minimum),
+                    )
+                },
+            ) { Text("Add", color = if (ready) Ours.accent else Ours.textLabel) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+        },
+    )
+}
+
+/** A plain text line for a dialog, with the app's hairline underneath rather than a box. */
+@Composable
+private fun PlainField(value: String, hint: String, onChange: (String) -> Unit) {
+    Column {
+        Box {
+            if (value.isEmpty()) {
+                Text(
+                    hint,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Ours.textLabel,
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onChange,
+                singleLine = true,
+                textStyle = LocalTextStyle.current
+                    .merge(MaterialTheme.typography.bodyLarge)
+                    .copy(color = Ours.text),
+                cursorBrush = SolidColor(Ours.accent),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        HairlineRule()
+    }
+}
+
 /** One rupee field, sized for a dialog rather than a hero. */
 @Composable
 private fun MoneyField(value: String, onChange: (String) -> Unit) {
@@ -397,6 +515,7 @@ private fun BalanceDialog(
 private fun WhatsLeft(
     balances: List<AccountBalance>,
     onSet: (AccountBalance) -> Unit,
+    onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val today = remember { LocalDate.now() }
@@ -466,6 +585,31 @@ private fun WhatsLeft(
                     MicroLabel("—")
                 }
             }
+        }
+
+        if (balances.isEmpty()) {
+            Text(
+                "Nothing here yet. An account appears on its own once a payment goes " +
+                    "through it — or you can put one in now.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.textSecondary,
+            )
+        }
+
+        // The way in for an account no payment has touched yet. Without it a person
+        // with no rows of their own sees an empty panel and no means of filling it.
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = onAdd),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Add an account",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ours.accent,
+            )
+            Text("+", style = MaterialTheme.typography.headlineSmall, color = Ours.accent)
         }
     }
 }

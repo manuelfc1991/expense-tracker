@@ -1,7 +1,7 @@
 {
-  "versionCode": 37,
-  "versionName": "4.6",
-  "notes": "Each of you now sees your own account balances; the household owner sees them all. Settings opens as an index.",
+  "versionCode": 38,
+  "versionName": "4.7",
+  "notes": "You can now add an account by hand, before any payment has gone through it.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25396232
 }

@@ -302,8 +302,11 @@ class TransactionRepository @Inject constructor(
     fun observeManualBalances(): kotlinx.coroutines.flow.Flow<Map<String, ManualBalance>> =
         sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->
             rules.mapNotNull { rule ->
-                val paise = rule.value.substringBefore('|').toLongOrNull() ?: return@mapNotNull null
                 val parts = rule.value.split('|')
+                // Zero means "this account exists and nobody has said what is in it".
+                // Dropping the row instead would take the account with it, along with
+                // the record of who added it.
+                val paise = parts.firstOrNull()?.toLongOrNull() ?: 0L
                 rule.ruleKey to ManualBalance(
                     paise = paise,
                     setAt = rule.updatedAt,
