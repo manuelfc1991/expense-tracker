@@ -53,8 +53,6 @@ data class TransactionsUiState(
     val baseCount: Int = 0,
     /** Total of what is on screen now — shown beside an active filter. */
     val filteredTotalPaise: Long = 0L,
-    /** Set briefly after a swipe-delete so the UI can offer Undo. */
-    val lastDeletedId: String? = null,
     val hasPartner: Boolean = false,
     /** Everyone with a row, self first — one filter chip each. */
     val people: List<HouseholdMember> = emptyList(),
@@ -96,14 +94,12 @@ class TransactionsViewModel @Inject constructor(
     private val query = MutableStateFlow("")
     private val memberFilter = MutableStateFlow<MemberFilter>(MemberFilter.Everyone)
     private val categoryFilter = MutableStateFlow<CategoryFilter>(CategoryFilter.All)
-    private val lastDeleted = MutableStateFlow<String?>(null)
     private val selection = MutableStateFlow<Set<String>>(emptySet())
     private val lastBulkDeleted = MutableStateFlow<List<String>>(emptyList())
 
     /** Everything that is not a filter, bundled so the outer combine stays within five. */
     private data class Aux(
         val selfUid: String,
-        val deletedId: String?,
         val selected: Set<String>,
         val bulkDeleted: List<String>,
     )
@@ -114,13 +110,12 @@ class TransactionsViewModel @Inject constructor(
         memberFilter,
         categoryFilter,
         combine(
-            prefs.selfUid, lastDeleted, selection, lastBulkDeleted,
-        ) { uid, deleted, selected, bulkDeleted ->
-            Aux(uid.orEmpty(), deleted, selected, bulkDeleted)
+            prefs.selfUid, selection, lastBulkDeleted,
+        ) { uid, selected, bulkDeleted ->
+            Aux(uid.orEmpty(), selected, bulkDeleted)
         },
     ) { all, searchText, member, category, aux ->
         val selfUid = aux.selfUid
-        val deletedId = aux.deletedId
 
         // Everything the search and the member filter allow, before the category filter.
         // The chips are counted against *this*, not against the visible rows — a chip row
@@ -161,7 +156,6 @@ class TransactionsViewModel @Inject constructor(
             // read ₹0 beside three visible entries.
             filteredTotalPaise = filtered.sumOf { it.amountPaise },
             groups = groupByDay(filtered),
-            lastDeletedId = deletedId,
             // Narrowed to what is actually on screen. Selecting three rows, then
             // typing a search that hides two of them, must not leave a bulk delete
             // armed against rows the reader can no longer see — "3 selected" has to
@@ -276,31 +270,6 @@ class TransactionsViewModel @Inject constructor(
     fun delete(txnId: String) {
         viewModelScope.launch { repository.deleteOrRequest(txnId) }
     }
-
-    /**
-     * Deletes and arms the Undo snackbar.
-     *
-     * The delete is real, not deferred — a tombstone is written and syncs immediately.
-     * Undo restores by writing a *new* event with a higher Lamport value, which is
-     * what makes it survive the round trip to the other phone: a delete that has
-     * already replicated cannot be un-sent, only superseded.
-     */
-    fun deleteWithUndo(txnId: String) {
-        viewModelScope.launch {
-            // Returns false when this member is not the owner: the row was flagged for
-            // approval rather than removed, so there is nothing to offer Undo for.
-            if (repository.deleteOrRequest(txnId)) lastDeleted.value = txnId
-        }
-    }
-
-    fun undoDelete(txnId: String) {
-        viewModelScope.launch {
-            repository.restore(txnId)
-            lastDeleted.value = null
-        }
-    }
-
-    fun clearUndo() { lastDeleted.value = null }
 
     companion object {
         private val dayFormatter = DateTimeFormatter.ofPattern("EEE, d MMM")

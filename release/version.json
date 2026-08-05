@@ -1,7 +1,7 @@
 {
-  "versionCode": 26,
-  "versionName": "3.5",
-  "notes": "Both Settings layouts are here to stay. The switch between them now lives in Developer.",
+  "versionCode": 27,
+  "versionName": "3.6",
+  "notes": "Swiping an entry no longer deletes or categorises it. Scrolling the list is just scrolling now.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25378476
+  "sizeBytes": 25377896
 }
