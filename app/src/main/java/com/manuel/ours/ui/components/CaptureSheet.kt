@@ -167,7 +167,7 @@ fun CaptureSheetContent(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 suggestions.forEach { option ->
                     OursChip(
-                        label = option.shortLabel,
+                        label = option.label,
                         selected = txn.category == option,
                         icon = BiIcon.forCategory(option),
                         onClick = { onCategorize(option) },

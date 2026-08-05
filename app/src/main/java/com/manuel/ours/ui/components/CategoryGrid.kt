@@ -1,5 +1,6 @@
 package com.manuel.ours.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +39,7 @@ data class GridExtra(
     val onClick: () -> Unit,
     val count: Int? = null,
     val tint: Color? = null,
+    @DrawableRes val icon: Int? = null,
 )
 
 /**
@@ -75,11 +78,16 @@ fun CategoryGrid(
     val cells = options.map { option ->
         val count = counts?.get(option) ?: 0
         Cell(
-            label = option.shortLabel,
+            label = option.label,
             selected = option == selected,
             onClick = { onSelect(option) },
             count = counts?.let { count },
             dim = counts != null && count == 0,
+            icon = BiIcon.forCategory(option),
+            // The category's own hue, the same one the avatar on a row and the header on
+            // the Rules screen use. Sixteen words in a grid are told apart by reading
+            // them; sixteen coloured marks are told apart by looking.
+            iconTint = Ours.forCategory(option),
         )
     } + extras.map { extra ->
         Cell(
@@ -89,6 +97,8 @@ fun CategoryGrid(
             count = extra.count,
             dim = extra.count == 0,
             tint = extra.tint,
+            icon = extra.icon,
+            iconTint = extra.tint,
         )
     }
 
@@ -114,6 +124,8 @@ private data class Cell(
     val count: Int? = null,
     val dim: Boolean = false,
     val tint: Color? = null,
+    @DrawableRes val icon: Int? = null,
+    val iconTint: Color? = null,
 )
 
 @Composable
@@ -133,12 +145,28 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
             )
             .clickable(onClick = cell.onClick)
             .padding(vertical = 9.dp, horizontal = 6.dp),
-        // No icon. Sixteen glyphs at 13dp across three columns is texture rather than
-        // information, and it steals the width the longest labels need — the design
-        // draws these as centred words and nothing else.
-        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // The mark, in the category's colour.
+        //
+        // This grid was drawn as centred words and nothing else, on the argument that
+        // sixteen small glyphs are texture rather than information. That holds only if
+        // the glyphs are all one colour — which they are not here. Each category owns a
+        // hue, already used by the avatar on every row and by the Rules screen, and
+        // carrying it into the picker is what lets you find Rent without reading four
+        // words on the way to it.
+        if (cell.icon != null) {
+            BiIconView(
+                icon = cell.icon,
+                contentDescription = null,
+                tint = when {
+                    cell.selected -> Color.White
+                    else -> cell.iconTint ?: Ours.textSecondary
+                },
+                modifier = Modifier.size(13.dp),
+            )
+        }
         Text(
             text = cell.label,
             style = MaterialTheme.typography.labelMedium,

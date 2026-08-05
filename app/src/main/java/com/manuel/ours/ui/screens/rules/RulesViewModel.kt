@@ -52,8 +52,7 @@ class RulesViewModel @Inject constructor(
                 // Every spending category is listed, including the empty ones: an
                 // absent section reads as "this cannot be automated", when in fact it
                 // just has no rules yet and is the very place you would add one.
-                groups = Category.entries
-                    .filter { it != Category.OTHER }
+                groups = Category.EVERY
                     .map { category ->
                         CategoryRules(
                             category = category,

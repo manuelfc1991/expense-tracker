@@ -229,7 +229,7 @@ private fun RankedBar(entry: CategoryTotal, totalSpentPaise: Long) {
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
-                text = entry.category.shortLabel,
+                text = entry.category.label,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Ours.text,

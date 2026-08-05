@@ -315,6 +315,14 @@ fun OursChip(
     count: Int? = null,
     /** Overrides the accent — the untagged chip is amber, matching its captions. */
     tint: Color? = null,
+    /**
+     * Colours the icon independently of the label.
+     *
+     * A category's mark carries its own hue everywhere else in the app — the avatar on a
+     * row, the header on the Rules screen — and tinting it with the chip's text colour
+     * instead would make sixteen filter chips identical but for the word.
+     */
+    iconTint: Color? = null,
 ) {
     val accent = tint ?: Ours.accent
     val bg = if (selected) accent else Color.Transparent
@@ -342,7 +350,12 @@ fun OursChip(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         if (icon != null) {
-            BiIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(13.dp))
+            BiIconView(
+                icon,
+                contentDescription = null,
+                tint = if (selected) fg else iconTint ?: fg,
+                modifier = Modifier.size(13.dp),
+            )
         }
         Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
         if (count != null) {
@@ -538,7 +551,7 @@ fun TransactionEntry(
     // in the month's total yet. Showing it at full weight would imply it was counted.
     val untagged = txn.needsReview || txn.category == Category.OTHER
     val caption = buildString {
-        append(if (untagged) "Untagged" else txn.category.shortLabel)
+        append(if (untagged) "Untagged" else txn.category.label)
         append(" · ")
         append(time)
         if (showOwner) {

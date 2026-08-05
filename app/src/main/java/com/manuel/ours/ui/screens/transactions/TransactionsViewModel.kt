@@ -80,7 +80,7 @@ data class TransactionsUiState(
             if (untaggedCount > 0) add(CategoryFilter.Untagged to untaggedCount)
             counts.entries
                 .sortedWith(compareByDescending<Map.Entry<Category, Int>> { it.value }
-                    .thenBy { it.key.shortLabel })
+                    .thenBy { it.key.label })
                 .forEach { (category, count) -> add(CategoryFilter.Of(category) to count) }
         }
 }

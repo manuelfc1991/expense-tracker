@@ -32,32 +32,37 @@ enum class MoneyFlow {
  * No emoji field. Icons come from [com.manuel.ours.ui.components.BiIcon.forCategory],
  * so the domain model stays free of presentation and there is no second, stale set of
  * glyphs for someone to render by accident.
+ *
+ * **One name each, and only one.** There used to be a second `shortLabel` — the label
+ * with its "& something" tail removed, plus a hand-written override where that produced
+ * nonsense. It was meant for grid cells too narrow for "Savings & Investments", and it
+ * worked, but it left every category with two names: Rules, Budgets and Summary's list
+ * said one, and the pickers, chips, captions and notification buttons said the other.
+ * Three of them were not even abbreviations — Entertainment/Fun, Between our
+ * accounts/Ours, Card bill payment/Card bill — so the same category read as two.
+ *
+ * The qualifiers are gone instead. "Food" says what "Food & Dining" said, and it fits a
+ * third of a phone's width, which "Food & Dining" never did. With one property there is
+ * nowhere for a second name to come from.
  */
 enum class Category(
     val label: String,
     val flow: MoneyFlow = MoneyFlow.SPENDING,
-    /**
-     * Set only where chopping [label] at its first word produces nonsense.
-     *
-     * "Between our accounts" became "Between", which on a chip beside Food and Rent
-     * reads as an unfinished sentence rather than a category.
-     */
-    private val short: String? = null,
 ) {
-    FOOD("Food & Dining"),
+    FOOD("Food"),
     GROCERIES("Groceries"),
-    TRANSPORT("Transport & Fuel"),
+    TRANSPORT("Transport"),
     SHOPPING("Shopping"),
-    BILLS("Bills & Utilities"),
+    BILLS("Bills"),
     RENT("Rent"),
     HEALTH("Health"),
     EDUCATION("Education"),
-    ENTERTAINMENT("Entertainment", short = "Fun"),
+    ENTERTAINMENT("Fun"),
     TRAVEL("Travel"),
     // Savings and investments: an FD, RD or SIP moves money, it doesn't spend it.
-    INVESTMENTS("Savings & Investments", MoneyFlow.SAVING),
+    INVESTMENTS("Savings", MoneyFlow.SAVING),
     // An EMI genuinely leaves your hands, so it stays spending.
-    EMI("EMI & Loans"),
+    EMI("EMI"),
     // Both of these were NEUTRAL — money moved without being spent — and both were
     // wrong for a household whose card purchases never reach the app.
     //
@@ -84,8 +89,8 @@ enum class Category(
      * Identified by the pair, never by a single message — see
      * `TransactionRepository.markSelfTransfers`.
      */
-    SELF_TRANSFER("Between our accounts", MoneyFlow.NEUTRAL, short = "Ours"),
-    CARD_PAYMENT("Card bill payment", short = "Card bill"),
+    SELF_TRANSFER("Ours", MoneyFlow.NEUTRAL),
+    CARD_PAYMENT("Card bill"),
     INCOME("Income", MoneyFlow.INCOMING),
     OTHER("Other");
 
@@ -121,6 +126,20 @@ enum class Category(
             it != TRANSFERS && it != CARD_PAYMENT && it != SELF_TRANSFER
         }
 
+        /**
+         * Everything a category can be set *to*, in one order.
+         *
+         * Rules, Sort's full picker and the Activity filter each built their own list —
+         * two of them as `entries` minus [OTHER], one as [PICKABLE] plus [INCOME]. Those
+         * are the same sixteen categories, but in two different orders, so the same
+         * screen-full appeared twice with Card bill and Ours swapped.
+         *
+         * [INCOME] belongs here and not in [PICKABLE]: a rule may well file a merchant as
+         * income — a salary, an FD maturing — but the grids that use [PICKABLE] only ever
+         * open on a debit, where offering Income is offering a wrong answer.
+         */
+        val EVERY: List<Category> = PICKABLE + INCOME
+
         fun fromNameOrOther(name: String?): Category =
             entries.firstOrNull { it.name == name } ?: OTHER
 
@@ -142,17 +161,6 @@ enum class Category(
     }
 
     val countsAsSpending: Boolean get() = flow == MoneyFlow.SPENDING
-
-
-
-    /**
-     * The label without its qualifier — "Food", not "Food & Dining".
-     *
-     * For captions and chips, where the row already carries a merchant, a time and an
-     * amount. "FOOD & DINING · 4:18 PM" spends a third of the line on a distinction
-     * nobody is making at a glance.
-     */
-    val shortLabel: String get() = short ?: label.substringBefore(" &").substringBefore(" ")
 }
 
 data class Transaction(

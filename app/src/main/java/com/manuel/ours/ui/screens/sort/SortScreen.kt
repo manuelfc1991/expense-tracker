@@ -249,7 +249,7 @@ private fun GroupCard(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 group.suggestions.forEachIndexed { index, category ->
                     OursChip(
-                        label = category.shortLabel,
+                        label = category.label,
                         // The leading guess is filled and the rest are outlines, so the
                         // one-tap path is obvious at a glance. Ninety-four rows become
                         // six decisions only if each decision is already half-made.
@@ -295,7 +295,7 @@ private fun CategorySheet(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Category.entries.filter { it != Category.OTHER }.forEach { category ->
+                Category.EVERY.forEach { category ->
                     OursChip(
                         label = category.label,
                         selected = false,

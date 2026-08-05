@@ -206,7 +206,7 @@ class IngestNotifier @Inject constructor(
             builder.addAction(
                 NotificationCompat.Action.Builder(
                     0,
-                    category.shortLabel,
+                    category.label,
                     actionIntent,
                 ).build()
             )

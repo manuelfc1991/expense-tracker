@@ -73,9 +73,7 @@ fun CategoryFilterSheet(
                         CategoryFilter.Of(category)
                     }
                 },
-                // Income belongs here even though it is never something you *assign* —
-                // it is very much something you filter for.
-                options = Category.PICKABLE + Category.INCOME,
+                options = Category.EVERY,
                 counts = counts,
                 extras = listOf(
                     GridExtra(
@@ -83,6 +81,7 @@ fun CategoryFilterSheet(
                         selected = pending == CategoryFilter.Untagged,
                         count = untaggedCount,
                         tint = Ours.warning,
+                        icon = BiIcon.forCategory(Category.OTHER),
                         onClick = {
                             pending = if (pending == CategoryFilter.Untagged) {
                                 CategoryFilter.All

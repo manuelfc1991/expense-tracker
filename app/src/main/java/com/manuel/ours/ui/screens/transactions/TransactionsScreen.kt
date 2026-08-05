@@ -236,10 +236,14 @@ fun TransactionsScreen(
                         onClick = {},
                     )
                     state.chips.forEach { (filter, count) ->
+                        val category = (filter as? CategoryFilter.Of)?.category
                         OursChip(
                             label = filter.label(),
                             selected = false,
                             count = count,
+                            icon = BiIcon.forCategory(category ?: Category.OTHER),
+                            iconTint = if (filter == CategoryFilter.Untagged) Ours.warning
+                            else category?.let { Ours.forCategory(it) },
                             tint = if (filter == CategoryFilter.Untagged) Ours.warning else null,
                             onClick = { viewModel.setCategoryFilter(filter) },
                         )
@@ -334,7 +338,7 @@ fun TransactionsScreen(
 private fun CategoryFilter.label(): String = when (this) {
     CategoryFilter.All -> "All"
     CategoryFilter.Untagged -> "Untagged"
-    is CategoryFilter.Of -> category.shortLabel
+    is CategoryFilter.Of -> category.label
 }
 
 /**
