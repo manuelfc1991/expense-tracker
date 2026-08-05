@@ -3,8 +3,9 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **5 August 2026** from `1e6d696`, covering **90 commits** from the first one
-on 3 August 2026 to **5.9 (50)**.
+Generated on **5 August 2026** from `9e012a2`, covering **91 commits** from the first one
+on 3 August 2026 to **5.10 (51)**. The commit that updates this file is necessarily not in
+it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
 heading are the work that release delivered. The quoted line is the note the phones showed
@@ -32,6 +33,13 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.10 (51) — 5 Aug 2026
+
+> Deleting an entry now asks first, and says which entry and what happens to it — a member
+> sees that the owner has to agree.
+
+- `9e012a2` Ask before a delete, and say which entry it is
 
 ## 5.9 (50) — 5 Aug 2026
 
