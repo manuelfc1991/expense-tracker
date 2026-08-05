@@ -7,6 +7,7 @@ import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.RecurringDetector
+import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.domain.model.Transaction
@@ -33,6 +34,22 @@ data class SummaryUiState(
     val transactions: List<Transaction> = emptyList(),
     /** Charges that repeat, inferred from history rather than declared anywhere. */
     val recurring: List<RecurringCharge> = emptyList(),
+    /**
+     * What each account was last known to hold. Drawn from every transaction the
+     * household has, not from the month on screen — an account nobody touched in
+     * August still holds whatever July left in it.
+     */
+    val balances: List<AccountBalance> = emptyList(),
+    /**
+     * Every rupee that left the household's accounts this month: spending, money put
+     * aside, and money moved between our own accounts.
+     *
+     * Deliberately not the same figure as spending, and deliberately shown next to it.
+     * Spending answers "what did we consume"; this answers "what left the account",
+     * and the difference between them is the savings and the transfers — money that is
+     * gone from the account and still ours.
+     */
+    val leftAccountsPaise: Long = 0L,
 ) {
     /** What the recurring charges add up to per month, cadences reconciled. */
     val committedMonthlyPaise: Long get() = recurring.sumOf { it.monthlyEquivalentPaise }
@@ -87,6 +104,10 @@ class SummaryViewModel @Inject constructor(
                     recurring = RecurringDetector.detect(
                         MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
                     ),
+                    balances = MonthlyAggregator.accountBalances(
+                        MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
+                    ),
+                    leftAccountsPaise = MonthlyAggregator.totalDebited(currentTxns),
                 )
             }
         }

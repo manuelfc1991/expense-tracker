@@ -1,6 +1,7 @@
 package com.manuel.ours.domain
 
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.DayTotal
@@ -100,6 +101,39 @@ object MonthlyAggregator {
         transactions
             .filter { it.type == TxnType.CREDIT && it.category.flow == MoneyFlow.INCOMING }
             .sumOf { it.amountPaise }
+
+    /**
+     * What each account was last known to hold, straight from the bank.
+     *
+     * Not a running total. The app never sees deposits it was not told about — cash
+     * paid in at a branch, interest credited silently — so a balance computed by adding
+     * up transactions would drift from the truth and never come back. This takes the
+     * most recent message that quoted a balance for each account and reports that,
+     * along with when it was said, so a stale figure is visibly stale rather than
+     * quietly wrong.
+     *
+     * Fed from every transaction the household has, not from the month being viewed:
+     * an account nobody touched in August still has whatever July left in it.
+     */
+    fun accountBalances(transactions: List<Transaction>): List<AccountBalance> =
+        transactions
+            // A balance with no account number is still a balance. Some banks name the
+            // account in every message and some name it in none — Kerala Gramin quotes
+            // one on a credit and omits it on a transfer — so an account known only by
+            // its bank is grouped under that, rather than dropped for lacking an id.
+            .filter { it.balancePaise != null }
+            .groupBy { it.accountTail?.takeIf(String::isNotBlank) ?: it.bank ?: "Account" }
+            .map { (_, rows) ->
+                val latest = rows.maxBy { it.occurredAt }
+                AccountBalance(
+                    accountTail = latest.accountTail?.takeIf(String::isNotBlank),
+                    bank = latest.bank,
+                    balancePaise = latest.balancePaise!!,
+                    asOf = latest.occurredAt,
+                    ownerName = latest.ownerName,
+                )
+            }
+            .sortedByDescending { it.balancePaise }
 
     fun byCategory(
         current: List<Transaction>,

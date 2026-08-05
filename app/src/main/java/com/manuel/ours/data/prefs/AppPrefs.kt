@@ -57,6 +57,7 @@ class AppPrefs @Inject constructor(
         // already consumed.
         val MERIDIEM_TWINS_REPAIRED = booleanPreferencesKey("meridiem_twins_repaired_v2")
         val CARD_BILL_ECHOES_REPAIRED = booleanPreferencesKey("card_bill_echoes_repaired")
+        val BALANCES_BACKFILLED = booleanPreferencesKey("balances_backfilled")
         val COUNTERPARTY_BACKFILLED = booleanPreferencesKey("counterparty_backfilled")
         val FIRED_BUDGET_ALERTS = stringSetPreferencesKey("fired_budget_alerts")
     }
@@ -160,6 +161,13 @@ class AppPrefs @Inject constructor(
 
     suspend fun setCounterpartyBackfilled() {
         context.dataStore.edit { it[Keys.COUNTERPARTY_BACKFILLED] = true }
+    }
+
+    suspend fun balancesBackfilled(): Boolean =
+        context.dataStore.data.map { it[Keys.BALANCES_BACKFILLED] ?: false }.first()
+
+    suspend fun setBalancesBackfilled() {
+        context.dataStore.edit { it[Keys.BALANCES_BACKFILLED] = true }
     }
 
     suspend fun cardBillEchoesRepaired(): Boolean =

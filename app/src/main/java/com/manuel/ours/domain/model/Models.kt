@@ -175,6 +175,20 @@ data class Transaction(
     val amountEditedAt: Long? = null,
     /** Last digits of the account paid, when the bank named one. */
     val counterpartyTail: String? = null,
+    /**
+     * What the bank said was left in [accountTail] just after this payment.
+     *
+     * Read straight off the message — "Bal Rs 3065.35" — and stored rather than
+     * discarded, which is what used to happen: the parser has always pulled this out
+     * and thrown it away. It is the only figure in the app that is not derived from
+     * other figures; every total elsewhere is arithmetic on transactions, and this is
+     * the bank's own answer.
+     *
+     * Null for a message that carried none, and for every hand-entered row. Only ever
+     * a *balance* — the clause matches "avl bal", "a/c bal", "clr bal" and nothing
+     * else, so a card's "avl limit" or "total amt due" can never land here.
+     */
+    val balancePaise: Long? = null,
 ) {
     /** Signed value for arithmetic: debits reduce, credits add. */
     val signedPaise: Long get() = if (type == TxnType.DEBIT) -amountPaise else amountPaise
@@ -197,6 +211,23 @@ data class Household(
 data class Budget(
     val category: Category?, // null = overall monthly budget
     val limitPaise: Long,
+)
+
+/**
+ * What one account was last known to hold, and when.
+ *
+ * [asOf] is not decoration. This figure is only as fresh as the last message that
+ * quoted it, and an account nobody has used for three weeks will report a three-week-old
+ * number — which is fine as long as the screen says so. A balance presented without its
+ * date is the app claiming to know something it does not.
+ */
+data class AccountBalance(
+    /** Null when the bank never named the account — then [bank] is the whole identity. */
+    val accountTail: String?,
+    val bank: String?,
+    val balancePaise: Long,
+    val asOf: Long,
+    val ownerName: String,
 )
 
 data class CategoryTotal(

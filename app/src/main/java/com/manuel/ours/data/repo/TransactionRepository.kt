@@ -200,6 +200,7 @@ class TransactionRepository @Inject constructor(
             occurredAt = parsed.occurredAt,
             accountTail = parsed.accountTail,
             counterpartyTail = parsed.counterpartyTail,
+            balancePaise = parsed.balancePaise,
             refNo = parsed.refNo,
             bank = parsed.bank,
             splitType = SplitType.SHARED,
@@ -630,6 +631,32 @@ class TransactionRepository @Inject constructor(
      *
      * Writes nothing when the message names no destination, which is most of them.
      */
+    /**
+     * Fills the balance column from messages already stored.
+     *
+     * The parser has always read the closing balance and thrown it away, so on the day
+     * the column arrives every existing row has none and the screen would open empty —
+     * on this household, twenty-four rows of history showing nothing until the next
+     * bank text. The figures are already here, in rawSms; this only has to look.
+     */
+    suspend fun backfillBalances(): Int {
+        if (prefs.balancesBackfilled()) return 0
+        var filled = 0
+        for (row in txnDao.allLive()) {
+            if (row.balancePaise != null) continue
+            val body = row.rawSms ?: continue
+            val balance = parser.extractBalance(body) ?: continue
+            saveAndLog(
+                row.copy(balancePaise = balance).toDomain(),
+                row.dedupeKey,
+                row.dedupeAt,
+            )
+            filled++
+        }
+        prefs.setBalancesBackfilled()
+        return filled
+    }
+
     suspend fun backfillCounterpartyTails(): Int {
         if (prefs.counterpartyBackfilled()) return 0
         var filled = 0

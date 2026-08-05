@@ -1,7 +1,7 @@
 {
-  "versionCode": 32,
-  "versionName": "4.1",
-  "notes": "New icon.",
+  "versionCode": 33,
+  "versionName": "4.2",
+  "notes": "Summary now shows what left your accounts, and what the bank last said was left in them.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25379848
 }

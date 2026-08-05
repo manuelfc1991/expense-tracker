@@ -32,6 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import java.time.temporal.ChronoUnit
+import java.time.ZoneId
+import java.time.LocalDate
+import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.model.CategoryTotal
@@ -110,6 +114,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         } else {
             item { NetHeadline(summary) }
             item { EarnedSpentSaved(summary) }
+            item { LeftAccounts(state.leftAccountsPaise, summary) }
 
             if (summary.byCategory.isNotEmpty()) {
                 item { WhereItWent(summary) }
@@ -117,6 +122,10 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
             if (summary.excluded.isNotEmpty()) {
                 item { NotCounted(summary) }
+            }
+
+            if (state.balances.isNotEmpty()) {
+                item { WhatsLeft(state.balances) }
             }
 
             if (state.recurring.isNotEmpty()) {
@@ -191,6 +200,106 @@ private fun EarnedSpentSaved(summary: MonthSummary, modifier: Modifier = Modifie
                 valueColor = if (summary.totalSavedPaise > 0) Ours.positive else Ours.text,
                 alignment = Alignment.End,
             )
+        }
+    }
+}
+
+/**
+ * Every rupee that left the accounts, next to the spending it is not.
+ *
+ * "Spent" answers what the household consumed, and deliberately leaves out savings and
+ * money moved between our own accounts — fold those in and a month of hard saving reads
+ * as a month of overspending, and money sent from one of our accounts to another gets
+ * counted as spending it never was, then counted again when it is actually spent.
+ *
+ * But "how much left my account" is a real question with a different answer, and the
+ * gap between the two figures is exactly the savings and the transfers. Showing both,
+ * with the difference named underneath, is how you get one number without lying about
+ * the other.
+ */
+@Composable
+private fun LeftAccounts(
+    leftPaise: Long,
+    summary: MonthSummary,
+    modifier: Modifier = Modifier,
+) {
+    val moved = leftPaise - summary.totalSpentPaise - summary.totalSavedPaise
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        HairlineRule()
+        Row(
+            Modifier.fillMaxWidth().padding(top = 11.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            MicroLabel("Left our accounts")
+            AmountColumn(leftPaise)
+        }
+        Text(
+            buildString {
+                append("Spending")
+                if (summary.totalSavedPaise > 0) append(", savings")
+                if (moved > 0) append(", and money moved between our accounts")
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = Ours.textSecondary,
+        )
+    }
+}
+
+/**
+ * What is actually in each account, according to the bank.
+ *
+ * The only figure on this screen that is not arithmetic on transactions. Everything
+ * else here is derived; this is quoted — the closing balance the bank put in its own
+ * message, which is why it carries the date it was said. The app never sees a cash
+ * deposit or a silent interest credit, so a balance it calculated itself would drift
+ * away from the truth and never find its way back.
+ */
+@Composable
+private fun WhatsLeft(balances: List<AccountBalance>, modifier: Modifier = Modifier) {
+    val today = remember { LocalDate.now() }
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        verticalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        TapeHeader("What is left", trailing = Money.whole(balances.sumOf { it.balancePaise }))
+        balances.forEach { account ->
+            val days = ChronoUnit.DAYS.between(
+                Instant.ofEpochMilli(account.asOf).atZone(ZoneId.systemDefault()).toLocalDate(),
+                today,
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        account.bank ?: "Account",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Ours.text,
+                    )
+                    // The age is the point. A balance with no date is the app claiming
+                    // to know something it does not.
+                    MicroLabel(
+                        buildString {
+                            account.accountTail?.let { append("···· $it · ") }
+                            append(
+                                when (days) {
+                                    0L -> "today"
+                                    1L -> "yesterday"
+                                    else -> "$days days ago"
+                                }
+                            )
+                        }
+                    )
+                }
+                AmountColumn(account.balancePaise)
+            }
         }
     }
 }

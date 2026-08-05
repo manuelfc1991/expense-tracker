@@ -91,6 +91,8 @@ class OursApp : Application(), Configuration.Provider {
             // Read the destination account out of messages stored before the column
             // existed, so naming an account fixes the history it came from.
             repository.backfillCounterpartyTails()
+            // The balances were always in the messages; the column to keep them is new.
+            repository.backfillBalances()
             repository.markSelfTransfers()
             // Sender and category rules taught through the sheet, applied before the
             // first message of this launch is parsed.
