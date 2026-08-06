@@ -111,7 +111,12 @@ class SyncEngine @Inject constructor(
             when (event.op) {
                 SyncOp.DELETE -> {
                     if (existing != null) {
-                        txnDao.softDelete(event.txnId, event.lamport, event.deviceId)
+                        // event.wallClock, not now: a deletion made on the other
+                        // phone belongs in Trash at the moment it happened, so both
+                        // phones agree on when the 30 days run out.
+                        txnDao.softDelete(
+                            event.txnId, event.lamport, event.deviceId, at = event.wallClock,
+                        )
                         applied++
                     }
                 }

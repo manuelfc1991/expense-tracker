@@ -163,9 +163,20 @@ fun BackupScreen(
                             else "${file.transactions.size} expenses"
                         )
                         val extras = buildList {
-                            if (file.sharedRules.isNotEmpty()) add("${file.sharedRules.size} shared rules")
-                            if (file.merchantRules.isNotEmpty()) add("${file.merchantRules.size} payee rules")
-                            if (file.budgets.isNotEmpty()) add("${file.budgets.size} budgets")
+                            fun count(n: Int, one: String, many: String) =
+                                if (n == 1) "1 $one" else "$n $many"
+                            if (file.sharedRules.isNotEmpty()) {
+                                add(count(file.sharedRules.size, "shared rule", "shared rules"))
+                            }
+                            if (file.merchantRules.isNotEmpty()) {
+                                add(count(file.merchantRules.size, "payee rule", "payee rules"))
+                            }
+                            // "1 budgets" reached a real screen. The household has one
+                            // overall cap and usually nothing else, so the singular is
+                            // the common case here, not the edge one.
+                            if (file.budgets.isNotEmpty()) {
+                                add(count(file.budgets.size, "budget", "budgets"))
+                            }
                         }
                         if (extras.isNotEmpty()) append(", ${extras.joinToString(", ")}")
                         append(".\n\nNothing already on this phone is removed.")

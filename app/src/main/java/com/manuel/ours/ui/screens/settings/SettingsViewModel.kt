@@ -297,6 +297,10 @@ class SettingsViewModel @Inject constructor(
      * and nested three levels to get there, and one more flow through it would cost more
      * in unchecked casts than this whole disclosure is worth.
      */
+    /** For the Trash row's badge. Kept out of uiState — that combine is at its limit. */
+    val trashCount: StateFlow<Int> = transactionRepository.observeTrashCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val retiredCount: StateFlow<Int> = transactionRepository.observeRetiredCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 

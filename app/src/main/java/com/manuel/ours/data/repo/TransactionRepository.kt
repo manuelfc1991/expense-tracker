@@ -19,6 +19,7 @@ import com.manuel.ours.data.sync.LamportClock
 import com.manuel.ours.data.sync.SyncOp
 import com.manuel.ours.data.sync.SyncPayload
 import com.manuel.ours.domain.ReuploadTally
+import com.manuel.ours.domain.Trash
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.SplitType
@@ -563,7 +564,7 @@ class TransactionRepository @Inject constructor(
         val existing = txnDao.getById(txnId) ?: return
         val lamport = clock.tick()
         val deviceId = prefs.deviceId()
-        txnDao.softDelete(txnId, lamport, deviceId)
+        txnDao.softDelete(txnId, lamport, deviceId, at = System.currentTimeMillis())
         prefs.writeLamport(lamport)
 
         eventDao.append(
@@ -582,6 +583,20 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
+     * What Trash holds: deletions from the last [Trash.WINDOW_DAYS] days.
+     *
+     * Not filtered by the tracking-start cutoff, unlike every other read here. A row
+     * deleted yesterday should be recoverable whether or not its month is retired —
+     * hiding it because of its *date* would make Trash lie about what it is holding.
+     */
+    fun observeTrash(): Flow<List<Transaction>> =
+        txnDao.observeTrash(Trash.since(System.currentTimeMillis()))
+            .map { list -> list.map { it.toDomain() } }
+
+    fun observeTrashCount(): Flow<Int> =
+        txnDao.observeTrashCount(Trash.since(System.currentTimeMillis()))
+
+    /**
      * Brings back a soft-deleted transaction.
      *
      * Writes a fresh UPSERT rather than clearing the tombstone: the delete may already
@@ -592,7 +607,10 @@ class TransactionRepository @Inject constructor(
     suspend fun restore(txnId: String) {
         val existing = txnDao.getByIdIncludingDeleted(txnId) ?: return
         saveAndLog(
-            existing.toDomain().copy(deleted = false),
+            // deletedAt cleared as well as the flag. Leaving the stamp behind would put
+            // a live row in Trash's window, so a restored entry would sit in both the
+            // ledger and the bin at once — and be "restorable" again from there.
+            existing.toDomain().copy(deleted = false, deletedAt = null),
             existing.dedupeKey,
             existing.dedupeAt,
         )

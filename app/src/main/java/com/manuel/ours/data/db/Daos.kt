@@ -151,8 +151,33 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE deleted = 0 AND needsReview = 1 ORDER BY occurredAt DESC")
     fun observeNeedsReview(): Flow<List<TransactionEntity>>
 
-    @Query("UPDATE transactions SET deleted = 1, updatedAtLamport = :lamport, updatedByDevice = :device WHERE id = :id")
-    suspend fun softDelete(id: String, lamport: Long, device: String)
+    @Query(
+        """
+        UPDATE transactions
+        SET deleted = 1, deletedAt = :at, updatedAtLamport = :lamport, updatedByDevice = :device
+        WHERE id = :id
+        """
+    )
+    suspend fun softDelete(id: String, lamport: Long, device: String, at: Long)
+
+    /**
+     * What Trash shows: deleted within the window, newest first.
+     *
+     * `deletedAt IS NOT NULL` is doing real work — it excludes every tombstone that
+     * predates the column, which on the first real phone was 446 rows that dedupe
+     * repairs removed rather than a person.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deleted = 1 AND deletedAt IS NOT NULL AND deletedAt >= :since
+        ORDER BY deletedAt DESC
+        """
+    )
+    fun observeTrash(since: Long): Flow<List<TransactionEntity>>
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 1 AND deletedAt IS NOT NULL AND deletedAt >= :since")
+    fun observeTrashCount(since: Long): Flow<Int>
 
     @Query(
         """

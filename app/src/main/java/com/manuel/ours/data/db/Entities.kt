@@ -56,6 +56,18 @@ data class TransactionEntity(
     val counterpartyTail: String? = null,
     /** The bank's own closing balance for [accountTail], when the message carried one. */
     val balancePaise: Long? = null,
+    /**
+     * When this row was deleted, or null if it is live — **and also null for every row
+     * deleted before 5.17**, which is the point.
+     *
+     * Trash is a 30-day window over this column, and the ledger already held 446
+     * tombstones on the first real phone: dedupe repairs and bulk tidy-ups soft-delete,
+     * so most of them were never a person choosing to throw something away. Backfilling
+     * a timestamp onto those would open Trash on 446 entries nobody deleted. A null is
+     * read as "older than the window", so Trash starts empty and fills only with
+     * deletions somebody actually made.
+     */
+    val deletedAt: Long? = null,
     /** (amount, rounded time bucket, account tail) — collapses the duplicate bank + UPI-app SMS. */
     val dedupeKey: String,
     /**
@@ -90,6 +102,7 @@ fun TransactionEntity.toDomain() = Transaction(
     needsReview = needsReview,
     rawSms = rawSms,
     deleted = deleted,
+    deletedAt = deletedAt,
     deleteRequestedBy = deleteRequestedBy,
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,
@@ -119,6 +132,7 @@ fun Transaction.toEntity(
     needsReview = needsReview,
     rawSms = rawSms,
     deleted = deleted,
+    deletedAt = deletedAt,
     deleteRequestedBy = deleteRequestedBy,
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,

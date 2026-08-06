@@ -22,6 +22,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -104,11 +108,11 @@ fun TransactionDetailScreen(
     val awaitingApproval by viewModel.deleteAwaitingApproval.collectAsStateWithLifecycle()
     val isOwner by viewModel.isOwner.collectAsStateWithLifecycle(initialValue = false)
 
-    // The one destructive button on this screen, and the only one in the app with no undo
-    // behind it: the bulk delete on Activity offers one, but this path closes the screen,
-    // so there is nowhere left to offer it from. A trash icon 15dp square sits a thumb's
-    // width from Back, and the row it removes may be a hand-made entry that exists in no
-    // backup — the sheet carries sync events, not history.
+    // The one destructive button on this screen. A trash icon 15dp square sits a thumb's
+    // width from Back, and the row it removes may be a hand-made entry — so it asks
+    // first, offers an Undo afterwards, and what slips past both is recoverable from
+    // Trash for thirty days. It used to have none of the three: this screen closed on
+    // the tap, which was taken as proof that an undo had nowhere to live.
     if (confirmingDelete && txn != null) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
@@ -145,7 +149,7 @@ fun TransactionDetailScreen(
                         // Back only on a delete that happened. A member's becomes a
                         // request, and closing the screen on it left the row sitting in
                         // the list with nothing to explain why.
-                        viewModel.delete(txnId) { onBack() }
+                        viewModel.delete(txnId)
                     },
                 ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.negative) }
             },
@@ -180,7 +184,29 @@ fun TransactionDetailScreen(
         )
     }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    // The row is soft-deleted, so it is still here to look at while the offer stands.
+    // When the snackbar goes without being pressed, so does the screen.
+    val justDeleted by viewModel.justDeleted.collectAsStateWithLifecycle()
+    val snackbarHost = remember { SnackbarHostState() }
+    LaunchedEffect(justDeleted) {
+        if (!justDeleted) return@LaunchedEffect
+        val result = snackbarHost.showSnackbar(
+            message = "Deleted",
+            actionLabel = "Undo",
+            duration = SnackbarDuration.Short,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoDelete(txnId)
+        } else {
+            viewModel.clearJustDeleted()
+            onBack()
+        }
+    }
+
+    Scaffold(
+        containerColor = Ours.ink,
+        snackbarHost = { SnackbarHost(snackbarHost) },
+    ) { padding ->
         // A row can vanish while its notification is still in the tray — the other
         // phone deleted it, or an approved delete synced across. Rendering nothing
         // left a blank page with no way to tell a slow load from a missing row.

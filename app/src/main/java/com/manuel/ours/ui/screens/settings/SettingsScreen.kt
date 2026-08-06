@@ -110,9 +110,11 @@ fun SettingsScreen(
     onScanInvite: () -> Unit = {},
     onOpenDeleteRequests: () -> Unit = {},
     onOpenBackup: () -> Unit = {},
+    onOpenTrash: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val trashCount by viewModel.trashCount.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // Re-read on every resume, because the only way to change this is to leave for
@@ -740,6 +742,17 @@ fun SettingsScreen(
 
                 // Above the version row rather than below it. This is the only answer in
                 // the app to a lost handset, and everything under it is housekeeping.
+                Hairline()
+                PanelRow(
+                    title = "Trash",
+                    caption = "Deleted entries, and ${com.manuel.ours.domain.Trash.WINDOW_DAYS} " +
+                        "days to change your mind",
+                    onClick = onOpenTrash,
+                    trailing = {
+                        if (trashCount > 0) StatePill("$trashCount", PillTone.Neutral)
+                    },
+                )
+
                 Hairline()
                 PanelRow(
                     title = "Backup & restore",

@@ -169,6 +169,8 @@ data class Transaction(
     val needsReview: Boolean = false,
     val rawSms: String? = null,
     val deleted: Boolean = false,
+    /** When it was deleted, for the Trash window. Null on live rows and on old tombstones. */
+    val deletedAt: Long? = null,
     /** Set when a member has asked the household owner to remove this row. */
     val deleteRequestedBy: String? = null,
     /** When the amount was last changed by hand; null means it is still the bank's. */

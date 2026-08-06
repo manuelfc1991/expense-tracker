@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ReminderEntity::class,
         SharedRuleEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -56,6 +56,19 @@ abstract class AppDatabase : RoomDatabase() {
          * message from an account carries that account's balance, so the figure appears
          * as the household uses the app rather than needing a rescan.
          */
+        /**
+         * Adds the deletion stamp that Trash is a window over. Nullable with no
+         * default, deliberately: every tombstone already in the ledger keeps a null and
+         * is therefore treated as older than the window. See TransactionEntity.deletedAt
+         * — backfilling these would have opened Trash on hundreds of rows that dedupe
+         * repairs deleted, not a person.
+         */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN deletedAt INTEGER")
+            }
+        }
+
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN balancePaise INTEGER")

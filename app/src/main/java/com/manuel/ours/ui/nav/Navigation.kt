@@ -50,6 +50,7 @@ import com.manuel.ours.ui.screens.sort.SortScreen
 import com.manuel.ours.ui.screens.summary.SummaryScreen
 import com.manuel.ours.ui.screens.transactions.TransactionDetailScreen
 import com.manuel.ours.ui.screens.transactions.TransactionsScreen
+import com.manuel.ours.ui.screens.trash.TrashScreen
 
 object Routes {
     const val ONBOARDING = "onboarding"
@@ -65,6 +66,7 @@ object Routes {
     const val SHEET_SETUP = "sheet_setup"
     const val DELETE_REQUESTS = "delete_requests"
     const val BACKUP = "backup"
+    const val TRASH = "trash"
     const val TXN_DETAIL = "txn/{txnId}"
 
     fun txnDetail(id: String) = "txn/$id"
@@ -220,6 +222,7 @@ fun OursNavHost(
                     onOpenSheetSetup = { navController.navigate(Routes.SHEET_SETUP) },
                     onOpenDeleteRequests = { navController.navigate(Routes.DELETE_REQUESTS) },
                     onOpenBackup = { navController.navigate(Routes.BACKUP) },
+                    onOpenTrash = { navController.navigate(Routes.TRASH) },
                     onScanInvite = { navController.navigate(Routes.QR_SCANNER) },
                 )
             }
@@ -259,6 +262,13 @@ fun OursNavHost(
 
             composable(Routes.BACKUP) {
                 BackupScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.TRASH) {
+                TrashScreen(
+                    onBack = { navController.popBackStack() },
+                    onTransactionClick = { navController.navigate(Routes.txnDetail(it)) },
+                )
             }
 
             composable(Routes.PARSER_TESTER) {

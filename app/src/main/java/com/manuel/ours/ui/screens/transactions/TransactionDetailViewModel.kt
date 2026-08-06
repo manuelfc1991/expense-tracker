@@ -107,11 +107,32 @@ class TransactionDetailViewModel @Inject constructor(
     val deleteAwaitingApproval: StateFlow<Boolean> = awaitingApproval.asStateFlow()
 
     /** [onRemoved] runs only for a delete that actually happened — the owner's. */
-    fun delete(txnId: String, onRemoved: () -> Unit = {}) {
+    /**
+     * Set the moment a delete goes through, and cleared when the screen has finished
+     * offering to take it back.
+     *
+     * The screen used to close on the same tap, and the comment beside the trash icon
+     * said an undo had nowhere to live because of it. That had the dependency backwards:
+     * the delete is soft, so the row still renders perfectly well for the few seconds an
+     * Undo needs. Staying put is what makes the offer possible.
+     */
+    val justDeleted = MutableStateFlow(false)
+
+    fun delete(txnId: String) {
         viewModelScope.launch {
-            if (repository.deleteOrRequest(txnId)) onRemoved() else awaitingApproval.value = true
+            if (repository.deleteOrRequest(txnId)) justDeleted.value = true
+            else awaitingApproval.value = true
         }
     }
+
+    fun undoDelete(txnId: String) {
+        viewModelScope.launch {
+            repository.restore(txnId)
+            justDeleted.value = false
+        }
+    }
+
+    fun clearJustDeleted() { justDeleted.value = false }
 
     /** Marks the row for review so it surfaces in the needs-review inbox. */
     fun flagWrongParse(txnId: String) {
