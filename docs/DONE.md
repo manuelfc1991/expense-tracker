@@ -3,7 +3,7 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `8b76281`, covering **95 commits** from the first one
+Generated on **6 August 2026** from `1187263`, covering **96 commits** from the first one
 on 3 August 2026 to **5.13 (54)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
@@ -39,7 +39,7 @@ honest — there are no release tags in this repository to trust instead.
 > A launcher icon that sits on white at the size of every other icon on the home screen —
 > the handshake was running past the mask edge and losing its wrist and fingertips to it.
 
-- `PENDING2` Put the icon on white
+- `1187263` Put the icon on white
 - `9301056` Size the launcher icon against the icons beside it
 
 **5.12 (53) was built and installed but never pushed** — the white background arrived
