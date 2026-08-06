@@ -99,7 +99,12 @@ class BackupViewModel @Inject constructor(
                         if (report.trackingStartApplied) {
                             append(" The tracking start date came across too.")
                         }
-                        append(" Sync to send this to the other phone.")
+                        // Only when something was actually written. Telling somebody to
+                        // sync a restore that changed nothing sends them to press a
+                        // button that has no work to do.
+                        if (!report.plan.changedNothing) {
+                            append(" Sync to send this to the other phone.")
+                        }
                     }
                 }
                 .onFailure { _status.value = "The restore stopped: ${it.message}" }

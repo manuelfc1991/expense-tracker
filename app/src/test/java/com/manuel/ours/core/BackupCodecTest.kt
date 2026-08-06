@@ -95,6 +95,28 @@ class BackupCodecTest {
         val read = BackupCodec.decode("this is a photo, not a backup")
 
         assertThat(read).isInstanceOf(BackupRead.Unreadable::class.java)
+        assertThat((read as BackupRead.Unreadable).detail).isEqualTo("this is not an Ours backup")
+    }
+
+    @Test
+    fun `a rejection never quotes the file back at the reader`() {
+        // Found on the phone, not here: picking a text file produced "Unexpected JSON
+        // token at offset 6 ... JSON input: this is not a backup, it is a photo caption".
+        // The parser's message carries a quotation of what it was given, and the file a
+        // person picks by mistake may well be a bank statement.
+        val secret = "ACCOUNT 3062 BALANCE 91234"
+
+        val reads = listOf(
+            BackupCodec.decode(secret),
+            BackupCodec.decode("""{"note":"$secret"}"""),
+            BackupCodec.decode("""{"format":"ours.backup","version":1,"x":"$secret"""),
+        )
+
+        reads.forEach { read ->
+            val detail = (read as BackupRead.Unreadable).detail
+            assertThat(detail).doesNotContain(secret)
+            assertThat(detail).doesNotContain("offset")
+        }
     }
 
     @Test

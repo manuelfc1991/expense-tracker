@@ -56,11 +56,18 @@ object BackupMerge {
          * One line, in the same voice as the rest of the app: say what happened, and do
          * not let "nothing to do" look like "it failed".
          */
+        /** True when the restore wrote nothing, so callers can stop short of "now sync". */
+        val changedNothing: Boolean get() = touched == 0
+
+        // Every branch ends in a full stop. It reads as pedantry until the caller appends
+        // a second sentence to it, which is exactly what the restore report does — and
+        // "That backup holds no expenses Sync to send this to the other phone." is what
+        // reached the screen before this said so.
         fun summaryLine(): String {
-            if (touched == 0 && untouched == 0) return "That backup holds no expenses"
+            if (touched == 0 && untouched == 0) return "That backup holds no expenses."
             if (touched == 0) {
                 return "Everything in that backup was already here — " +
-                    "${count(untouched, "expense")}, nothing to add"
+                    "${count(untouched, "expense")}, nothing to add."
             }
             val parts = buildList {
                 if (restored > 0) add("restored ${count(restored, "expense")}")

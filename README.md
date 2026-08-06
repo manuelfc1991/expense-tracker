@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 287 tests
+./gradlew testDebugUnitTest    # 290 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -349,13 +349,20 @@ into a second way to lose everything, so the file says what it is instead.
 
 **Known gaps, honestly:**
 
-1. **Restore has never been run on a handset.** The backup half has: 5.14 wrote
-   `ours-backup-2026-08-06-1104.json` on Manuel's phone and the share sheet took it.
-   The reading half is covered by twenty tests — the dedupe-key match, the tombstone
-   that must not resurrect, the re-attribution to a new uid, the refusal of a file
-   written by a newer build — but the picker, the confirmation dialog and the write path
-   have only ever run in a JVM. Test it on the emulator rather than on a phone holding
-   real money: restore a real backup there, where a wrong answer costs nothing.
+1. **No restore has yet written a row on a handset.** Everything up to the write has
+   been run on Manuel's phone: the backup (5.14 wrote `ours-backup-2026-08-06-1104.json`
+   and the share sheet took it), the picker, the confirmation dialog naming the file's
+   date and counts, a file written by a newer build being refused by version, a file
+   that is not a backup being refused by name, and a restore carried through to its
+   report. The one thing deliberately not tried there is a restore that *inserts*, since
+   the only copy of six months of spending is not where a write path should run first.
+
+   Three defects came out of that session and none were visible from the tests:
+   a rejection that pasted the parser's message *and a quotation of the chosen file*
+   into the interface, a missing full stop that ran two sentences together, and an
+   invitation to sync a restore that had changed nothing. All three are fixed and pinned
+   by tests now — which is the argument for the emulator run rather than against it.
+   `AT-HOME.md` step 7 is how to do it.
 2. **Bluetooth sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
@@ -435,14 +442,14 @@ RecurringDetectorTest      15   what repeats, and what only looks like it
 MergeConvergenceTest       14   sync convergence under adversarial ordering
 CategoryPredictorTest      12   one-tap category guesses
 MoneyTest                  12   lakh/crore formatting, paise arithmetic, bare amounts
-BackupMergeTest            12   what restoring a backup does to rows already here
+BackupMergeTest            15   what restoring a backup does to rows already here
 AffordabilityTest          11   budget vs balance, and unknown never counted as zero
 MeridiemTwinTest           11   the duplicates that fixing AM/PM created
 MoneyFlowTest              10   spending vs saving vs moving
 InvestmentLedgerTest        9   FD/RD/SIP handling
 RegionalBankTest            8   regional/small-finance sender coverage, bare-credit labels
 SheetRowFormatTest          8   Apps Script row shape, raw-message redaction
-BackupCodecTest             8   the backup file format, and every way reading one fails
+BackupCodecTest             9   the backup file format, and every way reading one fails
 CardBillEchoTest            7   one bill, two banks, two messages
 DedupeTimeTest              7   bank + UPI-app double messages
 SelfTransferTest            7   a round trip is not a purchase and a windfall
@@ -455,7 +462,7 @@ MixedReferenceDedupeTest    4   one payment, two texts, only one with a referenc
 RescanIdempotencyTest       4   a backfill never duplicates
 CorpusReportTest            1   parser coverage over the whole corpus
                           ―――
-                          287
+                          290
 ```
 
 **Most of the newer suites are refusals.** Four of them decide whether two rows are

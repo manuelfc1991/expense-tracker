@@ -1,7 +1,7 @@
 {
-  "versionCode": 55,
-  "versionName": "5.14",
+  "versionCode": 57,
+  "versionName": "5.16",
   "notes": "Backup and restore: the whole history in one file, so a lost phone stops meaning lost manual entries and lost category corrections. Settings, This app, Backup & restore.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25497886
+  "sizeBytes": 25497890
 }

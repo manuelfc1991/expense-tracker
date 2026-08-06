@@ -191,7 +191,12 @@ object BackupCodec {
         val root = try {
             json.parseToJsonElement(text) as? JsonObject
         } catch (e: Exception) {
-            return BackupRead.Unreadable(e.message ?: "not readable as JSON")
+            // Deliberately not e.message. The parser's own words are "Unexpected JSON
+            // token at offset 6: Expected EOF after parsing, but had i instead at path:
+            // $", followed by a quotation of the file — which told a person nothing and
+            // reprinted the contents of whatever they had picked into the interface. A
+            // wrong file is a wrong file.
+            return BackupRead.Unreadable("this is not an Ours backup")
         } ?: return BackupRead.Unreadable("this is not an Ours backup")
 
         if ((root["format"] as? JsonPrimitive)?.contentOrNull != FORMAT) {
@@ -204,8 +209,9 @@ object BackupCodec {
             BackupRead.Ok(json.decodeFromJsonElement(BackupFile.serializer(), root))
         } catch (e: Exception) {
             // Ours by its header, but damaged — truncated by a failed upload, most
-            // likely. Named as damage rather than as the wrong file.
-            BackupRead.Unreadable("the backup is incomplete or damaged: ${e.message}")
+            // likely. Named as damage rather than as the wrong file, and without
+            // quoting the file back at the reader.
+            BackupRead.Unreadable("the backup is incomplete or damaged")
         }
     }
 }

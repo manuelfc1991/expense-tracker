@@ -234,7 +234,38 @@ class BackupMergeTest {
             backupSelfUid = null, localSelfUid = null, localSelfName = null,
         )
 
-        assertThat(plan.summaryLine()).isEqualTo("That backup holds no expenses")
+        assertThat(plan.summaryLine()).isEqualTo("That backup holds no expenses.")
+        assertThat(plan.changedNothing).isTrue()
+    }
+
+    @Test
+    fun `every summary is a finished sentence`() {
+        // Found on the phone: the caller appends a second sentence, and two branches
+        // ended without a full stop — "That backup holds no expenses Sync to send this
+        // to the other phone."
+        val cases = listOf(
+            BackupMerge.plan(emptyList(), emptyList(), null, null, null),
+            BackupMerge.plan(listOf(backup("a", "k1")), listOf(local("a", "k1")), null, null, null),
+            BackupMerge.plan(listOf(backup("a", "k1")), emptyList(), null, null, null),
+            BackupMerge.plan(
+                listOf(backup("a", "k1", category = "Food"), backup("b", "k2")),
+                listOf(local("a2", "k1", category = "Other"), local("c", "k3")),
+                null, null, null,
+            ),
+        )
+
+        cases.forEach { assertThat(it.summaryLine()).endsWith(".") }
+    }
+
+    @Test
+    fun `changedNothing is only true when nothing was written`() {
+        val nothing = BackupMerge.plan(
+            listOf(backup("a", "k1")), listOf(local("a", "k1")), null, null, null,
+        )
+        val something = BackupMerge.plan(listOf(backup("a", "k1")), emptyList(), null, null, null)
+
+        assertThat(nothing.changedNothing).isTrue()
+        assertThat(something.changedNothing).isFalse()
     }
 
     @Test

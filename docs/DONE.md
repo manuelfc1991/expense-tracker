@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `fb10c9d`, covering **98 commits** from the first one
-on 3 August 2026 to **5.14 (55)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `4ddfb2b`, covering **99 commits** from the first one
+on 3 August 2026 to **5.16 (57)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -34,12 +34,16 @@ honest — there are no release tags in this repository to trust instead.
 
 ---
 
-## 5.14 (55) — 6 Aug 2026
+## 5.16 (57) — 6 Aug 2026
 
 > Backup and restore: the whole history in one file, so a lost phone stops meaning lost
 > manual entries and lost category corrections. Settings, This app, Backup & restore.
 
+- `PENDING` Three restore defects the tests could not see
 - `fb10c9d` A backup that can actually be restored
+
+5.14 (55) shipped the feature; 5.15 (56) was built and installed to check a fix on the
+phone but never pushed, so no handset was offered it. 5.16 is the one to have.
 
 ## 5.13 (54) — 6 Aug 2026
 

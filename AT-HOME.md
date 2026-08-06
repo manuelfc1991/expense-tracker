@@ -2,19 +2,19 @@
 
 Everything left that needs the other phone, or knowledge only you have.
 
-Last reviewed **6 August 2026**, against **5.14 (55)**. Earlier versions of this file
+Last reviewed **6 August 2026**, against **5.16 (57)**. Earlier versions of this file
 described a 2.3 release and a categorising job that is long finished; that work is done
 and has been removed rather than left to mislead.
 
 ---
 
-## 1. Her phone: update to 5.14
+## 1. Her phone: update to 5.16
 
 **Settings ▸ Updates ▸ Check for updates** → Download → Install.
 
 Everything below depends on this. Her phone has never run a build that can sync a
 budget, an account balance, or the fact that she exists — all three were write-only
-until 5.5, and membership until 5.4. 5.14 also adds the backup in step 7.
+until 5.5, and membership until 5.4. 5.16 also adds the backup in step 7.
 
 ## 2. Her phone: is it in the household at all?
 
@@ -102,16 +102,26 @@ a *new* member row, under a new uid, to clean up the same way afterwards.
 
 ## 7. The emulator: does a restore actually work?
 
-New in 5.14, and the half of backup that has never run outside a JVM. **Do this on the
-`ours-api36` AVD, not on a phone holding real money** — a restore writes rows, and the
-first run of a write path is not something to try on the only copy of six months of
-spending.
+New in 5.14. Most of it has now been run on your phone — the backup itself, the file
+picker, the confirmation dialog, both refusals, and a restore carried through to its
+report. What has **never** happened on any device is a restore that actually inserts a
+row, because the only copy of six months of spending is not where a write path should run
+for the first time.
+
+**Do this on the `ours-api36` AVD, not on your phone.** That is the whole point of the
+step: to make the first insert happen somewhere a wrong answer costs nothing.
+
+> Three defects turned up in the on-phone session that the tests had missed: a rejection
+> that pasted the parser's message and a quotation of the chosen file into the interface,
+> a missing full stop that ran two sentences together, and an offer to sync a restore that
+> had changed nothing. Fixed in 5.16 and pinned by tests. Expect the insert path to have
+> its own.
 
 On your phone: **Settings ▸ This app ▸ Backup & restore ▸ Back up everything**, and send
 the file somewhere the emulator can reach it — email it to yourself, or `adb pull` it out
 of the share target and `adb push` it to the AVD's Download folder.
 
-On the emulator, install 5.14, onboard it as its **own** household (do *not* join yours —
+On the emulator, install 5.16, onboard it as its **own** household (do *not* join yours —
 see step 6 for what a joined test device costs), then **Restore from a file** and pick it.
 
 **Check, in order:**
@@ -120,8 +130,9 @@ see step 6 for what a joined test device costs), then **Restore from a file** an
 2. It reports what it restored, and the entries appear in Activity with their categories.
 3. **Run it a second time.** It must say everything was already there and change nothing.
    That is the property the whole design rests on, and it is the one worth seeing fail.
-4. Point it at a file that is not a backup — any JPEG. It should say *"that file could not
-   be read"*, not print a serialization error.
+4. Point it at a file that is not a backup — any JPEG. It should say *"That file could
+   not be read — this is not an Ours backup"* and nothing more. (Verified on the phone in
+   5.16; listed so a regression is caught.)
 
 If step 3 duplicates the history, stop and report it: that is the one outcome that would
 make the feature worse than not having it.
