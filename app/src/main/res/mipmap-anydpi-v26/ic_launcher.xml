@@ -8,8 +8,9 @@
   a mask is guaranteed not to cut is the 66dp circle inside it. At 69dp the handshake ran
   tangent to 21% of the launcher's circular mask — measured off a screenshot, not
   inferred — which flattened the light hand's wrist and its fingertips and left the
-  near-black background showing only as slivers. It read as a photograph cropped into a
-  circle rather than as an icon, and it was visibly bigger than everything beside it.
+  background (then near-black) showing only as slivers. It read as a photograph cropped
+  into a circle rather than as an icon, and it was visibly bigger than everything beside
+  it.
 
   54dp is not a guess either. Measured from the app drawer on Manuel's phone, the glyph
   inside each neighbouring icon spans, in these same units: YouTube 62, Authenticator 61,

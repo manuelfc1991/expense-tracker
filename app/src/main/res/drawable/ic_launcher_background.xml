@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Ink, not accent.
+  White.
 
-  This was the app's blue, on the reasoning that the icon and the app should be the same
-  object. On a home screen it read as one more blue tile among a dozen, and with themed
-  icons switched on it was the *only* place the blue survived — so the launcher showed a
-  wallpaper-tinted mark and everywhere else showed a blue one, which is two identities
-  for one app.
+  It has been the app's blue, then near-black. Blue read as one more blue tile among a
+  dozen. Near-black was the app's own ground, which was the right instinct for matching
+  the app and the wrong one for a home screen: a dark disc on a dark wallpaper loses its
+  edge, and the mask's shape is part of how an icon is recognised at a glance.
 
-  Near-black is what the app's own ground is, and it lets the white clasp carry the mark
-  by itself. It is also the closest a fixed icon gets to the themed one, so the two read
-  as the same drawing rather than as a pair.
+  White is what most of the icons beside it already do — of the drawer's neighbours,
+  Authenticator, YouTube, Calendar, Contacts, Camera, Assistant, Phone and Messages all
+  sit on a white bleed. It is the background that disappears, which is the point: the
+  handshake is the mark, not the disc it sits on.
 
-  Not pure #000: against a black wallpaper the edge would vanish entirely, and the mask's
-  shape is part of the recognition.
+  Worth knowing before changing the artwork: the light hand is #FFCDBE, which against
+  white is 1.43:1 — it carries on hue, not on lightness. Recolour the hands and the pale
+  one is the first thing to check, because contrast maths will call it invisible and the
+  eye will not. Against the old near-black it was 13.4:1 and this could not have gone
+  wrong.
+
+  Pure #FFF rather than an off-white. The neighbours are pure white, and a near-white
+  reads as a slightly grubby version of them rather than as its own choice.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -22,5 +28,5 @@
     android:viewportHeight="108">
     <path
         android:pathData="M0,0h108v108h-108z"
-        android:fillColor="#FF0F0F14" />
+        android:fillColor="#FFFFFFFF" />
 </vector>
