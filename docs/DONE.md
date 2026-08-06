@@ -3,7 +3,7 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `28b010c`, covering **97 commits** from the first one
+Generated on **6 August 2026** from `fb10c9d`, covering **98 commits** from the first one
 on 3 August 2026 to **5.14 (55)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
@@ -39,7 +39,7 @@ honest — there are no release tags in this repository to trust instead.
 > Backup and restore: the whole history in one file, so a lost phone stops meaning lost
 > manual entries and lost category corrections. Settings, This app, Backup & restore.
 
-- `PENDING` A backup that can actually be restored
+- `fb10c9d` A backup that can actually be restored
 
 ## 5.13 (54) — 6 Aug 2026
 
