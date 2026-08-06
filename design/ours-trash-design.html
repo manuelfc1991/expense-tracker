@@ -1,0 +1,342 @@
+<meta charset="utf-8">
+<title>Ours · Trash — the screen, in every state</title>
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 90px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);font-variant-numeric:tabular-nums;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:-.012em}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 6px;max-width:76ch;line-height:1.62}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
+     margin:46px 0 6px;font-family:var(--mono);font-weight:600}
+  .note{color:var(--mut);font-size:13.5px;line-height:1.66;max-width:70ch;margin:0 0 22px}
+  .note b{color:var(--fg);font-weight:600}
+  code{font-family:var(--mono);font-size:.9em;color:var(--fg)}
+  .row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:340px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+       padding:4px 9px;border-radius:6px;margin-bottom:10px;
+       background:rgb(47 91 255/.13);color:#3F63D8}
+  .tag.key{background:rgb(61 220 160/.15);color:#2FA87B}
+  .tag.edge{background:rgb(255 176 32/.16);color:#B8791F}
+  .cap{color:var(--mut);font-size:12.5px;line-height:1.6;margin:11px 2px 0}
+  .cap b{color:var(--fg)}
+
+  /* ── device ─────────────────────────────────────────────── */
+  .dev{background:#000;border:1px solid var(--line);border-radius:32px;padding:7px;
+       box-shadow:0 20px 50px rgb(0 0 0/.28)}
+  .scr{
+    --ink:#EAE7E0; --sur:#F3F0EA; --hair:#D8D4CA;
+    --tx:#1A1A1A; --tx2:#5A5A55; --lab:#8B8B82;
+    --acc:#2F5BFF; --warn:#A96A12; --bad:#C41F33;
+    width:326px;background:var(--ink);border-radius:26px;overflow:hidden;color:var(--tx);
+    min-height:520px;display:flex;flex-direction:column}
+  .scr.dark{
+    --ink:#0B0B0F; --sur:#15151B; --hair:#2A2A34;
+    --tx:#F2F2F7; --tx2:#9A9AAE; --lab:#7C7C99;
+    --acc:#6E8BFF; --warn:#FFB020; --bad:#FF5C7A}
+  .sbar{display:flex;justify-content:space-between;padding:11px 17px 2px;
+        font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+  .ui{padding:8px 15px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
+  .hd{display:flex;align-items:center;gap:10px;padding:5px 1px 2px}
+  .mark{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.26em;flex:1}
+  .mark.sel{color:var(--acc)}
+  .act{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+       color:var(--acc);font-weight:600}
+  .back{color:var(--tx2);font-size:14px;line-height:1}
+  .lbl{font-family:var(--mono);font-size:8.6px;letter-spacing:.15em;text-transform:uppercase;
+       color:var(--lab)}
+  .tape{display:flex;justify-content:space-between;align-items:baseline;
+        border-bottom:1px solid var(--hair);padding-bottom:6px;margin-top:1px}
+
+  /* statement line — one row, amount flush right, hairline under */
+  .e{display:flex;align-items:center;gap:11px;padding:8px 0;
+     border-bottom:1px solid var(--hair)}
+  .ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
+      font-size:13px}
+  .ic.food{background:#F2D8CD}.ic.groc{background:#D2E5D7}.ic.tran{background:#D4DDF1}
+  .ic.shop{background:#E6D8EB}.ic.bill{background:#F5E6C8}
+  .scr.dark .ic.food{background:#3A2B25}.scr.dark .ic.groc{background:#22332A}
+  .scr.dark .ic.tran{background:#232C3F}.scr.dark .ic.shop{background:#332738}
+  .e .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .e .t b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;
+          text-overflow:ellipsis}
+  .e .t .c{font-family:var(--mono);font-size:8.6px;letter-spacing:.15em;color:var(--lab);
+           text-transform:uppercase}
+  .c.warn{color:var(--warn)}
+  .c.bad{color:var(--bad)}
+  .amt{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap;
+       color:var(--lab)}
+  .e.on{background:rgb(47 91 255/.14);box-shadow:inset 3px 0 0 var(--acc);
+        margin:0 -15px;padding-left:15px;padding-right:15px}
+  .scr.dark .e.on{background:rgb(110 139 255/.16)}
+
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;
+         justify-content:center;gap:9px;padding:0 26px 40px;text-align:center}
+  .empty .gl{font-size:26px;opacity:.5}
+  .empty p{margin:0;font-size:12.5px;color:var(--tx2);line-height:1.6}
+  .empty small{font-size:10.5px;color:var(--lab);line-height:1.6}
+  .foot{color:var(--lab);font-size:10.3px;line-height:1.6;padding-top:9px}
+  .snack{margin:auto -15px -14px;background:#2A2A32;color:#F2F2F7;padding:13px 16px;
+         display:flex;justify-content:space-between;align-items:center;font-size:12px}
+  .snack b{color:#B9C6FF;font-weight:600;font-size:11.5px;letter-spacing:.05em}
+
+  table{border-collapse:collapse;font-size:13px;margin:4px 0 0;width:100%;max-width:900px}
+  td,th{border-bottom:1px solid var(--line);padding:8px 18px 8px 0;text-align:left;
+        vertical-align:top;line-height:1.55}
+  th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--mut);font-weight:600}
+  td:first-child{white-space:nowrap;color:var(--fg)}
+</style>
+
+<div class="wrap">
+<h1>Trash</h1>
+<p class="sub">
+  Every state the screen can be in, drawn at device size in both themes. Option A, built
+  from the components that already exist: a row here is <code>StatementEntry</code> with
+  <code>captionColor</code> and <code>amountDim</code> set — no new element, no second
+  design system.
+</p>
+<p class="sub" style="margin-bottom:0">
+  The governing constraint is the one the whole app is built on: a row is a printed
+  statement line. Fixed pitch, amount flush right in the shared column, hairline between
+  entries. Everything Trash needs to say beyond that has to fit in the caption, and it
+  does — category, day, and time remaining.
+</p>
+
+<h2>1 · Empty — and this is the normal state</h2>
+<p class="note">
+  Worth designing first, because it is what the household will see almost every time. The
+  ledger holds 446 tombstones from dedupe repairs and none of them belong here, so Trash
+  opens empty and stays empty until somebody deletes something on purpose. An empty screen
+  that only says "nothing here" reads as a feature that is broken or pointless; this one
+  says what the room is <b>for</b>, so the first visit teaches the thirty days.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="tag key">DEFAULT STATE</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span></div>
+        <div class="empty">
+          <div class="gl">&#128465;</div>
+          <p>Nothing deleted in the last 30&nbsp;days.</p>
+          <small>Anything you delete waits here for 30 days,<br>so a mistake is a mistake
+            and not a loss.</small>
+        </div>
+      </div></div></div>
+  </div>
+  <div class="col">
+    <div class="tag">DARK</div>
+    <div class="dev"><div class="scr dark"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span></div>
+        <div class="empty">
+          <div class="gl">&#128465;</div>
+          <p>Nothing deleted in the last 30&nbsp;days.</p>
+          <small>Anything you delete waits here for 30 days,<br>so a mistake is a mistake
+            and not a loss.</small>
+        </div>
+      </div></div></div>
+  </div>
+</div>
+
+<h2>2 · Holding entries</h2>
+<p class="note">
+  One row per entry. The caption carries <b>category · day · time left</b>, and the count
+  sits in the tape header where every other list in the app puts it. The amount is dimmed
+  because a deleted row is in no total — the same treatment Activity gives an untagged row,
+  for the same reason.
+</p>
+<p class="note">
+  Colour is never the only signal. "2 days left" is red <i>and</i> says two; "13 days left"
+  is amber <i>and</i> says thirteen. Twelve categories inside one lightness band already
+  collapse under deuteranopia, and the rule that saved that — always print the words —
+  applies here too.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="tag key">PRIMARY</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span><span class="lbl">4</span></div>
+        <div class="e"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><div class="c">Food · 4 Aug · 30 days left</div></div>
+          <div class="amt">4.00</div></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><div class="c">Groceries · 2 Aug · 28 days left</div></div>
+          <div class="amt">172.00</div></div>
+        <div class="e"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><div class="c warn">Transport · 18 Jul · 13 days left</div></div>
+          <div class="amt">1,200.00</div></div>
+        <div class="e" style="border-bottom:0"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><div class="c bad">Shopping · 9 Jul · 2 days left</div></div>
+          <div class="amt">449.00</div></div>
+        <div class="foot">Tap to open an entry. Press and hold to choose several.</div>
+      </div></div></div>
+    <p class="cap">Four entries in the height the shipped design gives one and a half.</p>
+  </div>
+
+  <div class="col">
+    <div class="tag">DARK</div>
+    <div class="dev"><div class="scr dark"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span><span class="lbl">4</span></div>
+        <div class="e"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><div class="c">Food · 4 Aug · 30 days left</div></div>
+          <div class="amt">4.00</div></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><div class="c">Groceries · 2 Aug · 28 days left</div></div>
+          <div class="amt">172.00</div></div>
+        <div class="e"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><div class="c warn">Transport · 18 Jul · 13 days left</div></div>
+          <div class="amt">1,200.00</div></div>
+        <div class="e" style="border-bottom:0"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><div class="c bad">Shopping · 9 Jul · 2 days left</div></div>
+          <div class="amt">449.00</div></div>
+        <div class="foot">Tap to open an entry. Press and hold to choose several.</div>
+      </div></div></div>
+  </div>
+
+  <div class="col">
+    <div class="tag edge">EDGE CASE · ONE ENTRY</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span><span class="lbl">1</span></div>
+        <div class="e" style="border-bottom:0"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><div class="c">Food · 4 Aug · 30 days left</div></div>
+          <div class="amt">4.00</div></div>
+        <div class="foot">Tap to open an entry. Press and hold to choose several.</div>
+      </div></div></div>
+    <p class="cap">
+      No card, no panel, no second row. One deleted entry costs one line — which is what
+      the real screen showed after the round trip on the phone.
+    </p>
+  </div>
+</div>
+
+<h2>3 · Choosing several</h2>
+<p class="note">
+  The header becomes the action bar, exactly as Activity's does: the wordmark is replaced
+  by <b>2 SELECTED</b> in accent and the action sits on the right. That is a pattern the
+  household has already learnt for bulk delete — this is the same gesture pointed the
+  other way, so there is nothing new to learn and no second selection idiom in the tree.
+</p>
+<p class="note">
+  A chosen row is <b>tinted and marked at its left edge</b> — no checkbox column. That is
+  not a style preference: <code>TransactionListRow</code> already made this call and wrote
+  down why. A checkbox pushes every merchant, time and amount sideways the instant
+  selection begins, so the list you were reading rearranges itself under your thumb at
+  exactly the moment you were aiming at something. This screen inherits that rather than
+  re-litigating it. Back clears the selection before it leaves the screen — the same <code>BackHandler</code> guard Activity uses,
+  because leaving with a selection open is how a bulk action gets aimed at rows the reader
+  has forgotten about.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="tag key">SELECTING</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span>
+          <span class="mark sel">2 SELECTED</span><span class="act">Put back</span></div>
+        <div class="tape"><span class="lbl">Deleted</span><span class="lbl">4</span></div>
+        <div class="e on"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><div class="c">Food · 4 Aug · 30 days left</div></div>
+          <div class="amt">4.00</div></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><div class="c">Groceries · 2 Aug · 28 days left</div></div>
+          <div class="amt">172.00</div></div>
+        <div class="e on"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><div class="c warn">Transport · 18 Jul · 13 days left</div></div>
+          <div class="amt">1,200.00</div></div>
+        <div class="e" style="border-bottom:0"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><div class="c bad">Shopping · 9 Jul · 2 days left</div></div>
+          <div class="amt">449.00</div></div>
+        <div class="foot">Back clears the selection.</div>
+      </div></div></div>
+  </div>
+
+  <div class="col">
+    <div class="tag">AFTER PUTTING BACK</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="back">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="tape"><span class="lbl">Deleted</span><span class="lbl">2</span></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><div class="c">Groceries · 2 Aug · 28 days left</div></div>
+          <div class="amt">172.00</div></div>
+        <div class="e" style="border-bottom:0"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><div class="c bad">Shopping · 9 Jul · 2 days left</div></div>
+          <div class="amt">449.00</div></div>
+        <div class="snack"><span>2 entries are back</span></div>
+      </div></div></div>
+    <p class="cap">
+      No Undo on the snackbar. Putting something back is the undo — offering to undo the
+      undo is a loop, and the entry is one tap from the bin again if it was a slip.
+    </p>
+  </div>
+</div>
+
+<h2>The specification</h2>
+<table>
+  <tr><th>Element</th><th>Spec</th></tr>
+  <tr><td>Row</td>
+      <td><code>StatementEntry</code>, <code>Modifier.padding(horizontal = 15.dp)</code> —
+      the inset every other list passes and the shipped Trash did not, which is why its
+      amount ran off the edge of the display.</td></tr>
+  <tr><td>Caption</td>
+      <td><code>"${category.label} · ${d MMM} · ${expiryLabel}"</code> through
+      <code>MicroLabel</code>. Day, not clock time: "7:25 pm" for something deleted last
+      week answers a question nobody asked.</td></tr>
+  <tr><td>Caption colour</td>
+      <td><code>Ours.textLabel</code> · <code>Ours.warning</code> at &le;&nbsp;14 days ·
+      <code>Ours.negative</code> at &le;&nbsp;3. The same escalation Activity already uses
+      for an untagged row, and the words carry it independently.</td></tr>
+  <tr><td>Amount</td>
+      <td><code>amountDim = true</code>, always. Shared right-hand column, tabular figures,
+      no ₹ per row — the column is the unit.</td></tr>
+  <tr><td>Header</td>
+      <td><code>TRASH</code> → <code>N SELECTED</code> in <code>Ours.accent</code> with a
+      <code>Put back</code> action, mirroring Activity's selection header.</td></tr>
+  <tr><td>Empty</td>
+      <td>Two lines, not one: what is here, then what the room is for. It is the state the
+      household will see most often.</td></tr>
+  <tr><td>Order</td>
+      <td>Newest deletion first — <code>ORDER BY deletedAt DESC</code>. What you just
+      deleted by mistake is what you came for; the thing expiring in two days you were
+      told about by its colour.</td></tr>
+  <tr><td>Selected row</td>
+      <td><code>TransactionListRow(selected = true)</code> — accent tint at 14% plus a 3dp
+      left strip. No checkbox column, so nothing moves sideways when selection starts.</td></tr>
+  <tr><td>Talkback</td>
+      <td>Back carries "Clear selection" while a selection is open, rather than the wrong
+      label or none. Trash is a screen of consequential choices and the wrong place to be
+      silent.</td></tr>
+  <tr><td>Motion</td>
+      <td>A restored row leaves with the list's default item animation. Nothing bespoke —
+      a bin that animates elaborately is a bin drawing attention to itself.</td></tr>
+</table>
+
+<h2>One thing outside this screen</h2>
+<p class="note">
+  The delete confirmation still reads <b>"It goes from both phones and cannot be brought
+  back."</b> True when it was written; false twice over now, with an Undo on the way out
+  and thirty days in here. It should say what actually happens — a confirmation that
+  overstates the damage is one people learn to dismiss unread, which costs exactly the
+  protection it was added for.
+</p>
+</div>

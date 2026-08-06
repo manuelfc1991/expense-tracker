@@ -56,6 +56,16 @@ class TrashTest {
     }
 
     @Test
+    fun `the urgency thresholds are days, not colours`() {
+        // The screen colours the caption amber under a fortnight and red under three
+        // days, and prints the number either way. Pinning the boundaries here means the
+        // rule survives a redesign of what colour means what.
+        assertThat(Trash.daysLeft(daysAgo(16), now)).isEqualTo(14)   // amber begins
+        assertThat(Trash.daysLeft(daysAgo(27), now)).isEqualTo(3)    // red begins
+        assertThat(Trash.daysLeft(daysAgo(28), now)).isEqualTo(2)
+    }
+
+    @Test
     fun `a row deleted exactly at the boundary is outside the query`() {
         // The DAO asks for deletedAt >= since. A row stamped exactly on the boundary is
         // therefore still listed, and must not caption itself as having negative time.

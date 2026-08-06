@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `66c2c8d`, covering **100 commits** from the first one
-on 3 August 2026 to **5.16 (57)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `21bc4e3`, covering **101 commits** from the first one
+on 3 August 2026 to **5.18 (59)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,18 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.18 (59) — 6 Aug 2026
+
+> Trash: deleted entries wait 30 days and can be put back, one at a time or several at
+> once. Deleting a single entry now offers an Undo, and both confirmations stop claiming a
+> delete is forever.
+
+- `PENDING2` Trash as a statement, not a stack of cards
+- `21bc4e3` Undo on a single delete, and a Trash that holds thirty days
+
+5.17 (58) carried the same feature and was never pushed — it was installed to watch the
+schema migration run, and the redesign landed before it left this machine.
 
 ## 5.16 (57) — 6 Aug 2026
 

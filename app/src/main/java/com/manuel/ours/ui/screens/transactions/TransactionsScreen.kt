@@ -56,6 +56,7 @@ import com.manuel.ours.ui.components.CategoryPickerSheet
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.QuietEmpty
+import com.manuel.ours.domain.Trash
 import com.manuel.ours.ui.components.TransactionListRow
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
@@ -143,8 +144,12 @@ fun TransactionsScreen(
             text = {
                 Text(
                     if (isOwner) {
+                        // "gone for good" stopped being true when Trash arrived. Undo is
+                        // still the quick way back; the thirty days are the safety net
+                        // under it, and saying so is what keeps the sentence credible.
                         "They go from both phones. Undo is offered for a few seconds " +
-                            "afterwards, and then they are gone for good."
+                            "afterwards, and they wait in Trash for " +
+                            "${Trash.WINDOW_DAYS} days after that."
                     } else {
                         "The household owner has to agree to each one, and they still " +
                             "count until they do."

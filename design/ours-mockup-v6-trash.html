@@ -1,0 +1,285 @@
+<meta charset="utf-8">
+<title>Ours · Trash</title>
+<style>
+  :root{
+    --bg:#F5F5F8; --fg:#15151C; --mut:#5E5E72; --line:#E0E0E8;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#08080B;--fg:#ECECF2;--mut:#9A9AAE;--line:#22222B}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 80px;background:var(--bg);color:var(--fg);
+       font-family:var(--sans);font-variant-numeric:tabular-nums;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 34px;max-width:74ch;line-height:1.6}
+  h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
+     margin:44px 0 4px;font-family:var(--mono);font-weight:600}
+  .note{color:var(--mut);font-size:13.5px;line-height:1.65;max-width:68ch;margin:0 0 20px}
+  .note b{color:var(--fg);font-weight:600}
+  .row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .col{max-width:340px}
+  .verdict{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+           padding:4px 9px;border-radius:6px;margin-bottom:10px}
+  .v-yes{background:rgb(61 220 160/.15);color:#2FA87B}
+  .v-no{background:rgb(255 92 122/.15);color:#E04E6B}
+  .v-alt{background:rgb(47 91 255/.14);color:#3F63D8}
+  .cap{color:var(--mut);font-size:12.5px;line-height:1.6;margin:10px 2px 0}
+
+  .dev{background:#000;border:1px solid var(--line);border-radius:32px;padding:7px;
+       box-shadow:0 20px 50px rgb(0 0 0/.3)}
+  .scr{
+    --ink:#EAE7E0; --sur:#F2EFE9; --hair:#D6D2C8;
+    --tx:#1A1A1A; --tx2:#5A5A55; --lab:#8A8A82;
+    --acc:#2F5BFF; --ok:#1E9E6A; --warn:#B8791F; --bad:#D7263D;
+    width:330px;background:var(--ink);border-radius:26px;overflow:hidden;color:var(--tx)}
+  .sbar{display:flex;justify-content:space-between;padding:11px 18px 2px;
+        font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+  .ui{padding:8px 15px 14px;display:flex;flex-direction:column;gap:10px}
+  .hd{display:flex;align-items:center;gap:10px;padding:4px 1px}
+  .mark{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.26em}
+  .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--lab)}
+  .lbl.warn{color:var(--warn)}
+  .lbl.bad{color:var(--bad)}
+  .sect{display:flex;justify-content:space-between;align-items:baseline;
+        border-bottom:1px solid var(--hair);padding-bottom:6px;margin-top:2px}
+
+  /* a statement line: icon · title/caption · amount flush right */
+  .e{display:flex;align-items:center;gap:11px;padding:9px 0;
+     border-bottom:1px solid var(--hair)}
+  .e:last-of-type{border-bottom:0}
+  .ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
+      font-size:13px}
+  .ic.food{background:#F3D9CE}.ic.groc{background:#D3E6D8}.ic.tran{background:#D5DEF2}
+  .ic.shop{background:#E7D9EC}
+  .e .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .e .t b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;
+          text-overflow:ellipsis}
+  .e .t span{font-family:var(--mono);font-size:8.6px;letter-spacing:.1em;color:var(--lab);
+             text-transform:uppercase}
+  .amt{font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap}
+  .amt.dim{color:var(--lab);font-weight:600}
+
+  .actrow{display:flex;justify-content:space-between;align-items:center;padding:2px 0 8px}
+  .link{color:var(--acc);font-size:11.5px}
+  .ghost{border:1px solid var(--hair);border-radius:10px;padding:9px;text-align:center;
+         font-size:12px;font-weight:600}
+  .accent{background:var(--acc);color:#fff;border-radius:10px;padding:10px;
+          text-align:center;font-size:12.5px;font-weight:700}
+  .bar{position:relative;margin:6px -15px -14px;padding:11px 15px;background:var(--sur);
+       border-top:1px solid var(--hair);display:flex;justify-content:space-between;
+       align-items:center}
+  .meter{height:3px;background:var(--hair);border-radius:2px;overflow:hidden;margin-top:5px}
+  .meter i{display:block;height:100%;background:var(--warn)}
+  .meter.long i{background:var(--lab)}
+  .sel{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--lab);flex:none}
+  .sel.on{background:var(--acc);border-color:var(--acc)}
+  .foot{color:var(--lab);font-size:10.5px;line-height:1.55;padding-top:4px}
+  .edge{outline:1px dashed #D7263D;outline-offset:2px}
+  table{border-collapse:collapse;font-size:13px;margin:6px 0 0}
+  td,th{border-bottom:1px solid var(--line);padding:7px 16px 7px 0;text-align:left;
+        vertical-align:top}
+  th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--mut);font-weight:600}
+</style>
+
+<div class="wrap">
+<h1>Trash, redesigned</h1>
+<p class="sub">
+  Shipped in 5.17 and verified on the phone, but the first version was laid out as a list
+  of cards rather than as a statement. Three things to fix, one of them a defect: the
+  amount runs flush to the screen edge because the row is missing the 15dp inset every
+  other list gives it, each entry costs two rows instead of one, and every row carries its
+  own blue action — so a screen of five deleted entries has five competing calls to action
+  and no single one.
+</p>
+
+<h2>What it looks like now</h2>
+<p class="note">
+  Drawn from the real screenshot. The dashed rule marks the defect: <b>4.00</b> touches the
+  edge of the display, where every other list in the app holds a 15dp margin.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="verdict v-no">SHIPPED · TO REPLACE</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="lbl">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="sect"><span class="lbl">Deleted</span><span class="lbl">1</span></div>
+        <div class="e" style="border-bottom:0">
+          <div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><span>Food · 7:25 pm · Manuel</span></div>
+          <div class="amt edge" style="margin-right:-15px">4.00</div>
+        </div>
+        <div class="actrow" style="border-top:1px solid var(--hair);padding-top:8px">
+          <span style="font-size:11.5px;color:var(--tx2)">30 days left</span>
+          <span class="link">Put back</span>
+        </div>
+        <div class="foot">Entries leave this list 30 days after they were deleted, and
+          cannot be put back after that.</div>
+      </div></div></div>
+    <p class="cap">Two rows per entry. Five deleted entries fill the screen with ten.</p>
+  </div>
+</div>
+
+<h2>Option A · one statement line, expiry in the caption</h2>
+<p class="note">
+  The app's governing idea is that a row <b>is</b> a printed statement line — fixed pitch,
+  amount flush right, hairline between entries. Trash has no reason to be an exception:
+  the time it has left is just another thing the caption says, next to the category and
+  the hour. The amount dims because it is not counted in any total, which is the same
+  treatment an untagged row already gets.
+</p>
+<p class="note">
+  Restoring moves to <b>selection</b>, the pattern Activity already uses for acting on many
+  rows at once. One deleted entry and twelve are then the same gesture, and the screen has
+  exactly one call to action instead of one per row.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="verdict v-yes">RECOMMENDED</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="lbl">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="sect"><span class="lbl">Deleted</span><span class="lbl">4</span></div>
+        <div class="e"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><span>Food · 4 Aug · 30 days left</span></div>
+          <div class="amt dim">4.00</div></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><span>Groceries · 2 Aug · 28 days left</span></div>
+          <div class="amt dim">172.00</div></div>
+        <div class="e"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><span>Transport · 18 Jul · <span class="lbl warn"
+            style="font-size:8.6px">13 days left</span></span></div>
+          <div class="amt dim">1,200.00</div></div>
+        <div class="e"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><span>Shopping · 9 Jul · <span class="lbl bad"
+            style="font-size:8.6px">2 days left</span></span></div>
+          <div class="amt dim">449.00</div></div>
+        <div class="foot" style="padding-top:10px">Tap an entry to open it. Press and hold
+          to choose several.</div>
+      </div></div></div>
+    <p class="cap">Four entries in the space the current design gives one and a half.</p>
+  </div>
+
+  <div class="col">
+    <div class="verdict v-yes">RECOMMENDED · SELECTING</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="lbl">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="sect"><span class="lbl">2 chosen</span><span class="lbl">Select all</span></div>
+        <div class="e"><div class="sel on"></div>
+          <div class="t"><b>Keecheril St</b><span>Food · 4 Aug · 30 days left</span></div>
+          <div class="amt dim">4.00</div></div>
+        <div class="e"><div class="sel"></div>
+          <div class="t"><b>Maveli Store</b><span>Groceries · 2 Aug · 28 days left</span></div>
+          <div class="amt dim">172.00</div></div>
+        <div class="e"><div class="sel on"></div>
+          <div class="t"><b>Indian Oil</b><span>Transport · 18 Jul · <span class="lbl warn"
+            style="font-size:8.6px">13 days left</span></span></div>
+          <div class="amt dim">1,200.00</div></div>
+        <div class="e"><div class="sel"></div>
+          <div class="t"><b>Amazon</b><span>Shopping · 9 Jul · <span class="lbl bad"
+            style="font-size:8.6px">2 days left</span></span></div>
+          <div class="amt dim">449.00</div></div>
+        <div class="bar"><span class="lbl">₹1,204 back</span>
+          <span class="accent" style="padding:8px 14px">Put back 2</span></div>
+      </div></div></div>
+    <p class="cap">The same bottom bar Activity uses for bulk delete, pointed the other way.</p>
+  </div>
+</div>
+
+<h2>Option B · grouped by what runs out first</h2>
+<p class="note">
+  Same rows, gathered under headings so the ones about to disappear cannot be missed. It
+  reads well on a full bin and looks slightly ceremonial on a bin holding two things —
+  which, given a household deletes a handful of entries a month, is the normal case.
+</p>
+<div class="row">
+  <div class="col">
+    <div class="verdict v-alt">GOOD ON A FULL BIN, HEAVY ON AN EMPTY ONE</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="lbl">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="sect"><span class="lbl bad">Going this week</span><span class="lbl">1</span></div>
+        <div class="e"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><span>Shopping · 9 Jul · 2 days left</span></div>
+          <div class="amt dim">449.00</div></div>
+        <div class="sect"><span class="lbl">Later</span><span class="lbl">3</span></div>
+        <div class="e"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><span>Transport · 18 Jul · 13 days left</span></div>
+          <div class="amt dim">1,200.00</div></div>
+        <div class="e"><div class="ic groc">&#128722;</div>
+          <div class="t"><b>Maveli Store</b><span>Groceries · 2 Aug · 28 days left</span></div>
+          <div class="amt dim">172.00</div></div>
+        <div class="e"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><span>Food · 4 Aug · 30 days left</span></div>
+          <div class="amt dim">4.00</div></div>
+      </div></div></div>
+    <p class="cap">Two headings for four rows. Worth it only once a bin is routinely full.</p>
+  </div>
+
+  <div class="col">
+    <div class="verdict v-no">REJECTED</div>
+    <div class="dev"><div class="scr"><div class="sbar"><span>12:00</span><span>100%</span></div>
+      <div class="ui">
+        <div class="hd"><span class="lbl">&larr;</span><span class="mark">TRASH</span></div>
+        <div class="sect"><span class="lbl">Deleted</span><span class="lbl">3</span></div>
+        <div class="e" style="align-items:flex-start"><div class="ic food">&#9749;</div>
+          <div class="t"><b>Keecheril St</b><span>Food · 4 Aug</span>
+            <div class="meter long"><i style="width:100%"></i></div></div>
+          <div class="amt dim">4.00</div></div>
+        <div class="e" style="align-items:flex-start"><div class="ic tran">&#9981;</div>
+          <div class="t"><b>Indian Oil</b><span>Transport · 18 Jul</span>
+            <div class="meter"><i style="width:43%"></i></div></div>
+          <div class="amt dim">1,200.00</div></div>
+        <div class="e" style="align-items:flex-start"><div class="ic shop">&#128717;</div>
+          <div class="t"><b>Amazon</b><span>Shopping · 9 Jul</span>
+            <div class="meter"><i style="width:7%"></i></div></div>
+          <div class="amt dim">449.00</div></div>
+        <div class="foot" style="padding-top:10px">A bar per row for a number that only
+          ever counts down.</div>
+      </div></div></div>
+    <p class="cap">
+      A countdown meter looks precise and says less than the words did. <b>Meter</b> is
+      the app's budget element — spending against a cap — and borrowing it here would
+      teach it a second meaning.
+    </p>
+  </div>
+</div>
+
+<h2>What changes in the code</h2>
+<table>
+  <tr><th>Change</th><th>Why</th></tr>
+  <tr><td><b>15dp inset on the row</b></td>
+      <td>The defect. Every other caller passes
+      <code>Modifier.padding(horizontal = EDGE)</code>; Trash did not, so the amount
+      column stopped lining up with every other screen.</td></tr>
+  <tr><td><b>Expiry into the caption</b></td>
+      <td>One row per entry instead of two. Amber under 14 days, red under 3 — the same
+      warning/negative pair the rest of the app uses, never colour alone: the words say
+      it too.</td></tr>
+  <tr><td><b>Amount dimmed</b></td>
+      <td>A deleted row is in no total. Activity already dims untagged rows for exactly
+      this reason.</td></tr>
+  <tr><td><b>Restore by selection</b></td>
+      <td>One accent action per screen rather than one per row, and putting four entries
+      back becomes one gesture. Reuses Activity's selection bar rather than inventing a
+      second pattern.</td></tr>
+  <tr><td><b>Date, not clock time</b></td>
+      <td>"7:25 pm" for something deleted last week answers a question nobody asked. The
+      day it happened is what places it.</td></tr>
+</table>
+
+<h2>Also wrong, and not a layout question</h2>
+<p class="note">
+  The delete confirmation still reads <b>"It goes from both phones and cannot be brought
+  back."</b> That was true when it was written and is now false twice over — there is an
+  Undo on the way out and thirty days in here. A confirmation that overstates the damage
+  is the kind of thing people learn to click through.
+</p>
+</div>

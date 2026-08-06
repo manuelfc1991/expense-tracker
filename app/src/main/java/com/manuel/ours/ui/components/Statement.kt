@@ -544,6 +544,15 @@ fun TransactionEntry(
     modifier: Modifier = Modifier,
     showOwner: Boolean = false,
     divider: Boolean = true,
+    /**
+     * Replaces the whole caption. Trash needs "Food · 4 Aug · 30 days left" where this
+     * would print a clock time — the row is otherwise identical, and forking the element
+     * to change one line of text is how a second design system starts.
+     */
+    captionOverride: String? = null,
+    captionColorOverride: Color? = null,
+    /** Dim the amount for a row that is in no total. */
+    dimAmount: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val time = remember(txn.occurredAt) {
@@ -565,11 +574,12 @@ fun TransactionEntry(
     }
     StatementEntry(
         title = txn.merchant,
-        caption = caption,
+        caption = captionOverride ?: caption,
         paise = txn.amountPaise,
         category = txn.category,
-        captionColor = if (untagged) Ours.warning else Ours.textLabel,
-        amountDim = untagged,
+        captionColor = captionColorOverride
+            ?: if (untagged) Ours.warning else Ours.textLabel,
+        amountDim = dimAmount || untagged,
         divider = divider,
         onClick = onClick,
         modifier = modifier,

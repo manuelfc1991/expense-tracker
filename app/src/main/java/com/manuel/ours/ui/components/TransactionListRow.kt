@@ -48,6 +48,9 @@ fun TransactionListRow(
     divider: Boolean = true,
     selected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
+    captionOverride: String? = null,
+    captionColorOverride: androidx.compose.ui.graphics.Color? = null,
+    dimAmount: Boolean = false,
 ) {
     val accent = Ours.accent
     Box(
@@ -79,6 +82,9 @@ fun TransactionListRow(
             txn = txn,
             showOwner = showOwner,
             divider = divider,
+            captionOverride = captionOverride,
+            captionColorOverride = captionColorOverride,
+            dimAmount = dimAmount,
             modifier = Modifier.padding(horizontal = 15.dp),
         )
     }

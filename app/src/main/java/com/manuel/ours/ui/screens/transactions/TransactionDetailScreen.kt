@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.Trash
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.ui.components.CategoryGrid
@@ -131,9 +132,15 @@ fun TransactionDetailScreen(
                     // behind it shows. Money.whole read ₹450 off a row printed ₹450.75,
                     // which invites a second look at whether this is the right entry.
                     // Paise everywhere else are wrong; here they are the identifier.
+                    // "cannot be brought back" was true when this was written and is now
+                    // false twice over — there is an Undo on the way out and thirty days
+                    // in Trash. A confirmation that overstates the damage is one people
+                    // learn to dismiss unread, which costs exactly the protection it was
+                    // added for.
                     if (isOwner) {
                         "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
-                            "It goes from both phones and cannot be brought back."
+                            "It goes from both phones, and waits in Trash for " +
+                            "${Trash.WINDOW_DAYS} days in case you change your mind."
                     } else {
                         "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
                             "The household owner has to agree, and it still counts until they do."
