@@ -2,19 +2,19 @@
 
 Everything left that needs the other phone, or knowledge only you have.
 
-Last reviewed **5 August 2026**, against **5.7 (48)**. Earlier versions of this file
+Last reviewed **6 August 2026**, against **5.14 (55)**. Earlier versions of this file
 described a 2.3 release and a categorising job that is long finished; that work is done
 and has been removed rather than left to mislead.
 
 ---
 
-## 1. Her phone: update to 5.7
+## 1. Her phone: update to 5.14
 
 **Settings ▸ Updates ▸ Check for updates** → Download → Install.
 
 Everything below depends on this. Her phone has never run a build that can sync a
 budget, an account balance, or the fact that she exists — all three were write-only
-until 5.5, and membership until 5.4.
+until 5.5, and membership until 5.4. 5.14 also adds the backup in step 7.
 
 ## 2. Her phone: is it in the household at all?
 
@@ -100,10 +100,38 @@ next sync. The row was the symptom; a joined test device is the cause.
 The AVD itself is intact. Rejoin it by QR when you next need a second device — and expect
 a *new* member row, under a new uid, to clean up the same way afterwards.
 
+## 7. The emulator: does a restore actually work?
+
+New in 5.14, and the half of backup that has never run outside a JVM. **Do this on the
+`ours-api36` AVD, not on a phone holding real money** — a restore writes rows, and the
+first run of a write path is not something to try on the only copy of six months of
+spending.
+
+On your phone: **Settings ▸ This app ▸ Backup & restore ▸ Back up everything**, and send
+the file somewhere the emulator can reach it — email it to yourself, or `adb pull` it out
+of the share target and `adb push` it to the AVD's Download folder.
+
+On the emulator, install 5.14, onboard it as its **own** household (do *not* join yours —
+see step 6 for what a joined test device costs), then **Restore from a file** and pick it.
+
+**Check, in order:**
+
+1. The confirmation names the date, the build and the counts before anything is written.
+2. It reports what it restored, and the entries appear in Activity with their categories.
+3. **Run it a second time.** It must say everything was already there and change nothing.
+   That is the property the whole design rests on, and it is the one worth seeing fail.
+4. Point it at a file that is not a backup — any JPEG. It should say *"that file could not
+   be read"*, not print a serialization error.
+
+If step 3 duplicates the history, stop and report it: that is the one outcome that would
+make the feature worse than not having it.
+
 ---
 
 ## What to report back
 
-- Step 2: how many names Household lists
+- Step 2: **already answered** — 5.14 on your phone shows *Household · Manuel, Beula*,
+  so she is in and always was. Nothing to do.
 - Step 3: whether the two phones agree, and on what they don't
 - Step 5: whether Bluetooth exchanged anything at all
+- Step 7: whether a second restore is genuinely a no-op

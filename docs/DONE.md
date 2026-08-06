@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `1187263`, covering **96 commits** from the first one
-on 3 August 2026 to **5.13 (54)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `28b010c`, covering **97 commits** from the first one
+on 3 August 2026 to **5.14 (55)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,13 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.14 (55) — 6 Aug 2026
+
+> Backup and restore: the whole history in one file, so a lost phone stops meaning lost
+> manual entries and lost category corrections. Settings, This app, Backup & restore.
+
+- `PENDING` A backup that can actually be restored
 
 ## 5.13 (54) — 6 Aug 2026
 

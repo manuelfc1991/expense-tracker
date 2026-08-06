@@ -194,6 +194,17 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun count(): Int
 
+    /**
+     * Everything, tombstones included — for backup and restore only.
+     *
+     * Every other read here filters `deleted = 0`, which is right for anything that
+     * displays or totals. A backup that dropped tombstones would resurrect deleted
+     * entries the next time it was restored, and a restore that could not see local
+     * tombstones would re-insert what this phone had already thrown away.
+     */
+    @Query("SELECT * FROM transactions")
+    suspend fun allIncludingDeleted(): List<TransactionEntity>
+
     @Query("DELETE FROM transactions")
     suspend fun clear()
 }
@@ -338,6 +349,13 @@ interface ReminderDao {
 
     @Query("UPDATE reminders SET dismissed = 1 WHERE id = :id")
     suspend fun dismiss(id: String)
+
+    /** Dismissed ones too — a backup that forgot them would re-raise old reminders. */
+    @Query("SELECT * FROM reminders")
+    suspend fun all(): List<ReminderEntity>
+
+    @Upsert
+    suspend fun upsertAll(reminders: List<ReminderEntity>)
 }
 
 @Dao

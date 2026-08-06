@@ -51,7 +51,7 @@ when it was not.
 
 ```bash
 ./gradlew :app:assembleRelease                 # build
-./gradlew :app:testReleaseUnitTest             # ~499 tests, all should pass
+./gradlew :app:testReleaseUnitTest             # 287 tests, all should pass
 ./gradlew :app:publishRelease -PreleaseNotes="one line, shown in the update prompt"
 ```
 

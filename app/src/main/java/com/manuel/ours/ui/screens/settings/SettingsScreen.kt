@@ -109,6 +109,7 @@ fun SettingsScreen(
     onOpenSheetSetup: () -> Unit = {},
     onScanInvite: () -> Unit = {},
     onOpenDeleteRequests: () -> Unit = {},
+    onOpenBackup: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -735,6 +736,16 @@ fun SettingsScreen(
                     checked = state.appLock,
                     onCheckedChange = viewModel::setAppLock,
                     padded = false,
+                )
+
+                // Above the version row rather than below it. This is the only answer in
+                // the app to a lost handset, and everything under it is housekeeping.
+                Hairline()
+                PanelRow(
+                    title = "Backup & restore",
+                    caption = "Manual entries and your category corrections live only on " +
+                        "this phone — a rescan cannot bring them back",
+                    onClick = onOpenBackup,
                 )
 
                 Hairline()

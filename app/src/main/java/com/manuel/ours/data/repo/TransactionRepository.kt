@@ -6,6 +6,7 @@ import com.manuel.ours.data.db.MerchantRuleEntity
 import com.manuel.ours.data.db.SyncEventDao
 import com.manuel.ours.data.db.SyncEventEntity
 import com.manuel.ours.data.db.TransactionDao
+import com.manuel.ours.data.db.TransactionEntity
 import com.manuel.ours.data.db.toDomain
 import com.manuel.ours.data.db.toEntity
 import com.manuel.ours.data.prefs.AppPrefs
@@ -987,6 +988,52 @@ class TransactionRepository @Inject constructor(
         }
         prefs.setAccountLabelsRepaired()
         return stale.size
+    }
+
+    /**
+     * Writes rows a restore produced, minting a sync event for each.
+     *
+     * Deliberately not a bare `upsertAll`. A restore that only touched the local database
+     * would leave the other phone holding the un-corrected version forever — the very
+     * corrections a backup exists to protect are the ones that would stay lost. Going
+     * through [saveAndLog] gives each row a Lamport tick and an outbound event, so the
+     * next sync carries them across like any other edit.
+     *
+     * The cutoff is not applied here. `rebuildOwnLog` honours it because it is rebuilding
+     * *the log*; this is recovering data the household chose to keep, and silently
+     * dropping half of it on the way back in would be the same silent-cutoff bug in a
+     * worse place. What syncs is still bounded by the cutoff at push time.
+     */
+    suspend fun applyRestore(rows: List<TransactionEntity>): Int {
+        for (row in rows) {
+            if (!row.deleted) {
+                saveAndLog(row.toDomain(), row.dedupeKey, row.dedupeAt)
+                continue
+            }
+            // A tombstone cannot travel as an UPSERT. SyncPayload has no `deleted`
+            // field — deletion is carried by the op, not the payload — so an UPSERT
+            // for a deleted row is read by the other phone as "here it is again", and
+            // a restore would un-delete on her handset everything you had thrown away
+            // on yours.
+            val lamport = clock.tick()
+            val deviceId = prefs.deviceId()
+            txnDao.upsert(row.copy(updatedAtLamport = lamport, updatedByDevice = deviceId))
+            prefs.writeLamport(lamport)
+            eventDao.append(
+                SyncEventEntity(
+                    eventId = UUID.randomUUID().toString(),
+                    txnId = row.id,
+                    op = SyncOp.DELETE.name,
+                    lamport = lamport,
+                    deviceId = deviceId,
+                    ownerUid = row.ownerUid,
+                    payloadJson = null,
+                    wallClock = System.currentTimeMillis(),
+                    pushed = false,
+                )
+            )
+        }
+        return rows.size
     }
 
     /**

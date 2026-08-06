@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # 238 tests
+./gradlew testDebugUnitTest    # 287 tests
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26
@@ -308,9 +308,9 @@ editable auto-assign rules, bulk sorting by merchant, manual entry, transactions
 search/filter/grouping, swipe-to-delete with undo and multi-select for acting on many
 rows at once, renaming a payee the bank never named, recurring-charge detection,
 monthly summary, budgets, a tracking start date that retires older months without
-deleting them, CSV + PDF export, a home-screen widget that redraws when the numbers
-move, theming, QR invite generation and scanning, and the sync core with its
-convergence tests.
+deleting them, CSV + PDF export, whole-history backup and restore, a home-screen widget
+that redraws when the numbers move, theming, QR invite generation and scanning, and the
+sync core with its convergence tests.
 
 **Verified on two phones.** Everything above was exercised against a real inbox, and
 the Sheet transport has now carried a household: one phone wrote 460 events spanning
@@ -325,20 +325,49 @@ not assumed — the file header reads as noise and `sqlite3` refuses to open it.
 app lock uses `BiometricPrompt` with `DEVICE_CREDENTIAL` as a fallback, because a lock
 you can get permanently stuck behind is worse than no lock.
 
+**Backup**
+
+Settings ▸ This app ▸ Backup & restore writes the whole history to one JSON file and
+hands it to the share sheet: every transaction including tombstones, the shared rules,
+the payee rules a person made, budgets, members and reminders. It is the only answer in
+the app to a lost handset — a rescan rebuilds what the banks sent, and nothing rebuilds
+what somebody typed or corrected.
+
+Restoring **only ever adds.** Nothing already on the phone is deleted, a deletion made
+here is never undone, and rows are matched on `dedupeKey` rather than on id, because the
+realistic restore is onto a phone that has already re-read the inbox and holds the same
+transactions under fresh ids. A matched row keeps its local id and its parser-derived
+fields and takes the backup's human ones — the renamed payee, the corrected category, a
+hand-edited amount. Running the same restore twice is a no-op and says so.
+
+Two things it deliberately does not carry: the invite secret and the sheet URL, which are
+capability credentials and would otherwise sit in a file destined for Drive; and
+`sync_events`, which is rebuildable and would replay an ordering the household has moved
+past. It is **not encrypted** and it does include the original bank messages, account
+tails and balances among them — a passphrase that can be forgotten turns a safety net
+into a second way to lose everything, so the file says what it is instead.
+
 **Known gaps, honestly:**
 
-1. **Bluetooth sync is unproven against a second device.** Its runtime permissions were
+1. **Restore has never been run on a handset.** The backup half has: 5.14 wrote
+   `ours-backup-2026-08-06-1104.json` on Manuel's phone and the share sheet took it.
+   The reading half is covered by twenty tests — the dedupe-key match, the tombstone
+   that must not resurrect, the re-attribution to a new uid, the refusal of a file
+   written by a newer build — but the picker, the confirmation dialog and the write path
+   have only ever run in a JVM. Test it on the emulator rather than on a phone holding
+   real money: restore a real backup there, where a wrong answer costs nothing.
+2. **Bluetooth sync is unproven against a second device.** Its runtime permissions were
    declared in the manifest but never requested until recently, so every entry point
    silently reported "no peers" — the toggle looked on and did nothing. The request now
    happens when you enable it, and the preconditions check out on both phones, but no
    two devices have ever completed a Nearby handshake. Emulators get as far as
    `requestConnection` and then fail on the virtual radio.
-2. **Three or more people is supported and tested, but not on three real phones.** The
+3. **Three or more people is supported and tested, but not on three real phones.** The
    filter, the split bar, the merge and both transports take an arbitrary number of
    members; `AggregationTest` covers a household of three, and a four-member household
    has been exercised across one phone and three emulators. Two real handsets is the
    most that has ever run at once.
-3. **A retired month is retired for the household, not just for you.** The tracking
+4. **A retired month is retired for the household, not just for you.** The tracking
    start date bounds what *syncs* as well as what is drawn, so months before it never
    reach the other phone. That is deliberate, and it used to be the single most
    confusing thing in the app, because nothing said so: "Re-upload everything" honoured
@@ -405,22 +434,28 @@ CryptoAndCodecTest         15   key derivation, tamper detection, corrupt-line r
 RecurringDetectorTest      15   what repeats, and what only looks like it
 MergeConvergenceTest       14   sync convergence under adversarial ordering
 CategoryPredictorTest      12   one-tap category guesses
+MoneyTest                  12   lakh/crore formatting, paise arithmetic, bare amounts
+BackupMergeTest            12   what restoring a backup does to rows already here
+AffordabilityTest          11   budget vs balance, and unknown never counted as zero
 MeridiemTwinTest           11   the duplicates that fixing AM/PM created
-MoneyTest                  11   lakh/crore formatting, paise arithmetic, bare amounts
 MoneyFlowTest              10   spending vs saving vs moving
 InvestmentLedgerTest        9   FD/RD/SIP handling
 RegionalBankTest            8   regional/small-finance sender coverage, bare-credit labels
 SheetRowFormatTest          8   Apps Script row shape, raw-message redaction
+BackupCodecTest             8   the backup file format, and every way reading one fails
 CardBillEchoTest            7   one bill, two banks, two messages
 DedupeTimeTest              7   bank + UPI-app double messages
 SelfTransferTest            7   a round trip is not a purchase and a windfall
 AccountNumberMerchantTest   6   an account number is not a payee
 BillReminderTest            6   money owed, not money spent
+CounterpartyAccountTest     6   the account paid, when the bank named one
+ReuploadScopeTest           6   what a re-upload admits to leaving behind
+ZeroBalanceAccountTest      5   an account with no balance is not an account with none
 MixedReferenceDedupeTest    4   one payment, two texts, only one with a reference
 RescanIdempotencyTest       4   a backfill never duplicates
 CorpusReportTest            1   parser coverage over the whole corpus
                           ―――
-                          238
+                          287
 ```
 
 **Most of the newer suites are refusals.** Four of them decide whether two rows are

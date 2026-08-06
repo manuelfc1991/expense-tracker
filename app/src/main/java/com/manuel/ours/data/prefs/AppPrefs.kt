@@ -171,6 +171,13 @@ class AppPrefs @Inject constructor(
     /** For the backfill worker, which runs outside a composition. */
     suspend fun trackingStartAtOnce(): Long = trackingStartAt.first()
 
+    // Backup and restore read these once rather than observing them. See BackupManager.
+    suspend fun selfUidOnce(): String? = selfUid.first()
+
+    suspend fun selfNameOnce(): String? = selfName.first()
+
+    suspend fun householdIdOnce(): String? = householdId.first()
+
     suspend fun counterpartyBackfilled(): Boolean =
         context.dataStore.data.map { it[Keys.COUNTERPARTY_BACKFILLED] ?: false }.first()
 

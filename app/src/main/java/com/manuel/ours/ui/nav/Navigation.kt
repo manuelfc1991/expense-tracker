@@ -36,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.manuel.ours.ui.screens.backup.BackupScreen
 import com.manuel.ours.ui.screens.budgets.BudgetsScreen
 import com.manuel.ours.ui.screens.home.HomeScreen
 import com.manuel.ours.ui.screens.onboarding.OnboardingScreen
@@ -63,6 +64,7 @@ object Routes {
     const val RULES = "rules"
     const val SHEET_SETUP = "sheet_setup"
     const val DELETE_REQUESTS = "delete_requests"
+    const val BACKUP = "backup"
     const val TXN_DETAIL = "txn/{txnId}"
 
     fun txnDetail(id: String) = "txn/$id"
@@ -217,6 +219,7 @@ fun OursNavHost(
                     onOpenRules = { navController.navigate(Routes.RULES) },
                     onOpenSheetSetup = { navController.navigate(Routes.SHEET_SETUP) },
                     onOpenDeleteRequests = { navController.navigate(Routes.DELETE_REQUESTS) },
+                    onOpenBackup = { navController.navigate(Routes.BACKUP) },
                     onScanInvite = { navController.navigate(Routes.QR_SCANNER) },
                 )
             }
@@ -252,6 +255,10 @@ fun OursNavHost(
 
             composable(Routes.RULES) {
                 RulesScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.BACKUP) {
+                BackupScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.PARSER_TESTER) {
