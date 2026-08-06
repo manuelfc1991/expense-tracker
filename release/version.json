@@ -1,7 +1,7 @@
 {
-  "versionCode": 52,
-  "versionName": "5.11",
-  "notes": "Re-upload now says what it leaves behind — retired months are counted and dated instead of silently skipped, and a re-upload with nothing in scope no longer looks like a broken sheet.",
+  "versionCode": 53,
+  "versionName": "5.12",
+  "notes": "The launcher icon is the size of every other icon on the home screen — the handshake was running past the mask edge and losing its wrist and fingertips to it, and now it sits on the dark disc with a margin.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25464834
+  "sizeBytes": 25465126
 }

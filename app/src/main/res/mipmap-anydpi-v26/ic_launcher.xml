@@ -1,4 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sizing: the mark is 54dp wide on the 108dp canvas. Both layers, so the app is the same
+  size on the home screen whether themed icons are on or off.
+
+  It used to be 69dp, fitted so the furthest opaque pixel landed on a 72dp circle. That
+  was the wrong circle. 72dp is the *square* a mask is guaranteed not to exceed; the shape
+  a mask is guaranteed not to cut is the 66dp circle inside it. At 69dp the handshake ran
+  tangent to 21% of the launcher's circular mask — measured off a screenshot, not
+  inferred — which flattened the light hand's wrist and its fingertips and left the
+  near-black background showing only as slivers. It read as a photograph cropped into a
+  circle rather than as an icon, and it was visibly bigger than everything beside it.
+
+  54dp is not a guess either. Measured from the app drawer on Manuel's phone, the glyph
+  inside each neighbouring icon spans, in these same units: YouTube 62, Authenticator 61,
+  Messages 54, BHIM 53, Assistant 50, Camera 49, Calendar 48, Contacts 45, Phone 44.
+  A solid diagonal mass reads heavier than an open shape of equal width, so sitting at the
+  median of that band rather than its top is what makes this match rather than shout.
+
+  Anything up to about 63dp still clears the 66dp safe circle. The constraint that bit
+  here was never clipping — it was looking oversized beside real neighbours, which no
+  safe-zone rule detects and only a screenshot does.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />

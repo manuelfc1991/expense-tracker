@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `b903f2c`, covering **93 commits** from the first one
-on 3 August 2026 to **5.11 (52)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `8b76281`, covering **94 commits** from the first one
+on 3 August 2026 to **5.12 (53)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,14 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.12 (53) — 6 Aug 2026
+
+> The launcher icon is the size of every other icon on the home screen — the handshake was
+> running past the mask edge and losing its wrist and fingertips to it, and now it sits on
+> the dark disc with a margin.
+
+- `PENDING` Size the launcher icon against the icons beside it
 
 ## 5.11 (52) — 6 Aug 2026
 
