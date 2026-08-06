@@ -62,6 +62,21 @@ object SmsDeduplicator {
         if (existing.amountPaise != incoming.amountPaise) return false
         if (existing.type != incoming.type.name) return false
 
+        // The bank's own message id, checked before anything inferred.
+        //
+        // Kerala Gramin describes one debit twice — a detailed SMS carrying a UPI
+        // reference and a bare one carrying none — and the two arrive just over three
+        // minutes apart. Neither of the rules below can see it: the references cannot
+        // match when only one message has one, and the gap is outside WINDOW_MS. Both
+        // messages quote the same `Msg Id`, and that is the only thing that identifies
+        // them as one event. ₹8,955.79 of one month was counted twice for want of it.
+        //
+        // Both sides must be present. Two rows that simply lack an id are not thereby
+        // the same payment, and treating NULL as a match would merge unrelated ones.
+        val idMatch = !existing.bankMessageId.isNullOrBlank() &&
+            existing.bankMessageId == incoming.messageId
+        if (idMatch) return true
+
         val refMatch = !existing.refNo.isNullOrBlank() &&
             existing.refNo == incoming.refNo
         if (refMatch) return true

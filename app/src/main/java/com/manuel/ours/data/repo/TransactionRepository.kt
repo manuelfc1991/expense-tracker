@@ -125,6 +125,11 @@ class TransactionRepository @Inject constructor(
             SmsDeduplicator.WINDOW_MS
         }
         val candidates = buildList {
+            // The bank's own message id first: it is identity rather than inference, and
+            // the row it finds can be well outside any time window.
+            parsed.messageId?.takeIf { it.isNotBlank() }?.let { id ->
+                txnDao.findByMessageId(id)?.let(::add)
+            }
             parsed.refNo?.takeIf { it.isNotBlank() }?.let { ref ->
                 txnDao.findByRef(ref)?.let(::add)
             }
@@ -142,10 +147,15 @@ class TransactionRepository @Inject constructor(
             // occurredAt here is what let a rescan duplicate the whole history.
             val cardBillPair = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT ||
                 existing.category == Category.CARD_PAYMENT.name
-            val matches = if (cardBillPair) {
-                SmsDeduplicator.isCardBillEcho(existing, parsed)
-            } else {
-                SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
+            // The bank saying "this is the same message" outranks both inferences below.
+            // Checked here rather than only inside isDuplicate, because a card-bill pair
+            // takes the other branch entirely and would never see it.
+            val sameMessage = !existing.bankMessageId.isNullOrBlank() &&
+                existing.bankMessageId == parsed.messageId
+            val matches = when {
+                sameMessage -> true
+                cardBillPair -> SmsDeduplicator.isCardBillEcho(existing, parsed)
+                else -> SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
             }
             if (!matches) continue
             if (SmsDeduplicator.richer(existing, parsed)) {
@@ -210,6 +220,7 @@ class TransactionRepository @Inject constructor(
             counterpartyTail = parsed.counterpartyTail,
             balancePaise = parsed.balancePaise,
             refNo = parsed.refNo,
+            bankMessageId = parsed.messageId,
             bank = parsed.bank,
             splitType = SplitType.SHARED,
             source = source,

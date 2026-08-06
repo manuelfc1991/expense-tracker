@@ -57,6 +57,11 @@ object BankRules {
         // examined for an amount.
         BankRule("Kerala Gramin Bank", listOf("KGBANK", "KERGRB", "KLGBNK")),
         BankRule("Utkarsh Small Finance Bank", listOf("UTKBNK", "UTKARS")),
+        // The SuperCard is a **RuPay credit card**, which is why the paying account's own
+        // SMS calls it "Rupay Card" and why that row and this one describe the same debt.
+        // It also means this household now has a card whose individual purchases arrive
+        // by SMS — see the note on `Category.TRANSFERS`, which was written when none did.
+        //
         // The SuperCard, which is a credit card and sends from its own header. 297
         // messages on this household's phone — 251 card debits worth ₹44,037 — were
         // discarded unread because only the bank's own two headers were listed. Same

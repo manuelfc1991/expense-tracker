@@ -18,6 +18,12 @@ object SmsDeduplicatorProbe {
         db: AppDatabase,
         parsed: SmsParser.ParsedTxn,
     ): TransactionEntity? {
+        // The bank's own message id first, exactly as the repository does it. It finds
+        // rows no key or window would reach — Kerala Gramin's second SMS for one debit
+        // carries no reference and lands outside the time bucket.
+        parsed.messageId?.takeIf { it.isNotBlank() }?.let { id ->
+            db.transactionDao().findByMessageId(id)?.let { return it }
+        }
         for (key in SmsDeduplicator.candidateKeys(
             parsed.amountPaise, parsed.dedupeAt, parsed.refNo,
         )) {
@@ -36,6 +42,7 @@ object SmsDeduplicatorProbe {
         occurredAt = parsed.occurredAt,
         accountTail = parsed.accountTail,
         refNo = parsed.refNo,
+        bankMessageId = parsed.messageId,
         bank = parsed.bank,
         note = null,
         splitType = SplitType.SHARED.name,

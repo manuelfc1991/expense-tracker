@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ReminderEntity::class,
         SharedRuleEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -76,6 +76,24 @@ abstract class AppDatabase : RoomDatabase() {
          * up, and sync is last-write-wins **per row**, so a link that lived only on the credit
          * would leave the debit on the other phone still counted as spending.
          */
+        /**
+         * The bank's own message id, so one debit reported twice is one row.
+         *
+         * Kerala Gramin sends a detailed SMS and a bare one for the same payment. Only the
+         * detailed one carries a UPI reference, and the pair arrives just over three minutes
+         * apart — outside the dedup window — so both were stored. On this ledger that was a
+         * 1,778 card bill and a 7,177.79 one, 8,955.79 counted twice in a single month.
+         *
+         * Nullable with no default: rows written before this migration genuinely have no
+         * message id, and NULL is the honest way to say so. Two NULLs must never match, which
+         * is why the comparison in SmsDeduplicator requires both sides to be present.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN bankMessageId TEXT")
+            }
+        }
+
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN refundsTxnId TEXT")

@@ -93,6 +93,8 @@ class SmsParser {
          */
         val counterpartyTail: String?,
         val refNo: String?,
+        /** The bank's own id for this message, when it gives one. See [MESSAGE_ID]. */
+        val messageId: String?,
         val balancePaise: Long?,
         val occurredAt: Long,
         val rawBody: String,
@@ -163,6 +165,7 @@ class SmsParser {
                 accountTail = extractAccountTail(body),
                 counterpartyTail = extractCounterpartyTail(body),
                 refNo = extractRefNo(body),
+                messageId = extractMessageId(body),
                 balancePaise = extractBalance(body),
                 occurredAt = parsedDate?.epochMillis ?: receivedAt,
                 rawBody = body,
@@ -403,6 +406,9 @@ class SmsParser {
     fun extractRefNo(body: String): String? =
         REF_NO.find(body)?.groupValues?.get(1)
 
+    fun extractMessageId(body: String): String? =
+        MESSAGE_ID.find(body)?.groupValues?.get(1)
+
     /**
      * Merchant / counterparty, or null when we genuinely cannot tell.
      *
@@ -587,6 +593,26 @@ class SmsParser {
         val ACCOUNT_TAIL = Regex(
             "(?:a/c|ac|acct|account|card|xx|x{2,}|\\*{2,})\\s*(?:no\\.?)?\\s*" +
                 "(?:ending\\s*)?(?:x+|\\*+)?\\s*(\\d{4})\\b",
+            RegexOption.IGNORE_CASE,
+        )
+
+        /**
+         * The bank's own identifier for the message: "Msg Id 2644123773".
+         *
+         * Kerala Gramin sends **two** SMS for one debit — a detailed one carrying a UPI
+         * reference and a bare one carrying none — and both quote the same `Msg Id`. To
+         * the deduplicator they looked like two payments: the references could not match
+         * because only one message had one, and the pair arrived just over three minutes
+         * apart, a hair outside [SmsDeduplicator.WINDOW_MS]. A ₹1,778 card bill and a
+         * ₹7,177.79 one were each counted twice, ₹8,955.79 of a single month.
+         *
+         * Deliberately *not* folded into [REF_NO]. That value is shown on the detail
+         * screen as the reference to quote at the bank, and a message id is not one —
+         * and where a message carries both, the leftmost match would win and change
+         * which number people see.
+         */
+        val MESSAGE_ID = Regex(
+            "\\bmsg(?:\\s*|-)?id\\s*[:.\\-]?\\s*([0-9]{6,20})",
             RegexOption.IGNORE_CASE,
         )
 

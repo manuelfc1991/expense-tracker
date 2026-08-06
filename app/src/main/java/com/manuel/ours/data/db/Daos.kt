@@ -117,6 +117,14 @@ interface TransactionDao {
     suspend fun findByRef(refNo: String): TransactionEntity?
 
     /**
+     * The bank's own message id, which is the only thing tying Kerala Gramin's two
+     * SMS for one debit together. Probed directly because the pair falls outside the
+     * time window `findNearby` searches.
+     */
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND bankMessageId = :id LIMIT 1")
+    suspend fun findByMessageId(id: String): TransactionEntity?
+
+    /**
      * Rows carrying this person's name under some *other* id.
      *
      * A reinstall mints a fresh uid, and rows synced back from the sheet keep the old

@@ -28,6 +28,18 @@ data class TransactionEntity(
     val occurredAt: Long,
     val accountTail: String?,
     val refNo: String?,
+    /**
+     * The bank's own identifier for the message this row came from ("Msg Id 2644123773").
+     *
+     * Identity, not reference. Kerala Gramin sends two SMS for one debit — one with a UPI
+     * reference and one without — and the only thing they share is this number. Dedup
+     * could not see it: the refs could not match when only one message had one, and the
+     * pair landed three minutes and change apart, just outside the window. ₹8,955.79 of
+     * one month was counted twice as a result.
+     *
+     * Never shown. `refNo` is what a person quotes at the bank; this is bookkeeping.
+     */
+    val bankMessageId: String? = null,
     val bank: String?,
     val note: String?,
     val splitType: String,
@@ -135,6 +147,7 @@ fun TransactionEntity.toDomain() = Transaction(
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,
     balancePaise = balancePaise,
+    bankMessageId = bankMessageId,
 )
 
 fun Transaction.toEntity(
@@ -151,6 +164,7 @@ fun Transaction.toEntity(
     occurredAt = occurredAt,
     accountTail = accountTail,
     refNo = refNo,
+    bankMessageId = bankMessageId,
     bank = bank,
     note = note,
     splitType = splitType.name,

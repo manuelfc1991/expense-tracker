@@ -76,6 +76,19 @@ enum class Category(
     // purchase, so the bill is the *only* record. Excluding it hid the money entirely
     // rather than avoiding a double count. If a card whose purchases do arrive by SMS
     // is ever added, this is the line to revisit.
+    //
+    // **That card has now been added.** The Utkarsh SuperCard is a RuPay credit card
+    // whose every purchase arrives from UTKSPR, read since 1 August 2026 — and the
+    // household pays its bill from Kerala Gramin, which is the row the parser labels
+    // "Rupay Card". So for that one card both halves are now recorded: each purchase,
+    // and the bill that settles them.
+    //
+    // Nothing is double-counted yet only because no SuperCard purchase has fallen after
+    // the 1 August floor. The first month it does, this category starts overstating the
+    // total by the size of the bill. The fix is *not* to exclude card bills globally:
+    // the ICICI card's purchases still never arrive, so its bill remains the only record
+    // of that money, and excluding it would hide the spending outright. Whatever replaces
+    // this has to be decided per card, not per category.
     TRANSFERS("Transfers"),
     /**
      * Money moved between two accounts the household owns.
@@ -181,6 +194,11 @@ data class Transaction(
     val amountEditedAt: Long? = null,
     /** Last digits of the account paid, when the bank named one. */
     val counterpartyTail: String? = null,
+    /**
+     * The bank's own id for the message this came from. Identity for dedup, never shown.
+     * See `TransactionEntity.bankMessageId`.
+     */
+    val bankMessageId: String? = null,
     /** On a credit: the purchase this refund cancels. See TransactionEntity.refundsTxnId. */
     val refundsTxnId: String? = null,
     /** On a debit: how much of it has been refunded. */
