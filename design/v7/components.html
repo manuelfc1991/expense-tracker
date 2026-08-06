@@ -93,7 +93,7 @@
           <svg><use href="#i-cloud-check"/></svg></span></div>
         <div class="screen"><div class="screen-body pad" style="padding-top:12px">
           <div class="tape row between"><span class="micro">Today</span></div>
-          <div class="empty">
+          <div class="empty-state">
             <svg><use href="#i-receipt"/></svg>
             <p class="em-title">Nothing yet today</p>
             <p class="em-body">Your bank messages become expenses the moment they arrive — there
@@ -451,7 +451,7 @@
         <span class="micro">Wed 5 Aug</span><span class="micro">₹2,955.19</span></div>
       <button class="entry"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
         <span class="e-main"><span class="e-name cut">Keecheril St</span>
-          <span class="micro">Food · 7:48 am · Manuel</span></span><span class="amt">151.00</span></button>
+          <span class="micro">7:48 am · Manuel</span></span><span class="amt">151.00</span></button>
       <button class="entry"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
         <span class="e-main"><span class="e-name cut">Vezhampasser</span>
           <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button>
@@ -461,9 +461,9 @@
       <button class="entry"><span class="avatar c-income"><svg><use href="#i-cash-coin"/></svg></span>
         <span class="e-main"><span class="e-name cut">Salary — Kerala Gramin</span>
           <span class="micro ok">Income · 1 Aug</span></span><span class="amt ok">+58,200.00</span></button>
-      <button class="entry last" style="opacity:.55"><span class="avatar c-shopping"><svg><use href="#i-bag"/></svg></span>
+      <button class="entry last" ><span class="avatar c-shopping"><svg><use href="#i-bag"/></svg></span>
         <span class="e-main"><span class="e-name cut">Amazon</span>
-          <span class="micro bad">Shopping · 4 Aug · 2 days left</span></span><span class="amt dim">1,299.00</span></button>
+          <span class="micro bad">4 Aug · 2 days left</span></span><span class="amt dim">1,299.00</span></button>
     </div>
     <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
       Selection tints the row and marks its left edge rather than adding a checkbox column — a
@@ -666,14 +666,14 @@
       <div class="notice compact">
         <span class="micro warn">Needs you</span>
         <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Notification access is off</span>
-        <svg style="width:16px;height:16px;fill:var(--warning)"><use href="#i-chevron-right"/></svg>
+        <svg style="width:16px;height:16px;color:var(--warning)"><use href="#i-chevron-right"/></svg>
       </div>
       <div class="notice dashed">
         <div class="row between"><b style="font-size:13px">Not counted</b><span class="amt">7,325.00</span></div>
-        <div class="row"><svg style="width:13px;height:13px;fill:var(--on-surface-variant)"><use href="#i-graph-up-arrow"/></svg>
+        <div class="row"><svg style="width:13px;height:13px;color:var(--on-surface-variant)"><use href="#i-graph-up-arrow"/></svg>
           <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Savings</span>
           <span class="amt dim">5,000.00</span></div>
-        <div class="row"><svg style="width:13px;height:13px;fill:var(--on-surface-variant)"><use href="#i-arrow-left-right"/></svg>
+        <div class="row"><svg style="width:13px;height:13px;color:var(--on-surface-variant)"><use href="#i-arrow-left-right"/></svg>
           <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Ours</span>
           <span class="amt dim">2,325.00</span></div>
         <p class="nt-body">Money put aside is still yours, so it is not spending. Money moved
@@ -715,18 +715,18 @@
     <hr class="hair">
     <span class="demo-lbl">Empty states</span>
     <div class="demo-grid">
-      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-receipt"/></svg>
+      <div class="cell"><div class="empty-state" style="padding:24px 12px"><svg><use href="#i-receipt"/></svg>
         <p class="em-title">Nothing yet this month</p>
         <p class="em-body">Expenses appear here as your bank messages arrive.</p></div></div>
-      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-inboxes"/></svg>
+      <div class="cell"><div class="empty-state" style="padding:24px 12px"><svg><use href="#i-inboxes"/></svg>
         <p class="em-title">Nothing matches “xyz”</p>
         <p class="em-body">Try a shorter search, or clear the category filter.</p>
         <button class="btn btn-text">Clear filter</button></div></div>
-      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-trash"/></svg>
+      <div class="cell"><div class="empty-state" style="padding:24px 12px"><svg><use href="#i-trash"/></svg>
         <p class="em-title">Nothing deleted in the last 30 days</p>
         <p class="em-body">Anything you delete waits here for 30 days, so a mistake stays a
           mistake and does not become a loss.</p></div></div>
-      <div class="cell"><div class="empty" style="padding:24px 12px"><svg style="fill:var(--success)"><use href="#i-check-circle"/></svg>
+      <div class="cell"><div class="empty-state" style="padding:24px 12px"><svg style="color:var(--success)"><use href="#i-check-circle"/></svg>
         <p class="em-title">Everything is sorted</p>
         <p class="em-body">Nothing is waiting on a category.</p></div></div>
     </div>

@@ -34,14 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.core.Money
 import com.manuel.ours.data.sms.SmsParser
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 
 /**
  * Paste an SMS, see exactly what the parser makes of it — including *why* it was
@@ -60,7 +58,7 @@ fun ParserTesterScreen(onBack: () -> Unit) {
         else parser.parse(sender, body, System.currentTimeMillis())
     }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(containerColor = Ours.surface) { padding ->
         Column(
             Modifier
                 .fillMaxSize()
@@ -70,19 +68,7 @@ fun ParserTesterScreen(onBack: () -> Unit) {
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                BiIconView(
-                    BiIcon.Back,
-                    contentDescription = "Back",
-                    tint = Ours.textSecondary,
-                    modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                )
-                Text("PARSER", style = WordmarkStyle, color = Ours.text)
-            }
+            OursTopBar(title = "Parser", onBack = onBack)
 
             MicroLabel("Sender ID")
             PlainField(sender, { sender = it }, "HDFCBK", singleLine = true)
@@ -94,12 +80,12 @@ fun ParserTesterScreen(onBack: () -> Unit) {
                 null -> Text(
                     text = "Paste a bank SMS above to see how it parses.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
 
                 is SmsParser.Result.Expense -> ResultCard(
                     title = "Parsed as an expense",
-                    color = Ours.positive,
+                    color = Ours.success,
                 ) {
                     val txn = result.txn
                     Field("Amount", Money.format(txn.amountPaise, withDecimals = true))
@@ -121,19 +107,19 @@ fun ParserTesterScreen(onBack: () -> Unit) {
                         text = "Reminders are kept separate from expenses — this is money " +
                             "you owe, not money you've spent.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                 }
 
                 is SmsParser.Result.Ignored -> ResultCard(
                     title = "Ignored",
-                    color = Ours.negative,
+                    color = Ours.error,
                 ) {
                     Field("Reason", result.reason.name.replace('_', ' ').lowercase())
                     Text(
                         text = explain(result.reason),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                 }
             }
@@ -171,7 +157,7 @@ private fun Field(label: String, value: String?) {
         Text(
             text = value ?: "—",
             style = ValueTextStyle.copy(fontSize = 12.sp),
-            color = Ours.text,
+            color = Ours.onSurface,
         )
     }
 }
@@ -189,14 +175,14 @@ private fun PlainField(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
-            .background(Ours.surface)
+            .background(Ours.surfaceContainer)
             .padding(horizontal = 12.dp, vertical = 11.dp),
     ) {
         if (value.isEmpty()) {
             Text(
                 placeholder,
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textLabel,
+                color = Ours.onSurfaceMuted,
             )
         }
         BasicTextField(
@@ -206,8 +192,8 @@ private fun PlainField(
             minLines = minLines,
             textStyle = LocalTextStyle.current
                 .merge(MaterialTheme.typography.bodySmall)
-                .copy(color = Ours.text),
-            cursorBrush = SolidColor(Ours.accent),
+                .copy(color = Ours.onSurface),
+            cursorBrush = SolidColor(Ours.primary),
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -215,8 +201,11 @@ private fun PlainField(
 
 private fun explain(reason: SmsParser.Reason): String = when (reason) {
     SmsParser.Reason.UNKNOWN_SENDER ->
-        "The sender isn't a bank we recognise, or it's a personal phone number. " +
-            "Personal numbers are never parsed."
+        "The sender isn't a bank we recognise and the message doesn't name one, or " +
+            "it's a personal phone number. Personal numbers are never parsed."
+    SmsParser.Reason.BEFORE_SENDER_START ->
+        "This parses fine — it's just older than the date we started counting this " +
+            "account from, so it's left out of the totals on purpose."
     SmsParser.Reason.OTP ->
         "This looks like a one-time password. OTPs contain amounts too, which is " +
             "exactly why they're checked first."

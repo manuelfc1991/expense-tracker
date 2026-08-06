@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,7 +60,7 @@ fun CaptureSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Ours.surface,
+        containerColor = Ours.surfaceContainer,
     ) {
         CaptureSheetContent(txn, suggestions, onDismiss, onCategorize, onRename, onNote)
     }
@@ -117,7 +118,7 @@ fun CaptureSheetContent(
     }
 
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 15.dp).padding(bottom = 26.dp),
+        Modifier.fillMaxWidth().imePadding().padding(horizontal = 15.dp).padding(bottom = 26.dp),
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         Row(
@@ -130,7 +131,7 @@ fun CaptureSheetContent(
                     txn.merchant,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                 )
                 MicroLabel(listOfNotNull(txn.bank, "just now").joinToString(" · "))
             }
@@ -139,7 +140,7 @@ fun CaptureSheetContent(
         Text(
             Money.whole(txn.amountPaise),
             style = SheetAmountStyle,
-            color = Ours.text,
+            color = Ours.onSurface,
             maxLines = 1,
         )
 
@@ -169,7 +170,7 @@ fun CaptureSheetContent(
                     OursChip(
                         label = option.label,
                         selected = txn.category == option,
-                        icon = BiIcon.forCategory(option),
+                        icon = OursIcon.forCategory(option),
                         onClick = { onCategorize(option) },
                     )
                 }
@@ -236,22 +237,22 @@ private fun CaptureTextDialog(
 
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
-        title = { Text(title, style = MaterialTheme.typography.titleMedium, color = Ours.text) },
+        containerColor = Ours.surfaceContainer,
+        title = { Text(title, style = MaterialTheme.typography.titleMedium, color = Ours.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 androidx.compose.foundation.text.BasicTextField(
                     value = text,
                     onValueChange = { text = it },
                     singleLine = selectAll,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(Ours.accent),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.onSurface),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(Ours.primary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)
                         .padding(vertical = 6.dp),
                 )
-                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
                 if (hint != null) {
                     Row(
                         Modifier.fillMaxWidth().clickable { rememberIt = !rememberIt },
@@ -266,7 +267,7 @@ private fun CaptureTextDialog(
                             Text(
                                 hint,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Ours.text,
+                                color = Ours.onSurface,
                             )
                             MicroLabel("Names every payment to it, past and future")
                         }
@@ -278,11 +279,11 @@ private fun CaptureTextDialog(
             androidx.compose.material3.TextButton(
                 onClick = { onConfirm(text.text, rememberIt) },
                 enabled = text.text.isNotBlank() || hint == null,
-            ) { Text("Save", color = Ours.accent) }
+            ) { Text("Save", color = Ours.primary) }
         },
         dismissButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Ours.textSecondary)
+                Text("Cancel", color = Ours.onSurfaceVariant)
             }
         },
     )

@@ -54,7 +54,7 @@ fun CategoryFilterSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Ours.ink,
+        containerColor = Ours.surface,
     ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 15.dp).padding(bottom = 32.dp),
@@ -81,7 +81,7 @@ fun CategoryFilterSheet(
                         selected = pending == CategoryFilter.Untagged,
                         count = untaggedCount,
                         tint = Ours.warning,
-                        icon = BiIcon.forCategory(Category.OTHER),
+                        icon = OursIcon.forCategory(Category.OTHER),
                         onClick = {
                             pending = if (pending == CategoryFilter.Untagged) {
                                 CategoryFilter.All

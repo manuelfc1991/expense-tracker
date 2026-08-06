@@ -56,6 +56,14 @@ data class SyncPayload(
     val counterpartyTail: String? = null,
     val needsReview: Boolean = false,
     /**
+     * Both halves of a refund link, so the two phones agree about the month's spending.
+     *
+     * Defaulted, so a payload written by an older build decodes as "not a refund" rather than
+     * failing — which is what keeps a mid-rollout household syncing.
+     */
+    val refundsTxnId: String? = null,
+    val refundedPaise: Long = 0,
+    /**
      * The original bank message, so a mis-parse can be diagnosed on either phone.
      *
      * **This is the most sensitive field in the payload** — it carries the account tail

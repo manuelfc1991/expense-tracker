@@ -145,11 +145,20 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND deleteRequestedBy IS NOT NULL")
     fun observeDeleteRequestCount(): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1")
-    fun observeNeedsReviewCount(): Flow<Int>
+    /**
+     * Both of these take the tracking-start cutoff, and must.
+     *
+     * Without it the badge counted rows every list on the app deliberately hides: this
+     * household tracks from 1 August, four `needsReview` rows sit before it, and the
+     * Activity tab therefore advertised four pieces of work that led to an empty Sort
+     * screen and an "Untagged 0" filter. A count you cannot act on is worse than none —
+     * it sends someone looking for work that is not there.
+     */
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1 AND occurredAt >= :since")
+    fun observeNeedsReviewCount(since: Long): Flow<Int>
 
-    @Query("SELECT * FROM transactions WHERE deleted = 0 AND needsReview = 1 ORDER BY occurredAt DESC")
-    fun observeNeedsReview(): Flow<List<TransactionEntity>>
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND needsReview = 1 AND occurredAt >= :since ORDER BY occurredAt DESC")
+    fun observeNeedsReview(since: Long): Flow<List<TransactionEntity>>
 
     @Query(
         """

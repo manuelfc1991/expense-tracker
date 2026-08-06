@@ -155,6 +155,8 @@ dependencies {
 // Lets the throwaway corpus harness receive -Dcorpus=... from the command line.
 tasks.withType<Test>().configureEach {
     systemProperty("corpus", System.getProperty("corpus") ?: "")
+    // Path to a real inbox dump for RealInboxAuditTest, which skips without one.
+    systemProperty("ours.inbox.dump", System.getProperty("ours.inbox.dump") ?: "")
     testLogging { showStandardStreams = true }
 }
 

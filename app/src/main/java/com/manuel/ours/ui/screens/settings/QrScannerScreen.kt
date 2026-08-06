@@ -1,7 +1,9 @@
 package com.manuel.ours.ui.screens.settings
 
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursIconView
 
 
 import android.Manifest
@@ -21,7 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.Color
 import com.manuel.ours.ui.components.AccentButton
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,36 +86,25 @@ fun QrScannerScreen(
         ActivityResultContracts.RequestPermission()
     ) { hasPermission = it }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(containerColor = Ours.surface) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             if (!hasPermission) {
                 Column(
                     Modifier.fillMaxSize().padding(horizontal = 15.dp, vertical = 22.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        BiIconView(
-                            BiIcon.Back,
-                            contentDescription = "Back",
-                            tint = Ours.textSecondary,
-                            modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                        )
-                        Text("SCAN", style = WordmarkStyle, color = Ours.text)
-                    }
+                    OursTopBar(title = "Scan", onBack = onBack)
                     Spacer(Modifier.height(18.dp))
-                    BiIconView(
-                        icon = BiIcon.Camera,
+                    OursIconView(
+                        icon = OursIcon.Camera,
                         contentDescription = null,
-                        tint = Ours.accent,
+                        tint = Ours.primary,
                         modifier = Modifier.size(28.dp),
                     )
                     Text(
                         text = "Camera access is needed to scan your partner's code.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                     AccentButton(
                         label = "Allow camera",
@@ -131,15 +122,15 @@ fun QrScannerScreen(
             // Back sits over the viewfinder rather than in a bar above it: the camera
             // wants the whole screen, and a title telling you what you are pointing at
             // is not worth the strip it costs.
-            BiIconView(
-                BiIcon.Back,
+            // Over the viewfinder rather than in a bar above it: the camera wants the whole
+            // screen. Still a real target — white on a live preview is the hardest thing in the
+            // app to aim at.
+            OursIconButton(
+                icon = OursIcon.Back,
                 contentDescription = "Back",
+                onClick = onBack,
                 tint = Color.White,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(18.dp)
-                    .size(18.dp)
-                    .clickable(onClick = onBack),
+                modifier = Modifier.align(Alignment.TopStart).padding(Space.s2),
             )
 
             Box(

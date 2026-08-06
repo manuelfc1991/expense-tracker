@@ -1,5 +1,6 @@
 package com.manuel.ours.ui.screens.transactions
 
+import kotlinx.coroutines.flow.flowOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.manuel.ours.data.repo.TransactionRepository
@@ -45,6 +46,41 @@ class TransactionDetailViewModel @Inject constructor(
      */
     fun observe(txnId: String): Flow<DetailState> = repository.observeById(txnId)
         .map { txn -> if (txn == null) DetailState.Missing else DetailState.Found(txn) }
+
+    /**
+     * Debits this credit could plausibly be cancelling.
+     *
+     * Same-amount candidates first, because that is the common case, but nothing is preselected
+     * on amount alone: two ₹2,000 movements in a month are far more often two real payments than
+     * a purchase and its refund. Only an exact amount *and* a matching payee earns a highlight,
+     * and even then it is a suggestion.
+     */
+    fun refundCandidates(credit: Transaction): Flow<List<RefundCandidate>> =
+        repository.observeRefundCandidates().map { debits ->
+            debits.map { debit ->
+                RefundCandidate(
+                    txn = debit,
+                    exactAmount = debit.amountPaise - debit.refundedPaise == credit.amountPaise,
+                    samePayee = debit.merchant.equals(credit.merchant, ignoreCase = true),
+                )
+            }.sortedWith(
+                compareByDescending<RefundCandidate> { it.exactAmount && it.samePayee }
+                    .thenByDescending { it.exactAmount }
+                    .thenByDescending { it.txn.occurredAt }
+            )
+        }
+
+    /** The purchase a linked refund cancels, so the detail screen can name and open it. */
+    fun refundedPurchase(txnId: String?): Flow<Transaction?> =
+        if (txnId == null) flowOf(null) else repository.observeById(txnId)
+
+    fun linkRefund(creditId: String, debitId: String, paise: Long) {
+        viewModelScope.launch { repository.linkRefund(creditId, debitId, paise) }
+    }
+
+    fun unlinkRefund(creditId: String) {
+        viewModelScope.launch { repository.unlinkRefund(creditId) }
+    }
 
     fun recategorize(txnId: String, category: Category) {
         // learn = true writes a merchant rule, so this merchant lands correctly
@@ -142,4 +178,19 @@ class TransactionDetailViewModel @Inject constructor(
             }
         }
     }
+}
+
+/**
+ * A purchase a refund might be cancelling, with why it is being offered.
+ *
+ * The two flags are kept apart rather than collapsed into a score, because they mean different
+ * things to the reader: the amount matching is a strong hint, the payee matching is what makes it
+ * safe to highlight.
+ */
+data class RefundCandidate(
+    val txn: Transaction,
+    val exactAmount: Boolean,
+    val samePayee: Boolean,
+) {
+    val recommended: Boolean get() = exactAmount && samePayee
 }

@@ -37,19 +37,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.ui.components.GhostButton
+import com.manuel.ours.ui.components.StatementSkeleton
+import com.manuel.ours.ui.components.EmptyState
 import com.manuel.ours.ui.components.AmountColumn
-import com.manuel.ours.ui.components.BiIcon
+import com.manuel.ours.ui.components.OursIcon
 import com.manuel.ours.ui.components.CategoryGrid
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.Ruler
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 
-private val EDGE = 15.dp
 
 /**
  * Sorting, grouped by merchant.
@@ -74,47 +76,37 @@ fun SortScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                OursTopBar(
+                    title = "SORT",
+                    onBack = onBack,
                 ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("SORT", style = WordmarkStyle, color = Ours.text)
-                }
-                MicroLabel(
+                    MicroLabel(
                     "${state.totalRemaining} left · ${state.groups.size} " +
                         if (state.groups.size == 1) "group" else "groups"
                 )
+                }
             }
-        }
 
         item {
             val sorted = (state.startingTotal - state.totalRemaining).toFloat()
             Ruler(
                 fraction = if (state.startingTotal > 0) sorted / state.startingTotal else 0f,
                 height = 12.dp,
-                modifier = Modifier.padding(horizontal = EDGE),
+                modifier = Modifier.padding(horizontal = Space.edge),
             )
         }
 
         if (state.loading) {
-            item { QuietEmpty("Looking through this month", modifier = Modifier.padding(top = 24.dp)) }
+            item { StatementSkeleton(Modifier.padding(horizontal = Space.edge, vertical = Space.s3)) }
         } else if (state.groups.isEmpty()) {
             item {
-                QuietEmpty(
-                    "Everything is sorted",
-                    icon = BiIcon.Done,
-                    modifier = Modifier.padding(top = 24.dp),
+                EmptyState(
+                    title = "Everything is sorted",
+                    body = "Every payment has a category, and the rules you set along the way " +
+                        "will handle the next ones.",
+                    icon = OursIcon.Done,
+                    iconTint = Ours.success,
+                    action = { GhostButton("Back to Activity", onClick = onBack) },
                 )
             }
         } else {
@@ -153,17 +145,17 @@ private fun GroupCard(
     // A sorted group fades instead of disappearing. Rows vanishing under your thumb
     // makes the list feel unstable and costs you the chance to notice a mistake.
     val edge = when {
-        done -> Ours.hairline
+        done -> Ours.outlineVariant
         group.unknownPayee -> Ours.warning.copy(alpha = 0.35f)
-        else -> Ours.hairline
+        else -> Ours.outlineVariant
     }
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = EDGE)
+            .padding(horizontal = Space.edge)
             .alpha(if (done) 0.45f else 1f)
             .clip(RoundedCornerShape(13.dp))
-            .background(Ours.surface)
+            .background(Ours.surfaceContainer)
             .border(1.dp, edge, RoundedCornerShape(13.dp))
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp),
@@ -181,13 +173,13 @@ private fun GroupCard(
                     Modifier
                         .size(32.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Ours.positive.copy(alpha = 0.18f)),
+                        .background(Ours.success.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    BiIconView(
-                        BiIcon.Done,
+                    OursIconView(
+                        OursIcon.Done,
                         contentDescription = null,
-                        tint = Ours.positive,
+                        tint = Ours.success,
                         modifier = Modifier.size(15.dp),
                     )
                 }
@@ -197,7 +189,7 @@ private fun GroupCard(
                 CategoryAvatar(
                     category = group.suggestions.firstOrNull() ?: Category.OTHER,
                     size = 32.dp,
-                    overrideIcon = if (group.unknownPayee) BiIcon.NeedsReview else null,
+                    overrideIcon = if (group.unknownPayee) OursIcon.NeedsReview else null,
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -205,7 +197,7 @@ private fun GroupCard(
                     group.merchant,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                     maxLines = 1,
                 )
                 MicroLabel(
@@ -224,26 +216,50 @@ private fun GroupCard(
         } else if (group.unknownPayee) {
             // Plain language, not accounting language. "Uncategorised debit" is a
             // description of the database; this is a description of what happened.
+            // Counted, and said so. This used to read "Held out of spending until you
+            // decide", which was the opposite of the truth: a debit the bank named no
+            // payee for lands in Transfers, and Transfers counts as spending — on the
+            // evidence that 83 of 85 such rows were money sent to somebody else. The
+            // row is in the total from the moment it arrives, so the screen has to say
+            // so, or the one number the household trusts is quietly wrong.
             Text(
-                "The bank named nobody. Held out of spending until you decide.",
+                "The bank named nobody, so it's counted as spending for now.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textSecondary,
+                color = Ours.onSurfaceVariant,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // Filled, as the mockup has it: the likely answer for a payment the
-                // bank named nobody for is that it was money moved, not spent. It is a
-                // recommendation rather than a selection — nothing is applied until it
-                // is tapped — but it is the one chip worth aiming a thumb at.
-                OursChip(
-                    label = "Moving money",
-                    selected = true,
-                    icon = BiIcon.forCategory(Category.TRANSFERS),
-                    onClick = { onAssign(Category.TRANSFERS) },
-                )
+                // "It was spending" is the filled chip, and the money model is why.
+                //
+                // A filled chip is a recommendation, and this one used to recommend
+                // "Moving money" — against the app's own evidence that **83 of 85**
+                // unnamed-payee debits were money sent to other people, not shuffled
+                // between one's own accounts (see `Category.TRANSFERS`). The easiest
+                // tap on the screen was the wrong answer roughly ninety-eight times in
+                // a hundred, and getting it wrong removes a real expense from the
+                // month — the one number the household actually reads.
+                //
+                // Both answers are still one tap. Only the emphasis moved.
                 OursChip(
                     label = "It was spending",
-                    selected = false,
+                    selected = true,
                     onClick = onMore,
+                )
+                // Assigns Ours, not Transfers.
+                //
+                // Tapping this used to write Transfers — the category the row was
+                // already in — so it changed nothing at all: same category, same total,
+                // and the payment came straight back next time. "Moving money" has to
+                // mean money that left one of your accounts for another, which is Ours,
+                // and Ours is neutral.
+                //
+                // Kept because `markSelfTransfers` can only recognise a self-transfer
+                // from the matching pair; when the other leg never arrives as a message,
+                // a person saying so is the only evidence there is.
+                OursChip(
+                    label = "Moving money",
+                    selected = false,
+                    icon = OursIcon.forCategory(Category.SELF_TRANSFER),
+                    onClick = { onAssign(Category.SELF_TRANSFER) },
                 )
             }
         } else {
@@ -255,7 +271,7 @@ private fun GroupCard(
                         // one-tap path is obvious at a glance. Ninety-four rows become
                         // six decisions only if each decision is already half-made.
                         selected = index == 0,
-                        icon = BiIcon.forCategory(category),
+                        icon = OursIcon.forCategory(category),
                         iconTint = Ours.forCategory(category),
                         onClick = { onAssign(category) },
                     )
@@ -280,10 +296,10 @@ private fun CategorySheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Ours.ink,
+        containerColor = Ours.surface,
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = EDGE).padding(bottom = 28.dp),
+            Modifier.fillMaxWidth().padding(horizontal = Space.edge).padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MicroLabel(group.merchant)
@@ -291,7 +307,7 @@ private fun CategorySheet(
                 "${group.count} ${if (group.count == 1) "payment" else "payments"} · " +
                     Money.exact(group.totalPaise),
                 style = MaterialTheme.typography.titleMedium,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             // The same grid as the detail screen, the add sheet and the filter.
             //

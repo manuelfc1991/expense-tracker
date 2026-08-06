@@ -14,9 +14,22 @@ data class BankRule(
     val merchantPatterns: List<Regex> = emptyList(),
     val isCard: Boolean = false,
     val isWallet: Boolean = false,
+    /**
+     * Ignore anything this sender wrote before this instant. Zero means no floor.
+     *
+     * For a sender adopted part-way through a household's history. Teaching the app a
+     * header it has been discarding for months does not just fix the future — it makes
+     * every old message suddenly readable, and a backfill will happily post all of them
+     * into months whose totals the household has already read, reconciled and moved on
+     * from. The floor keeps a correction to the parser from rewriting the past.
+     */
+    val notBefore: Long = 0L,
 )
 
 object BankRules {
+
+    /** 1 August 2026, 00:00 in Asia/Kolkata. See [BankRule.notBefore]. */
+    const val AUGUST_2026 = 1_785_522_600_000L
 
     val ALL: List<BankRule> = listOf(
         BankRule("HDFC Bank", listOf("HDFCBK", "HDFCBN", "HDFCB", "HDFC")),
@@ -32,7 +45,9 @@ object BankRules {
         BankRule("Yes Bank", listOf("YESBNK", "YESBK")),
         BankRule("IDFC First", listOf("IDFCFB", "IDFCBK")),
         BankRule("IndusInd Bank", listOf("INDUSB", "INDUSI")),
-        BankRule("Federal Bank", listOf("FEDBNK", "FEDERL")),
+        // FEDSMS is not a typo of FEDBNK. Federal sends from both, and this household's
+        // ₹52 credit on 06 Aug 2026 arrived from FEDSMS and was discarded unread.
+        BankRule("Federal Bank", listOf("FEDBNK", "FEDERL", "FEDSMS", "FEDBNK1")),
         // Regional and small-finance banks. These matter far more than their size
         // suggests: a household usually banks with exactly one of them, so a missing
         // header here is not a few stray messages, it is every salary credit and every
@@ -42,6 +57,22 @@ object BankRules {
         // examined for an amount.
         BankRule("Kerala Gramin Bank", listOf("KGBANK", "KERGRB", "KLGBNK")),
         BankRule("Utkarsh Small Finance Bank", listOf("UTKBNK", "UTKARS")),
+        // The SuperCard, which is a credit card and sends from its own header. 297
+        // messages on this household's phone — 251 card debits worth ₹44,037 — were
+        // discarded unread because only the bank's own two headers were listed. Same
+        // shape of failure as Kerala Gramin, same cost.
+        //
+        // Read from 1 August 2026 only, by the household's decision. The unread history
+        // runs back to 15 February and posting it now would move March through July by
+        // tens of thousands of rupees each — months already read and reconciled. The
+        // parser was wrong then; the ledger for those months is what the household
+        // actually worked from, and rewriting it retroactively helps nobody.
+        BankRule(
+            "Utkarsh SuperCard",
+            listOf("UTKSPR", "UTKSPC"),
+            isCard = true,
+            notBefore = AUGUST_2026,
+        ),
         BankRule("Karnataka Bank", listOf("KARBNK", "KTKBNK")),
         BankRule("South Indian Bank", listOf("SIBSMS", "SOUTHB")),
         BankRule("Indian Bank", listOf("INDBNK", "ALLBNK")),
@@ -106,10 +137,79 @@ object BankRules {
         taught = headerToBank.mapKeys { it.key.uppercase().trim() }
     }
 
+    /**
+     * Headers this phone worked out for itself, from the shape of a message.
+     *
+     * The compiled table and the sheet both need a person to notice something is missing
+     * first, and the whole difficulty is that a header nobody has heard of fails
+     * *silently* — there is no error, just a bank that stopped existing. This is the
+     * third source: a message that carries an amount, a settled verb and an account
+     * number is a bank alert whoever sent it, and if it also names its bank in words we
+     * know exactly which one.
+     *
+     * Kept separate from [taught] so that what a phone guessed can always be told apart
+     * from what a person confirmed.
+     */
+    @Volatile
+    private var discovered: Map<String, String> = emptyMap()
+
+    /** Header → bank, for everything this phone has worked out but nobody has confirmed. */
+    fun discoveredSenders(): Map<String, String> = discovered
+
+    @Synchronized
+    fun rememberDiscovered(sender: String, bank: String) {
+        val header = normaliseHeader(sender) ?: return
+        if (byHeader.containsKey(header) || taught.containsKey(header)) return
+        if (discovered[header] == bank) return
+        discovered = discovered + (header to bank)
+    }
+
+    /** Only for tests, and for a person rejecting a guess. */
+    @Synchronized
+    fun forgetDiscovered(header: String? = null) {
+        discovered = if (header == null) emptyMap()
+        else discovered - header.uppercase().trim()
+    }
+
+    /**
+     * The bank a message names in its own text, if it is one we know.
+     *
+     * Indian bank SMS almost always sign off — "-Federal Bank", "-SBI". That signature is
+     * far stronger evidence than any guess made from six letters of a sender ID, so when
+     * it is present it wins.
+     */
+    fun bankNamedIn(body: String): String? {
+        val lower = body.lowercase()
+        // Whole words, never substrings. "CRED" is a real issuer in this table and it
+        // also sits inside the word *credited*, so a plain `contains` identified the
+        // sender of virtually every bank SMS ever written as CRED — including a
+        // phishing message on this household's phone.
+        // Longest first, so "ICICI Bank" is not claimed by a shorter rule that overlaps.
+        ALL.map { it.bank }
+            .sortedByDescending { it.length }
+            .firstOrNull { Regex("\\b${Regex.escape(it.lowercase())}\\b").containsMatchIn(lower) }
+            ?.let { return it }
+        // Banks abbreviate their own sign-off: Utkarsh Small Finance Bank signs
+        // "-Utkarsh SFBL". The leading word carries the identity, so it is worth
+        // matching on its own — but only where it belongs to exactly one bank, or
+        // "Indian" would have to choose between Indian Bank and Indian Overseas Bank.
+        return DISTINCTIVE_FIRST_WORD.entries
+            .firstOrNull { (word, _) -> Regex("\\b$word\\b").containsMatchIn(lower) }
+            ?.value
+    }
+
+    private val DISTINCTIVE_FIRST_WORD: Map<String, String> = ALL
+        .map { it.bank.substringBefore(' ').lowercase() to it.bank }
+        .filter { it.first.length >= 5 }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.distinct().size == 1 }
+        .mapValues { it.value.first() }
+
     fun forSender(sender: String): BankRule? {
         val header = normaliseHeader(sender) ?: return null
         byHeader[header]?.let { return it }
         taught[header]?.let { return BankRule(bank = it, headers = listOf(header)) }
+        discovered[header]?.let { return BankRule(bank = it, headers = listOf(header)) }
         // Fall back to a prefix match — banks add suffixes like "HDFCBKS", "SBIINBA".
         byHeader.entries.firstOrNull { (key, _) ->
             header.startsWith(key) || key.startsWith(header)

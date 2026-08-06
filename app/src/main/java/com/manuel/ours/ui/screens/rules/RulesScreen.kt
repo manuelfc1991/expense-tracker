@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,15 +44,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 
-private val EDGE = 15.dp
 
 /**
  * Auto-assign rules, one section per category.
@@ -70,44 +72,31 @@ fun RulesScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf<Category?>(null) }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(modifier = Modifier.imePadding(), containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                OursTopBar(
+                    title = "RULES",
+                    onBack = onBack,
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        BiIconView(
-                            BiIcon.Back,
-                            contentDescription = "Back",
-                            tint = Ours.textSecondary,
-                            modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                        )
-                        Text("RULES", style = WordmarkStyle, color = Ours.text)
-                    }
                     MicroLabel("${state.total} rules")
                 }
             }
 
             item {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
                         "Any expense whose payee contains the text is filed here " +
                             "automatically, from now on.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                     // Both of these surprise people, so they are said out loud rather
                     // than left to be discovered.
@@ -116,7 +105,7 @@ fun RulesScreen(
                             "\"reliance\" catches \"Reliance Smart\" too. Money coming in " +
                             "is never matched — credits are always Income.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textLabel,
+                        color = Ours.onSurfaceMuted,
                     )
                 }
             }
@@ -146,7 +135,7 @@ private fun CategorySection(
     onRemove: (Long) -> Unit,
 ) {
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+        Modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         Row(
@@ -160,7 +149,7 @@ private fun CategorySection(
                     group.category.label,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                 )
                 MicroLabel(
                     when (val n = group.rules.size) {
@@ -174,12 +163,12 @@ private fun CategorySection(
                 text = group.rules.count { it.userDefined }.takeIf { it > 0 }?.let { "$it yours" }
                     ?: "",
                 style = ValueTextStyle.copy(fontSize = 11.sp),
-                color = Ours.accent,
+                color = Ours.primary,
             )
-            BiIconView(
-                if (expanded) BiIcon.Collapse else BiIcon.Expand,
+            OursIconView(
+                if (expanded) OursIcon.Collapse else OursIcon.Expand,
                 contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = Ours.textLabel,
+                tint = Ours.onSurfaceMuted,
                 modifier = Modifier.size(11.dp),
             )
         }
@@ -200,7 +189,7 @@ private fun CategorySection(
             }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }
 
@@ -212,8 +201,8 @@ private fun CategorySection(
  */
 @Composable
 private fun RuleChip(rule: Rule, onRemove: () -> Unit) {
-    val edge = if (rule.userDefined) Ours.accent else Ours.hairline
-    val fg = if (rule.userDefined) Ours.text else Ours.textSecondary
+    val edge = if (rule.userDefined) Ours.primary else Ours.outlineVariant
+    val fg = if (rule.userDefined) Ours.onSurface else Ours.onSurfaceVariant
     Row(
         Modifier
             .clip(RoundedCornerShape(8.dp))
@@ -223,12 +212,14 @@ private fun RuleChip(rule: Rule, onRemove: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Text(rule.pattern, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
-        BiIconView(
-            BiIcon.Dismiss,
-            contentDescription = "Remove rule ${rule.pattern}",
-            tint = Ours.textLabel,
-            modifier = Modifier.size(9.dp).clickable(onClick = onRemove),
-        )
+        OursIconButton(
+                        icon = OursIcon.Dismiss,
+                        contentDescription = "Remove rule ${rule.pattern}",
+                        onClick = onRemove,
+                        tint = Ours.onSurfaceMuted,
+                        glyph = 9.dp,
+                        size = Space.target,
+                    )
     }
 }
 
@@ -242,14 +233,14 @@ private fun AddRuleField(onAdd: (String) -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(9.dp))
-                .background(Ours.surface)
+                .background(Ours.surfaceContainer)
                 .padding(horizontal = 11.dp, vertical = 10.dp),
         ) {
             if (text.isEmpty()) {
                 Text(
                     "Payee contains…",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textLabel,
+                    color = Ours.onSurfaceMuted,
                 )
             }
             BasicTextField(
@@ -262,8 +253,8 @@ private fun AddRuleField(onAdd: (String) -> Unit) {
                 ),
                 textStyle = LocalTextStyle.current
                     .merge(MaterialTheme.typography.bodySmall)
-                    .copy(color = Ours.text),
-                cursorBrush = SolidColor(Ours.accent),
+                    .copy(color = Ours.onSurface),
+                cursorBrush = SolidColor(Ours.primary),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

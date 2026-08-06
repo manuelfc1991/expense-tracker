@@ -39,6 +39,16 @@ class AppPrefs @Inject constructor(
         val LAMPORT = longPreferencesKey("lamport")
         val LAST_SYNC_AT = longPreferencesKey("last_sync_at")
         val LAST_SYNC_TRANSPORT = stringPreferencesKey("last_sync_transport")
+
+        /**
+         * Why the last sync did not work, or absent if it did.
+         *
+         * The app had nowhere to record this, which is why it had no error state: a failure
+         * showed as a red line inside a Settings disclosure and nowhere a person would look.
+         * Persisted rather than held in memory because the failure usually happens in a worker,
+         * minutes before anyone opens the app.
+         */
+        val LAST_SYNC_ERROR = stringPreferencesKey("last_sync_error")
         val THEME = stringPreferencesKey("theme")
         val NEARBY_ALWAYS = booleanPreferencesKey("nearby_always")
         val APP_LOCK = booleanPreferencesKey("app_lock")
@@ -118,6 +128,8 @@ class AppPrefs @Inject constructor(
     val lastSyncAt: Flow<Long> = context.dataStore.data.map { it[Keys.LAST_SYNC_AT] ?: 0L }
     val lastSyncTransport: Flow<String?> =
         context.dataStore.data.map { it[Keys.LAST_SYNC_TRANSPORT] }
+    val lastSyncError: Flow<String?> =
+        context.dataStore.data.map { it[Keys.LAST_SYNC_ERROR]?.takeIf { e -> e.isNotBlank() } }
     val nearbyAlways: Flow<Boolean> = context.dataStore.data.map { it[Keys.NEARBY_ALWAYS] ?: false }
     val appLock: Flow<Boolean> = context.dataStore.data.map { it[Keys.APP_LOCK] ?: false }
 
@@ -331,6 +343,16 @@ class AppPrefs @Inject constructor(
         context.dataStore.edit {
             it[Keys.LAST_SYNC_AT] = at
             it[Keys.LAST_SYNC_TRANSPORT] = transport
+            // A success clears the last failure. Otherwise a one-off outage would leave an error
+            // notice on Home for the rest of the month.
+            it.remove(Keys.LAST_SYNC_ERROR)
+        }
+    }
+
+    suspend fun setSyncError(reason: String?) {
+        context.dataStore.edit {
+            if (reason.isNullOrBlank()) it.remove(Keys.LAST_SYNC_ERROR)
+            else it[Keys.LAST_SYNC_ERROR] = reason
         }
     }
 

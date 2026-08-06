@@ -20,16 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.MicroLabel
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.components.TransactionEntry
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 
-private val EDGE = 15.dp
 
 /**
  * What the household has asked to remove, and what the owner decides.
@@ -47,38 +46,26 @@ fun DeleteRequestsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("DELETE REQUESTS", style = WordmarkStyle, color = Ours.text)
-                }
+                OursTopBar(title = "DELETE REQUESTS", onBack = onBack)
             }
 
             if (state.requests.isEmpty()) {
                 item {
-                    QuietEmpty(
-                        "Nothing waiting on you",
-                        // A tick, not the ledger's receipt. QuietEmpty defaults to the
-                        // receipt because most empty states in this app are an empty
-                        // month; an approvals queue with nothing in it is the opposite —
-                        // it is finished, which is what Sort already says with this icon.
-                        icon = BiIcon.Done,
-                        modifier = Modifier.padding(top = 32.dp),
+                    // A tick, not the ledger's receipt: most empty states in this app are an
+                    // empty month, but an approvals queue with nothing in it is the opposite —
+                    // it is finished, which is what Sort already says with this icon.
+                    EmptyState(
+                        title = "Nothing waiting on you",
+                        body = "If someone asks to remove an entry, it appears here and on Home.",
+                        icon = OursIcon.Done,
+                        iconTint = Ours.success,
                     )
                 }
             } else {
@@ -86,8 +73,8 @@ fun DeleteRequestsScreen(
                     Text(
                         "These stay in your totals until you decide.",
                         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
-                        modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+                        color = Ours.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = Space.edge, vertical = 6.dp),
                     )
                 }
 
@@ -95,29 +82,29 @@ fun DeleteRequestsScreen(
                     Column(Modifier.fillMaxWidth()) {
                         TapeHeader(
                             "Asked by ${request.askedBy}",
-                            modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = Space.edge, vertical = 6.dp),
                         )
                         TransactionEntry(
                             txn = request.transaction,
                             showOwner = true,
                             divider = false,
                             onClick = { onTransactionClick(request.transaction.id) },
-                            modifier = Modifier.padding(horizontal = EDGE),
+                            modifier = Modifier.padding(horizontal = Space.edge),
                         )
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 8.dp),
+                            Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(18.dp),
                         ) {
                             MicroLabel(
                                 "Delete it",
-                                color = Ours.negative,
+                                color = Ours.error,
                                 modifier = Modifier.clickable {
                                     viewModel.approve(request.transaction.id)
                                 },
                             )
                             MicroLabel(
                                 "Keep it",
-                                color = Ours.accent,
+                                color = Ours.primary,
                                 modifier = Modifier.clickable {
                                     viewModel.reject(request.transaction.id)
                                 },

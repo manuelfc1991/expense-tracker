@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.theme.Ours
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -137,23 +137,23 @@ private fun LockedScreen(onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ours.ink)
+            .background(Ours.surface)
             .padding(horizontal = 22.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        BiIconView(
-            icon = BiIcon.Locked,
+        OursIconView(
+            icon = OursIcon.Locked,
             contentDescription = null,
-            tint = Ours.accent,
+            tint = Ours.primary,
             modifier = Modifier.size(28.dp),
         )
         Column(Modifier.height(18.dp)) {}
-        Text("Ours is locked", style = MaterialTheme.typography.headlineMedium, color = Ours.text)
+        Text("Ours is locked", style = MaterialTheme.typography.headlineMedium, color = Ours.onSurface)
         Column(Modifier.height(10.dp)) {}
         Text(
             text = "Unlock with your fingerprint, face or screen lock.",
             style = MaterialTheme.typography.bodyLarge,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
         )
         Column(Modifier.height(26.dp)) {}
         AccentButton("Unlock", onClick = onRetry)

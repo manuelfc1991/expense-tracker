@@ -12,31 +12,41 @@ import androidx.compose.ui.unit.sp
 /**
  * Tabular figures, everywhere a number appears.
  *
- * Without this a column of rupee values visibly jitters as digits change, and the
- * right-hand amount column — the thing that makes the list read as a statement rather
- * than a feed — stops lining up at all.
+ * Without this a column of rupee values visibly jitters as digits change, and the right-hand
+ * amount column — the thing that makes the list read as a statement rather than a feed —
+ * stops lining up at all.
  */
 private const val TABULAR = "tnum"
 
 val OursTypography = Typography(
-    // The one very large number. Everything else is restrained specifically so this
-    // can be this big; the jump from a 9sp label to a 48sp figure *is* the hierarchy.
+    // The one very large number. Everything else is restrained specifically so this can be
+    // this big; the jump from an 11sp label to a 44sp figure *is* the hierarchy.
     displayLarge = TextStyle(
         fontFamily = OursMono,
         fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
+        fontSize = 44.sp,
         lineHeight = 44.sp,
-        letterSpacing = (-2.6).sp,
+        letterSpacing = (-2.2).sp,
         fontFeatureSettings = TABULAR,
     ),
-    // The summary's net figure. A step down, because it carries a sign and needs the
-    // room for it without wrapping.
+    // The summary's net figure and the detail screen's amount. A step down, because it carries
+    // a sign and needs the room for it without wrapping.
     displayMedium = TextStyle(
         fontFamily = OursMono,
         fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        lineHeight = 38.sp,
-        letterSpacing = (-2.0).sp,
+        fontSize = 34.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-1.4).sp,
+        fontFeatureSettings = TABULAR,
+    ),
+    // The figure a bottom sheet leads with. A sheet is not a screen: it sits over one, keeps
+    // its own grab handle above it, and still has a grid and two buttons to fit underneath.
+    displaySmall = TextStyle(
+        fontFamily = OursMono,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 32.sp,
+        letterSpacing = (-0.8).sp,
         fontFeatureSettings = TABULAR,
     ),
     headlineMedium = TextStyle(
@@ -44,6 +54,7 @@ val OursTypography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
+        letterSpacing = (-0.2).sp,
     ),
     headlineSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -60,8 +71,14 @@ val OursTypography = Typography(
     titleMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 19.sp,
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
+    ),
+    titleSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -69,7 +86,7 @@ val OursTypography = Typography(
         fontSize = 15.sp,
         lineHeight = 22.sp,
     ),
-    // The merchant name on an entry row: 13px semibold in the mockup.
+    // The merchant name on an entry row, at SemiBold.
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
@@ -85,53 +102,53 @@ val OursTypography = Typography(
     labelLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
+        fontSize = 14.sp,
         letterSpacing = 0.1.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        letterSpacing = 0.1.sp,
+        fontSize = 12.sp,
+        letterSpacing = 0.4.sp,
     ),
     labelSmall = TextStyle(
         fontFamily = OursMono,
         fontWeight = FontWeight.Medium,
-        fontSize = 9.sp,
-        letterSpacing = 1.6.sp,
+        fontSize = 11.sp,
+        letterSpacing = 1.5.sp,
     ),
 )
 
 /**
- * The small uppercase caption that sits **above** every value — "SPENT THIS MONTH",
- * "BUDGET", "LEFT". Never beside: the eye should land on the number first and only
- * read the caption if it needs to.
+ * The small uppercase caption that sits **above** every value — "SPENT THIS MONTH", "BUDGET",
+ * "LEFT". Never beside: the eye should land on the number first and only read the caption if
+ * it needs to.
  *
- * The wide tracking is what makes 9sp read as a deliberate caption rather than as
- * body text someone forgot to enlarge.
+ * **11sp, not 9sp.** This is the most-used style in the app — it captions every figure on
+ * every screen — and 9sp is below Material's own `labelSmall` floor and hard for a lot of
+ * readers. The wide tracking is what signals "this is a deliberate caption rather than body
+ * text someone forgot to enlarge", so nothing is lost by giving it the extra two points.
+ *
+ * The cost is real and was budgeted for: roughly 4–6dp of extra height per captioned figure,
+ * and about 3 characters off the width of a row caption. The row caption is one line with
+ * ellipsis, so anything that overflows loses its tail rather than wrapping — which is why the
+ * captions were re-composed to fit 25 characters. See `design/v7/design-system.html`.
  */
 val MicroLabelStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
-    fontSize = 9.sp,
-    lineHeight = 12.sp,
-    letterSpacing = 1.6.sp,
+    fontSize = 11.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 1.5.sp,
 )
 
-/**
- * The figure a bottom sheet leads with — the amount being captured or entered.
- *
- * A step below [Typography.displayMedium] because a sheet is not a screen: it sits over
- * one, keeps its own top rule and grab handle above it, and still has a grid and two
- * buttons to fit underneath. The detail screen's hero can be the largest thing in view;
- * this one only has to be the largest thing in the sheet.
- */
+/** The figure a bottom sheet leads with. Kept as a name for the call sites that read better. */
 val SheetAmountStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Bold,
-    fontSize = 35.sp,
-    lineHeight = 38.sp,
-    letterSpacing = (-1.4).sp,
+    fontSize = 28.sp,
+    lineHeight = 32.sp,
+    letterSpacing = (-0.8).sp,
     fontFeatureSettings = TABULAR,
 )
 
@@ -156,10 +173,10 @@ val WordmarkStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Bold,
     fontSize = 14.sp,
-    letterSpacing = 3.6.sp,
+    letterSpacing = 3.4.sp,
 )
 
-/** The month stepper — "JULY 2026". */
+/** The month stepper — "AUGUST 2026". */
 val MonthTitleStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
@@ -171,8 +188,8 @@ val MonthTitleStyle = TextStyle(
 val AxisLabelStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
-    fontSize = 9.sp,
-    letterSpacing = 0.9.sp,
+    fontSize = 10.sp,
+    letterSpacing = 0.8.sp,
     fontFeatureSettings = TABULAR,
 )
 
@@ -180,14 +197,54 @@ val AxisLabelStyle = TextStyle(
 val PillTextStyle = TextStyle(
     fontFamily = OursMono,
     fontWeight = FontWeight.Medium,
-    fontSize = 9.sp,
-    letterSpacing = 1.1.sp,
+    fontSize = 10.sp,
+    letterSpacing = 1.0.sp,
 )
 
+/**
+ * The Material 3 shape scale, exactly.
+ *
+ * The set this replaces (6/9/13/16/22dp) sat near these values without landing on them, so
+ * nothing could be reused between two components without someone making a rounding decision.
+ *
+ * extraSmall snackbar · small chips, grid cells, small fields · medium panels, notices,
+ * the action card · large FAB · extraLarge dialogs and bottom sheets.
+ */
 val OursShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(9.dp),
-    medium = RoundedCornerShape(13.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
     large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
+
+/**
+ * The 4dp baseline grid, and the one screen gutter.
+ *
+ * Every screen used to declare its own `private val EDGE = 15.dp`, eight times over, off-grid.
+ * One token, on the grid, in one place.
+ */
+object Space {
+    val s1 = 4.dp
+    val s2 = 8.dp
+    val s3 = 12.dp
+    val s4 = 16.dp
+    val s5 = 20.dp
+    val s6 = 24.dp
+    val s8 = 32.dp
+    val s10 = 40.dp
+    val s12 = 48.dp
+
+    /** The screen gutter. Was 15dp. */
+    val edge = 16.dp
+
+    /**
+     * The Material minimum touch target, and the absolute floor for two adjacent controls.
+     *
+     * Named so they can be cited in review rather than re-argued. The build this replaces
+     * tapped bare glyphs — a 16dp back arrow, a 13dp bill dismiss, a 9dp rule-chip delete on a
+     * destructive action — all of them under half the minimum.
+     */
+    val target = 48.dp
+    val targetTight = 40.dp
+}

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +21,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -48,28 +53,34 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.Trash
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
+import com.manuel.ours.domain.model.TxnType
+import com.manuel.ours.ui.components.AccentButton
+import com.manuel.ours.ui.components.TransactionEntry
+import com.manuel.ours.ui.components.NoticeTone
+import com.manuel.ours.ui.components.Notice
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.CategoryGrid
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconButton
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val EDGE = 15.dp
 
 /**
  * One entry, opened up.
@@ -94,6 +105,7 @@ fun TransactionDetailScreen(
     var editingAmount by remember { mutableStateOf<String?>(null) }
     var editingNote by remember { mutableStateOf<String?>(null) }
     var confirmingDelete by remember { mutableStateOf(false) }
+    var pickingRefund by remember { mutableStateOf(false) }
 
     editingNote?.let { draft ->
         NoteDialog(
@@ -117,11 +129,11 @@ fun TransactionDetailScreen(
     if (confirmingDelete && txn != null) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            containerColor = Ours.surface,
+            containerColor = Ours.surfaceContainer,
             title = {
                 Text(
                     if (isOwner) "Delete this entry?" else "Ask to remove this?",
-                    color = Ours.text,
+                    color = Ours.onSurface,
                 )
             },
             text = {
@@ -146,7 +158,7 @@ fun TransactionDetailScreen(
                             "The household owner has to agree, and it still counts until they do."
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -158,12 +170,24 @@ fun TransactionDetailScreen(
                         // the list with nothing to explain why.
                         viewModel.delete(txnId)
                     },
-                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.negative) }
+                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.error) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmingDelete = false }) {
-                    Text("Cancel", color = Ours.textSecondary)
+                    Text("Cancel", color = Ours.onSurfaceVariant)
                 }
+            },
+        )
+    }
+
+    if (pickingRefund) {
+        RefundPickerSheet(
+            credit = txn,
+            viewModel = viewModel,
+            onDismiss = { pickingRefund = false },
+            onPick = { debitId, paise ->
+                viewModel.linkRefund(txnId, debitId, paise)
+                pickingRefund = false
             },
         )
     }
@@ -211,7 +235,8 @@ fun TransactionDetailScreen(
     }
 
     Scaffold(
-        containerColor = Ours.ink,
+        modifier = Modifier.imePadding(),
+        containerColor = Ours.surface,
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->
         // A row can vanish while its notification is still in the tray — the other
@@ -222,23 +247,16 @@ fun TransactionDetailScreen(
                 Modifier.fillMaxSize().padding(padding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("ENTRY", style = WordmarkStyle, color = Ours.text)
-                }
-                QuietEmpty(
-                    text = "This entry is no longer here",
-                    icon = BiIcon.NoResults,
-                    modifier = Modifier.padding(top = 32.dp),
+                OursTopBar(title = "Entry", onBack = onBack)
+                // A row can vanish while its notification is still in the tray — the other
+                // phone deleted it, or an approved delete synced across. Rendering nothing left
+                // a blank page with no way to tell a slow load from a missing row.
+                EmptyState(
+                    title = "This entry is no longer here",
+                    body = "It was removed on the other phone, or an approved delete has synced " +
+                        "across.",
+                    icon = OursIcon.NoResults,
+                    action = { GhostButton("Back to Activity", onClick = onBack) },
                 )
             }
             return@Scaffold
@@ -253,30 +271,15 @@ fun TransactionDetailScreen(
                 .padding(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("ENTRY", style = WordmarkStyle, color = Ours.text)
-                }
-                BiIconView(
-                    BiIcon.Delete,
-                    contentDescription = "Delete",
-                    tint = Ours.negative,
-                    modifier = Modifier
-                        .size(15.dp)
-                        .clickable { confirmingDelete = true },
+            OursTopBar(title = "Entry", onBack = onBack) {
+                // Was a 15dp glyph a thumb's width from Back, on the one control here that
+                // destroys a row — and the row may be a hand-made entry that exists in no
+                // backup. A 48dp target at the far end of the bar, in the error colour.
+                OursIconButton(
+                    icon = OursIcon.Delete,
+                    contentDescription = "Delete this entry",
+                    onClick = { confirmingDelete = true },
+                    tint = Ours.error,
                 )
             }
 
@@ -284,12 +287,12 @@ fun TransactionDetailScreen(
                 MicroLabel(
                     "Asked the household owner to remove this — it still counts until they agree",
                     color = Ours.warning,
-                    modifier = Modifier.padding(horizontal = EDGE),
+                    modifier = Modifier.padding(horizontal = Space.edge),
                 )
             }
 
             Column(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 Row(
@@ -305,13 +308,18 @@ fun TransactionDetailScreen(
                         Text(
                             current.merchant,
                             style = MaterialTheme.typography.titleLarge,
-                            color = Ours.text,
+                            color = Ours.onSurface,
                             modifier = Modifier.clickable { renaming = current.merchant },
                         )
                         MicroLabel(
-                            Instant.ofEpochMilli(current.occurredAt)
-                                .atZone(ZoneId.systemDefault())
-                                .format(DateTimeFormatter.ofPattern("d MMM yyyy · h:mm a"))
+                            // Date alone when the bank gave no clock time. This is the screen
+                            // people reconcile against a bank statement, so an invented
+                            // "12:00 am" is worse here than anywhere else in the app.
+                            OursZone.format(
+                                current.occurredAt,
+                                if (OursZone.isDateOnly(current.occurredAt)) OursZone.date
+                                else OursZone.dateTime,
+                            )
                         )
                     }
                 }
@@ -320,7 +328,7 @@ fun TransactionDetailScreen(
                 Text(
                     text = Money.format(current.amountPaise, withDecimals = true),
                     style = MaterialTheme.typography.displayMedium,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                     maxLines = 1,
                     modifier = if (canEditAmount) {
                         Modifier.clickable {
@@ -335,26 +343,86 @@ fun TransactionDetailScreen(
                 // the least it can do is admit that somebody changed it.
                 current.amountEditedAt?.let { at ->
                     MicroLabel(
-                        "Amount edited by hand · " + Instant.ofEpochMilli(at)
-                            .atZone(ZoneId.systemDefault())
-                            .format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+                        "Amount edited by hand · " + OursZone.format(at, OursZone.date),
                         color = Ours.warning,
                     )
                 }
             }
 
-            TapeHeader("Category", modifier = Modifier.padding(horizontal = EDGE))
+            // A credit that might be money coming back rather than money earned.
+            //
+            // Every credit that is not a maturing investment becomes Income, so a ₹2,000 return
+            // leaves the ledger holding a ₹2,000 debit *and* a ₹2,000 credit: net worth right,
+            // spending overstated by ₹2,000, and the budget charged for a purchase that was
+            // undone. Only a person can say which credits are refunds — matching on amount is the
+            // trap this exists to avoid — so it is asked, once, and only where it can apply.
+            if (current.type == TxnType.CREDIT) {
+                val purchase by viewModel.refundedPurchase(current.refundsTxnId)
+                    .collectAsStateWithLifecycle(initialValue = null)
+
+                if (current.refundsTxnId == null) {
+                    Notice(
+                        tone = NoticeTone.Info,
+                        title = "Is this money coming back?",
+                        body = "Credits count as income. If this is a refund for something you " +
+                            "bought, say so and it will cancel that purchase instead of " +
+                            "inflating what you earned.",
+                        modifier = Modifier.padding(horizontal = Space.edge),
+                        action = {
+                            GhostButton(
+                                label = "This is a refund",
+                                onClick = { pickingRefund = true },
+                            )
+                        },
+                    )
+                } else {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = Space.edge),
+                        verticalArrangement = Arrangement.spacedBy(Space.s2),
+                    ) {
+                        TapeHeader("Cancels")
+                        purchase?.let { debit ->
+                            TransactionEntry(
+                                txn = debit,
+                                divider = false,
+                                dimAmount = true,
+                                captionOverride = buildString {
+                                    append(OursZone.format(debit.occurredAt, OursZone.day))
+                                    append(" · ")
+                                    append(
+                                        if (debit.refundedPaise >= debit.amountPaise) {
+                                            "fully refunded"
+                                        } else {
+                                            "partly refunded"
+                                        }
+                                    )
+                                },
+                                onClick = { /* already the pair; opening it would loop */ },
+                            )
+                        }
+                        MicroLabel(
+                            "Refund · not counted as income",
+                        )
+                        GhostButton(
+                            label = "Unlink",
+                            onClick = { viewModel.unlinkRefund(txnId) },
+                        )
+                    }
+                }
+            }
+
+            TapeHeader("Category", modifier = Modifier.padding(horizontal = Space.edge))
             CategoryGrid(
                 selected = current.category,
                 onSelect = { viewModel.recategorize(txnId, it) },
-                modifier = Modifier.padding(horizontal = EDGE),
+                modifier = Modifier.padding(horizontal = Space.edge),
             )
 
             TapeHeader(
                 "Note",
                 trailing = if (current.note.isNullOrBlank()) null else "Edit",
                 modifier = Modifier
-                    .padding(horizontal = EDGE)
+                    .padding(horizontal = Space.edge)
                     .clickable { editingNote = current.note.orEmpty() },
             )
             // The only field holding something the bank could never have sent, and the
@@ -364,7 +432,7 @@ fun TransactionDetailScreen(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = EDGE)
+                    .padding(horizontal = Space.edge)
                     .clickable { editingNote = current.note.orEmpty() }
             ) {
                 if (current.note.isNullOrBlank()) {
@@ -373,14 +441,14 @@ fun TransactionDetailScreen(
                     Text(
                         current.note!!,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                 }
             }
 
-            TapeHeader("Counts as", modifier = Modifier.padding(horizontal = EDGE))
+            TapeHeader("Counts as", modifier = Modifier.padding(horizontal = Space.edge))
             Row(
-                Modifier.padding(horizontal = EDGE),
+                Modifier.padding(horizontal = Space.edge),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 OursChip(
@@ -395,9 +463,9 @@ fun TransactionDetailScreen(
                 )
             }
 
-            TapeHeader("Where it came from", modifier = Modifier.padding(horizontal = EDGE))
+            TapeHeader("Where it came from", modifier = Modifier.padding(horizontal = Space.edge))
             Column(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                 verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
                 DetailRow("Paid by", current.ownerName)
@@ -410,23 +478,23 @@ fun TransactionDetailScreen(
             // The raw SMS is kept locally so a mis-parse can be diagnosed. It is never
             // synced — this text exists only on the phone that received it.
             current.rawSms?.let { raw ->
-                TapeHeader("Original message", modifier = Modifier.padding(horizontal = EDGE))
+                TapeHeader("Original message", modifier = Modifier.padding(horizontal = Space.edge))
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                     verticalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(11.dp))
-                            .background(Ours.surface)
+                            .background(Ours.surfaceContainer)
                             .padding(13.dp)
                     ) {
                         Text(
                             text = raw,
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = OursMono,
-                            color = Ours.textSecondary,
+                            color = Ours.onSurfaceVariant,
                         )
                     }
                     MicroLabel("Stays on this phone · never synced")
@@ -452,11 +520,11 @@ private fun DetailRow(label: String, value: String) {
             Text(
                 value,
                 style = ValueTextStyle.copy(fontWeight = FontWeight.Medium),
-                color = Ours.text,
+                color = Ours.onSurface,
                 maxLines = 1,
             )
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }
 
@@ -487,22 +555,22 @@ private fun RenameDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
-        title = { Text("Who was this?", style = MaterialTheme.typography.titleMedium, color = Ours.text) },
+        containerColor = Ours.surfaceContainer,
+        title = { Text("Who was this?", style = MaterialTheme.typography.titleMedium, color = Ours.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BasicTextField(
                     value = text,
                     onValueChange = { text = it },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
-                    cursorBrush = SolidColor(Ours.accent),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.onSurface),
+                    cursorBrush = SolidColor(Ours.primary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)
                         .padding(vertical = 6.dp),
                 )
-                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
 
                 if (accountTail == null) {
                     MicroLabel("Only this row — the bank named no account to remember.")
@@ -520,7 +588,7 @@ private fun RenameDialog(
                             Text(
                                 "Remember account ${'$'}accountTail",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Ours.text,
+                                color = Ours.onSurface,
                             )
                             MicroLabel("Names every payment to it, past and future")
                         }
@@ -532,10 +600,10 @@ private fun RenameDialog(
             TextButton(
                 onClick = { onConfirm(text.text, rememberAccount) },
                 enabled = text.text.isNotBlank(),
-            ) { Text("Save", color = Ours.accent) }
+            ) { Text("Save", color = Ours.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     )
 }
@@ -562,9 +630,9 @@ private fun AmountDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
+        containerColor = Ours.surfaceContainer,
         title = {
-            Text("Correct the amount", style = MaterialTheme.typography.titleMedium, color = Ours.text)
+            Text("Correct the amount", style = MaterialTheme.typography.titleMedium, color = Ours.onSurface)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -573,14 +641,14 @@ private fun AmountDialog(
                     onValueChange = { text = it },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
-                    cursorBrush = SolidColor(Ours.accent),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.onSurface),
+                    cursorBrush = SolidColor(Ours.primary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)
                         .padding(vertical = 6.dp),
                 )
-                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
                 MicroLabel(
                     "The bank's figure is not kept. This row will be marked as edited.",
                     color = Ours.warning,
@@ -591,10 +659,10 @@ private fun AmountDialog(
             TextButton(
                 onClick = { onConfirm(text.text) },
                 enabled = text.text.isNotBlank(),
-            ) { Text("Save", color = Ours.accent) }
+            ) { Text("Save", color = Ours.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     )
 }
@@ -618,31 +686,137 @@ private fun NoteDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
-        title = { Text("Note", style = MaterialTheme.typography.titleMedium, color = Ours.text) },
+        containerColor = Ours.surfaceContainer,
+        title = { Text("Note", style = MaterialTheme.typography.titleMedium, color = Ours.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BasicTextField(
                     value = text,
                     onValueChange = { text = it },
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.text),
-                    cursorBrush = SolidColor(Ours.accent),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ours.onSurface),
+                    cursorBrush = SolidColor(Ours.primary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)
                         .padding(vertical = 6.dp),
                 )
-                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
                 MicroLabel("Only you and your household see this")
             }
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(text.text) }) {
-                Text("Save", color = Ours.accent)
+                Text("Save", color = Ours.primary)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     )
+}
+
+/**
+ * Which purchase a refund cancels.
+ *
+ * Same-amount candidates are offered first and labelled, but **nothing is preselected on amount
+ * alone**: two ₹2,000 movements in a month are far more often two real payments than a purchase
+ * and its refund, and this household has already been bitten by a matcher that was too eager —
+ * two ₹10,000 movements a minute apart, an FD maturing and rent paid to a person, both real. Only
+ * an exact amount *and* a matching payee earns a highlight, and even then it is a recommendation.
+ *
+ * The whole 60 days stay reachable, because a partial refund will not match on amount at all.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RefundPickerSheet(
+    credit: com.manuel.ours.domain.model.Transaction?,
+    viewModel: TransactionDetailViewModel,
+    onDismiss: () -> Unit,
+    onPick: (debitId: String, paise: Long) -> Unit,
+) {
+    if (credit == null) return
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val candidates by viewModel.refundCandidates(credit)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    var chosen by remember { mutableStateOf<String?>(null) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Ours.surfaceContainerLow,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = Space.edge).padding(bottom = Space.s8),
+            verticalArrangement = Arrangement.spacedBy(Space.s3),
+        ) {
+            MicroLabel(
+                "Refund of ${Money.whole(credit.amountPaise)} · " +
+                    OursZone.format(credit.occurredAt, OursZone.day)
+            )
+            Text(
+                "What did this cancel?",
+                style = MaterialTheme.typography.titleMedium,
+                color = Ours.onSurface,
+            )
+
+            if (candidates.isEmpty()) {
+                EmptyState(
+                    title = "No purchases to cancel",
+                    body = "Nothing in the last 60 days is still unrefunded, so there is nothing " +
+                        "for this credit to undo.",
+                    icon = OursIcon.NoResults,
+                )
+            } else {
+                candidates.take(12).forEach { candidate ->
+                    val selected = chosen == candidate.txn.id
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.small)
+                            .background(
+                                if (selected) {
+                                    Ours.primaryFixed.copy(alpha = 0.14f)
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
+                            .clickable { chosen = candidate.txn.id }
+                            .padding(horizontal = Space.s2),
+                    ) {
+                        TransactionEntry(
+                            txn = candidate.txn,
+                            divider = false,
+                            captionOverride = buildString {
+                                append(OursZone.format(candidate.txn.occurredAt, OursZone.day))
+                                if (candidate.recommended) append(" · match")
+                                else if (candidate.exactAmount) append(" · same amount")
+                            },
+                            captionColorOverride = if (candidate.recommended) Ours.primary else null,
+                        )
+                    }
+                }
+                Text(
+                    "A partial refund is fine — the purchase keeps whatever it is not cancelling.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.onSurfaceMuted,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.s2)) {
+                    Box(Modifier.weight(1f)) { GhostButton("Cancel", onClick = onDismiss) }
+                    Box(Modifier.weight(1f)) {
+                        AccentButton(
+                            label = "Link them",
+                            enabled = chosen != null,
+                            dimWhenDisabled = true,
+                            onClick = {
+                                val debit = candidates.first { it.txn.id == chosen }.txn
+                                // Capped at the purchase: a refund larger than the thing it
+                                // refunds is a mis-link, not a windfall.
+                                onPick(debit.id, minOf(credit.amountPaise, debit.amountPaise))
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

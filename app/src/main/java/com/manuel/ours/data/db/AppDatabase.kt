@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ReminderEntity::class,
         SharedRuleEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -63,6 +63,28 @@ abstract class AppDatabase : RoomDatabase() {
          * — backfilling these would have opened Trash on hundreds of rows that dedupe
          * repairs deleted, not a person.
          */
+        /**
+         * Adds the two halves of a refund link.
+         *
+         * Nullable and zero-defaulted, so every row already in the ledger is untouched and reads
+         * as "not a refund and not refunded" — which is what it is. Nothing is backfilled: a
+         * refund is a claim about two rows that only a person can make, and guessing them from
+         * matching amounts is the trap this feature exists to avoid.
+         *
+         * Two columns rather than one on purpose. Each row then says what it is without a join,
+         * which matters twice: the list draws a struck-through amount without looking anything
+         * up, and sync is last-write-wins **per row**, so a link that lived only on the credit
+         * would leave the debit on the other phone still counted as spending.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN refundsTxnId TEXT")
+                db.execSQL(
+                    "ALTER TABLE transactions ADD COLUMN refundedPaise INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN deletedAt INTEGER")

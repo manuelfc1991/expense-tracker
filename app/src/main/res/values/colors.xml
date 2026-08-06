@@ -1,21 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="surface">#FBF9FE</color>
-    <color name="widget_bg">#FFFFFF</color>
-    <color name="widget_text">#141019</color>
-    <color name="widget_text_dim">#5D5A66</color>
+    <!--
+      Colours for the surfaces Compose does not draw: the window before the first frame, the
+      notification, and the home-screen widget. Every value mirrors a role in
+      `ui/theme/Color.kt` and carries that role's name in a comment, because the one thing
+      that must not happen is these drifting from the palette the rest of the app is built on.
+
+      Light scheme; values-night carries the dark one.
+    -->
+
+    <!-- surface — the window behind everything, before Compose has drawn a pixel. -->
+    <color name="surface">#FAFAFC</color>
 
     <!--
       The notification's own palette.
 
-      A notification is drawn by the system, not by Compose, so it cannot read the
-      theme the rest of the app is built from. These mirror the light scheme exactly,
-      with values-night carrying the dark one — otherwise the one surface the user sees
-      most often is the only one that looks like a different app.
+      A notification is inflated by the system process, so it cannot read the theme.
+      DecoratedCustomViewStyle keeps Android's chrome around the custom body, so the background
+      mirrors what the shade already is rather than painting a card inside a card.
     -->
     <color name="notif_bg">#FFFFFF</color>
-    <color name="notif_text">#101014</color>
-    <color name="notif_dim">#79798F</color>
-    <color name="notif_hair">#E3E3EA</color>
-    <color name="notif_accent">#2F5BFF</color>
+    <color name="notif_text">#101014</color>       <!-- onSurface       18.21:1 -->
+    <color name="notif_dim">#5C5D70</color>        <!-- onSurfaceMuted   6.19:1, was #79798F at 4.25:1 -->
+    <color name="notif_hair">#D3D3DD</color>       <!-- outlineVariant -->
+    <color name="notif_accent">#1F44D6</color>     <!-- primary, the TEXT tone: 7.05:1, was #2F5BFF at 3.06:1 on white -->
+
+    <!-- The widget. surfaceContainer, so it reads as part of the app on a busy home screen. -->
+    <color name="widget_bg">#EEEEF3</color>
+    <color name="widget_text">#101014</color>
+    <color name="widget_text_dim">#5C5D70</color>
+    <color name="widget_rule">#D3D3DD</color>      <!-- the ruler's empty ticks -->
+    <color name="widget_fill">#0A7050</color>      <!-- success, the ruler's filled ticks -->
+    <color name="widget_over">#B3123A</color>      <!-- error, once over budget -->
 </resources>

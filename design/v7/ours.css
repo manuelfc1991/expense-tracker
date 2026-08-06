@@ -184,18 +184,18 @@
   --scrim:                     rgba(16, 16, 20, 0.40);
   --shadow:                    rgba(16, 16, 20, 0.22);
 
-  --cat-food:          #A8400C;
-  --cat-groceries:     #0C6E4E;
-  --cat-transport:     #14568C;
-  --cat-shopping:      #6A2BB8;
-  --cat-bills:         #784E06;
-  --cat-rent:          #3049B5;
-  --cat-health:        #99276B;
-  --cat-education:     #59610F;
-  --cat-fun:           #7E2F87;
-  --cat-travel:        #056268;
-  --cat-savings:       #35670F;
-  --cat-emi:           #A62438;
+  --cat-food:          #855028;
+  --cat-groceries:     #157655;
+  --cat-transport:     #0C2E46;
+  --cat-shopping:      #731DAD;
+  --cat-bills:         #3F3312;
+  --cat-rent:          #132274;
+  --cat-health:        #B00949;
+  --cat-education:     #616E0F;
+  --cat-fun:           #691169;
+  --cat-travel:        #115B67;
+  --cat-savings:       #205205;
+  --cat-emi:           #851B2C;
 }
 
 /* ── The type scale ───────────────────────────────────────────────────────
@@ -334,11 +334,18 @@ table.spec-table { width: 100%; border-collapse: collapse; margin: 20px 0 28px; 
 
 /* A row of phones, for state variants side by side. */
 .phones { display: flex; flex-wrap: wrap; gap: 28px; margin: 24px 0 8px; }
+/* Caption under a mockup. The label is tracked-out mono; the sentence after it is not —
+   uppercasing a sentence is the same mistake the app's own settings captions made, where
+   half of them read as SHOUTING AND THEN STOPPING MID-… */
 .phone-cap {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
-  color: #7A7C90; margin: 12px 0 0; text-align: center; max-width: 360px;
+  font-size: 12.5px; line-height: 1.5; color: #8A8CA0;
+  margin: 12px 0 0; max-width: 360px;
 }
-.phone-cap b { color: #E8E8F0; font-weight: 500; display: block; margin-bottom: 3px; }
+.phone-cap b {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
+  color: #E8E8F0; font-weight: 500; display: block; margin-bottom: 5px;
+}
+.phone-cap em { color: #C2C3D4; font-style: italic; }
 
 /* The written half of a screen spec. */
 .spec-block h3 { margin-top: 0; }
@@ -410,6 +417,7 @@ pre.wire {
 .pad { padding-left: var(--edge); padding-right: var(--edge); }
 .stack   > * + * { margin-top: var(--sp-3); }
 .stack-2 > * + * { margin-top: var(--sp-2); }
+.stack-3 > * + * { margin-top: var(--sp-3); }
 .stack-4 > * + * { margin-top: var(--sp-4); }
 .stack-5 > * + * { margin-top: var(--sp-5); }
 .row { display: flex; align-items: center; gap: var(--sp-2); }
@@ -420,7 +428,25 @@ pre.wire {
 
 /* ─── 4. COMPONENT LIBRARY ─────────────────────────────────────────────── */
 
-/* ── Type roles ── */
+/* ── Type roles ──
+   `color: inherit` and `max-width: none` are load-bearing, not tidiness. These roles are
+   mostly set on <p>, and §2's `.doc p { color: …; max-width: 74ch }` beats an inherited
+   value on specificity — so without this every headline figure inside a phone rendered in
+   the documentation's body grey (#A9AABD) instead of the theme's onSurface. It looked
+   almost right on near-black, which is exactly why it survived a first look.
+
+   The `.ours` prefix is what makes it win: `.doc p` is one class plus one type, which
+   outranks a bare `.t-display-l`. Two classes beat it, and scoping to the theme wrapper is
+   also the honest statement — inside a themed surface, a type role takes the theme's
+   colour and nothing else gets a say. */
+.ours .t-display-l, .ours .t-display-m, .ours .t-display-s,
+.ours .t-headline-l, .ours .t-headline-m, .ours .t-headline-s,
+.ours .t-title-l, .ours .t-title-m, .ours .t-title-s,
+.ours .t-body-l, .ours .t-body-m, .ours .t-body-s,
+.ours .t-label-l, .ours .t-label-m {
+  color: inherit; max-width: none;
+}
+
 .t-display-l { font-family: var(--mono); font-weight: 700; font-size: var(--t-display-l-size);
   line-height: var(--t-display-l-lh); letter-spacing: var(--t-display-l-ls);
   font-feature-settings: "tnum"; margin: 0; }
@@ -688,7 +714,7 @@ pre.wire {
 .chip[aria-selected="true"] svg { fill: currentColor; }
 .chip.warn { color: var(--warning); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 50%, transparent); }
 .chip.warn[aria-selected="true"] { background: var(--warning); color: #2A1C00; }
-.chip.tinted svg { fill: var(--c); }
+.chip.tinted svg { color: var(--c); }
 .chip[aria-selected="true"].tinted svg { fill: currentColor; }
 .chiprow { display: flex; gap: 6px; flex-wrap: wrap; }
 .chiprow.scroll { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
@@ -732,7 +758,7 @@ pre.wire {
   background: var(--surface-c); border-radius: var(--shape-full); padding: 0 var(--sp-4);
 }
 .field-filled.boxy { border-radius: var(--shape-sm); min-height: 44px; }
-.field-filled svg { width: 18px; height: 18px; fill: var(--on-surface-variant); flex: 0 0 18px; }
+.field-filled svg { width: 18px; height: 18px; color: var(--on-surface-variant); flex: 0 0 18px; }
 .field-filled .fl-input { flex: 1 1 auto; min-width: 0; font-size: var(--t-body-m-size); }
 
 /* A rupee amount as the hero of a sheet. */
@@ -769,7 +795,7 @@ pre.wire {
 .prow .pr-cap { font-size: var(--t-body-s-size); color: var(--on-surface-variant); }
 .prow .pr-cap.warn { color: var(--warning); } .prow .pr-cap.bad { color: var(--error); }
 .prow .pr-cap.accent { color: var(--primary); }
-.prow > svg.chev { width: 18px; height: 18px; fill: var(--on-surface-muted); flex: 0 0 18px; }
+.prow > svg.chev { width: 18px; height: 18px; color: var(--on-surface-muted); flex: 0 0 18px; }
 
 /* ── Notice / banner ── one thing that is wrong, with the way to fix it.
    Amber when something is merely not running; red only when a figure is wrong. */
@@ -799,7 +825,7 @@ pre.wire {
   color: var(--on-surface-variant); cursor: pointer; font-family: var(--sans);
   font-size: var(--t-label-m-size); font-weight: 500; overflow: hidden;
 }
-.cat-cell svg { width: 14px; height: 14px; fill: var(--c, currentColor); flex: 0 0 14px; }
+.cat-cell svg { width: 14px; height: 14px; color: var(--c, currentColor); flex: 0 0 14px; }
 .cat-cell .n { font-family: var(--mono); font-size: 10px; color: var(--on-surface-muted); }
 .cat-cell[aria-selected="true"] { background: var(--primary-fixed); color: var(--on-primary-fixed); box-shadow: none; }
 .cat-cell[aria-selected="true"] svg { fill: currentColor; }
@@ -874,11 +900,17 @@ pre.wire {
 /* ── Empty state ── says what is missing, never "no data". "Nothing yet this
    month" is a fact about the month; "no data" is a fact about a database the
    reader does not have. */
-.empty { display: flex; flex-direction: column; align-items: center; text-align: center;
+/* `.empty-state`, not `.empty`.
+   A bare state adjective is too generic for a component to own: `.empty` is also wanted as a
+   modifier — a zero-count category cell, an amount field with nothing typed in it — and when
+   this block was called `.empty` those picked up `flex-direction: column` and 40dp of padding
+   from it. A 44dp grid cell became 200dp tall and stacked its icon, label and count. Component
+   names are nouns here; modifiers are adjectives. */
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center;
   gap: var(--sp-3); padding: var(--sp-10) var(--sp-6); }
-.empty > svg { width: 32px; height: 32px; fill: var(--on-surface-muted); }
-.empty .em-title { font-size: var(--t-body-l-size); font-weight: 600; color: var(--on-surface); }
-.empty .em-body  { font-size: var(--t-body-s-size); color: var(--on-surface-muted); max-width: 30ch; }
+.empty-state > svg { width: 32px; height: 32px; color: var(--on-surface-muted); }
+.empty-state .em-title { font-size: var(--t-body-l-size); font-weight: 600; color: var(--on-surface); }
+.empty-state .em-body  { font-size: var(--t-body-s-size); color: var(--on-surface-muted); max-width: 30ch; }
 
 /* ── Tabs ── MD3 primary tabs. The app has none today; Summary needs them. */
 .tabs { display: flex; border-bottom: 1px solid var(--outline-variant); }
@@ -916,7 +948,7 @@ pre.wire {
 .notif .nf-app { display: flex; align-items: center; gap: 6px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
   color: var(--on-surface-muted); }
-.notif .nf-app svg { width: 12px; height: 12px; fill: var(--primary); }
+.notif .nf-app svg { width: 12px; height: 12px; color: var(--primary); }
 .notif .nf-actions { display: flex; gap: var(--sp-2); border-top: 1px solid var(--outline-variant);
   padding-top: var(--sp-2); }
 .notif .nf-actions button {
@@ -1001,7 +1033,7 @@ pre.wire {
   padding: 0 var(--edge); background: var(--surface-c-high);
   border-bottom: 1px solid var(--outline-variant); flex: 0 0 auto;
 }
-.stale-ribbon svg { width: 13px; height: 13px; fill: var(--on-surface-muted); flex: 0 0 13px; }
+.stale-ribbon svg { width: 13px; height: 13px; color: var(--on-surface-muted); flex: 0 0 13px; }
 
 /* Camera viewfinder, for the QR scanner screen. */
 .viewfinder { flex: 1 1 auto; position: relative;
@@ -1017,8 +1049,13 @@ pre.wire {
 /* Utility */
 .mt-0 { margin-top: 0 !important; }
 .tc { text-align: center; }
-.dim { opacity: 0.4; }
-.fade { opacity: 0.45; }
+/* No bare opacity utilities.
+   There were two — `.dim` and `.fade`. `.fade` was never used at all, and `.dim` was only ever
+   written as `class="amt dim"`, where it was actively harmful: `.amt.dim` already means "this
+   amount is in no total", and it says so by taking onSurfaceVariant, which is 9.57:1. The
+   utility then multiplied 40% opacity on top, taking all 31 dimmed amounts in this package down
+   to 2.48:1 — a clear AA failure, and exactly the kind this design system is meant to catch.
+   Dimming is a colour decision, so it belongs to the component that is being dimmed. */
 .nowrap { white-space: nowrap; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 

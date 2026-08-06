@@ -238,7 +238,20 @@
     <code>outline</code> is non-text and needs 3:1.
   </p>
   <div class="tbl-scroll" id="contrast-table">
-    <!-- generated: see tools/validate.py -->
+    <table class="spec-table">
+<tr><th rowspan="2">Role</th><th colspan="3" style="text-align:center">Dark — on…</th><th colspan="3" style="text-align:center">Light — on…</th><th rowspan="2"></th></tr>
+<tr><th>surface</th><th>container</th><th>cont.High</th><th>surface</th><th>container</th><th>cont.High</th></tr>
+<tr><td>onSurface</td><td class="mono"><span class="pass">17.13</span></td><td class="mono"><span class="pass">15.51</span></td><td class="mono"><span class="pass">14.00</span></td><td class="mono"><span class="pass">18.21</span></td><td class="mono"><span class="pass">16.42</span></td><td class="mono"><span class="pass">15.57</span></td><td></td></tr>
+<tr><td>onSurfaceVariant</td><td class="mono"><span class="pass">9.57</span></td><td class="mono"><span class="pass">8.66</span></td><td class="mono"><span class="pass">7.82</span></td><td class="mono"><span class="pass">8.33</span></td><td class="mono"><span class="pass">7.51</span></td><td class="mono"><span class="pass">7.12</span></td><td></td></tr>
+<tr><td>onSurfaceMuted</td><td class="mono"><span class="pass">6.23</span></td><td class="mono"><span class="pass">5.64</span></td><td class="mono"><span class="pass">5.10</span></td><td class="mono"><span class="pass">6.19</span></td><td class="mono"><span class="pass">5.58</span></td><td class="mono"><span class="pass">5.29</span></td><td></td></tr>
+<tr><td>primary</td><td class="mono"><span class="pass">11.16</span></td><td class="mono"><span class="pass">10.10</span></td><td class="mono"><span class="pass">9.12</span></td><td class="mono"><span class="pass">7.05</span></td><td class="mono"><span class="pass">6.36</span></td><td class="mono"><span class="pass">6.03</span></td><td></td></tr>
+<tr><td>success</td><td class="mono"><span class="pass">11.88</span></td><td class="mono"><span class="pass">10.75</span></td><td class="mono"><span class="pass">9.71</span></td><td class="mono"><span class="pass">5.85</span></td><td class="mono"><span class="pass">5.27</span></td><td class="mono"><span class="pass">5.00</span></td><td></td></tr>
+<tr><td>warning</td><td class="mono"><span class="pass">11.90</span></td><td class="mono"><span class="pass">10.77</span></td><td class="mono"><span class="pass">9.73</span></td><td class="mono"><span class="pass">7.18</span></td><td class="mono"><span class="pass">6.47</span></td><td class="mono"><span class="pass">6.13</span></td><td></td></tr>
+<tr><td>error</td><td class="mono"><span class="pass">8.84</span></td><td class="mono"><span class="pass">8.00</span></td><td class="mono"><span class="pass">7.23</span></td><td class="mono"><span class="pass">6.57</span></td><td class="mono"><span class="pass">5.93</span></td><td class="mono"><span class="pass">5.62</span></td><td></td></tr>
+<tr><td>neutral</td><td class="mono"><span class="pass">7.95</span></td><td class="mono"><span class="pass">7.20</span></td><td class="mono"><span class="pass">6.50</span></td><td class="mono"><span class="pass">6.67</span></td><td class="mono"><span class="pass">6.01</span></td><td class="mono"><span class="pass">5.70</span></td><td></td></tr>
+<tr><td>outline</td><td class="mono"><span class="pass">5.72</span></td><td class="mono"><span class="pass">5.18</span></td><td class="mono"><span class="pass">4.68</span></td><td class="mono"><span class="pass">4.33</span></td><td class="mono"><span class="pass">3.90</span></td><td class="mono"><span class="pass">3.70</span></td><td>non-text · needs 3:1</td></tr>
+<tr><td>white on primaryFixed</td><td class="mono" colspan="6" style="text-align:center"><span class="pass">5.17</span> — the same figure in both themes, which is the point of a fixed role</td><td></td></tr>
+</table>
   </div>
 
   <h3>The twelve category hues</h3>
@@ -249,8 +262,72 @@
     purpose, and that is exactly what makes them collapse for a colour-blind reader: once hue
     information is gone, lightness is nearly all the separation left.
   </p>
-  <div id="cat-swatches"><!-- generated --></div>
-  <div id="cvd-table"><!-- generated --></div>
+  <div class="note-box warn">
+    <p class="nb-title">What this palette costs — stated, not hidden</p>
+    <p>
+      Separation was bought with lightness, and lightness is not free. Two honest costs:
+    </p>
+    <p>
+      <strong>Some hues drift from their meaning.</strong> On paper, Bills is
+      <code>#3F3312</code> — a dark olive-brown rather than the amber “utility” was meant to read
+      as, and Transport is <code>#0C2E46</code>, nearly navy rather than a road blue. The hue
+      angles are still right to within 9°; what has gone is the saturation and lightness that made
+      the association obvious. On paper every category ink is dark, which is at least consistent
+      with a statement, but Bills no longer looks like a bill.
+    </p>
+    <p>
+      <strong>Some dark values run brighter than the original band.</strong> Education
+      <code>#C9DA5C</code> and Fun <code>#E048E7</code> sit above the L .51–.62 band the current
+      palette holds itself to, and that band exists for a reason the source states plainly: a
+      brighter pass “would have glared on OLED and fought the text”. These two are the ones to
+      watch on a real phone at night. If either proves uncomfortable, drop its lightness and
+      re-run the validator — the floor to keep is ΔE 10 across all 66 pairs and 4.5:1 on every
+      surface, not any particular hex.
+    </p>
+    <p>
+      Both costs are worth paying, because the thing they buy is a palette a colour-blind reader
+      can use, and the alternative was a palette where Food and Education were the same colour.
+      But they are costs, and the next person to touch these values should know they were chosen
+      against a measured objective rather than by eye.
+    </p>
+  </div>
+
+  <div id="cat-swatches"><div class="ours ours-dark locked"><h4>Dark</h4>
+<div class="swatches">
+<div class="sw"><div class="sw-chip" style="background:#D37E3D"></div><div class="sw-body"><div class="sw-name">Food</div><div class="sw-hex">#D37E3D</div><div class="sw-meta">5.08:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#30CF95"></div><div class="sw-body"><div class="sw-name">Groceries</div><div class="sw-hex">#30CF95</div><div class="sw-meta">7.80:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#74AAD1"></div><div class="sw-body"><div class="sw-name">Transport</div><div class="sw-hex">#74AAD1</div><div class="sw-meta">6.26:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#AA76CB"></div><div class="sw-body"><div class="sw-name">Shopping</div><div class="sw-hex">#AA76CB</div><div class="sw-meta">4.59:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#D7B762"></div><div class="sw-body"><div class="sw-name">Bills</div><div class="sw-hex">#D7B762</div><div class="sw-meta">8.07:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#6286E5"></div><div class="sw-body"><div class="sw-name">Rent</div><div class="sw-hex">#6286E5</div><div class="sw-meta">4.51:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#E85395"></div><div class="sw-body"><div class="sw-name">Health</div><div class="sw-hex">#E85395</div><div class="sw-meta">4.54:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#C9DA5C"></div><div class="sw-body"><div class="sw-name">Education</div><div class="sw-hex">#C9DA5C</div><div class="sw-meta">10.17:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#E048E7"></div><div class="sw-body"><div class="sw-name">Fun</div><div class="sw-hex">#E048E7</div><div class="sw-meta">4.65:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#82D9E2"></div><div class="sw-body"><div class="sw-name">Travel</div><div class="sw-hex">#82D9E2</div><div class="sw-meta">9.65:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#65CE31"></div><div class="sw-body"><div class="sw-name">Savings</div><div class="sw-hex">#65CE31</div><div class="sw-meta">7.76:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#DA6776"></div><div class="sw-body"><div class="sw-name">EMI</div><div class="sw-hex">#DA6776</div><div class="sw-meta">4.60:1 worst</div></div></div>
+</div></div><div class="ours ours-light locked"><h4>Light — dark inks on paper</h4>
+<div class="swatches">
+<div class="sw"><div class="sw-chip" style="background:#855028"></div><div class="sw-body"><div class="sw-name">Food</div><div class="sw-hex">#855028</div><div class="sw-meta">5.42:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#157655"></div><div class="sw-body"><div class="sw-name">Groceries</div><div class="sw-hex">#157655</div><div class="sw-meta">4.59:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#0C2E46"></div><div class="sw-body"><div class="sw-name">Transport</div><div class="sw-hex">#0C2E46</div><div class="sw-meta">11.52:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#731DAD"></div><div class="sw-body"><div class="sw-name">Shopping</div><div class="sw-hex">#731DAD</div><div class="sw-meta">6.87:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#3F3312"></div><div class="sw-body"><div class="sw-name">Bills</div><div class="sw-hex">#3F3312</div><div class="sw-meta">10.17:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#132274"></div><div class="sw-body"><div class="sw-name">Rent</div><div class="sw-hex">#132274</div><div class="sw-meta">11.41:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#B00949"></div><div class="sw-body"><div class="sw-name">Health</div><div class="sw-hex">#B00949</div><div class="sw-meta">5.78:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#616E0F"></div><div class="sw-body"><div class="sw-name">Education</div><div class="sw-hex">#616E0F</div><div class="sw-meta">4.60:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#691169"></div><div class="sw-body"><div class="sw-name">Fun</div><div class="sw-hex">#691169</div><div class="sw-meta">9.14:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#115B67"></div><div class="sw-body"><div class="sw-name">Travel</div><div class="sw-hex">#115B67</div><div class="sw-meta">6.34:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#205205"></div><div class="sw-body"><div class="sw-name">Savings</div><div class="sw-hex">#205205</div><div class="sw-meta">7.58:1 worst</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#851B2C"></div><div class="sw-body"><div class="sw-name">EMI</div><div class="sw-hex">#851B2C</div><div class="sw-meta">7.86:1 worst</div></div></div>
+</div></div></div>
+  <div id="cvd-table"><p>Pairwise CIE76 ΔE across all 66 category pairs, under Machado et al. severity-1.0 simulation. A pair under <strong>ΔE 10</strong> is one most people cannot separate at a glance. v7 has none in either theme; the current build has three to four in each.</p><div class="tbl-scroll"><table class="spec-table">
+<tr><th>Simulation</th><th>v7 dark · min ΔE</th><th>closest pair</th><th>v7 light · min ΔE</th><th>closest pair</th><th>current build · collapsed pairs</th></tr>
+<tr><td>normal</td><td class="mono"><span class="pass">24.8</span></td><td>Health / EMI</td><td class="mono"><span class="pass">20.1</span></td><td>Health / EMI</td><td class="mono"><span class="pass">0 of 66</span></td></tr>
+<tr><td>deuteranopia</td><td class="mono"><span class="pass">10.9</span></td><td>Shopping / Fun</td><td class="mono"><span class="pass">10.2</span></td><td>Bills / EMI</td><td class="mono"><span class="fail">3 of 66</span> — worst Food / Education</td></tr>
+<tr><td>protanopia</td><td class="mono"><span class="pass">10.9</span></td><td>Shopping / Rent</td><td class="mono"><span class="pass">10.6</span></td><td>Health / Travel</td><td class="mono"><span class="fail">4 of 66</span> — worst Bills / Education</td></tr>
+<tr><td>tritanopia</td><td class="mono"><span class="pass">11.1</span></td><td>Health / EMI</td><td class="mono"><span class="pass">10.2</span></td><td>Transport / Rent</td><td class="mono"><span class="fail">4 of 66</span> — worst Groceries / Travel</td></tr>
+</table></div></div>
 </section>
 
 <!-- ══ TYPE ════════════════════════════════════════════════════════════ -->
@@ -338,6 +415,107 @@
     <tr><td>axis <em>(brand)</em></td><td class="mono">mono</td><td class="mono">10</td><td class="mono">500</td><td class="mono">+0.8 tnum</td><td>Chart axis ends.</td></tr>
   </table>
   </div>
+
+  <h3>How a date is written — and in which zone</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:150px">Context</th><th style="width:170px">Format</th><th>Where</th></tr>
+    <tr><td>Row caption</td><td class="mono">7:48 am</td>
+      <td>Today’s rows. The clock alone, because the date rule above already places them.</td></tr>
+    <tr><td>Row caption, older</td><td class="mono">4 Aug</td>
+      <td>Trash, Committed, anywhere a row is not filed under a day. “7:25 pm” for something
+        deleted last week answers a question nobody asked.</td></tr>
+    <tr><td>Day rule</td><td class="mono">Today · Wed 5 Aug</td>
+      <td>Sticky group headers in Activity. Today and Yesterday are named, not dated.</td></tr>
+    <tr><td>Detail</td><td class="mono">3 Aug 2026 · 7:12 pm</td>
+      <td>One entry, where you are reconciling against a statement.</td></tr>
+    <tr><td>Month</td><td class="mono">August 2026</td>
+      <td>The Summary stepper, tracked-out as a wordmark.</td></tr>
+    <tr><td>Relative</td><td class="mono">4m · 3h · 2d</td>
+      <td>Sync freshness only. Never for a transaction — “2d ago” is not a date you can check
+        against a bank statement.</td></tr>
+    <tr><td>Countdown</td><td class="mono">30 days left</td>
+      <td>Trash expiry, and bills due. Amber under a fortnight, red under three days, and the
+        number is printed either way.</td></tr>
+  </table>
+  </div>
+
+  <div class="note-box warn">
+    <p class="nb-title">One zone, not two — the latent bug in <code>docs/REVIEW.md</code> §3</p>
+    <p>
+      All money maths runs in a fixed zone — <code>MonthlyAggregator.ZONE = Asia/Kolkata</code> —
+      and <strong>every date the interface formats runs in another</strong>,
+      <code>ZoneId.systemDefault()</code>: in <code>Statement.kt</code>,
+      <code>SummaryScreen.kt</code>, <code>TransactionDetailScreen.kt</code>,
+      <code>TrashScreen.kt</code>, <code>SettingsScreen.kt</code>, and most consequentially in
+      the tracking-start date picker, which converts the chosen day locally and then compares it
+      against transactions bucketed into months in IST.
+    </p>
+    <p>
+      Both phones sit in IST today, so the two agree and nothing is visibly wrong. Take one phone
+      to another zone and the cutoff moves by hours, and Activity’s day headings stop agreeing
+      with the month totals they sit under. <code>ExportManager</code> and
+      <code>BackupManager</code> already hard-code Asia/Kolkata and are consistent; the interface
+      is the odd one out.
+    </p>
+    <p>
+      <strong>The rule:</strong> every date in this design — caption, day rule, month stepper,
+      picker, countdown — is rendered in the same zone the money is bucketed in. One constant,
+      used in both places. It is a design rule and not only an implementation detail, because it
+      is what makes a day’s subtotal equal to the sum of the rows printed under it.
+    </p>
+  </div>
+
+  <h3>The row caption has a 25-character budget</h3>
+  <p>
+    A statement row spends its width on the amount column, so what is left for the caption is
+    narrow and fixed. At 360dp: 360 − 32 (edges) − 32 (mark) − 24 (gaps) − 66 (amount) =
+    <strong>206px</strong>, and an 11sp mono character with 1.5px tracking is 8.1px. That is
+    <strong>25 characters</strong>, and the caption is one line with ellipsis — so a caption
+    that overflows does not wrap, it <em>silently loses its tail</em>.
+  </p>
+  <div class="note-box warn">
+    <p class="nb-title">Which is worse than it sounds</p>
+    <p>
+      The tail is where the important part lives. <code>Food · 22 Jul · 11 days left</code> is
+      28 characters, so a Trash row would have rendered as
+      <code>FOOD · 22 JUL · 11 DA…</code> — clipping the day count, which is the only reason
+      that row has a caption at all. Eleven caption patterns in this package busted the budget
+      before it was measured.
+    </p>
+  </div>
+  <p>
+    <strong>The rule: the mark already states the category, so the caption spends its
+    characters on what the mark cannot say.</strong> Drop the category word whenever something
+    more specific needs the room.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:190px">Context</th><th style="width:230px">Caption</th><th>Why</th></tr>
+    <tr><td>Today, one person</td><td class="mono">Food · 7:48 am</td>
+      <td>Room to spare, so the category is spelled out.</td></tr>
+    <tr><td>Activity, household</td><td class="mono">7:48 am · Manuel</td>
+      <td>Who paid cannot be inferred from anything on the row; the category can.</td></tr>
+    <tr><td>Untagged</td><td class="mono">Untagged · 6:05 pm</td>
+      <td><strong>The exception.</strong> A grey dots mark cannot convey “untagged” — that is
+        the whole reason the state has a word. Always kept, in amber.</td></tr>
+    <tr><td>Trash</td><td class="mono">22 Jul · 11 days left</td>
+      <td>The countdown is the point. The day places the entry; the clock time would answer a
+        question nobody asked about something deleted last week.</td></tr>
+    <tr><td>Committed</td><td class="mono">Monthly · next 1 Sep</td>
+      <td>Cadence and next date. The sightings count — “seen 6×”, which qualifies how much to
+        trust the inference — moves to the detail screen rather than being clipped here.</td></tr>
+    <tr><td>Refunded</td><td class="mono">4 Aug · fully refunded</td>
+      <td>The state, not the category. “partly refunded · ₹800 of ₹2,000” exceeds the budget and
+        so belongs on the detail screen.</td></tr>
+  </table>
+  </div>
+  <p>
+    At a 200% font scale the budget falls to about 12 characters, which no useful caption
+    fits. There the row reflows: the caption moves under the payee at full width and the
+    amount keeps its right edge. That is the only place in this design where a statement row
+    stops being one line.
+  </p>
 
   <h3>How money is written</h3>
   <p>
@@ -460,20 +638,53 @@
 <section class="doc-sec" id="icons">
   <h2>Icons</h2>
   <p class="sec-lede">
-    Bootstrap Icons 1.11.3 (MIT), <strong>outline weight throughout</strong>, with filled
-    variants only for the selected bottom-nav tab. Mixing weights is the fastest way to make
-    a carefully chosen icon set look accidental. Every glyph below is rendered from the app’s
-    own vector drawables, so what you see here is what ships.
+    <strong>Drawn for this app, not borrowed.</strong> 24dp grid, single-weight
+    <strong>1.75dp stroke</strong>, round caps and joins, 20dp live area. One source of
+    geometry — <code>tools/icons.py</code> — generates both the Android vector drawables and
+    the SVG sprite these pages use, so a glyph in this document is byte-for-byte the glyph
+    that ships. Filled variants exist only for the five selected bottom-nav tabs.
   </p>
+
+  <div class="note-box fix">
+    <p class="nb-title">Why the set was redrawn</p>
+    <p>
+      What it replaces is <strong>Bootstrap Icons 1.11.3 — filled silhouettes on a 16px
+      grid</strong>, in an app that draws icons at 13–24dp. Two things went wrong at those
+      sizes, and both are visible on a real phone rather than in a preview:
+    </p>
+    <p>
+      <strong>Detail collapsed.</strong> The old wastebasket put a lid, a rim, a tapered body
+      and three tick marks into solid fill. At 13dp — the size the Trash row and the delete
+      button actually use — the lid merged into the body and it read as a grey blob. It is the
+      glyph that prompted the whole redraw.
+    </p>
+    <p>
+      <strong>The weight was never consistent.</strong> A glyph drawn on a 16 grid and scaled
+      to 24dp carries roughly 1.5× the apparent stroke of one drawn at 24, so a screen mixing
+      category marks with chevrons and status glyphs never looked like one family however
+      carefully the set had been chosen.
+    </p>
+    <p>
+      Stroke geometry rather than filled outline is the load-bearing decision. The weight
+      becomes <em>one number</em> instead of an emergent property of every shape, and a stroke
+      does not thin as the drawable scales down. Android has supported
+      <code>strokeWidth</code> and <code>strokeColor</code> on <code>&lt;path&gt;</code> since
+      API 21 and this app is minSdk 26, so it costs nothing —
+      <code>Icon(painter, tint = …)</code> applies a colour filter over the rendered drawable,
+      so stroke glyphs tint exactly as the filled ones did.
+    </p>
+  </div>
 
   <div class="tbl-scroll">
   <table class="spec-table">
     <tr><th style="width:120px">Rule</th><th>Detail</th></tr>
-    <tr><td><strong>Grid</strong></td><td>16×16 source, drawn on a 16dp viewport. Never scale a 16px glyph past 24dp — the strokes go soft; pick a larger source instead.</td></tr>
-    <tr><td><strong>Sizes</strong></td><td><span class="mono">14dp</span> inside chips and grid cells · <span class="mono">18dp</span> in rows and buttons · <span class="mono">20dp</span> in icon buttons and app bars · <span class="mono">24dp</span> FAB and nav · <span class="mono">32dp</span> empty states and onboarding.</td></tr>
+    <tr><td><strong>Grid</strong></td><td>24×24 canvas, 20×20 live area — 2dp clear on every side. Circle d19, square 18×18. Terminals land on whole or half units. Anything that breaks a keyline says why, in a comment beside it in <code>tools/icons.py</code>.</td></tr>
+    <tr><td><strong>Stroke</strong></td><td><span class="mono">1.75dp</span>, <code>round</code> cap, <code>round</code> join, outer corners 2.0, inner 1.25. One weight across the whole set; no exceptions.</td></tr>
+    <tr><td><strong>Sizes</strong></td><td><span class="mono">14dp</span> inside chips and grid cells · <span class="mono">18dp</span> in rows and buttons · <span class="mono">20dp</span> in icon buttons and app bars · <span class="mono">24dp</span> FAB and nav · <span class="mono">32dp</span> empty states and onboarding. Because the source is 24 and stroked, every one of these is the same apparent weight.</td></tr>
+    <tr><td><strong>Detail budget</strong></td><td>At most <strong>two</strong> elements in a glyph that will be drawn at 13dp, and 1.5dp of clearance between them. The heart’s pulse trace had to be pulled in and shortened for exactly this reason: at 13dp it was merging with the heart’s own stroke, and a heart-shaped blob reads as “favourite”, not “health”.</td></tr>
     <tr><td><strong>Targets</strong></td><td>The glyph is not the target. Every tappable icon sits inside a 48dp square (40dp where two are unavoidably adjacent, never below 24dp).</td></tr>
-    <tr><td><strong>Colour</strong></td><td>A category glyph carries its category’s hue, everywhere it appears — the avatar on a row, the chip, the grid cell, the Rules header. Everything else is <code>onSurfaceVariant</code>, or <code>primary</code> when it is the action.</td></tr>
-    <tr><td><strong>Meaning</strong></td><td>One glyph, one job. A chevron means “there is more this way” and is never an up/down arrow, because those mean money moved — a real bug this set had, where the disclosure control on Rules was a pair of trend arrows.</td></tr>
+    <tr><td><strong>Colour</strong></td><td>A category glyph carries its category’s hue everywhere it appears — the avatar on a row, the chip, the grid cell, the Rules header. Everything else is <code>onSurfaceVariant</code>, or <code>primary</code> when it is the action.</td></tr>
+    <tr><td><strong>Meaning</strong></td><td>One glyph, one job. A chevron means “there is more this way” and is never an up/down arrow, because those mean money moved — a real bug this set had, where the disclosure control on Rules was a pair of trend arrows. Savings was likewise a bar chart whose connecting line dipped before it rose, so it read as a crown; it is now a rising arrow, because for that category the only job is “up”.</td></tr>
     <tr><td><strong>Labels</strong></td><td>Every icon-only control carries a <code>contentDescription</code>. An icon is never the only way a state is announced.</td></tr>
   </table>
   </div>
@@ -617,7 +828,53 @@
     and renames the fields to the MD3 roles, so <code>schemeFor()</code> becomes a
     near-identity mapping instead of a translation.
   </p>
-  <pre class="wire" id="kotlin-out">// generated below</pre>
+  <pre class="wire" id="kotlin-out">// ui/theme/Color.kt — the v7 roles. Every figure below was measured, not judged;
+// design/v7/design-system.html carries the table.
+
+object DarkScheme {
+    val surface            = Color(0xFF0F0F14)
+    val surfaceContainer   = Color(0xFF1A1A21)
+    val onSurface          = Color(0xFFF2F2F7)   // 17.13:1
+    val onSurfaceVariant   = Color(0xFFB6B6C8)   //  9.57:1
+    val onSurfaceMuted     = Color(0xFF9092A6)   //  6.23:1  (was 4.59:1)
+    val outline            = Color(0xFF8B8B9E)
+    val outlineVariant     = Color(0xFF2E2E3A)   // the hairline; decorative, 1.43:1
+    val primary            = Color(0xFFB3C4FF)   // 11.16:1 as TEXT (was 3.80:1)
+    val primaryFixed       = Color(0xFF2F5BFF)   // the button; white on it 5.17:1
+    val success            = Color(0xFF5BE3AF)
+    val warning            = Color(0xFFFFC24D)
+    val error              = Color(0xFFFF8FA3)
+}
+
+private val DarkCategory = mapOf(
+    Category.FOOD to Color(0xFFD37E3D),
+    Category.GROCERIES to Color(0xFF30CF95),
+    Category.TRANSPORT to Color(0xFF74AAD1),
+    Category.SHOPPING to Color(0xFFAA76CB),
+    Category.BILLS to Color(0xFFD7B762),
+    Category.RENT to Color(0xFF6286E5),
+    Category.HEALTH to Color(0xFFE85395),
+    Category.EDUCATION to Color(0xFFC9DA5C),
+    Category.ENTERTAINMENT to Color(0xFFE048E7),
+    Category.TRAVEL to Color(0xFF82D9E2),
+    Category.INVESTMENTS to Color(0xFF65CE31),
+    Category.EMI to Color(0xFFDA6776),
+)
+
+private val LightCategory = mapOf(
+    Category.FOOD to Color(0xFF855028),
+    Category.GROCERIES to Color(0xFF157655),
+    Category.TRANSPORT to Color(0xFF0C2E46),
+    Category.SHOPPING to Color(0xFF731DAD),
+    Category.BILLS to Color(0xFF3F3312),
+    Category.RENT to Color(0xFF132274),
+    Category.HEALTH to Color(0xFFB00949),
+    Category.EDUCATION to Color(0xFF616E0F),
+    Category.ENTERTAINMENT to Color(0xFF691169),
+    Category.TRAVEL to Color(0xFF115B67),
+    Category.INVESTMENTS to Color(0xFF205205),
+    Category.EMI to Color(0xFF851B2C),
+)</pre>
 </section>
 
 </div>
@@ -625,18 +882,13 @@
 <script>
 /* The icon set, drawn from the sprite so this page cannot fall out of step with it. */
 (function () {
-  var NAMES = ("plus-lg,x-lg,check-lg,check-circle,question-circle,search,trash,tag,download," +
-    "arrow-left,arrow-up,arrow-down,arrow-left-right,arrow-repeat,chevron-left,chevron-right," +
-    "chevron-up,chevron-down,house,house-fill,receipt,receipt-cutoff,pie-chart,pie-chart-fill," +
-    "wallet2,wallet-fill,gear,gear-fill,cloud-check,cloud-slash,bluetooth,exclamation-triangle," +
-    "envelope,inbox,inboxes,people,lock,shield-lock,camera,folder2,folder2-open,send-check," +
-    "graph-up,emoji-neutral,three-dots").split(",");
+  var NAMES = ("plus,x,check,check_circle,question,search,trash,tag,download,arrow_left,arrow_up,arrow_down,arrow_left_right,arrow_repeat,chevron_left,chevron_right,chevron_up,chevron_down,home,home_fill,receipt,receipt_fill,chart,chart_fill,wallet,wallet_fill,gear,gear_fill,cloud_check,cloud_slash,bluetooth,warning,envelope,inbox,inbox_stack,people,lock,shield_lock,camera,folder,folder_open,send_check,graph_up,credit_card,bank,cash,cup,basket,fuel,bag,bolt,house_door,heart,book,film,plane,chart_arrow,dots").split(",");
   var host = document.getElementById('icon-grid');
   if (!host) return;
   NAMES.forEach(function (n) {
     var d = document.createElement('div');
     d.style.cssText = 'text-align:center;padding:12px 4px;border:1px solid var(--outline-variant);border-radius:8px';
-    d.innerHTML = '<svg style="width:20px;height:20px;fill:var(--on-surface-variant)"><use href="#i-' + n +
+    d.innerHTML = '<svg style="width:20px;height:20px;color:var(--on-surface-variant)"><use href="#i-' + n +
       '"/></svg><div class="micro" style="margin-top:8px;font-size:9px;letter-spacing:.6px">' + n + '</div>';
     host.appendChild(d);
   });

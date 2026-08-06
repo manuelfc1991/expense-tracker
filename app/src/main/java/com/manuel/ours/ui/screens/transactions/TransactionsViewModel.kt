@@ -2,6 +2,7 @@ package com.manuel.ours.ui.screens.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
@@ -303,6 +304,6 @@ class TransactionsViewModel @Inject constructor(
     fun clearDeleteRequestNotice() { requestedDeletes.value = 0 }
 
     companion object {
-        private val dayFormatter = DateTimeFormatter.ofPattern("EEE, d MMM")
+        private val dayFormatter = OursZone.dayRule
     }
 }

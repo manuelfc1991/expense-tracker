@@ -5,9 +5,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +35,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.manuel.ours.core.Money
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.ui.components.AccentButton
@@ -63,6 +71,7 @@ fun AddExpenseSheet(
         category: Category,
         split: SplitType,
         note: String,
+        occurredAt: Long,
     ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -70,6 +79,11 @@ fun AddExpenseSheet(
     var merchant by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(Category.FOOD) }
+    // "Now" is the default, so the common case still costs nothing. Without this row a cash
+    // lunch entered in the evening lands in the wrong hour — and entered after midnight, in the
+    // wrong day's subtotal, which is the one figure a statement has to get right.
+    var whenPicked by remember { mutableStateOf<Long?>(null) }
+    var pickingDate by remember { mutableStateOf(false) }
     var splitType by remember { mutableStateOf(SplitType.SHARED) }
 
     val amountFocus = remember { FocusRequester() }
@@ -78,14 +92,23 @@ fun AddExpenseSheet(
     val amountPaise = Money.parseToPaise(amountText)
     val valid = amountPaise != null && amountPaise > 0
 
+    if (pickingDate) {
+        ManualDatePicker(
+            initial = whenPicked ?: System.currentTimeMillis(),
+            onPick = { whenPicked = it; pickingDate = false },
+            onDismiss = { pickingDate = false },
+        )
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Ours.ink,
+        containerColor = Ours.surface,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .padding(horizontal = 15.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -101,11 +124,11 @@ fun AddExpenseSheet(
                 Text(
                     "₹",
                     style = SheetAmountStyle,
-                    color = if (valid) Ours.text else Ours.textLabel,
+                    color = if (valid) Ours.onSurface else Ours.onSurfaceMuted,
                 )
                 Box(Modifier.weight(1f)) {
                     if (amountText.isEmpty()) {
-                        Text("0", style = SheetAmountStyle, color = Ours.textLabel)
+                        Text("0", style = SheetAmountStyle, color = Ours.onSurfaceMuted)
                     }
                     BasicTextField(
                         value = amountText,
@@ -116,8 +139,8 @@ fun AddExpenseSheet(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         textStyle = LocalTextStyle.current
                             .merge(SheetAmountStyle)
-                            .copy(color = Ours.text),
-                        cursorBrush = SolidColor(Ours.accent),
+                            .copy(color = Ours.onSurface),
+                        cursorBrush = SolidColor(Ours.primary),
                         modifier = Modifier.fillMaxWidth().focusRequester(amountFocus),
                     )
                 }
@@ -133,6 +156,32 @@ fun AddExpenseSheet(
 
             MicroLabel("Category")
             CategoryGrid(selected = category, onSelect = { category = it })
+
+            MicroLabel("When")
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OursChip(
+                    label = "Now",
+                    selected = whenPicked == null,
+                    onClick = { whenPicked = null },
+                )
+                OursChip(
+                    label = "Earlier today",
+                    selected = whenPicked?.let { OursZone.dateOf(it) == OursZone.today() } == true,
+                    onClick = {
+                        // Midday today: a time somebody would recognise as "earlier", and safely
+                        // inside the same day in the household's zone.
+                        whenPicked = OursZone.startOfDay(OursZone.today()) + 12 * 3_600_000L
+                    },
+                )
+                OursChip(
+                    label = whenPicked
+                        ?.takeIf { OursZone.dateOf(it) != OursZone.today() }
+                        ?.let { OursZone.format(it, OursZone.day) }
+                        ?: "Pick a date",
+                    selected = whenPicked?.let { OursZone.dateOf(it) != OursZone.today() } == true,
+                    onClick = { pickingDate = true },
+                )
+            }
 
             MicroLabel("Counts as")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -179,11 +228,60 @@ fun AddExpenseSheet(
                             category,
                             splitType,
                             note.trim(),
+                            whenPicked ?: System.currentTimeMillis(),
                         )
                     },
                     modifier = Modifier.weight(1f),
                 )
             }
         }
+    }
+}
+
+/**
+ * A date for a payment that already happened.
+ *
+ * Future dates are refused: an expense dated tomorrow would sit outside the month's range checks
+ * and could not be reconciled against anything. Snapped to midday in the household's zone rather
+ * than midnight, so it cannot land in the previous day for a reader east of it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ManualDatePicker(
+    initial: Long,
+    onPick: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val today = OursZone.today()
+    val state = rememberDatePickerState(
+        // The picker speaks UTC in both directions, so the initial value has to be UTC midnight
+        // of the intended local day — handing it local midnight puts an IST user a day behind.
+        initialSelectedDateMillis = OursZone.dateOf(initial)
+            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableYear(year: Int) = year <= today.year
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                !java.time.Instant.ofEpochMilli(utcTimeMillis)
+                    .atZone(java.time.ZoneOffset.UTC).toLocalDate().isAfter(today)
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        colors = DatePickerDefaults.colors(containerColor = Ours.surfaceContainerHigh),
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val picked = state.selectedDateMillis ?: return@TextButton
+                    val day = java.time.Instant.ofEpochMilli(picked)
+                        .atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                    onPick(OursZone.startOfDay(day) + 12 * 3_600_000L)
+                },
+            ) { Text("Use this date", color = Ours.primary) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
+        },
+    ) {
+        DatePicker(state = state, title = null)
     }
 }

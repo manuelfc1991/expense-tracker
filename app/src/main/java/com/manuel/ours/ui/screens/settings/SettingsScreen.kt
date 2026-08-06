@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -64,12 +65,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.prefs.ThemeMode
 import com.manuel.ours.data.sync.NearbyTransport
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIconButton
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
@@ -80,9 +85,9 @@ import androidx.compose.foundation.shape.CircleShape
 import com.manuel.ours.ui.theme.AccentColor
 import com.manuel.ours.ui.theme.ThemeTone
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.work.SyncWorker
 import java.time.Instant
 import java.time.LocalDate
@@ -92,7 +97,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-private val EDGE = 15.dp
 
 /**
  * Settings as a set of labelled panels rather than a Material preference list.
@@ -137,6 +141,7 @@ fun SettingsScreen(
     var showInvite by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var openGroup by remember { mutableStateOf<SettingsGroup?>(null) }
+    var search by remember { mutableStateOf("") }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -208,7 +213,7 @@ fun SettingsScreen(
                         .ifBlank { "Just you" },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                 )
                 MicroLabel(
                     if (state.isHouseholdOwner) "You own this household"
@@ -252,7 +257,7 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.headlineMedium,
                             fontFamily = OursMono,
                             fontWeight = FontWeight.Bold,
-                            color = Ours.text,
+                            color = Ours.onSurface,
                         )
                     }
                     Note("Joining instead? Scan the code on their phone.")
@@ -342,8 +347,8 @@ fun SettingsScreen(
                         Text(
                             text = it,
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (it.startsWith("Connected")) Ours.positive
-                            else Ours.negative,
+                            color = if (it.startsWith("Connected")) Ours.success
+                            else Ours.error,
                         )
                     }
                     GhostButton(
@@ -424,24 +429,24 @@ fun SettingsScreen(
                     // did is more useful than when it happened.
                     caption = progress ?: state.lastSyncLabel,
                     captionColor = when {
-                        running -> Ours.accent
+                        running -> Ours.primary
                         progress == "Sync failed" ||
                             progress == "Could not reach anything to sync with" -> Ours.warning
-                        else -> Ours.textLabel
+                        else -> Ours.onSurfaceMuted
                     },
                     onClick = { if (!running) SyncWorker.syncNow(context) },
                     trailing = {
                         if (running) {
                             CircularProgressIndicator(
-                                color = Ours.accent,
+                                color = Ours.primary,
                                 strokeWidth = 2.dp,
                                 modifier = Modifier.size(14.dp),
                             )
                         } else {
-                            BiIconView(
-                                BiIcon.Sync,
+                            OursIconView(
+                                OursIcon.Sync,
                                 contentDescription = null,
-                                tint = Ours.textLabel,
+                                tint = Ours.onSurfaceMuted,
                                 modifier = Modifier.size(13.dp),
                             )
                         }
@@ -569,8 +574,8 @@ fun SettingsScreen(
                 if (scanning) {
                     LinearProgressIndicator(
                         progress = { scan!!.fraction },
-                        color = Ours.accent,
-                        trackColor = Ours.hairline,
+                        color = Ours.primary,
+                        trackColor = Ours.outlineVariant,
                         modifier = Modifier.fillMaxWidth().height(3.dp),
                     )
                 }
@@ -715,7 +720,9 @@ fun SettingsScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     AccentColor.entries.forEach { a ->
                         AccentSwatch(
-                            colour = a.on(Ours.isDark),
+                            // The fill, not the text tone: the swatch is a filled circle, and
+                            // it has to show the colour the buttons will actually be.
+                            colour = a.fill,
                             selected = state.accent == a,
                             label = a.label,
                             onClick = { viewModel.setAccentColor(a) },
@@ -767,14 +774,14 @@ fun SettingsScreen(
                         "(${com.manuel.ours.BuildConfig.VERSION_CODE})",
                     caption = updateStatus ?: "Updates come from its own repository",
                     captionColor = when {
-                        busy -> Ours.accent
-                        updateStatus == null -> Ours.textLabel
+                        busy -> Ours.primary
+                        updateStatus == null -> Ours.onSurfaceMuted
                         updateStatus!!.startsWith("Could not") ||
                             updateStatus!!.contains("failed", true) ||
-                            updateStatus!!.contains("different key") -> Ours.negative
+                            updateStatus!!.contains("different key") -> Ours.error
                         updateStatus!!.startsWith("Ready") ||
-                            updateStatus!!.contains("available") -> Ours.accent
-                        else -> Ours.positive
+                            updateStatus!!.contains("available") -> Ours.primary
+                        else -> Ours.success
                     },
                     // Seven taps here, then the household code, unlocks developer
                     // mode. A single repeated tap is something a thumb can do by
@@ -792,7 +799,7 @@ fun SettingsScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(12.dp),
                                 strokeWidth = 1.5.dp,
-                                color = Ours.accent,
+                                color = Ours.primary,
                             )
                         }
                     },
@@ -808,7 +815,7 @@ fun SettingsScreen(
                     )
                     pending != null -> {
                         if (pending.available.notes.isNotBlank()) {
-                            Note(pending.available.notes, tone = Ours.text)
+                            Note(pending.available.notes, tone = Ours.onSurface)
                         }
                         AccentButton(
                             label = "Download ${pending.available.versionName}",
@@ -864,9 +871,9 @@ fun SettingsScreen(
                         tone = Ours.warning,
                     )
                     versionTaps in 1 until VERSION_TAPS_TO_UNLOCK && remaining <= 4 ->
-                        MicroLabel("$remaining more taps on the version", color = Ours.accent)
+                        MicroLabel("$remaining more taps on the version", color = Ours.primary)
                     versionTaps >= VERSION_TAPS_TO_UNLOCK ->
-                        MicroLabel("Now tap the household code", color = Ours.accent)
+                        MicroLabel("Now tap the household code", color = Ours.primary)
                     else -> Unit
                 }
             }
@@ -875,7 +882,7 @@ fun SettingsScreen(
         // Loose, not panelled. It is the fine print, and a border around it would
         // make it look like another group of settings.
         item {
-            Box(Modifier.padding(horizontal = EDGE)) {
+            Box(Modifier.padding(horizontal = Space.edge)) {
                 Note(
                     "The database on this phone is encrypted with a key held in the " +
                         "Android Keystore. Bluetooth sync is encrypted end to end. " +
@@ -993,7 +1000,7 @@ fun SettingsScreen(
         }
     }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(modifier = Modifier.imePadding(), containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
@@ -1005,20 +1012,17 @@ fun SettingsScreen(
                 !state.settingsIndex -> {
 
                     item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("SETTINGS", style = WordmarkStyle, color = Ours.text)
+                        OursTopBar(title = "Settings") {
                             StatePill(
                                 text = if (state.lastSyncLabel == "Never synced") "Off" else "Synced",
                                 tone = if (state.lastSyncLabel == "Never synced") PillTone.Neutral
                                 else PillTone.Ok,
-                                icon = BiIcon.Done.takeIf { state.lastSyncLabel != "Never synced" },
+                                icon = OursIcon.Done.takeIf { state.lastSyncLabel != "Never synced" },
                             )
                         }
                     }
+                    // A search field, because a screen this size is not navigable by scrolling.
+                    item { SettingsSearch(query = search, onQueryChange = { search = it }) }
                     // ─── Anything that is silently broken ────────────────────────
                     //
                     // Every failure this app has actually had was a permission that was off
@@ -1032,7 +1036,7 @@ fun SettingsScreen(
                     if (problems.isNotEmpty()) {
                         item {
                             Column(
-                                Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                                Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 problems.forEach { problem ->
@@ -1085,24 +1089,14 @@ fun SettingsScreen(
                 // ─── Index: one open page ────────────────────────────────
                 open != null -> {
                     item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            BiIconView(
-                                BiIcon.Back,
-                                contentDescription = "Back",
-                                tint = Ours.textSecondary,
-                                modifier = Modifier.size(16.dp)
-                                    .clickable { openGroup = null },
-                            )
-                            Text(
-                                open.title.uppercase(),
-                                style = WordmarkStyle,
-                                color = Ours.text,
-                            )
-                        }
+                        // The last hand-rolled header in the app. Back closes the open page
+                        // rather than the screen — without that, opening Household from the
+                        // index and pressing back left Settings entirely, which is not where
+                        // you were.
+                        OursTopBar(
+                            title = open.title,
+                            onBack = { openGroup = null },
+                        )
                     }
                     groupItems(open)()
                 }
@@ -1111,20 +1105,17 @@ fun SettingsScreen(
                 else -> {
 
                     item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("SETTINGS", style = WordmarkStyle, color = Ours.text)
+                        OursTopBar(title = "Settings") {
                             StatePill(
                                 text = if (state.lastSyncLabel == "Never synced") "Off" else "Synced",
                                 tone = if (state.lastSyncLabel == "Never synced") PillTone.Neutral
                                 else PillTone.Ok,
-                                icon = BiIcon.Done.takeIf { state.lastSyncLabel != "Never synced" },
+                                icon = OursIcon.Done.takeIf { state.lastSyncLabel != "Never synced" },
                             )
                         }
                     }
+                    // A search field, because a screen this size is not navigable by scrolling.
+                    item { SettingsSearch(query = search, onQueryChange = { search = it }) }
                     // ─── Anything that is silently broken ────────────────────────
                     //
                     // Every failure this app has actually had was a permission that was off
@@ -1138,7 +1129,7 @@ fun SettingsScreen(
                     if (problems.isNotEmpty()) {
                         item {
                             Column(
-                                Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                                Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 problems.forEach { problem ->
@@ -1148,10 +1139,24 @@ fun SettingsScreen(
                         }
                     }
                     item {
-                        Panel {
-                            SettingsGroup.entries
-                                .filter { it != SettingsGroup.DEVELOPER || state.developerMode }
-                                .forEachIndexed { index, group ->
+                        val groups = SettingsGroup.entries
+                            .filter { it != SettingsGroup.DEVELOPER || state.developerMode }
+                            .filter { group ->
+                                search.isBlank() ||
+                                    group.title.contains(search, ignoreCase = true) ||
+                                    group.keywords.any { it.contains(search, ignoreCase = true) } ||
+                                    summaryOf(group).contains(search, ignoreCase = true)
+                            }
+                        if (groups.isEmpty()) {
+                            EmptyState(
+                                title = "Nothing matches \"$search\"",
+                                body = "Try a shorter word — the search covers each page's name " +
+                                    "and what it currently says about itself.",
+                                icon = OursIcon.NoResults,
+                            )
+                        } else {
+                            Panel {
+                                groups.forEachIndexed { index, group ->
                                     if (index > 0) Hairline()
                                     PanelRow(
                                         title = group.title,
@@ -1159,6 +1164,34 @@ fun SettingsScreen(
                                         onClick = { openGroup = group },
                                     )
                                 }
+                            }
+                        }
+                    }
+                    // Trash and Backup, lifted out of "This app".
+                    //
+                    // They are the answers to "I deleted something" and "the phone is gone", not
+                    // housekeeping beside a version number — and they were three taps deep.
+                    if (search.isBlank()) {
+                        item {
+                            Panel {
+                                PanelRow(
+                                    title = "Trash",
+                                    caption = "Deleted entries, and " +
+                                        "${com.manuel.ours.domain.Trash.WINDOW_DAYS} days to " +
+                                        "change your mind",
+                                    onClick = onOpenTrash,
+                                    trailing = {
+                                        if (trashCount > 0) StatePill("$trashCount", PillTone.Neutral)
+                                    },
+                                )
+                                Hairline()
+                                PanelRow(
+                                    title = "Backup & restore",
+                                    caption = "Manual entries and your category corrections live " +
+                                        "only on this phone — a rescan cannot bring them back",
+                                    onClick = onOpenBackup,
+                                )
+                            }
                         }
                     }
                 }
@@ -1168,13 +1201,69 @@ fun SettingsScreen(
 }
 
 /** The five pages of Settings, plus the one that only exists when unlocked. */
-private enum class SettingsGroup(val title: String) {
-    HOUSEHOLD("Household"),
-    SYNC("Sync"),
-    ENTRIES("What becomes an entry"),
-    PAYMENT("When a payment happens"),
-    APP("This app"),
-    DEVELOPER("Developer"),
+private enum class SettingsGroup(val title: String, val keywords: List<String> = emptyList()) {
+    HOUSEHOLD("Household", listOf("invite", "partner", "member", "qr", "code", "delete requests")),
+    SYNC("Sync", listOf("sheet", "google", "bluetooth", "nearby", "upload")),
+    ENTRIES("What becomes an entry", listOf("sms", "notification", "rescan", "rules", "parser", "tracking", "date")),
+    PAYMENT("When a payment happens", listOf("notification", "popup", "overlay", "alert")),
+    APP("This app", listOf("theme", "dark", "light", "contrast", "accent", "colour", "color", "lock", "unlock", "version", "update")),
+    DEVELOPER("Developer", listOf("test", "amount", "edit")),
+}
+
+/**
+ * The one field that makes a screen this size usable.
+ *
+ * It matches a page's name, the keywords above, and what the page currently *says about itself* —
+ * so "bluetooth off" finds Sync, and so does "synced 4m ago".
+ */
+@Composable
+private fun SettingsSearch(query: String, onQueryChange: (String) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Space.edge)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(Ours.surfaceContainer)
+            .padding(horizontal = Space.s4),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Space.s2),
+    ) {
+        OursIconView(
+            OursIcon.Search,
+            contentDescription = null,
+            tint = Ours.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        Box(Modifier.weight(1f).padding(vertical = 14.dp)) {
+            if (query.isEmpty()) {
+                Text(
+                    "Search settings",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ours.onSurfaceMuted,
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = LocalTextStyle.current
+                    .merge(MaterialTheme.typography.bodyMedium)
+                    .copy(color = Ours.onSurface),
+                cursorBrush = SolidColor(Ours.primary),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (query.isNotEmpty()) {
+            OursIconButton(
+                icon = OursIcon.Dismiss,
+                contentDescription = "Clear the search",
+                onClick = { onQueryChange("") },
+                tint = Ours.onSurfaceVariant,
+                glyph = 16.dp,
+                size = Space.targetTight,
+            )
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1220,7 +1309,7 @@ private fun NeedsYouRow(text: String, onClick: () -> Unit) {
         Text(
             text,
             style = MaterialTheme.typography.bodySmall,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.warning)
@@ -1248,14 +1337,14 @@ private fun PermissionRow(title: String, granted: Boolean, onClick: () -> Unit) 
         Text(
             title,
             style = MaterialTheme.typography.bodySmall,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         StatePill(
             text = if (granted) "Granted" else "Not granted",
             tone = if (granted) PillTone.Ok else PillTone.Warn,
         )
-        Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+        Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.onSurfaceMuted)
     }
 }
 
@@ -1278,19 +1367,19 @@ private fun DisclosureRow(
                 title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             Text(
                 caption,
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textSecondary,
+                color = Ours.onSurfaceVariant,
             )
         }
         trailing?.invoke()
         Text(
             if (expanded) "⌃" else "›",
             style = MaterialTheme.typography.bodyLarge,
-            color = Ours.textLabel,
+            color = Ours.onSurfaceMuted,
         )
     }
 }
@@ -1300,7 +1389,7 @@ private fun Section(label: String, trailing: String? = null) {
     TapeHeader(
         label,
         trailing = trailing,
-        modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+        modifier = Modifier.padding(horizontal = Space.edge, vertical = 6.dp),
     )
 }
 
@@ -1317,7 +1406,7 @@ private fun PanelRow(
     title: String,
     caption: String? = null,
     onClick: (() -> Unit)? = null,
-    captionColor: Color = Ours.textSecondary,
+    captionColor: Color = Ours.onSurfaceVariant,
     chevron: Boolean = true,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -1334,7 +1423,7 @@ private fun PanelRow(
                 title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             // Sentence case and wrapping, not a MicroLabel.
             //
@@ -1351,7 +1440,7 @@ private fun PanelRow(
         }
         trailing?.invoke()
         if (chevron && onClick != null) {
-            Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+            Text("›", style = MaterialTheme.typography.bodyLarge, color = Ours.onSurfaceMuted)
         }
     }
 }
@@ -1372,7 +1461,7 @@ private fun AccentSwatch(
             // judged is never the colour with a line through it.
             .border(
                 width = if (selected) 2.dp else 1.dp,
-                color = if (selected) Ours.text else Ours.hairline,
+                color = if (selected) Ours.onSurface else Ours.outlineVariant,
                 shape = CircleShape,
             )
             .padding(if (selected) 4.dp else 3.dp)
@@ -1382,8 +1471,8 @@ private fun AccentSwatch(
         contentAlignment = Alignment.Center,
     ) {
         if (selected) {
-            BiIconView(
-                BiIcon.Done,
+            OursIconView(
+                OursIcon.Done,
                 contentDescription = label,
                 tint = Color.White,
                 modifier = Modifier.size(13.dp),
@@ -1398,9 +1487,9 @@ private fun Panel(content: @Composable ColumnScope.() -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = EDGE)
+            .padding(horizontal = Space.edge)
             .clip(RoundedCornerShape(13.dp))
-            .border(1.dp, Ours.hairline, RoundedCornerShape(13.dp))
+            .border(1.dp, Ours.outlineVariant, RoundedCornerShape(13.dp))
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         content = content,
@@ -1413,18 +1502,18 @@ private fun PanelTitle(text: String) {
         text,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
-        color = Ours.text,
+        color = Ours.onSurface,
     )
 }
 
 @Composable
-private fun Note(text: String, tone: Color = Ours.textSecondary) {
+private fun Note(text: String, tone: Color = Ours.onSurfaceVariant) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = tone)
 }
 
 @Composable
 private fun Hairline() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
 }
 
 @Composable
@@ -1439,7 +1528,7 @@ private fun SettingRow(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = if (padded) EDGE else 0.dp, vertical = 9.dp),
+            .padding(horizontal = if (padded) Space.edge else 0.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -1448,14 +1537,14 @@ private fun SettingRow(
                 title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             caption?.let { MicroLabel(it) }
         }
-        BiIconView(
-            BiIcon.More,
+        OursIconView(
+            OursIcon.More,
             contentDescription = null,
-            tint = Ours.textLabel,
+            tint = Ours.onSurfaceMuted,
             modifier = Modifier.size(11.dp),
         )
     }
@@ -1473,7 +1562,7 @@ private fun ToggleRow(
     Row(
         Modifier
             .fillMaxWidth()
-            .then(if (padded) Modifier.padding(horizontal = EDGE) else Modifier),
+            .then(if (padded) Modifier.padding(horizontal = Space.edge) else Modifier),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -1482,7 +1571,7 @@ private fun ToggleRow(
                 title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             Note(caption)
         }
@@ -1491,11 +1580,11 @@ private fun ToggleRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Ours.accent,
-                checkedBorderColor = Ours.accent,
-                uncheckedThumbColor = Ours.textLabel,
+                checkedTrackColor = Ours.primaryFixed,
+                checkedBorderColor = Ours.primaryFixed,
+                uncheckedThumbColor = Ours.onSurfaceMuted,
                 uncheckedTrackColor = Color.Transparent,
-                uncheckedBorderColor = Ours.hairline,
+                uncheckedBorderColor = Ours.outlineVariant,
             ),
         )
     }
@@ -1513,14 +1602,14 @@ private fun HairlineField(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(9.dp))
-            .background(Ours.surfaceHigh)
+            .background(Ours.surfaceContainerHigh)
             .padding(horizontal = 11.dp, vertical = 10.dp),
     ) {
         if (value.isEmpty()) {
             Text(
                 placeholder,
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textLabel,
+                color = Ours.onSurfaceMuted,
                 maxLines = 1,
             )
         }
@@ -1531,8 +1620,8 @@ private fun HairlineField(
             enabled = enabled,
             textStyle = LocalTextStyle.current
                 .merge(MaterialTheme.typography.bodySmall)
-                .copy(color = Ours.text),
-            cursorBrush = SolidColor(Ours.accent),
+                .copy(color = Ours.onSurface),
+            cursorBrush = SolidColor(Ours.primary),
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -1551,13 +1640,11 @@ private fun TrackingStartPicker(
     onPick: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val today = LocalDate.now(ZoneId.systemDefault())
+    val today = OursZone.today()
     // The picker speaks UTC in both directions, so the initial value has to be UTC
     // midnight of the intended *local* day. Handing it local midnight put IST users a
     // day behind — it opened on the 2nd when today was the 3rd.
-    val initialDay = if (initial > 0L) {
-        Instant.ofEpochMilli(initial).atZone(ZoneId.systemDefault()).toLocalDate()
-    } else today
+    val initialDay = if (initial > 0L) OursZone.dateOf(initial) else today
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initialDay.atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli(),
@@ -1572,7 +1659,7 @@ private fun TrackingStartPicker(
 
     DatePickerDialog(
         onDismissRequest = onDismiss,
-        colors = DatePickerDefaults.colors(containerColor = Ours.ink),
+        colors = DatePickerDefaults.colors(containerColor = Ours.surface),
         confirmButton = {
             TextButton(
                 onClick = {
@@ -1580,12 +1667,15 @@ private fun TrackingStartPicker(
                     // The picker reports UTC midnight; convert to local midnight, or a
                     // user east of UTC loses the first hours of their chosen day.
                     val day = Instant.ofEpochMilli(picked).atZone(ZoneOffset.UTC).toLocalDate()
-                    onPick(day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    // Local midnight in the household's zone, which is the same zone the
+                    // months are bucketed in. Using the device zone here is what made an IST
+                    // user's cutoff land on the wrong day.
+                    onPick(OursZone.startOfDay(day))
                 }
-            ) { Text("Start here", color = Ours.accent) }
+            ) { Text("Start here", color = Ours.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     ) {
         DatePicker(state = state, title = null)
@@ -1594,9 +1684,7 @@ private fun TrackingStartPicker(
 
 /** Internal, like [relativeSyncLabel]: the view model dates the cutoff the same way. */
 internal fun formatDay(epochMillis: Long): String =
-    Instant.ofEpochMilli(epochMillis)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
+    OursZone.format(epochMillis, OursZone.date)
 
 private fun hasAll(context: android.content.Context, permissions: List<String>): Boolean =
     permissions.all {
@@ -1643,7 +1731,7 @@ private fun DetailLine(label: String, value: String, onClick: (() -> Unit)? = nu
         Text(
             value,
             style = ValueTextStyle,
-            color = Ours.text,
+            color = Ours.onSurface,
             maxLines = 1,
         )
     }

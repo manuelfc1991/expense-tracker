@@ -29,7 +29,7 @@ enum class MoneyFlow {
 }
 
 /**
- * No emoji field. Icons come from [com.manuel.ours.ui.components.BiIcon.forCategory],
+ * No emoji field. Icons come from [com.manuel.ours.ui.components.OursIcon.forCategory],
  * so the domain model stays free of presentation and there is no second, stale set of
  * glyphs for someone to render by accident.
  *
@@ -132,14 +132,18 @@ enum class Category(
             entries.firstOrNull { it.name == name } ?: OTHER
 
         /**
-         * Debits kept out of the spending headline.
+         * Debits kept out of the spending headline — which is **three** categories, not
+         * the six this comment used to claim.
          *
-         * - [CARD_PAYMENT]: a card bill settles purchases already recorded one by one,
-         *   so counting the bill too double-counts every transaction inside it.
-         *   On real data this alone inflated one month by ₹7,325.
-         * - [TRANSFERS]: large round-number debits whose message names no payee are
-         *   far more often money moved between accounts than a purchase.
-         * - [INVESTMENTS]: an FD, RD or SIP is saving, not spending.
+         * - [INVESTMENTS] ("Savings"): an FD, RD or SIP is saving, not spending.
+         * - [SELF_TRANSFER] ("Ours"): out of one of your accounts, into another.
+         * - [INCOME]: never a debit in the first place.
+         *
+         * [TRANSFERS] and [CARD_PAYMENT] are **not** excluded, whatever their names
+         * suggest. Both carry the default [MoneyFlow.SPENDING], and both do so
+         * deliberately — see the notes on each. This list is derived from `flow`, so it
+         * has always behaved that way; only the comment said otherwise, and a comment
+         * that contradicts the one number the household trusts is worse than none.
          *
          * Nothing here is hidden — the summary shows each excluded total, and one tap
          * reclassifies anything that really was spending.
@@ -177,6 +181,10 @@ data class Transaction(
     val amountEditedAt: Long? = null,
     /** Last digits of the account paid, when the bank named one. */
     val counterpartyTail: String? = null,
+    /** On a credit: the purchase this refund cancels. See TransactionEntity.refundsTxnId. */
+    val refundsTxnId: String? = null,
+    /** On a debit: how much of it has been refunded. */
+    val refundedPaise: Long = 0,
     /**
      * What the bank said was left in [accountTail] just after this payment.
      *

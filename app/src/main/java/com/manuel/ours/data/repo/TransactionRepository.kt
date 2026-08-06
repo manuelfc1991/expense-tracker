@@ -82,10 +82,13 @@ class TransactionRepository @Inject constructor(
         return txnDao.getBetween(maxOf(from, startAt), to).map { it.toDomain() }
     }
 
-    fun observeNeedsReviewCount(): Flow<Int> = txnDao.observeNeedsReviewCount()
+    fun observeNeedsReviewCount(): Flow<Int> =
+        prefs.trackingStartAt.flatMapLatest { startAt -> txnDao.observeNeedsReviewCount(startAt) }
 
     fun observeNeedsReview(): Flow<List<Transaction>> =
-        txnDao.observeNeedsReview().map { list -> list.map { it.toDomain() } }
+        prefs.trackingStartAt.flatMapLatest { startAt ->
+            txnDao.observeNeedsReview(startAt).map { list -> list.map { it.toDomain() } }
+        }
 
     suspend fun getById(id: String): Transaction? = txnDao.getById(id)?.toDomain()
 
@@ -641,6 +644,8 @@ class TransactionRepository @Inject constructor(
             deleteRequestedBy = txn.deleteRequestedBy,
             amountEditedAt = txn.amountEditedAt,
             counterpartyTail = txn.counterpartyTail,
+            refundsTxnId = txn.refundsTxnId,
+            refundedPaise = txn.refundedPaise,
             rawSms = txn.rawSms,
         )
         eventDao.append(
@@ -657,6 +662,70 @@ class TransactionRepository @Inject constructor(
             )
         )
     }
+
+    /**
+     * Records that a credit cancels a purchase.
+     *
+     * Deliberate and reversible, because it is a claim only a person can make. Both rows are
+     * written — the credit learns what it cancels, the debit learns how much of it is undone —
+     * and both are logged, so the two phones cannot end up disagreeing about the month's spend.
+     *
+     * @param refundedPaise how much of the purchase this cancels, capped at the purchase itself.
+     *   A refund larger than the thing it refunds is a mis-link, not a windfall.
+     */
+    suspend fun linkRefund(creditId: String, debitId: String, refundedPaise: Long) {
+        val credit = txnDao.getById(creditId) ?: return
+        val debit = txnDao.getById(debitId) ?: return
+        if (credit.type != TxnType.CREDIT.name || debit.type != TxnType.DEBIT.name) return
+
+        // Capped at the purchase: a refund larger than the thing it refunds is a mis-link, not a
+        // windfall, and letting it through would make the month's spending negative.
+        val amount = refundedPaise.coerceIn(0, debit.amountPaise)
+
+        // The category moves too. A linked credit stops being Income and becomes a movement, which
+        // is what keeps it out of *both* totals rather than only out of spending.
+        saveAndLog(
+            credit.copy(
+                refundsTxnId = debitId,
+                category = Category.SELF_TRANSFER.name,
+                needsReview = false,
+            ).toDomain(),
+            credit.dedupeKey,
+            credit.dedupeAt,
+        )
+        saveAndLog(
+            debit.copy(refundedPaise = amount).toDomain(),
+            debit.dedupeKey,
+            debit.dedupeAt,
+        )
+    }
+
+    /**
+     * Undoes the link, from either side.
+     *
+     * A claim you cannot withdraw is one people will not make, so this is offered on both rows
+     * and restores the credit to Income.
+     */
+    suspend fun unlinkRefund(creditId: String) {
+        val credit = txnDao.getById(creditId) ?: return
+        val debitId = credit.refundsTxnId ?: return
+        txnDao.getById(debitId)?.let { debit ->
+            saveAndLog(debit.copy(refundedPaise = 0).toDomain(), debit.dedupeKey, debit.dedupeAt)
+        }
+        saveAndLog(
+            credit.copy(refundsTxnId = null, category = Category.INCOME.name).toDomain(),
+            credit.dedupeKey,
+            credit.dedupeAt,
+        )
+    }
+
+    /** Debits from the last 60 days that a refund could plausibly be cancelling. */
+    fun observeRefundCandidates(nowMillis: Long = System.currentTimeMillis()): Flow<List<Transaction>> =
+        observeBetween(nowMillis - 60L * 24 * 60 * 60 * 1000, nowMillis + 1)
+            .map { list ->
+                list.filter { it.type == TxnType.DEBIT && it.refundedPaise < it.amountPaise }
+                    .sortedByDescending { it.occurredAt }
+            }
 
     /**
      * Claims any transactions imported before the user's identity existed. Safe to

@@ -6,6 +6,8 @@ import com.manuel.ours.data.db.SyncEventDao
 import com.manuel.ours.data.prefs.AppPrefs
 import com.manuel.ours.data.repo.BudgetRepository
 import com.manuel.ours.data.repo.TransactionRepository
+import com.manuel.ours.domain.Pacing
+import com.manuel.ours.domain.RecurringDetector
 import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.affordability
@@ -56,6 +58,30 @@ data class HomeUiState(
      * Summary where the recurring charges are already worked out.
      */
     val affordability: Affordability? = null,
+    /**
+     * What can be spent per day for the rest of the month without missing the cap.
+     *
+     * The highest-priority finding in `docs/REVIEW.md`: nothing in the budget path took the date
+     * as an input, so 74% of a month's budget gone on the 6th was reported in green with no
+     * comment. See [Pacing] for why this paces the discretionary money rather than the total.
+     */
+    val pacing: Pacing.Result? = null,
+    /**
+     * Why the last sync failed, or null if it did not.
+     *
+     * The app had no error surface at all — a failure was a red line inside a Settings
+     * disclosure, which is not where anyone looks. Shown on Home, above the ledger, with the
+     * data still readable beneath it.
+     */
+    val syncError: String? = null,
+    /**
+     * How long the other phone may have been out of step, as a phrase — "3h", "2d" — or null
+     * when the last sync is recent enough not to be worth mentioning.
+     *
+     * Derived here rather than in the composable so the threshold is one decision in one place
+     * and can be tested.
+     */
+    val staleFor: String? = null,
     val vsLastMonthPercent: Float? = null,
     val spentToday: Long = 0,
     val spentThisWeek: Long = 0,
@@ -188,17 +214,36 @@ class HomeViewModel @Inject constructor(
         filter,
         budgetRepository.observeOverall(),
         syncEventDao.observeUnpushedCount(),
-        prefs.lastSyncAt,
-    ) { self, memberFilter, budget, pending, lastSync ->
-        Params(self.first, self.second, self.third, memberFilter, budget, pending, lastSync)
+        // Paired rather than passed separately: `combine` only has typed overloads up to five
+        // flows, and the sixth silently drops to the vararg `Array<T>` form, which loses every
+        // parameter type. Nesting keeps the lambda typed.
+        combine(prefs.lastSyncAt, prefs.lastSyncError) { at, error -> at to error },
+    ) { self, memberFilter, budget, pending, sync ->
+        Params(
+            self.first, self.second, self.third, memberFilter, budget, pending,
+            sync.first, sync.second,
+        )
     }.flatMapLatest { params ->
         val today = LocalDate.now(MonthlyAggregator.ZONE)
         val thisMonth = MonthlyAggregator.monthRange(today.year, today.monthValue)
         val previous = today.minusMonths(1)
         val lastMonth = MonthlyAggregator.monthRange(previous.year, previous.monthValue)
+        // A pattern needs history to be visible at all, so commitments are detected over the
+        // same window Summary uses — the same constant, the same detector, the same filter.
+        //
+        // Home used to leave commitments out entirely, on the argument that it would need this
+        // whole window for one line of caption and that a figure disagreeing with Summary's
+        // would be worse than no figure. The first half was a cost worth paying once the
+        // pacing line made it the most useful line on the screen; the second half is answered
+        // by construction rather than by care, because both screens now call the same function
+        // over the same range.
+        val lookback = MonthlyAggregator.monthRange(
+            today.minusMonths(RecurringDetector.LOOKBACK_MONTHS).year,
+            today.minusMonths(RecurringDetector.LOOKBACK_MONTHS).monthValue,
+        )
 
         combine(
-            transactionRepository.observeBetween(lastMonth.first, thisMonth.last + 1),
+            transactionRepository.observeBetween(lookback.first, thisMonth.last + 1),
             transactionRepository.observeNeedsReviewCount(),
             reminderDao.observeUpcoming(System.currentTimeMillis() - DAY_MS),
             transactionRepository.observeBalances(params.selfUid, params.owner),
@@ -257,6 +302,25 @@ class HomeViewModel @Inject constructor(
                     balances = balances,
                     partialView = !params.owner,
                 ),
+                syncError = params.syncError,
+                // Stale once the last sync is older than the periodic interval, so the ribbon
+                // only appears when a sync has actually been missed rather than merely not
+                // happened in the last minute.
+                staleFor = params.lastSync
+                    .takeIf { it > 0L && System.currentTimeMillis() - it > STALE_AFTER_MS }
+                    ?.let { relativeAge(System.currentTimeMillis() - it) },
+                pacing = run {
+                    // Household-wide and unfiltered, exactly like the ruler it sits under: the
+                    // budget is one cap over one household, so narrowing the view must not
+                    // change what the household is allowed to spend today.
+                    val recurring = RecurringDetector.detect(allTxns)
+                    Pacing.of(
+                        spentPaise = householdSpent,
+                        budgetPaise = params.budget,
+                        monthlyCommittedPaise = recurring.sumOf { it.monthlyEquivalentPaise },
+                        committedRemainingPaise = MonthlyAggregator.committedRemaining(recurring),
+                    )
+                },
                 vsLastMonthPercent = if (priorSpent > 0) {
                     (spent - priorSpent) * 100f / priorSpent
                 } else null,
@@ -326,6 +390,8 @@ class HomeViewModel @Inject constructor(
         category: Category,
         splitType: SplitType,
         note: String,
+        /** When the payment actually happened, which is not always when it was typed in. */
+        occurredAt: Long = System.currentTimeMillis(),
     ) {
         viewModelScope.launch {
             transactionRepository.addManual(
@@ -333,7 +399,7 @@ class HomeViewModel @Inject constructor(
                 type = TxnType.DEBIT,
                 merchant = merchant,
                 category = category,
-                occurredAt = System.currentTimeMillis(),
+                occurredAt = occurredAt,
                 // Blank stays null, so an untouched field does not store an
                 // empty string that later reads as a note nobody wrote.
                 note = note.trim().takeIf { it.isNotEmpty() },
@@ -354,10 +420,31 @@ class HomeViewModel @Inject constructor(
         val budget: Long?,
         val pending: Int,
         val lastSync: Long,
+        val syncError: String?,
     )
 
     private companion object {
         const val DAY_MS = 24 * 60 * 60 * 1000L
+
+        /**
+         * How out of date the other phone has to be before it is worth saying so.
+         *
+         * Two hours, not two minutes: sync runs periodically and Bluetooth only works when the
+         * two are in the same room, so a short gap is the normal condition rather than a fault.
+         * A ribbon that appeared every time the phones were briefly apart would be ignored.
+         */
+        const val STALE_AFTER_MS = 2 * 60 * 60 * 1000L
+
+        fun relativeAge(delta: Long): String {
+            val minutes = delta / 60_000
+            val hours = minutes / 60
+            val days = hours / 24
+            return when {
+                minutes < 60 -> "${minutes}m ago"
+                hours < 24 -> "${hours}h ago"
+                else -> "${days}d ago"
+            }
+        }
         const val PLACEHOLDER_OWNER = "local"
     }
 }

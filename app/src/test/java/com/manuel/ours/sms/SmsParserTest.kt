@@ -325,6 +325,10 @@ class SmsParserTest {
         ).isEqualTo(SmsParser.Reason.UNKNOWN_SENDER)
     }
 
+    /**
+     * Bank-shaped is not enough on its own: this names no bank, so it stays discarded.
+     * [SenderDiscoveryTest] covers the unknown header that does name one.
+     */
     @Test
     fun `unknown brand sender ignored`() {
         assertThat(ignored("AD-ZZZZZZ", "Rs.100 debited from a/c XX1111 at SOMEWHERE"))
