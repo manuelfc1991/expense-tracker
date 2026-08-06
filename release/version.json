@@ -1,7 +1,7 @@
 {
-  "versionCode": 60,
-  "versionName": "5.19",
-  "notes": "The empty Trash screen now shows a wastebasket rather than the ledger's receipt icon — the same glyph as the delete button that sends things there.",
+  "versionCode": 61,
+  "versionName": "5.20",
+  "notes": "Two icons that were saying the wrong thing: the rules list opened and closed with money up and down arrows, and an approvals queue with nothing in it drew the ledger's receipt. Both now use the mark that means what they do.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25497890
+  "sizeBytes": 25497974
 }

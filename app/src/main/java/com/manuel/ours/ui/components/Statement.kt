@@ -406,7 +406,7 @@ fun PrimaryAction(
             MicroLabel(caption, color = Color.White.copy(alpha = 0.72f))
         }
         BiIconView(
-            BiIcon.NextMonth,
+            BiIcon.More,
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(12.dp),

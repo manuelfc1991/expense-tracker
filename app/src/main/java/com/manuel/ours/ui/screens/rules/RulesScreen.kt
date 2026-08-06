@@ -177,8 +177,8 @@ private fun CategorySection(
                 color = Ours.accent,
             )
             BiIconView(
-                if (expanded) BiIcon.TrendUp else BiIcon.TrendDown,
-                contentDescription = null,
+                if (expanded) BiIcon.Collapse else BiIcon.Expand,
+                contentDescription = if (expanded) "Collapse" else "Expand",
                 tint = Ours.textLabel,
                 modifier = Modifier.size(11.dp),
             )

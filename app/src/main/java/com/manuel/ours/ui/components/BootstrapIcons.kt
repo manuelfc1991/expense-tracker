@@ -45,6 +45,25 @@ object BiIcon {
     @DrawableRes val Back = R.drawable.bi_arrow_left
     @DrawableRes val PreviousMonth = R.drawable.bi_chevron_left
     @DrawableRes val NextMonth = R.drawable.bi_chevron_right
+
+    /**
+     * Disclosure, not direction.
+     *
+     * These used to be TrendUp and TrendDown — the plain up/down arrows that mean money
+     * moved, which is the one thing a control for opening a list must not say. A chevron
+     * is what the rest of the app already uses to mean "there is more this way": PanelRow
+     * ends in one, and the month stepper is a pair of them.
+     */
+    /**
+     * The same chevron the month stepper uses, under the name it is doing the job of.
+     * PanelRow and PrimaryAction were reaching for [NextMonth] to mean "there is more
+     * this way", which is how an icon quietly acquires a second meaning and how the
+     * disclosure control above ended up being a pair of money-direction arrows.
+     */
+    @DrawableRes val More = R.drawable.bi_chevron_right
+
+    @DrawableRes val Expand = R.drawable.bi_chevron_down
+    @DrawableRes val Collapse = R.drawable.bi_chevron_up
     @DrawableRes val Export = R.drawable.bi_download
     @DrawableRes val Search = R.drawable.bi_search
     @DrawableRes val Delete = R.drawable.bi_trash

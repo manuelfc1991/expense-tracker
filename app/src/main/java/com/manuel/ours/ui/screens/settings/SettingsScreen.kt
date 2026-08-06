@@ -1453,7 +1453,7 @@ private fun SettingRow(
             caption?.let { MicroLabel(it) }
         }
         BiIconView(
-            BiIcon.NextMonth,
+            BiIcon.More,
             contentDescription = null,
             tint = Ours.textLabel,
             modifier = Modifier.size(11.dp),

@@ -73,6 +73,11 @@ fun DeleteRequestsScreen(
                 item {
                     QuietEmpty(
                         "Nothing waiting on you",
+                        // A tick, not the ledger's receipt. QuietEmpty defaults to the
+                        // receipt because most empty states in this app are an empty
+                        // month; an approvals queue with nothing in it is the opposite —
+                        // it is finished, which is what Sort already says with this icon.
+                        icon = BiIcon.Done,
                         modifier = Modifier.padding(top = 32.dp),
                     )
                 }

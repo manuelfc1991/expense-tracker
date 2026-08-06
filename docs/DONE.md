@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `6664ee8`, covering **104 commits** from the first one
-on 3 August 2026 to **5.19 (60)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `14b1d35`, covering **105 commits** from the first one
+on 3 August 2026 to **5.20 (61)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,14 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.20 (61) — 6 Aug 2026
+
+> Two icons that were saying the wrong thing: the rules list opened and closed with money
+> up and down arrows, and an approvals queue with nothing in it drew the ledger's receipt.
+> Both now use the mark that means what they do.
+
+- `PENDING` Icons that mean what they draw
 
 ## 5.19 (60) — 6 Aug 2026
 
