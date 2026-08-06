@@ -28,8 +28,8 @@ android {
         applicationId = "com.manuel.ours"
         minSdk = 26
         targetSdk = 34
-        versionCode = 59
-        versionName = "5.18"
+        versionCode = 60
+        versionName = "5.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

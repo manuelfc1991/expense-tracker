@@ -3,8 +3,8 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `dcb35ae`, covering **102 commits** from the first one
-on 3 August 2026 to **5.18 (59)**. The commit that updates this file is necessarily not in
+Generated on **6 August 2026** from `1197c35`, covering **103 commits** from the first one
+on 3 August 2026 to **5.19 (60)**. The commit that updates this file is necessarily not in
 it — regenerate after a release and the previous one appears.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
@@ -33,6 +33,13 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 5.19 (60) — 6 Aug 2026
+
+> The empty Trash screen now shows a wastebasket rather than the ledger's receipt icon —
+> the same glyph as the delete button that sends things there.
+
+- `PENDING` The empty bin draws a bin
 
 ## 5.18 (59) — 6 Aug 2026
 

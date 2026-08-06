@@ -1,7 +1,7 @@
 {
-  "versionCode": 59,
-  "versionName": "5.18",
-  "notes": "Trash: deleted entries wait 30 days and can be put back, one at a time or several at once. Deleting a single entry now offers an Undo, and both confirmations stop claiming a delete is forever.",
+  "versionCode": 60,
+  "versionName": "5.19",
+  "notes": "The empty Trash screen now shows a wastebasket rather than the ledger's receipt icon — the same glyph as the delete button that sends things there.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25497890
 }

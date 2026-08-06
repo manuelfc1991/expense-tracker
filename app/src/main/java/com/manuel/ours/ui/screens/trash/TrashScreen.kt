@@ -189,11 +189,15 @@ private fun EmptyBin() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        // The wastebasket, the same glyph the delete button on an entry uses — this is
+        // where that button sends things, and drawing the two differently would hide the
+        // connection. It was BiIcon.Activity, which is the receipt used for the ledger
+        // itself: the one icon in the set that means the opposite of an empty bin.
         BiIconView(
-            BiIcon.Activity,
+            BiIcon.Delete,
             contentDescription = null,
             tint = Ours.textLabel,
-            modifier = Modifier.size(26.dp),
+            modifier = Modifier.size(30.dp),
         )
         Text(
             "Nothing deleted in the last ${Trash.WINDOW_DAYS} days.",
