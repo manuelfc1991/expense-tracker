@@ -158,3 +158,14 @@ emulator -avd <name> -no-window -gpu swiftshader_indirect -no-snapshot
 
 `ours-release.jks`, `keystore.properties`, `local.properties`. See
 `docs/HANDOVER.md`.
+
+## The other documents
+
+| | |
+|---|---|
+| `README.md` | what the app is, and its known gaps |
+| `docs/DONE.md` | every release and the commits in it |
+| `AT-HOME.md` | what is left that needs the other phone |
+| `docs/REVIEW.md` | what the money model gets wrong, and where the tests are not |
+| `docs/HANDOVER.md` | picking this up on another machine |
+| `design/` | the mockups the screens are built from |

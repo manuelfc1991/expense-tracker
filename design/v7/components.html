@@ -1,0 +1,997 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — Component library</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Components</p>
+  <h1>Component library</h1>
+  <p class="doc-lede">
+    Every control in the app, in every state it can reach. Built from the tokens on the
+    <a href="design-system.html">Design system</a> page, so nothing here is an approximation
+    of the spec — it <em>is</em> the spec, rendered.
+  </p>
+  <p class="doc-lede">
+    Use the switch in the corner to see each component on paper as well as on near-black.
+    Light is not an inversion, so both are worth checking.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html" aria-current="page">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+  </nav>
+</header>
+
+<!-- ══ THE FIVE STATES ═════════════════════════════════════════════════ -->
+<section class="doc-sec" id="states">
+  <h2>The five states, on one component</h2>
+  <p class="sec-lede">
+    Before the parts: the rule that governs all of them. Every list, panel and figure in this
+    app has to have an answer for five situations, and three of them are missing from the
+    current build entirely. Here they are on the transaction list, which is the component that
+    matters most.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+          <div>
+            <button class="entry"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+            <button class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                <span class="micro">Groceries · 11:20 am</span></span><span class="amt">376.00</span></button>
+            <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Success</b>Rows, a subtotal on the rule. An untagged row says so and dims its amount, because it is not in the total yet.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div class="tape row between"><span class="micro">Today</span>
+            <span class="skel h11" style="width:54px"></span></div>
+          <div class="stack-4">
+            <div class="row"><span class="skel h32"></span>
+              <span class="grow stack-2"><span class="skel h13" style="width:46%;display:block"></span>
+              <span class="skel h11" style="width:28%;display:block"></span></span>
+              <span class="skel h13" style="width:52px"></span></div>
+            <div class="row"><span class="skel h32"></span>
+              <span class="grow stack-2"><span class="skel h13" style="width:62%;display:block"></span>
+              <span class="skel h11" style="width:34%;display:block"></span></span>
+              <span class="skel h13" style="width:44px"></span></div>
+            <div class="row"><span class="skel h32"></span>
+              <span class="grow stack-2"><span class="skel h13" style="width:38%;display:block"></span>
+              <span class="skel h11" style="width:24%;display:block"></span></span>
+              <span class="skel h13" style="width:56px"></span></div>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Loading</b>A skeleton shaped like the content, not a spinner. The page does not jump when the real rows land.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad" style="padding-top:12px">
+          <div class="tape row between"><span class="micro">Today</span></div>
+          <div class="empty">
+            <svg><use href="#i-receipt"/></svg>
+            <p class="em-title">Nothing yet today</p>
+            <p class="em-body">Your bank messages become expenses the moment they arrive — there
+              is nothing to do here.</p>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Empty</b>A fact about the day, never “no data”. No action offered, because nothing is wrong.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-slash"/></svg></span></div>
+        <div class="screen">
+          <div class="stale-ribbon">
+            <svg><use href="#i-cloud-slash"/></svg>
+            <span class="micro grow">Offline · last synced 3h ago</span>
+            <span class="micro accent">Retry</span>
+          </div>
+          <div class="screen-body pad stack-4" style="padding-top:12px">
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+            <div>
+              <button class="entry"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                  <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+              <button class="entry last"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                  <span class="micro">Groceries · 11:20 am</span></span><span class="amt">376.00</span></button>
+            </div>
+            <p class="micro" style="line-height:1.5;text-transform:none;letter-spacing:0">
+              This phone’s own messages are still being read. What may be missing is anything
+              paid from the other phone since 6:41&nbsp;am.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Offline</b>The rows are still true — SMS is read locally. What is stale is the <em>other</em> phone, and the ribbon says exactly that.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-exclamation-triangle"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div class="notice bad">
+            <p class="nt-title">Sync failed</p>
+            <p class="nt-body">The sheet returned a Google login page instead of your data. That
+              usually means the deployment’s access is not set to “Anyone”.</p>
+            <div class="row" style="gap:8px">
+              <button class="btn btn-outline" style="flex:1;min-height:40px;font-size:12px">Try again</button>
+              <button class="btn btn-text" style="flex:1;min-height:40px;font-size:12px">Fix the sheet</button>
+            </div>
+          </div>
+          <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+          <div>
+            <button class="entry last"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Error</b>Names the cause and offers the fix. It never replaces the data underneath — the ledger is still readable.</p>
+    </div>
+  </div>
+
+  <div class="note-box fix">
+    <p class="nb-title">Three of these are new</p>
+    <p>
+      The current build has a success state everywhere, a skeleton on Home only, and a
+      one-line text empty state. It has <strong>no offline design at all</strong> and
+      <strong>no error surface</strong> outside a red sentence buried inside a Settings
+      disclosure. For an app whose whole premise is two phones staying in step, “what is stale
+      and what is merely late” is not a corner case; it is the normal condition of the second
+      phone.
+    </p>
+  </div>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:110px">State</th><th style="width:230px">Trigger</th><th>Rule</th></tr>
+    <tr><td><strong>Loading</strong></td><td>First read of a month; a rescan in flight.</td>
+      <td>Skeleton in the shape of the content, at the real row height. Never a centred
+          spinner over a blank page — a spinner does not say what it is waiting for. Anything
+          under 200ms shows nothing at all, because a flash is worse than a wait.</td></tr>
+    <tr><td><strong>Empty</strong></td><td>Nothing recorded, or a filter that matches nothing.</td>
+      <td>Icon, a sentence about the world, and a body line about why that is fine. An action
+          only when there is genuinely one to take — an empty Trash offers nothing, an empty
+          search offers “clear the filter”.</td></tr>
+    <tr><td><strong>Success</strong></td><td>The normal case.</td>
+      <td>The one on the far left. Everything else on these pages is this state.</td></tr>
+    <tr><td><strong>Offline</strong></td><td>No network, or last sync older than the sync interval.</td>
+      <td>A 36dp ribbon under the app bar, never a blocking dialog. It states what is
+          <em>certainly</em> current (this phone’s own SMS) and what may be missing (the other
+          phone since a named time). Figures are never hidden or greyed — they are correct,
+          just possibly incomplete.</td></tr>
+    <tr><td><strong>Error</strong></td><td>A sync, restore, update or parse that failed.</td>
+      <td>Named cause, one fix, and the data left visible beneath it. Red is reserved for
+          this and for loss; something merely not running is amber.</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ══ BUTTONS ═════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="buttons">
+  <h2>Buttons</h2>
+  <p class="sec-lede">
+    MD3’s five, plus the app’s own captioned action card. All are 48dp tall — the current
+    build sits at 40–42dp, and the pair on a bottom sheet was hand-tuned to 13dp padding
+    because a one-pixel height difference between two adjacent buttons is the kind of thing
+    you cannot name but can see. On the grid it stops being a question.
+  </p>
+
+  <div class="demo ours" data-theme="dark">
+    <div class="demo-grid">
+      <div class="cell"><span class="demo-lbl">Filled — the one primary action</span>
+        <button class="btn btn-filled block">Save</button></div>
+      <div class="cell"><span class="demo-lbl">Filled + icon</span>
+        <button class="btn btn-filled block"><svg><use href="#i-check-lg"/></svg>Save</button></div>
+      <div class="cell"><span class="demo-lbl">Tonal — a step below primary</span>
+        <button class="btn btn-tonal block">Put back</button></div>
+      <div class="cell"><span class="demo-lbl">Outlined — the secondary</span>
+        <button class="btn btn-outline block">Cancel</button></div>
+      <div class="cell"><span class="demo-lbl">Text — inside a dialog</span>
+        <button class="btn btn-text">Check for updates</button></div>
+      <div class="cell"><span class="demo-lbl">Danger — never the default</span>
+        <button class="btn btn-danger block"><svg><use href="#i-trash"/></svg>Delete 3 entries</button></div>
+      <div class="cell"><span class="demo-lbl">Disabled — a flat tint, not a pale accent</span>
+        <button class="btn btn-filled block" disabled>Save</button></div>
+      <div class="cell"><span class="demo-lbl">Disabled beside an outline — keeps the hierarchy</span>
+        <div class="row" style="gap:8px"><button class="btn btn-outline" style="flex:1">Cancel</button>
+        <button class="btn btn-filled dim-disabled" style="flex:1" disabled>Save</button></div></div>
+      <div class="cell"><span class="demo-lbl">Working — the label reports, no spinner</span>
+        <button class="btn btn-filled block is-disabled">Checking…</button></div>
+      <div class="cell"><span class="demo-lbl">Pair — secondary then primary</span>
+        <div class="row" style="gap:8px"><button class="btn btn-outline" style="flex:1">Later</button>
+        <button class="btn btn-filled" style="flex:1">Save</button></div></div>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Action card — title over caption, chevron trailing. One per screen.</span>
+    <button class="action-card">
+      <span class="grow"><span class="ac-title" style="display:block">Sort 94 expenses</span>
+        <span class="micro on-fill" style="margin-top:4px">6 groups · about 6 taps</span></span>
+      <svg><use href="#i-chevron-right"/></svg>
+    </button>
+
+    <hr class="hair">
+    <span class="demo-lbl">Icon buttons — 48dp target around an 18–20dp glyph</span>
+    <div class="demo-row">
+      <button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+      <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button>
+      <button class="ico-btn accent" aria-label="Sync now"><svg><use href="#i-arrow-repeat"/></svg></button>
+      <button class="ico-btn danger" aria-label="Delete"><svg><use href="#i-trash"/></svg></button>
+      <button class="ico-btn filled" aria-label="Add"><svg><use href="#i-plus-lg"/></svg></button>
+      <button class="ico-btn sm" aria-label="Dismiss"><svg><use href="#i-x-lg"/></svg></button>
+      <span class="micro" style="margin-left:8px">last is the 40dp variant, for adjacent pairs</span>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">FAB — 56dp, and it shrinks rather than disappears</span>
+    <div class="demo-row">
+      <div style="position:relative;width:70px;height:70px">
+        <button class="fab" style="position:static" aria-label="Add expense"><svg><use href="#i-plus-lg"/></svg></button></div>
+      <div style="position:relative">
+        <button class="fab extended" style="position:static" ><svg><use href="#i-plus-lg"/></svg>Add expense</button></div>
+      <div style="position:relative;width:52px;height:52px">
+        <button class="fab small" style="position:static" aria-label="Add expense"><svg><use href="#i-plus-lg"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="note-box warn">
+    <p class="nb-title">A behaviour change worth arguing about</p>
+    <p>
+      The current add button vanishes the instant the list starts moving, so that it can never
+      cover an amount — the amount column being the whole layout. The cost is that the only
+      way to add an expense is unavailable during exactly the gesture people use while looking
+      for it, and it reappears under the thumb when the fling stops.
+    </p>
+    <p>
+      v7 shrinks it to the 40dp variant on scroll-down and restores it on scroll-up or at rest.
+      The list keeps its bottom padding so the last row still clears the corner, so the
+      original concern is met without the control ever going away.
+    </p>
+  </div>
+</section>
+
+<!-- ══ SELECTION ═══════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="selection">
+  <h2>Selection controls</h2>
+
+  <div class="demo ours" data-theme="dark">
+    <span class="demo-lbl">Filter chips — the selected one is the only filled thing in view</span>
+    <div class="chiprow">
+      <span class="chip" aria-selected="true">All <span class="n">19</span></span>
+      <span class="chip tinted c-food"><svg><use href="#i-cup-hot"/></svg>Food <span class="n">7</span></span>
+      <span class="chip tinted c-groceries"><svg><use href="#i-basket"/></svg>Groceries <span class="n">4</span></span>
+      <span class="chip warn"><svg><use href="#i-three-dots"/></svg>Untagged <span class="n">3</span></span>
+      <span class="chip">More ›</span>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.5">
+      Each chip carries its count, which turns “which of these is worth tapping” into
+      something answerable by reading rather than by tapping each one and coming back.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Selected states</span>
+    <div class="chiprow">
+      <span class="chip tinted c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+      <span class="chip warn" aria-selected="true"><svg><use href="#i-three-dots"/></svg>Untagged <span class="n">3</span></span>
+      <span class="chip" style="opacity:.38">Health <span class="n">0</span></span>
+      <span class="micro" style="margin-left:6px">an empty category fades rather than disappearing</span>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Switch — 52×32 track, 24dp thumb when on</span>
+    <div class="demo-row" style="gap:24px">
+      <span class="switch" role="switch" aria-checked="true"><i></i></span>
+      <span class="switch" role="switch" aria-checked="false"><i></i></span>
+      <span class="switch" role="switch" aria-checked="false" style="opacity:.38"><i></i></span>
+      <span class="micro">on · off · unavailable</span>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Segmented button — a small set of exclusive options</span>
+    <div class="demo-narrow">
+      <div class="segmented" role="group">
+        <button aria-pressed="false">System</button>
+        <button aria-pressed="true">Light</button>
+        <button aria-pressed="false">Dark</button>
+      </div>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Accent picker — the colour is the thing being chosen, so no names</span>
+    <div class="swatch-row">
+      <span class="swatch" aria-pressed="true" style="--c:#2F5BFF"><i></i></span>
+      <span class="swatch" aria-pressed="false" style="--c:#5B4BE0"><i></i></span>
+      <span class="swatch" aria-pressed="false" style="--c:#8A4BD8"><i></i></span>
+      <span class="swatch" aria-pressed="false" style="--c:#A8459B"><i></i></span>
+      <span class="swatch" aria-pressed="false" style="--c:#0E9C93"><i></i></span>
+      <span class="swatch" aria-pressed="false" style="--c:#1E86D6"><i></i></span>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.5">
+      Constrained to the blue-through-violet arc plus teal. Green means money arriving here,
+      amber a warning and red a loss, so an accent taken from any of those would make the
+      interface say something it does not mean.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Category grid — fixed cells, so Rent is in the same place every time</span>
+    <div class="cat-grid demo-narrow">
+      <span class="cat-cell c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+      <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+      <span class="cat-cell c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport</span>
+      <span class="cat-cell c-shopping"><svg><use href="#i-bag"/></svg>Shopping</span>
+      <span class="cat-cell c-bills"><svg><use href="#i-lightning-charge"/></svg>Bills</span>
+      <span class="cat-cell c-rent"><svg><use href="#i-house-door"/></svg>Rent</span>
+      <span class="cat-cell c-health"><svg><use href="#i-heart-pulse"/></svg>Health</span>
+      <span class="cat-cell c-education"><svg><use href="#i-book"/></svg>Education</span>
+      <span class="cat-cell c-fun"><svg><use href="#i-film"/></svg>Fun</span>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.5">
+      Not a horizontal strip (Android draws no scrollbar, so eleven of sixteen were invisible
+      rather than merely off-screen) and not a wrapped flow of chips (variable widths give a
+      different row length every time the list changes, so the eye re-scans for a category it
+      has used a hundred times).
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Grid in filter mode — counts included, zeroes faded</span>
+    <div class="cat-grid demo-narrow">
+      <span class="cat-cell c-food"><svg><use href="#i-cup-hot"/></svg>Food <span class="n">7</span></span>
+      <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries <span class="n">4</span></span>
+      <span class="cat-cell c-transport empty"><svg><use href="#i-fuel-pump"/></svg>Transport <span class="n">0</span></span>
+      <span class="cat-cell c-health empty"><svg><use href="#i-heart-pulse"/></svg>Health <span class="n">0</span></span>
+      <span class="cat-cell c-rent" aria-selected="true"><svg><use href="#i-house-door"/></svg>Rent <span class="n">1</span></span>
+      <span class="cat-cell warn"><svg><use href="#i-three-dots"/></svg>Untagged <span class="n">3</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TEXT INPUT ══════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="input">
+  <h2>Text fields</h2>
+  <p class="sec-lede">
+    A line to write on, not a box to fill in. The filled rounded input this replaces read as
+    the heaviest thing on a sheet — heavier than the amount, which is the one field that
+    matters. A rule under the text weighs almost nothing and still says “you can type here”.
+  </p>
+
+  <div class="demo ours" data-theme="dark">
+    <div class="demo-grid">
+      <div class="cell"><span class="demo-lbl">Empty · placeholder</span>
+        <div class="field-line"><span class="fl-input ph">Who did you pay?</span>
+          <span class="micro accent">Optional</span></div></div>
+      <div class="cell"><span class="demo-lbl">Focused</span>
+        <div class="field-line focused"><span class="fl-input">Keecheril St<span class="caret"></span></span>
+          <span class="micro accent">Edit</span></div></div>
+      <div class="cell"><span class="demo-lbl">Filled</span>
+        <div class="field-line"><span class="fl-input">Reliance Smart</span>
+          <span class="micro accent">Edit</span></div></div>
+      <div class="cell"><span class="demo-lbl">Error — says why, rather than refusing silently</span>
+        <div class="field-line error"><span class="fl-input">re</span>
+          <span class="micro bad">Too short</span></div>
+        <p class="field-help bad">At least 3 characters.</p></div>
+      <div class="cell"><span class="demo-lbl">Disabled — while a connection is being tested</span>
+        <div class="field-line" style="opacity:.38"><span class="fl-input">https://script.google…</span></div></div>
+      <div class="cell"><span class="demo-lbl">Tap row — opens a dialog instead of a keyboard</span>
+        <div class="field-line"><span class="fl-input ph">Tap to name — account ····3062</span>
+          <span class="micro accent">Name</span></div></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      The small accent word at the right end changes once something is typed — OPTIONAL while
+      empty, EDIT or NOTE once not — so the field labels itself instead of needing a caption
+      above it. The tap row exists because a capture sheet cannot host a live text field: it
+      appears unbidden over whatever you were reading, and raising a keyboard inside it would
+      shove the whole sheet up the screen the moment it arrived.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Search — filled, pill, 48dp</span>
+    <div class="demo-narrow stack-2">
+      <div class="field-filled"><svg><use href="#i-search"/></svg>
+        <span class="fl-input ph">Search merchant or note</span></div>
+      <div class="field-filled"><svg><use href="#i-search"/></svg>
+        <span class="fl-input">relian<span class="caret"></span></span>
+        <button class="ico-btn sm" aria-label="Clear"><svg><use href="#i-x-lg"/></svg></button></div>
+      <div class="row between"><span class="micro">4 of 19 entries</span><span class="micro">₹3,182.40</span></div>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Money — the figure a sheet leads with. Keyboard opens on it.</span>
+    <div class="demo-narrow stack-2">
+      <div class="money-input empty"><span class="cur">₹</span><span class="num">0</span></div>
+      <hr class="hair">
+      <div class="money-input"><span class="cur">₹</span><span class="num">450.75<span class="caret" style="height:30px"></span></span></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      Both halves dim until there is a figure, so an untouched sheet shows a grey ₹0 rather
+      than a lone rupee sign floating beside nothing. The amount is the only field Save waits
+      for: an expense with an amount and nothing else is still a true row, while one with a
+      payee and no amount is not a row at all.
+    </p>
+  </div>
+</section>
+
+<!-- ══ LISTS ═══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="lists">
+  <h2>Lists and rows</h2>
+
+  <div class="demo ours" data-theme="dark">
+    <span class="demo-lbl">Statement entry — every variant</span>
+    <div class="demo-narrow">
+      <div class="tape row between" style="margin-bottom:10px">
+        <span class="micro">Wed 5 Aug</span><span class="micro">₹2,955.19</span></div>
+      <button class="entry"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+        <span class="e-main"><span class="e-name cut">Keecheril St</span>
+          <span class="micro">Food · 7:48 am · Manuel</span></span><span class="amt">151.00</span></button>
+      <button class="entry"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+        <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+          <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button>
+      <button class="entry selected"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+        <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+          <span class="micro">Groceries · 7:12 pm</span></span><span class="amt">2,358.19</span></button>
+      <button class="entry"><span class="avatar c-income"><svg><use href="#i-cash-coin"/></svg></span>
+        <span class="e-main"><span class="e-name cut">Salary — Kerala Gramin</span>
+          <span class="micro ok">Income · 1 Aug</span></span><span class="amt ok">+58,200.00</span></button>
+      <button class="entry last" style="opacity:.55"><span class="avatar c-shopping"><svg><use href="#i-bag"/></svg></span>
+        <span class="e-main"><span class="e-name cut">Amazon</span>
+          <span class="micro bad">Shopping · 4 Aug · 2 days left</span></span><span class="amt dim">1,299.00</span></button>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      Selection tints the row and marks its left edge rather than adding a checkbox column — a
+      checkbox would push every payee, time and amount sideways the instant selection began,
+      so the list you were reading would rearrange itself under your thumb at exactly the
+      moment you were aiming at something. The last row is a Trash entry: dimmed amount,
+      because it is in no total, and its caption counts down in red under three days.
+    </p>
+
+    <div class="note-box warn" style="margin:20px 0 0">
+      <p class="nb-title">No swipe actions. Deliberately.</p>
+      <p>
+        This row used to be a swipe-to-dismiss box — left to delete, right to categorise — and
+        it had to go. The gesture that dismisses a row and the gesture that scrolls a list
+        start out identical, and a list exists to be scrolled. A thumb travelling up the
+        screen at a slight angle was deleting entries by accident, at a threshold already set
+        to 55% of the row width. That is not tunable. Deleting is on the detail screen and in
+        the selection toolbar; a category can be set from five places. Each needs a deliberate
+        tap, which is the right price for changing a row you did not open.
+      </p>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Panel row — title, one wrapping sentence, optional trailing</span>
+    <div class="panel demo-narrow">
+      <button class="prow"><span class="pr-main"><span class="pr-title">Trash</span>
+        <span class="pr-cap">Deleted entries, and 30 days to change your mind</span></span>
+        <span class="pill">5</span><svg class="chev"><use href="#i-chevron-right"/></svg></button>
+      <hr class="hair">
+      <button class="prow"><span class="pr-main"><span class="pr-title">Sync now</span>
+        <span class="pr-cap accent">Syncing…</span></span>
+        <span class="spinner"></span></button>
+      <hr class="hair">
+      <button class="prow"><span class="pr-main"><span class="pr-title">Notification access</span>
+        <span class="pr-cap">Needed before anything can be read</span></span>
+        <span class="pill warn">Not granted</span><svg class="chev"><use href="#i-chevron-right"/></svg></button>
+      <hr class="hair">
+      <div class="prow" style="cursor:default"><span class="pr-main"><span class="pr-title">Require unlock</span>
+        <span class="pr-cap">Fingerprint, face or screen lock when you open Ours.</span></span>
+        <span class="switch" role="switch" aria-checked="true"><i></i></span></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      The caption is sentence case and wraps. It used to be a micro-label, which uppercases
+      and clips to one line — right for a caption over a figure, wrong for a sentence, so half
+      of them read as SHOUTING AND THEN STOPPING MID-…
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Data table — the accounts list is table-shaped and was ad-hoc rows</span>
+    <div class="demo-narrow">
+      <table class="dtable">
+        <tr><th>Account</th><th class="r">Usable</th></tr>
+        <tr><td><b style="font-size:13px">Kerala Gramin</b>
+          <span class="micro" style="margin-top:3px">···· 3062 · today</span></td>
+          <td class="r"><span class="amt">9,649.00</span></td></tr>
+        <tr><td><b style="font-size:13px">Federal</b>
+          <span class="micro warn" style="margin-top:3px">···· 4657 · you said, 3 days ago</span></td>
+          <td class="r"><span class="amt">500.00</span></td></tr>
+        <tr><td><b style="font-size:13px">ICICI</b>
+          <span class="micro" style="margin-top:3px">···· 3008 · tap to set</span></td>
+          <td class="r"><span class="micro">—</span></td></tr>
+      </table>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      Amber marks a figure no bank stands behind. An account with no balance recorded prints
+      an em dash and is <em>counted and reported</em>, never summed as ₹0 — unknown is not
+      zero, and the summary says how many are unknown.
+    </p>
+  </div>
+</section>
+
+<!-- ══ NAVIGATION ══════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="nav">
+  <h2>Navigation</h2>
+
+  <div class="demo ours" data-theme="dark">
+    <span class="demo-lbl">Top app bar — small, with every trailing arrangement</span>
+    <div class="demo-narrow stack-2" style="max-width:360px">
+      <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Ours</span></span>
+        <span class="pill ok"><svg><use href="#i-check-circle"/></svg>4m</span>
+        <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button></div>
+      <hr class="hair">
+      <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+        <span class="appbar-title"><span class="wordmark">Entry</span></span>
+        <button class="ico-btn danger" aria-label="Delete"><svg><use href="#i-trash"/></svg></button></div>
+      <hr class="hair">
+      <div class="appbar scrolled"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+        <span class="appbar-title"><span class="wordmark">Trash</span></span>
+        <span class="micro" style="padding-right:8px">5 entries</span></div>
+      <hr class="hair">
+      <div class="appbar select"><button class="ico-btn" aria-label="Clear selection"><svg><use href="#i-x-lg"/></svg></button>
+        <span class="appbar-title"><span class="wordmark">3 selected</span></span>
+        <button class="ico-btn" aria-label="Select all"><svg><use href="#i-check-lg"/></svg></button>
+        <button class="ico-btn" aria-label="Set category"><svg><use href="#i-tag"/></svg></button>
+        <button class="ico-btn danger" aria-label="Delete selected"><svg><use href="#i-trash"/></svg></button></div>
+    </div>
+
+    <div class="note-box fix" style="margin-top:18px">
+      <p class="nb-title">The selection bar was a mis-tap trap</p>
+      <p>
+        It is currently four identical 9sp uppercase words — <code>All · Categorize · Delete ·
+        Done</code> — with Delete third, between two harmless ones, each tapping a bare text
+        label with no target padding. The batch it destroys can include hand-made entries that
+        exist in no backup.
+      </p>
+      <p>
+        v7 makes them 48dp icon buttons, moves Delete to the far end where a thumb reaching
+        for “done” cannot find it, gives it the error colour, and keeps the confirm dialog and
+        the undo. Same four actions, three separate defences.
+      </p>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Bottom navigation — with an active indicator and a badge</span>
+    <div style="max-width:360px">
+      <div class="navbar">
+        <button class="nav-item" aria-selected="true"><span class="nav-ind">
+          <svg><use href="#i-house-fill"/></svg></span><span class="nav-lbl">Home</span></button>
+        <button class="nav-item"><span class="nav-badge">94</span><span class="nav-ind">
+          <svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+        <button class="nav-item"><span class="nav-ind">
+          <svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+        <button class="nav-item"><span class="nav-ind">
+          <svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+        <button class="nav-item"><span class="nav-badge dot"></span><span class="nav-ind">
+          <svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+      </div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      The indicator uses <code>secondaryContainer</code>, not the accent. That satisfies both
+      concerns at once: the selected tab is unmistakable, and the accent stays unique to
+      actions, which was the reason the current build has no indicator at all. Labels are
+      12sp sentence case rather than 9sp uppercase — “ACTIVITY” tracked out at 9sp is the
+      hardest text in the app to read and it is the one you navigate by.
+    </p>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      The badge on Activity is the untagged count. It exists nowhere today, so a household
+      with 94 unsorted rows has no idea until it happens to open Home. The dot on Settings
+      means something needs attention — a revoked permission, a delete request waiting.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Navigation rail — medium and expanded windows</span>
+    <div style="display:flex;height:240px;max-width:360px;border:1px solid var(--outline-variant);border-radius:12px;overflow:hidden">
+      <div class="rail">
+        <button class="fab small" style="position:static;margin-bottom:8px" aria-label="Add"><svg><use href="#i-plus-lg"/></svg></button>
+        <button class="nav-item" aria-selected="true"><span class="nav-ind"><svg><use href="#i-house-fill"/></svg></span><span class="nav-lbl">Home</span></button>
+        <button class="nav-item"><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+        <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+      </div>
+      <div style="flex:1;padding:16px" class="stack-2">
+        <span class="micro">Spent this month</span>
+        <p class="t-display-s">₹21,979.40</p>
+        <div class="ruler sm"><div class="fill" style="width:68%"></div></div>
+      </div>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Tabs — primary. The app has none today; Summary needs them.</span>
+    <div class="demo-narrow">
+      <div class="tabs">
+        <button class="tab" aria-selected="true">This month</button>
+        <button class="tab" aria-selected="false">Accounts</button>
+        <button class="tab" aria-selected="false">Committed</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMMUNICATION ═══════════════════════════════════════════════════ -->
+<section class="doc-sec" id="comms">
+  <h2>Feedback and status</h2>
+
+  <div class="demo ours" data-theme="dark">
+    <span class="demo-lbl">Status pills — coloured only by what they report</span>
+    <div class="demo-row">
+      <span class="pill ok"><svg><use href="#i-check-circle"/></svg>Synced 4m</span>
+      <span class="pill warn">3 waiting</span>
+      <span class="pill">Off</span>
+      <span class="pill bad"><svg><use href="#i-cloud-slash"/></svg>Failed</span>
+      <span class="pill ok">Granted</span>
+      <span class="pill warn">Not granted</span>
+      <span class="pill solid">2</span>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Notices — amber for “not running”, red for “wrong or lost”</span>
+    <div class="demo-narrow stack-2">
+      <div class="notice bad">
+        <p class="nt-title">Nothing is being tracked</p>
+        <p class="nt-body">Ours can’t read your bank messages, so no expenses are being recorded.</p>
+        <button class="btn btn-outline block" style="min-height:40px">Turn on SMS access</button>
+      </div>
+      <div class="notice">
+        <p class="nt-title">2 deletes are waiting for you</p>
+        <p class="nt-body">Someone in the household asked to remove 2 transactions. They still
+          count until you decide.</p>
+        <button class="btn btn-outline block" style="min-height:40px">Review</button>
+      </div>
+      <div class="notice compact">
+        <span class="micro warn">Needs you</span>
+        <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Notification access is off</span>
+        <svg style="width:16px;height:16px;fill:var(--warning)"><use href="#i-chevron-right"/></svg>
+      </div>
+      <div class="notice dashed">
+        <div class="row between"><b style="font-size:13px">Not counted</b><span class="amt">7,325.00</span></div>
+        <div class="row"><svg style="width:13px;height:13px;fill:var(--on-surface-variant)"><use href="#i-graph-up-arrow"/></svg>
+          <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Savings</span>
+          <span class="amt dim">5,000.00</span></div>
+        <div class="row"><svg style="width:13px;height:13px;fill:var(--on-surface-variant)"><use href="#i-arrow-left-right"/></svg>
+          <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Ours</span>
+          <span class="amt dim">2,325.00</span></div>
+        <p class="nt-body">Money put aside is still yours, so it is not spending. Money moved
+          between our own accounts never left the household. Both still come off your balance.</p>
+      </div>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Snackbars — one per batch, never one per row</span>
+    <div style="position:relative;height:210px;max-width:360px;border:1px solid var(--outline-variant);border-radius:12px;overflow:hidden;background:var(--surface)">
+      <div class="snackbar" style="bottom:150px">
+        <span class="grow">Deleted</span><button class="sb-action">Undo</button></div>
+      <div class="snackbar" style="bottom:92px">
+        <span class="grow">10 transactions deleted</span><button class="sb-action">Undo</button></div>
+      <div class="snackbar" style="bottom:16px">
+        <span class="grow" style="line-height:1.4">Asked the household owner to remove it — it
+          still counts until they agree</span></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      Ten stacked “transaction deleted” toasts would bury the Undo that matters under nine
+      that no longer do. The third has no action because there is nothing to undo — a
+      member’s delete is a request, and saying so is what stops the person pressing again on
+      a button that looks broken.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Progress</span>
+    <div class="demo-narrow stack-2">
+      <div class="prog-lin"><i style="width:64%"></i></div>
+      <span class="micro">1,204 of 1,880 messages · 171 found</span>
+      <div class="prog-lin indet"><i></i></div>
+      <span class="micro">indeterminate — when the total is not yet known</span>
+      <div class="demo-row" style="margin-top:8px"><span class="spinner"></span>
+        <span class="spinner lg"></span><span class="micro">inline · full</span></div>
+      <div class="ruler sm" style="margin-top:8px"><div class="fill" style="width:38%"></div></div>
+      <span class="micro">the ruler doubles as progress during a backfill — same vocabulary as the budget</span>
+    </div>
+
+    <hr class="hair">
+    <span class="demo-lbl">Empty states</span>
+    <div class="demo-grid">
+      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-receipt"/></svg>
+        <p class="em-title">Nothing yet this month</p>
+        <p class="em-body">Expenses appear here as your bank messages arrive.</p></div></div>
+      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-inboxes"/></svg>
+        <p class="em-title">Nothing matches “xyz”</p>
+        <p class="em-body">Try a shorter search, or clear the category filter.</p>
+        <button class="btn btn-text">Clear filter</button></div></div>
+      <div class="cell"><div class="empty" style="padding:24px 12px"><svg><use href="#i-trash"/></svg>
+        <p class="em-title">Nothing deleted in the last 30 days</p>
+        <p class="em-body">Anything you delete waits here for 30 days, so a mistake stays a
+          mistake and does not become a loss.</p></div></div>
+      <div class="cell"><div class="empty" style="padding:24px 12px"><svg style="fill:var(--success)"><use href="#i-check-circle"/></svg>
+        <p class="em-title">Everything is sorted</p>
+        <p class="em-body">Nothing is waiting on a category.</p></div></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      A finished queue gets a tick, not the ledger’s receipt glyph — an approvals list with
+      nothing in it is the opposite of an empty month. Trash gets the wastebasket, the same
+      glyph as the delete button that sends things there; drawing the two differently hides
+      the connection.
+    </p>
+  </div>
+</section>
+
+<!-- ══ DATA DISPLAY ════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="data">
+  <h2>Measurement</h2>
+
+  <div class="demo ours" data-theme="dark">
+    <span class="demo-lbl">Ruler — discrete ticks, because a budget is “this many out of that many”</span>
+    <div class="demo-narrow stack-2">
+      <span class="micro">68% used</span>
+      <div class="ruler"><div class="fill" style="width:68%"></div></div>
+      <span class="micro">112% — over fills the whole scale in the warning colour</span>
+      <div class="ruler over"><div class="fill" style="width:100%"></div></div>
+      <span class="micro">no budget set — an empty scale, not a filled one</span>
+      <div class="ruler"><div class="fill" style="width:0"></div></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      A solid fill says “roughly this much”. Ticks say “this many out of that many”, and it
+      borrows the vernacular of a printed scale, which is the material the whole interface is
+      made of. A ruler that ran past its own end would just look broken, so over-budget fills
+      completely and changes colour.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Label over value — the three figures under a ruler</span>
+    <div class="demo-narrow">
+      <hr class="hair" style="margin-bottom:12px">
+      <div class="row between">
+        <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+        <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+        <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span>
+      </div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      “Left” is given as much weight as “used”, because it is the figure that changes a
+      decision — nobody has ever declined to buy something because they were at 68%.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Ranked bars — a share of the month, not of the biggest category</span>
+    <div class="demo-narrow stack-3">
+      <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+        <b style="font-size:13px">Groceries</b><span class="amt">8,412.00</span></div>
+        <div class="meter" style="--c:var(--cat-groceries)"><i style="width:38%"></i></div></div>
+      <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+        <b style="font-size:13px">Food</b><span class="amt">5,934.00</span></div>
+        <div class="meter" style="--c:var(--cat-food)"><i style="width:27%"></i></div></div>
+      <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+        <b style="font-size:13px">Bills</b><span class="amt">3,516.00</span></div>
+        <div class="meter" style="--c:var(--cat-bills)"><i style="width:16%"></i></div></div>
+      <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+        <b style="font-size:13px">Transport</b><span class="amt">2,198.00</span></div>
+        <div class="meter" style="--c:var(--cat-transport)"><i style="width:10%"></i></div></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      Not a donut: a donut is only readable when its slices are of comparable size, which
+      household spending never is — one category at 95% is a circle with a notch in it.
+      Scaling against the <em>largest category</em> instead of the month’s total would make
+      the top bar full-width by definition, so ₹3,233 of a ₹3,233 month and ₹8,412 of a
+      ₹22,000 one would draw the identical bar. The name and the amount sit on the same line
+      as the length, which is what keeps the colour from being load-bearing.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Daily columns — only the peak is labelled</span>
+    <div class="demo-narrow">
+      <span class="micro">Daily · August</span>
+      <div class="daily" style="margin:10px 0 8px">
+        <i style="height:14%"></i><i style="height:8%"></i><i style="height:36%"></i><i style="height:22%"></i>
+        <i style="height:5%"></i><i style="height:48%"></i><i style="height:100%" class="peak"></i>
+        <i style="height:18%"></i><i style="height:31%"></i><i style="height:4%"></i><i style="height:26%"></i>
+        <i style="height:52%"></i><i style="height:12%"></i><i style="height:19%"></i><i style="height:41%"></i>
+        <i style="height:8%"></i><i style="height:23%"></i><i style="height:3%"></i><i style="height:37%"></i>
+        <i style="height:15%"></i><i style="height:29%"></i><i style="height:6%"></i><i style="height:44%"></i>
+        <i style="height:11%"></i><i style="height:20%"></i><i style="height:33%"></i><i style="height:7%"></i>
+        <i style="height:25%"></i><i style="height:16%"></i><i style="height:9%"></i><i style="height:4%"></i>
+      </div>
+      <div class="row between"><span class="axis">1</span>
+        <span class="axis">7 · ₹6,905.00</span><span class="axis">31</span></div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      A number over every column is noise — the shape tells you the rhythm, and the single
+      label tells you the one thing the shape cannot: that Saturday was a third of the month.
+      A zero-spend day still draws a visible sliver, so the axis reads as a full month rather
+      than as missing days.
+    </p>
+
+    <hr class="hair">
+    <span class="demo-lbl">Household split — who spent what, as one bar</span>
+    <div class="demo-narrow">
+      <span class="micro">Household</span>
+      <div class="split" style="margin:10px 0 10px">
+        <i style="flex:62;background:var(--primary-fixed)"></i>
+        <i style="flex:31;background:var(--cat-shopping)"></i>
+        <i style="flex:7;background:var(--cat-groceries)"></i>
+      </div>
+      <div class="legend">
+        <span class="lg-item"><span class="dot" style="background:var(--primary-fixed)"></span>You
+          <b class="val" style="font-size:12px">13,627.19</b></span>
+        <span class="lg-item"><span class="dot" style="background:var(--cat-shopping)"></span>Anu
+          <b class="val" style="font-size:12px">6,812.00</b></span>
+        <span class="lg-item"><span class="dot" style="background:var(--cat-groceries)"></span>Kiran
+          <b class="val" style="font-size:12px">1,540.21</b></span>
+      </div>
+    </div>
+    <p class="micro" style="text-transform:none;letter-spacing:0;line-height:1.55">
+      One colour per person, not two. The bar used to draw the first two members and take the
+      rest with it, so a third person’s spending vanished from both the bar and the legend
+      while still counting toward the total the widths were computed from — the bar quietly
+      failed to fill.
+    </p>
+  </div>
+</section>
+
+<!-- ══ PICKERS ═════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="pickers">
+  <h2>Date and time pickers</h2>
+  <p class="sec-lede">
+    The app has one date picker, for the tracking-start cutoff, and no time picker at all —
+    which means a manual entry for yesterday’s cash lunch is recorded at the moment you typed
+    it, in the wrong day’s subtotal. v7 adds both to the add sheet.
+  </p>
+
+  <div class="demo ours" data-theme="dark">
+    <div class="demo-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+      <div class="cell"><span class="demo-lbl">Date — docked calendar</span>
+        <div style="background:var(--surface-c-high);border-radius:var(--shape-xl);padding:20px">
+          <span class="micro">Track from</span>
+          <p class="t-headline-s" style="margin:8px 0 16px">5 Aug 2026</p>
+          <div class="row between" style="margin-bottom:10px">
+            <button class="ico-btn sm" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="micro">August 2026</span>
+            <button class="ico-btn sm" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="cal">
+            <span class="cd dow">M</span><span class="cd dow">T</span><span class="cd dow">W</span>
+            <span class="cd dow">T</span><span class="cd dow">F</span><span class="cd dow">S</span><span class="cd dow">S</span>
+            <span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span>
+            <span class="cd"></span><span class="cd">1</span><span class="cd">2</span>
+            <span class="cd">3</span><span class="cd">4</span><span class="cd sel">5</span><span class="cd today">6</span>
+            <span class="cd off">7</span><span class="cd off">8</span><span class="cd off">9</span>
+            <span class="cd off">10</span><span class="cd off">11</span><span class="cd off">12</span><span class="cd off">13</span>
+            <span class="cd off">14</span><span class="cd off">15</span><span class="cd off">16</span>
+            <span class="cd off">17</span><span class="cd off">18</span><span class="cd off">19</span><span class="cd off">20</span>
+            <span class="cd off">21</span><span class="cd off">22</span><span class="cd off">23</span>
+          </div>
+          <div class="row" style="justify-content:flex-end;gap:8px;margin-top:16px">
+            <button class="btn btn-text">Cancel</button><button class="btn btn-text">Start here</button></div>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          Future dates are refused — a start date of tomorrow would silently hide today’s
+          spending with no way to tell that was why. Today is ringed, the selection is filled.
+        </p></div>
+
+      <div class="cell"><span class="demo-lbl">Time — dial</span>
+        <div style="background:var(--surface-c-high);border-radius:var(--shape-xl);padding:20px">
+          <span class="micro">When was this?</span>
+          <div class="row" style="gap:6px;align-items:flex-end;margin:12px 0 18px">
+            <span class="t-display-s" style="background:var(--primary-container);color:var(--on-primary-container);padding:4px 10px;border-radius:8px">01</span>
+            <span class="t-display-s">:</span>
+            <span class="t-display-s" style="background:var(--surface-c-highest);padding:4px 10px;border-radius:8px">45</span>
+            <span class="stack" style="margin-left:8px">
+              <span class="micro accent">PM</span><span class="micro" style="margin-top:4px">AM</span></span>
+          </div>
+          <div class="dial" id="dial"></div>
+          <div class="row" style="justify-content:flex-end;gap:8px;margin-top:16px">
+            <button class="btn btn-text">Cancel</button><button class="btn btn-text">Set</button></div>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          Offered on the add sheet behind a “Now” chip, so the common case still costs nothing.
+          It only appears once you say the payment was not just made.
+        </p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ NOTIFICATION & WIDGET ═══════════════════════════════════════════ -->
+<section class="doc-sec" id="offapp">
+  <h2>Outside the app</h2>
+  <p class="sec-lede">
+    The notification is the surface this household sees most often — several times a day,
+    usually without opening the app — so it is drawn by the app rather than left to Android’s
+    default, which would make it look like a different product from the one it belongs to.
+  </p>
+
+  <div class="demo ours" data-theme="dark">
+    <div class="demo-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+      <div class="cell"><span class="demo-lbl">Collapsed — 64dp, all Android allows</span>
+        <div class="notif">
+          <div class="nf-app"><svg><use href="#i-receipt"/></svg>Ours · now</div>
+          <div class="row between" style="margin-top:6px">
+            <span class="t-title-l" style="font-family:var(--mono);font-feature-settings:'tnum'">₹151.00</span>
+            <span style="font-size:13px;color:var(--on-surface-variant)" class="cut">Keecheril St</span></div>
+        </div></div>
+
+      <div class="cell"><span class="demo-lbl">Expanded — three one-tap categories</span>
+        <div class="notif">
+          <div class="nf-app"><svg><use href="#i-receipt"/></svg>Ours · now</div>
+          <span class="t-display-s" style="display:block;margin-top:4px">₹151.00</span>
+          <div style="font-size:13px;color:var(--on-surface)" class="cut">Keecheril St</div>
+          <span class="micro">Tap a category below</span>
+          <div class="nf-actions"><button>Food</button><button>Groceries</button><button>Transport</button></div>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          Three is not a preference — Android renders at most three notification actions and
+          silently drops the rest. So these three chips are the entire interface, and the
+          ranking behind them has to be good. When the app is already confident, no buttons
+          are shown: the prompt is meant to fade away as the app learns, not become a
+          permanent tax on every purchase.
+        </p></div>
+
+      <div class="cell"><span class="demo-lbl">Budget alert</span>
+        <div class="notif">
+          <div class="nf-app"><svg><use href="#i-exclamation-triangle"/></svg>Ours · 2m</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">80% of August’s budget</div>
+          <div style="font-size:13px;color:var(--on-surface-variant)">₹25,600 of ₹32,000, with 12 days to go.</div>
+        </div></div>
+
+      <div class="cell"><span class="demo-lbl">Home-screen widget</span>
+        <div class="widget">
+          <span class="micro">Spent · August</span>
+          <p class="t-display-s" style="margin-top:6px">₹21,979</p>
+          <div class="ruler sm" style="margin-top:10px"><div class="fill" style="width:68%"></div></div>
+          <span class="micro" style="margin-top:8px">68% of ₹32K · 4 untagged</span>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          The ruler is new here. The widget currently prints a bare percentage, and the whole
+          point of a widget is glancing rather than reading — a scale answers “am I fine” in
+          one look where “68% of ₹32K” has to be parsed.
+        </p></div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script src="theme.js"></script>
+<script>
+/* Lay out the time-picker dial: twelve numbers on a circle, hand to the selection. */
+(function () {
+  var d = document.getElementById('dial');
+  if (!d) return;
+  var R = 74, C = 95, sel = 1;
+  for (var h = 1; h <= 12; h++) {
+    var a = (h / 12) * 2 * Math.PI - Math.PI / 2;
+    var s = document.createElement('span');
+    s.className = 'dnum' + (h === sel ? ' on' : '');
+    s.style.left = (C + R * Math.cos(a)) + 'px';
+    s.style.top  = (C + R * Math.sin(a)) + 'px';
+    s.textContent = h;
+    d.appendChild(s);
+  }
+  var hand = document.createElement('i');
+  hand.className = 'hand';
+  hand.style.height = R + 'px';
+  hand.style.transform = 'rotate(' + (sel / 12 * 360) + 'deg)';
+  d.appendChild(hand);
+})();
+</script>

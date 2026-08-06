@@ -1,0 +1,644 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — Design system</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Foundations</p>
+  <h1>The design system</h1>
+  <p class="doc-lede">
+    A bank SMS <strong>is</strong> a machine-printed statement line: fixed pitch, amount flush
+    right, a hairline between entries. That is the material this interface is made of, and
+    v7 does not replace it. What v7 does is put it on <strong>Material&nbsp;3</strong> —
+    proper colour roles, a 4dp grid, the MD3 shape and motion scales, real touch targets —
+    so the house style stops being a set of one-off decisions and becomes a system that can
+    be handed to Figma or to another developer without a translator.
+  </p>
+  <p class="doc-lede">
+    Every colour pair on this page was computed, not judged. Where a figure fails, it says
+    so.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html" aria-current="page">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+  </nav>
+</header>
+
+<!-- ══ PRINCIPLES ══════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="principles">
+  <h2>Six principles</h2>
+  <p class="sec-lede">
+    These are decisions, not aspirations. Each one rules something out, which is what makes
+    it usable in a review: you can point at a proposal and say it breaks number four.
+  </p>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr>
+      <th style="width:210px">Principle</th><th>What it means</th><th style="width:290px">What it rules out</th>
+    </tr>
+    <tr>
+      <td><strong>1. The row is a printed line</strong></td>
+      <td>Mark, name over caption, amount flush right in one shared column, hairline
+          underneath. Amounts carry no ₹ per row — once the column is aligned, the column
+          is the unit.</td>
+      <td>A card per transaction. Boxing every line of a statement is precisely what a
+          statement does not do.</td>
+    </tr>
+    <tr>
+      <td><strong>2. One accent, one action</strong></td>
+      <td>Exactly one accent-filled thing per screen. Green means money arriving, amber
+          means something is not running, red means a figure is wrong or lost.</td>
+      <td>A second primary button. A “Save” and a “Done” on the same screen makes both
+          stop meaning “do this”.</td>
+    </tr>
+    <tr>
+      <td><strong>3. Label above, never beside</strong></td>
+      <td>The caption sits over its figure so the eye lands on the number and reads the
+          caption only if it needs to.</td>
+      <td>Inline <code>Budget: ₹32,000</code>, which forces both to be read in sequence.</td>
+    </tr>
+    <tr>
+      <td><strong>4. Structure by hairline, not by shadow</strong></td>
+      <td>Depth comes from 1px rules and stepped near-black surfaces. Shadow is spent only
+          on things that genuinely float: FAB, dialog, sheet.</td>
+      <td>Elevation as decoration. A raised card for content that is not raised.</td>
+    </tr>
+    <tr>
+      <td><strong>5. Say what is missing, never “no data”</strong></td>
+      <td>“Nothing yet this month” is a fact about the month. Empty, error and offline all
+          name the thing and offer the way out.</td>
+      <td>“No data”, “Error 500”, a bare spinner with no idea what it is waiting for.</td>
+    </tr>
+    <tr>
+      <td><strong>6. Colour is never the only carrier</strong></td>
+      <td>Every coloured bar, chip and pill also prints its name and its number. Twelve
+          category hues cannot be told apart by everyone and are not asked to be.</td>
+      <td>A legend-only chart. Red/green as the sole difference between two states.</td>
+    </tr>
+  </table>
+  </div>
+</section>
+
+<!-- ══ COLOUR ══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="colour">
+  <h2>Colour</h2>
+  <p class="sec-lede">
+    MD3 role names throughout, so the scheme drops into <code>darkColorScheme()</code> and
+    <code>lightColorScheme()</code> without a mapping layer. Light is <strong>not</strong> an
+    inversion of dark: a statement is ink on paper, so paper is the original and it gets its
+    own validated hues. Dropping the dark values onto white fails contrast and turns muddy,
+    the greens and ambers worst of all.
+  </p>
+
+  <div class="note-box">
+    <p class="nb-title">Why there are two blues</p>
+    <p>
+      The brand accent <code>#2F5BFF</code> is a <strong>surface</strong> colour: white sits
+      on it at 5.2:1 and it makes a good button. As <strong>text</strong> on near-black it is
+      only <span class="fail">3.80:1</span> — and the app sets accent text everywhere: “Sort”,
+      “Edit”, “See all”, “Put back”, every <code>MicroLabel(color = Ours.accent)</code>. All
+      of it currently fails AA.
+    </p>
+    <p>
+      So v7 splits the role, which is exactly what MD3’s <em>fixed</em> roles are for.
+      <code>primary</code> is the accent as text and icon — tone 80 on dark, tone 30 on paper.
+      <code>primaryFixed</code> is the brand blue, unchanged in both themes, used only where
+      something is filled. One accent, two jobs, and both legible.
+    </p>
+  </div>
+
+  <h3>Dark scheme</h3>
+  <div class="ours ours-dark">
+    <h4>Surfaces — stepped near-black, not one flat ground</h4>
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:#08080C"></div><div class="sw-body">
+        <div class="sw-name">surfaceDim</div><div class="sw-hex">#08080C</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#0F0F14"></div><div class="sw-body">
+        <div class="sw-name">surface</div><div class="sw-hex">#0F0F14</div>
+        <div class="sw-meta">the page</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#0A0A0E"></div><div class="sw-body">
+        <div class="sw-name">containerLowest</div><div class="sw-hex">#0A0A0E</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#15151B"></div><div class="sw-body">
+        <div class="sw-name">containerLow</div><div class="sw-hex">#15151B</div>
+        <div class="sw-meta">sheets</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#1A1A21"></div><div class="sw-body">
+        <div class="sw-name">container</div><div class="sw-hex">#1A1A21</div>
+        <div class="sw-meta">nav bar, fields</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#232329"></div><div class="sw-body">
+        <div class="sw-name">containerHigh</div><div class="sw-hex">#232329</div>
+        <div class="sw-meta">dialogs</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#2D2D35"></div><div class="sw-body">
+        <div class="sw-name">containerHighest</div><div class="sw-hex">#2D2D35</div>
+        <div class="sw-meta">snackbar</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#2E2E3A"></div><div class="sw-body">
+        <div class="sw-name">outlineVariant</div><div class="sw-hex">#2E2E3A</div>
+        <div class="sw-meta">the hairline</div></div></div>
+    </div>
+
+    <h4>Content and accent</h4>
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:#F2F2F7"></div><div class="sw-body">
+        <div class="sw-name">onSurface</div><div class="sw-hex">#F2F2F7</div>
+        <div class="sw-meta">17.1:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#B6B6C8"></div><div class="sw-body">
+        <div class="sw-name">onSurfaceVariant</div><div class="sw-hex">#B6B6C8</div>
+        <div class="sw-meta">9.6:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#9092A6"></div><div class="sw-body">
+        <div class="sw-name">onSurfaceMuted</div><div class="sw-hex">#9092A6</div>
+        <div class="sw-meta">6.2:1 · was 4.6:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#8B8B9E"></div><div class="sw-body">
+        <div class="sw-name">outline</div><div class="sw-hex">#8B8B9E</div>
+        <div class="sw-meta">5.7:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#B3C4FF"></div><div class="sw-body">
+        <div class="sw-name">primary</div><div class="sw-hex">#B3C4FF</div>
+        <div class="sw-meta">11.2:1 as text</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#2F5BFF"></div><div class="sw-body">
+        <div class="sw-name">primaryFixed</div><div class="sw-hex">#2F5BFF</div>
+        <div class="sw-meta">white on it 5.2:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#1B2452"></div><div class="sw-body">
+        <div class="sw-name">primaryContainer</div><div class="sw-hex">#1B2452</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#2A2A38"></div><div class="sw-body">
+        <div class="sw-name">secondaryContainer</div><div class="sw-hex">#2A2A38</div>
+        <div class="sw-meta">nav indicator</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#5BE3AF"></div><div class="sw-body">
+        <div class="sw-name">success</div><div class="sw-hex">#5BE3AF</div>
+        <div class="sw-meta">11.9:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#FFC24D"></div><div class="sw-body">
+        <div class="sw-name">warning</div><div class="sw-hex">#FFC24D</div>
+        <div class="sw-meta">11.9:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#FF8FA3"></div><div class="sw-body">
+        <div class="sw-name">error</div><div class="sw-hex">#FF8FA3</div>
+        <div class="sw-meta">8.8:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#9BA8BE"></div><div class="sw-body">
+        <div class="sw-name">neutral</div><div class="sw-hex">#9BA8BE</div>
+        <div class="sw-meta">7.9:1 · no identity</div></div></div>
+    </div>
+  </div>
+
+  <h3>Light scheme</h3>
+  <div class="ours ours-light">
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:#FAFAFC;box-shadow:inset 0 0 0 1px #D3D3DD"></div><div class="sw-body">
+        <div class="sw-name">surface</div><div class="sw-hex">#FAFAFC</div>
+        <div class="sw-meta">the page</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#FFFFFF;box-shadow:inset 0 0 0 1px #D3D3DD"></div><div class="sw-body">
+        <div class="sw-name">containerLowest</div><div class="sw-hex">#FFFFFF</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#F4F4F8"></div><div class="sw-body">
+        <div class="sw-name">containerLow</div><div class="sw-hex">#F4F4F8</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#EEEEF3"></div><div class="sw-body">
+        <div class="sw-name">container</div><div class="sw-hex">#EEEEF3</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#E8E8EF"></div><div class="sw-body">
+        <div class="sw-name">containerHigh</div><div class="sw-hex">#E8E8EF</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#D3D3DD"></div><div class="sw-body">
+        <div class="sw-name">outlineVariant</div><div class="sw-hex">#D3D3DD</div>
+        <div class="sw-meta">the hairline</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#101014"></div><div class="sw-body">
+        <div class="sw-name">onSurface</div><div class="sw-hex">#101014</div>
+        <div class="sw-meta">18.2:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#494A5C"></div><div class="sw-body">
+        <div class="sw-name">onSurfaceVariant</div><div class="sw-hex">#494A5C</div>
+        <div class="sw-meta">8.3:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#5C5D70"></div><div class="sw-body">
+        <div class="sw-name">onSurfaceMuted</div><div class="sw-hex">#5C5D70</div>
+        <div class="sw-meta">6.2:1 · was 4.3:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#1F44D6"></div><div class="sw-body">
+        <div class="sw-name">primary</div><div class="sw-hex">#1F44D6</div>
+        <div class="sw-meta">7.1:1 as text</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#2F5BFF"></div><div class="sw-body">
+        <div class="sw-name">primaryFixed</div><div class="sw-hex">#2F5BFF</div>
+        <div class="sw-meta">the same button</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#DEE4FF"></div><div class="sw-body">
+        <div class="sw-name">primaryContainer</div><div class="sw-hex">#DEE4FF</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#0A7050"></div><div class="sw-body">
+        <div class="sw-name">success</div><div class="sw-hex">#0A7050</div>
+        <div class="sw-meta">5.9:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#7A4A00"></div><div class="sw-body">
+        <div class="sw-name">warning</div><div class="sw-hex">#7A4A00</div>
+        <div class="sw-meta">7.2:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#B3123A"></div><div class="sw-body">
+        <div class="sw-name">error</div><div class="sw-hex">#B3123A</div>
+        <div class="sw-meta">6.6:1</div></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#4F5A6E"></div><div class="sw-body">
+        <div class="sw-name">neutral</div><div class="sw-hex">#4F5A6E</div>
+        <div class="sw-meta">6.7:1</div></div></div>
+    </div>
+  </div>
+
+  <h3>Measured contrast</h3>
+  <p>
+    Every content role against the three surfaces it can land on. AA body text needs 4.5:1;
+    <code>outline</code> is non-text and needs 3:1.
+  </p>
+  <div class="tbl-scroll" id="contrast-table">
+    <!-- generated: see tools/validate.py -->
+  </div>
+
+  <h3>The twelve category hues</h3>
+  <p>
+    Hue carries the meaning — debt reads red, growth green, travel teal — and is anchored
+    within ±9° of that meaning. What v7 changes is that <strong>lightness is allowed to
+    vary</strong>. The current palette holds every category inside one lightness band on
+    purpose, and that is exactly what makes them collapse for a colour-blind reader: once hue
+    information is gone, lightness is nearly all the separation left.
+  </p>
+  <div id="cat-swatches"><!-- generated --></div>
+  <div id="cvd-table"><!-- generated --></div>
+</section>
+
+<!-- ══ TYPE ════════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="type">
+  <h2>Typography</h2>
+  <p class="sec-lede">
+    Two families. <strong>Noto Sans Mono</strong> for every number and every small-caps
+    caption — it is the one common grotesque mono that draws ₹ (U+20B9) itself, where
+    JetBrains Mono and Google’s Roboto Mono subset both omit it and would set the rupee sign
+    from a fallback face beside the digits, in the 44sp figure that carries the whole
+    hierarchy of the home screen. <strong>Roboto</strong> for prose. Tabular figures
+    everywhere a number appears, or the right-hand amount column visibly jitters as digits
+    change and stops lining up at all.
+  </p>
+
+  <div class="note-box fix">
+    <p class="nb-title">The one breaking change</p>
+    <p>
+      The micro-label goes from <strong>9sp to 11sp</strong>. It is the most-used style in the
+      app — it captions every figure on every screen — and 9sp is below MD3’s
+      <code>labelSmall</code> floor and hard for a lot of readers. The wide tracking is what
+      signals “this is a caption”, not the smallness, so nothing is lost by giving it the
+      extra two points. Expect roughly 4–6px of extra height per captioned figure; the
+      screens on the following pages are drawn at the new size and still fit.
+    </p>
+  </div>
+
+  <div class="ours ours-dark" style="background:var(--surface);border:1px solid var(--outline-variant);border-radius:16px;padding:28px 24px;margin:24px 0">
+    <p class="t-display-l" style="color:var(--on-surface)">₹21,979.40</p>
+    <p class="micro" style="margin-top:10px">display large · 44/44 · −2.2 · mono 700 · the one hero figure</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-display-m" style="color:var(--success)">+₹16,261.00</p>
+    <p class="micro" style="margin-top:10px">display medium · 34/36 · mono 700 · a signed net figure</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-display-s" style="color:var(--on-surface)">₹4,500</p>
+    <p class="micro" style="margin-top:10px">display small · 28/32 · mono 700 · the figure a sheet leads with</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-headline-m" style="color:var(--on-surface)">Your expenses, without the data entry</p>
+    <p class="micro" style="margin-top:10px">headline medium · 22/28 · sans 600 · onboarding and empty titles</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-title-l" style="color:var(--on-surface)">Reliance Smart</p>
+    <p class="micro" style="margin-top:10px">title large · 17 · sans 600 · the payee on a detail screen</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-body-l" style="color:var(--on-surface-variant)">Only bank and UPI messages are parsed, and the text of every message stays on this phone.</p>
+    <p class="micro" style="margin-top:10px">body large · 15/22 · sans 400 · prose, field values</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-body-m" style="color:var(--on-surface)" ><b>Keecheril St</b></p>
+    <p class="micro" style="margin-top:10px">body medium · 13/19 · sans 600 · the payee on a row</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="t-body-s" style="color:var(--on-surface-variant)">They stay in your totals until you decide.</p>
+    <p class="micro" style="margin-top:10px">body small · 12/17 · sans 400 · captions that are sentences</p>
+    <hr class="hair" style="margin:22px 0">
+    <div class="row" style="gap:18px">
+      <span class="amt" style="min-width:0">2,358.19</span>
+      <span class="val">68%</span>
+      <span class="pill ok"><svg><use href="#i-check-circle"/></svg>Synced</span>
+      <span class="wordmark">Ours</span>
+    </div>
+    <p class="micro" style="margin-top:12px">brand roles · amount 14 mono 700 tnum · value 15 mono 500 · pill 10 mono · wordmark 14/3.4</p>
+    <hr class="hair" style="margin:22px 0">
+    <p class="micro">micro label · 11 mono 500 · +1.5 tracking · uppercase · always above its value</p>
+  </div>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th>Role</th><th>Family</th><th>Size / line</th><th>Weight</th><th>Tracking</th><th>Used for</th></tr>
+    <tr><td>displayLarge</td><td class="mono">mono</td><td class="mono">44 / 44</td><td class="mono">700</td><td class="mono">−2.2</td><td>The month’s spend. One per screen.</td></tr>
+    <tr><td>displayMedium</td><td class="mono">mono</td><td class="mono">34 / 36</td><td class="mono">700</td><td class="mono">−1.4</td><td>Net figure, detail amount, budget editor.</td></tr>
+    <tr><td>displaySmall</td><td class="mono">mono</td><td class="mono">28 / 32</td><td class="mono">700</td><td class="mono">−0.8</td><td>The amount a bottom sheet leads with.</td></tr>
+    <tr><td>headlineMedium</td><td class="mono">sans</td><td class="mono">22 / 28</td><td class="mono">600</td><td class="mono">−0.2</td><td>Onboarding titles, lock screen.</td></tr>
+    <tr><td>headlineSmall</td><td class="mono">sans</td><td class="mono">19 / 25</td><td class="mono">600</td><td class="mono">0</td><td>Dialog titles.</td></tr>
+    <tr><td>titleLarge</td><td class="mono">sans</td><td class="mono">17 / 23</td><td class="mono">600</td><td class="mono">0</td><td>Payee on the detail screen.</td></tr>
+    <tr><td>titleMedium</td><td class="mono">sans</td><td class="mono">15 / 20</td><td class="mono">600</td><td class="mono">0</td><td>Notice titles, sheet headings.</td></tr>
+    <tr><td>titleSmall</td><td class="mono">sans</td><td class="mono">13 / 18</td><td class="mono">600</td><td class="mono">0</td><td>Tab labels, panel titles.</td></tr>
+    <tr><td>bodyLarge</td><td class="mono">sans</td><td class="mono">15 / 22</td><td class="mono">400</td><td class="mono">0</td><td>Prose, text-field values.</td></tr>
+    <tr><td>bodyMedium</td><td class="mono">sans</td><td class="mono">13 / 19</td><td class="mono">400/600</td><td class="mono">0</td><td>Payee on a row (600), settings rows.</td></tr>
+    <tr><td>bodySmall</td><td class="mono">sans</td><td class="mono">12 / 17</td><td class="mono">400</td><td class="mono">0</td><td>Explanatory captions that are sentences.</td></tr>
+    <tr><td>labelLarge</td><td class="mono">sans</td><td class="mono">14</td><td class="mono">600</td><td class="mono">+0.1</td><td>Button labels.</td></tr>
+    <tr><td>labelMedium</td><td class="mono">sans</td><td class="mono">12</td><td class="mono">500</td><td class="mono">+0.4</td><td>Chips, grid cells.</td></tr>
+    <tr><td>labelSmall</td><td class="mono">mono</td><td class="mono">11</td><td class="mono">500</td><td class="mono">+1.5</td><td>The micro-label. <strong>Was 9sp.</strong></td></tr>
+    <tr><td>amount <em>(brand)</em></td><td class="mono">mono</td><td class="mono">14</td><td class="mono">700</td><td class="mono">tnum</td><td>The shared right-hand column.</td></tr>
+    <tr><td>value <em>(brand)</em></td><td class="mono">mono</td><td class="mono">15</td><td class="mono">500</td><td class="mono">tnum</td><td>A figure under a micro-label.</td></tr>
+    <tr><td>wordmark <em>(brand)</em></td><td class="mono">mono</td><td class="mono">14</td><td class="mono">700</td><td class="mono">+3.4</td><td>Screen titles. Tracked to read as a mark.</td></tr>
+    <tr><td>pill <em>(brand)</em></td><td class="mono">mono</td><td class="mono">10</td><td class="mono">500</td><td class="mono">+1.0</td><td>Status pills only. Never body text.</td></tr>
+    <tr><td>axis <em>(brand)</em></td><td class="mono">mono</td><td class="mono">10</td><td class="mono">500</td><td class="mono">+0.8 tnum</td><td>Chart axis ends.</td></tr>
+  </table>
+  </div>
+
+  <h3>How money is written</h3>
+  <p>
+    Three formats, and choosing the wrong one makes a page stop reconciling. Indian
+    lakh/crore grouping throughout, never Western thousands.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:150px">Format</th><th style="width:150px">Example</th><th>When</th></tr>
+    <tr><td class="mono">exact</td><td class="mono">₹21,979.40</td>
+      <td>Any total the reader can also see the rows of — a day’s subtotal, a group total,
+          the month’s spend. It has to agree with the column beneath it to the paise, because
+          that is arithmetic the reader can do and watch fail.</td></tr>
+    <tr><td class="mono">whole</td><td class="mono">₹10,021</td>
+      <td>What you are <em>allowed or able</em> to spend: a budget, what is left of one, safe-to-spend.
+          Rounded <strong>down</strong> — a capacity that rounds up promises 99 paise the household
+          does not have.</td></tr>
+    <tr><td class="mono">bare</td><td class="mono">2,358.19</td>
+      <td>Every row in a list. No ₹, because forty repeated signs only add a ragged left edge
+          to the one thing that has to stay flush. Always two decimal places, even on round
+          figures, so the decimal point is in the same place on every row.</td></tr>
+    <tr><td class="mono">compact</td><td class="mono">₹1.2L · ₹42.4K</td>
+      <td>Chart axes and the budget figure, where space is tight.</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ══ SPACING ═════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="spacing">
+  <h2>Spacing, shape and layers</h2>
+  <p class="sec-lede">
+    A 4dp baseline grid. The current build uses 15dp screen edges and 7/9/11/13dp paddings —
+    close to a grid but never on one, so nothing could be reused between two components
+    without someone making a rounding decision. Everything below is a multiple of four.
+  </p>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:110px">Token</th><th style="width:80px">Value</th><th>Used for</th></tr>
+    <tr><td class="mono">space-1</td><td class="mono">4dp</td><td>Gap inside a chip; caption-to-value.</td></tr>
+    <tr><td class="mono">space-2</td><td class="mono">8dp</td><td>Between related rows; icon-to-label.</td></tr>
+    <tr><td class="mono">space-3</td><td class="mono">12dp</td><td>Avatar-to-text; between list items in a group.</td></tr>
+    <tr><td class="mono">space-4</td><td class="mono">16dp</td><td><strong>The screen edge.</strong> Panel padding. Section gap.</td></tr>
+    <tr><td class="mono">space-5</td><td class="mono">20dp</td><td>Between unrelated blocks on a screen.</td></tr>
+    <tr><td class="mono">space-6</td><td class="mono">24dp</td><td>Dialog padding; onboarding edge.</td></tr>
+    <tr><td class="mono">space-8</td><td class="mono">32dp</td><td>Above a screen’s primary action.</td></tr>
+    <tr><td class="mono">space-10/12</td><td class="mono">40/48dp</td><td>Empty-state padding; end-of-list breathing room.</td></tr>
+  </table>
+  </div>
+
+  <h4>Shape</h4>
+  <p>
+    The MD3 scale exactly. The old set (6/9/13/16/22dp) sat near these values without
+    landing on them.
+  </p>
+  <div class="ours ours-dark" style="display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 8px">
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:4px"></div>
+      <div class="micro" style="margin-top:8px">xs · 4</div></div>
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:8px"></div>
+      <div class="micro" style="margin-top:8px">sm · 8</div></div>
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:12px"></div>
+      <div class="micro" style="margin-top:8px">md · 12</div></div>
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:16px"></div>
+      <div class="micro" style="margin-top:8px">lg · 16</div></div>
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:28px"></div>
+      <div class="micro" style="margin-top:8px">xl · 28</div></div>
+    <div style="text-align:center">
+      <div style="width:78px;height:56px;background:var(--surface-c-high);border-radius:999px"></div>
+      <div class="micro" style="margin-top:8px">full</div></div>
+  </div>
+  <p style="font-size:14px">
+    <strong>xs</strong> snackbar · <strong>sm</strong> chips, grid cells, small fields ·
+    <strong>md</strong> panels, notices, action card · <strong>lg</strong> FAB, phone corners ·
+    <strong>xl</strong> dialogs, bottom sheets · <strong>full</strong> buttons, pills, nav indicator.
+  </p>
+
+  <h4>Elevation</h4>
+  <p>
+    Structure is carried by hairlines and stepped surfaces, so shadow is spent only on
+    things that genuinely float. This is a deliberate departure from stock MD3, where
+    tonal elevation is applied broadly.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:90px">Level</th><th style="width:170px">Treatment</th><th>Applied to</th></tr>
+    <tr><td class="mono">0</td><td>surface, no shadow</td><td>The page. Every list, every panel, the app bar at rest.</td></tr>
+    <tr><td class="mono">1</td><td>surfaceContainer, hairline</td><td>Nav bar, search field, app bar once content scrolls under it.</td></tr>
+    <tr><td class="mono">2</td><td>+ soft shadow</td><td>FAB.</td></tr>
+    <tr><td class="mono">3</td><td>containerLow + shadow</td><td>Bottom sheets, snackbar.</td></tr>
+    <tr><td class="mono">4</td><td>containerHigh + shadow</td><td>Dialogs, notifications, menus.</td></tr>
+    <tr><td class="mono">5</td><td>—</td><td>Unused. Nothing in this app is five layers deep.</td></tr>
+  </table>
+  </div>
+
+  <h4>Motion</h4>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:190px">Token</th><th style="width:120px">Duration</th><th>Applied to</th></tr>
+    <tr><td class="mono">short-2 · standard</td><td class="mono">100ms</td><td>State layers, ripples, chip selection.</td></tr>
+    <tr><td class="mono">short-4 · standard</td><td class="mono">200ms</td><td>Nav-bar indicator, switch thumb, fade between screens.</td></tr>
+    <tr><td class="mono">medium-2 · emphasized</td><td class="mono">300ms</td><td>Detail screen slide-up; disclosure expand.</td></tr>
+    <tr><td class="mono">medium-4 · emphasized</td><td class="mono">400ms</td><td>Bottom sheet enter; FAB shrink to small.</td></tr>
+    <tr><td class="mono">long-2 · decelerate</td><td class="mono">500ms</td><td>The count-up on the hero figure. Nothing else.</td></tr>
+  </table>
+  </div>
+  <p>
+    The count-up is used exactly once per screen, on the headline, for the same reason there
+    is one accent: it makes the number feel <em>computed</em> rather than merely displayed,
+    and a second one would make both feel like decoration. It respects
+    <code>prefers-reduced-motion</code> by snapping to the figure.
+  </p>
+</section>
+
+<!-- ══ ICONS ═══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="icons">
+  <h2>Icons</h2>
+  <p class="sec-lede">
+    Bootstrap Icons 1.11.3 (MIT), <strong>outline weight throughout</strong>, with filled
+    variants only for the selected bottom-nav tab. Mixing weights is the fastest way to make
+    a carefully chosen icon set look accidental. Every glyph below is rendered from the app’s
+    own vector drawables, so what you see here is what ships.
+  </p>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:120px">Rule</th><th>Detail</th></tr>
+    <tr><td><strong>Grid</strong></td><td>16×16 source, drawn on a 16dp viewport. Never scale a 16px glyph past 24dp — the strokes go soft; pick a larger source instead.</td></tr>
+    <tr><td><strong>Sizes</strong></td><td><span class="mono">14dp</span> inside chips and grid cells · <span class="mono">18dp</span> in rows and buttons · <span class="mono">20dp</span> in icon buttons and app bars · <span class="mono">24dp</span> FAB and nav · <span class="mono">32dp</span> empty states and onboarding.</td></tr>
+    <tr><td><strong>Targets</strong></td><td>The glyph is not the target. Every tappable icon sits inside a 48dp square (40dp where two are unavoidably adjacent, never below 24dp).</td></tr>
+    <tr><td><strong>Colour</strong></td><td>A category glyph carries its category’s hue, everywhere it appears — the avatar on a row, the chip, the grid cell, the Rules header. Everything else is <code>onSurfaceVariant</code>, or <code>primary</code> when it is the action.</td></tr>
+    <tr><td><strong>Meaning</strong></td><td>One glyph, one job. A chevron means “there is more this way” and is never an up/down arrow, because those mean money moved — a real bug this set had, where the disclosure control on Rules was a pair of trend arrows.</td></tr>
+    <tr><td><strong>Labels</strong></td><td>Every icon-only control carries a <code>contentDescription</code>. An icon is never the only way a state is announced.</td></tr>
+  </table>
+  </div>
+
+  <h4>Category marks</h4>
+  <div class="ours ours-dark" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin:16px 0 28px">
+    <div style="text-align:center"><span class="avatar c-food" style="margin:0 auto"><svg><use href="#i-cup-hot"/></svg></span><div class="micro" style="margin-top:7px">Food</div></div>
+    <div style="text-align:center"><span class="avatar c-groceries" style="margin:0 auto"><svg><use href="#i-basket"/></svg></span><div class="micro" style="margin-top:7px">Groceries</div></div>
+    <div style="text-align:center"><span class="avatar c-transport" style="margin:0 auto"><svg><use href="#i-fuel-pump"/></svg></span><div class="micro" style="margin-top:7px">Transport</div></div>
+    <div style="text-align:center"><span class="avatar c-shopping" style="margin:0 auto"><svg><use href="#i-bag"/></svg></span><div class="micro" style="margin-top:7px">Shopping</div></div>
+    <div style="text-align:center"><span class="avatar c-bills" style="margin:0 auto"><svg><use href="#i-lightning-charge"/></svg></span><div class="micro" style="margin-top:7px">Bills</div></div>
+    <div style="text-align:center"><span class="avatar c-rent" style="margin:0 auto"><svg><use href="#i-house-door"/></svg></span><div class="micro" style="margin-top:7px">Rent</div></div>
+    <div style="text-align:center"><span class="avatar c-health" style="margin:0 auto"><svg><use href="#i-heart-pulse"/></svg></span><div class="micro" style="margin-top:7px">Health</div></div>
+    <div style="text-align:center"><span class="avatar c-education" style="margin:0 auto"><svg><use href="#i-book"/></svg></span><div class="micro" style="margin-top:7px">Education</div></div>
+    <div style="text-align:center"><span class="avatar c-fun" style="margin:0 auto"><svg><use href="#i-film"/></svg></span><div class="micro" style="margin-top:7px">Fun</div></div>
+    <div style="text-align:center"><span class="avatar c-travel" style="margin:0 auto"><svg><use href="#i-airplane"/></svg></span><div class="micro" style="margin-top:7px">Travel</div></div>
+    <div style="text-align:center"><span class="avatar c-savings" style="margin:0 auto"><svg><use href="#i-graph-up-arrow"/></svg></span><div class="micro" style="margin-top:7px">Savings</div></div>
+    <div style="text-align:center"><span class="avatar c-emi" style="margin:0 auto"><svg><use href="#i-bank"/></svg></span><div class="micro" style="margin-top:7px">EMI</div></div>
+    <div style="text-align:center"><span class="avatar c-neutral" style="margin:0 auto"><svg><use href="#i-arrow-left-right"/></svg></span><div class="micro" style="margin-top:7px">Transfers</div></div>
+    <div style="text-align:center"><span class="avatar c-neutral" style="margin:0 auto"><svg><use href="#i-credit-card"/></svg></span><div class="micro" style="margin-top:7px">Card bill</div></div>
+    <div style="text-align:center"><span class="avatar c-neutral" style="margin:0 auto"><svg><use href="#i-arrow-left-right"/></svg></span><div class="micro" style="margin-top:7px">Ours</div></div>
+    <div style="text-align:center"><span class="avatar c-income" style="margin:0 auto"><svg><use href="#i-cash-coin"/></svg></span><div class="micro" style="margin-top:7px">Income</div></div>
+    <div style="text-align:center"><span class="avatar c-neutral" style="margin:0 auto"><svg><use href="#i-three-dots"/></svg></span><div class="micro" style="margin-top:7px">Other</div></div>
+  </div>
+  <p style="font-size:14px">
+    Three categories stay deliberately grey. Transfers, Card&nbsp;bill and Ours are the
+    things the summary excludes or treats as movement rather than spending — a vivid hue
+    would argue for their importance. Income borrows <code>success</code> instead of owning a
+    thirteenth hue, because money arriving is the same “good” the budget ruler reports.
+  </p>
+
+  <h4>The rest of the set</h4>
+  <div class="ours ours-dark" id="icon-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
+</section>
+
+<!-- ══ ACCESSIBILITY ═══════════════════════════════════════════════════ -->
+<section class="doc-sec" id="a11y">
+  <h2>Accessibility</h2>
+  <p class="sec-lede">
+    The audit found four systematic problems, all of them the kind that never shows up in a
+    screenshot. Each is fixed by a rule rather than by a one-off correction.
+  </p>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:150px">Problem</th><th style="width:250px">Found in</th><th>The rule now</th></tr>
+    <tr>
+      <td><strong>Touch targets</strong></td>
+      <td>Back arrows tap a bare 16dp glyph. The rule-chip delete is <span class="fail">9dp</span>. Bill dismiss is 13dp. The detail-screen delete is a 15dp glyph a thumb’s width from Back.</td>
+      <td>The glyph is never the target. 48dp minimum, 40dp only where two controls are unavoidably adjacent, never below the 24dp WCAG 2.5.8 floor. Destructive controls get 8dp of clear space from anything benign.</td>
+    </tr>
+    <tr>
+      <td><strong>Text size</strong></td>
+      <td>The 9sp micro-label, used to caption every figure on every screen.</td>
+      <td>11sp floor for all text. Nothing in the app is smaller.</td>
+    </tr>
+    <tr>
+      <td><strong>Contrast</strong></td>
+      <td>Accent-as-text at <span class="fail">3.80:1</span>. Light-theme captions at <span class="fail">4.25:1</span> — a failure the source comments already admit. Shopping at <span class="fail">2.90:1</span>, also admitted.</td>
+      <td>Split the accent into <code>primary</code> (text) and <code>primaryFixed</code> (fills). Every role re-derived and measured; the worst text pair in v7 is <span class="pass">5.00:1</span>.</td>
+    </tr>
+    <tr>
+      <td><strong>Colour-blindness</strong></td>
+      <td>Food and Education are near-identical to a deuteranope; the source names this and accepts it.</td>
+      <td>Lightness is allowed to vary across the set, which is what restores separation once hue is gone. Validated against all three dichromacies — figures above. Name and amount still print beside every bar regardless.</td>
+    </tr>
+    <tr>
+      <td><strong>Announcements</strong></td>
+      <td>Selection count, sync state and untagged count are visual only.</td>
+      <td>Live-region announcements for selection changes and sync results; state pills carry their text, not just their colour; the untagged count is a nav-bar badge with a spoken label.</td>
+    </tr>
+  </table>
+  </div>
+
+  <h4>Dynamic type</h4>
+  <p>
+    The app must survive the system font scale to 200%. Two consequences the current layout
+    would not tolerate: the shared amount column has to keep its right edge (it grows, it
+    does not wrap), and the three-figure BUDGET / USED / LEFT row has to reflow to two lines
+    rather than crush. Both are specified on the Core screens page.
+  </p>
+</section>
+
+<!-- ══ RESPONSIVE ══════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="responsive">
+  <h2>Window size classes</h2>
+  <p class="sec-lede">
+    The app currently has no response to window size at all — one 360dp layout, everywhere.
+    That is fine on the Motorola it was built for and wrong on the partner’s Android 16
+    handset the moment it is rotated, and wrong on any foldable.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:120px">Class</th><th style="width:110px">Width</th><th style="width:150px">Navigation</th><th>Layout</th></tr>
+    <tr><td><strong>Compact</strong></td><td class="mono">&lt; 600dp</td><td>Bottom nav bar</td>
+      <td>One column. The reference layout; every mockup in this package is drawn at 360dp.</td></tr>
+    <tr><td><strong>Medium</strong></td><td class="mono">600–839dp</td><td>Navigation rail</td>
+      <td>One column capped at 480dp and centred, so a line of prose never runs to 800dp.
+          Summary’s panels go two-up. Bottom sheets become centred dialogs.</td></tr>
+    <tr><td><strong>Expanded</strong></td><td class="mono">≥ 840dp</td><td>Navigation rail</td>
+      <td>Two panes: the statement list on the left, the selected entry on the right, which
+          is what the detail screen already is. Tapping a row fills the right pane instead of
+          navigating. Sort and Trash keep one pane — they are jobs, not browsing.</td></tr>
+  </table>
+  </div>
+  <p>
+    Landscape on a compact phone keeps the bottom bar but drops the hero figure to
+    <code>displaySmall</code> and moves the daily chart beside it, so the fold still shows the
+    budget ruler.
+  </p>
+</section>
+
+<!-- ══ HANDOFF ═════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="handoff">
+  <h2>Handoff</h2>
+  <p class="sec-lede">
+    The tokens as they land in each tool. This page is the source; the two blocks below are
+    derived from it.
+  </p>
+
+  <h4>Figma</h4>
+  <ul>
+    <li>Two colour variable <strong>modes</strong> — Light and Dark — on one collection, named
+      exactly as the MD3 roles above (<code>surface</code>, <code>onSurfaceVariant</code>,
+      <code>primaryFixed</code> …). Never a raw hex in a layer.</li>
+    <li>Category hues in a second collection, <code>category/food</code> … so a bar can be
+      rebound without touching the semantic roles.</li>
+    <li>Number variables for the spacing scale, so auto-layout gaps are
+      <code>space-3</code> rather than 12.</li>
+    <li>Text styles named for the role, not the appearance: <code>display/large</code>, not
+      <code>Mono 44 Bold</code>.</li>
+    <li>Components with variants for every state on the Components page — including
+      <em>disabled</em> and <em>error</em>, which are the two that get skipped and then get
+      improvised in code.</li>
+  </ul>
+
+  <h4>Compose</h4>
+  <p>
+    The existing <code>OursColors</code> data class and <code>LocalOursColors</code> already do
+    the right thing — Material has no slot for “the colour a category is”. v7 keeps that shape
+    and renames the fields to the MD3 roles, so <code>schemeFor()</code> becomes a
+    near-identity mapping instead of a translation.
+  </p>
+  <pre class="wire" id="kotlin-out">// generated below</pre>
+</section>
+
+</div>
+
+<script>
+/* The icon set, drawn from the sprite so this page cannot fall out of step with it. */
+(function () {
+  var NAMES = ("plus-lg,x-lg,check-lg,check-circle,question-circle,search,trash,tag,download," +
+    "arrow-left,arrow-up,arrow-down,arrow-left-right,arrow-repeat,chevron-left,chevron-right," +
+    "chevron-up,chevron-down,house,house-fill,receipt,receipt-cutoff,pie-chart,pie-chart-fill," +
+    "wallet2,wallet-fill,gear,gear-fill,cloud-check,cloud-slash,bluetooth,exclamation-triangle," +
+    "envelope,inbox,inboxes,people,lock,shield-lock,camera,folder2,folder2-open,send-check," +
+    "graph-up,emoji-neutral,three-dots").split(",");
+  var host = document.getElementById('icon-grid');
+  if (!host) return;
+  NAMES.forEach(function (n) {
+    var d = document.createElement('div');
+    d.style.cssText = 'text-align:center;padding:12px 4px;border:1px solid var(--outline-variant);border-radius:8px';
+    d.innerHTML = '<svg style="width:20px;height:20px;fill:var(--on-surface-variant)"><use href="#i-' + n +
+      '"/></svg><div class="micro" style="margin-top:8px;font-size:9px;letter-spacing:.6px">' + n + '</div>';
+    host.appendChild(d);
+  });
+})();
+</script>
