@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -433,8 +434,15 @@ fun HomeScreen(
             Box(
                 Modifier
                     .padding(end = Space.edge, bottom = 14.dp)
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(15.dp))
+                    // 56dp, the standard floating-action size. At 44 it was under the
+                    // 48dp minimum touch target and read as a chip that had drifted
+                    // loose. Still clears the list: `contentPadding` reserves 96dp and
+                    // this occupies 70 with its margin.
+                    .size(56.dp)
+                    // Round, not the 15.dp squircle every other surface here uses. This
+                    // is the one control that floats over the statement rather than
+                    // sitting in it, and a circle is what says so.
+                    .clip(CircleShape)
                     .background(Ours.primaryFixed)
                     .clickable { showAddSheet = true },
                 contentAlignment = Alignment.Center,
@@ -443,7 +451,9 @@ fun HomeScreen(
                     OursIcon.Add,
                     contentDescription = "Add expense",
                     tint = Color.White,
-                    modifier = Modifier.size(16.dp),
+                    // Grown with the button. Left at 16 the plus swam in the middle of
+                    // the circle, which reads as a rendering mistake rather than a style.
+                    modifier = Modifier.size(22.dp),
                 )
             }
         }

@@ -1,7 +1,7 @@
 {
-  "versionCode": 66,
-  "versionName": "6.4",
-  "notes": "Every entry now says which account it was paid from, and lets you change it.",
+  "versionCode": 67,
+  "versionName": "6.5",
+  "notes": "A rounder, larger add button.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25566242
 }
