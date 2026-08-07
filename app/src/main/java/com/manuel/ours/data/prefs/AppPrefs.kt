@@ -75,6 +75,15 @@ class AppPrefs @Inject constructor(
         val BALANCES_BACKFILLED = booleanPreferencesKey("balances_backfilled")
         val COUNTERPARTY_BACKFILLED = booleanPreferencesKey("counterparty_backfilled")
         val FIRED_BUDGET_ALERTS = stringSetPreferencesKey("fired_budget_alerts")
+
+        /**
+         * Due-date alerts already shown, keyed by bill, date and stage.
+         *
+         * The key carries the date rather than the month, so a card due on the 2nd every
+         * month gets one warning per month rather than one ever. Same cap as the budget
+         * set, for the same reason: DataStore rewrites the whole file on every edit.
+         */
+        val FIRED_BILL_ALERTS = stringSetPreferencesKey("fired_bill_alerts")
     }
 
     /** Stable per-install identity. Doubles as the log filename and the merge tiebreak. */
@@ -300,6 +309,21 @@ class AppPrefs @Inject constructor(
     suspend fun hasBudgetAlertFired(key: String): Boolean =
         context.dataStore.data.map { it[Keys.FIRED_BUDGET_ALERTS].orEmpty() }.first()
             .contains(key)
+
+    /** Every due-date alert already shown, so a re-run says nothing a second time. */
+    suspend fun firedBillAlerts(): Set<String> =
+        context.dataStore.data.map { it[Keys.FIRED_BILL_ALERTS].orEmpty() }.first()
+
+    suspend fun markBillAlertsFired(keys: Collection<String>) {
+        if (keys.isEmpty()) return
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.FIRED_BILL_ALERTS].orEmpty()
+            val trimmed = if (current.size >= MAX_FIRED_ALERTS) {
+                current.sorted().takeLast(MAX_FIRED_ALERTS / 2).toSet()
+            } else current
+            prefs[Keys.FIRED_BILL_ALERTS] = trimmed + keys
+        }
+    }
 
     suspend fun markBudgetAlertFired(key: String) {
         context.dataStore.edit { prefs ->

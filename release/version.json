@@ -1,7 +1,7 @@
 {
-  "versionCode": 67,
-  "versionName": "6.5",
-  "notes": "A rounder, larger add button.",
+  "versionCode": 68,
+  "versionName": "6.6",
+  "notes": "Reminders for bills and card due dates, three days ahead and on the day.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25566242
+  "sizeBytes": 25582626
 }

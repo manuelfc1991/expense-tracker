@@ -342,6 +342,14 @@ data class AccountBalance(
     val isCard: Boolean = false,
     val limitPaise: Long? = null,
     /**
+     * Day of the month this card's bill falls due, when the household has said.
+     *
+     * Carried here so the Accounts panel can show it and the edit dialog can change it.
+     * It lived only on `CardInfo` and so never reached a screen, which is half of why it
+     * sat unset — the other half being that the add dialog hard-coded null.
+     */
+    val dueDay: Int? = null,
+    /**
      * What the bank makes you keep in the account, which is not yours to spend.
      *
      * Zero for a zero-balance account. Breaching it costs a penalty, so money below

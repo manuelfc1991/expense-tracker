@@ -107,6 +107,10 @@ class OursApp : Application(), Configuration.Provider {
             householdRepository.migrateHouseholdIdIfLegacy()
 
             SyncWorker.enqueuePeriodic(this@OursApp)
+            // Bills with a date on them. Nothing announced these before: a due date was
+            // stored, drawn on Home the day the statement arrived, and never mentioned
+            // again — including on the day it fell due.
+            com.manuel.ours.work.DueBillsWorker.enqueuePeriodic(this@OursApp)
 
             // Restore nearby sync if it is switched on. The toggle used to be the only
             // thing that ever started the service, so after an app restart — or a phone
@@ -246,6 +250,15 @@ class OursApp : Application(), Configuration.Provider {
         )
         manager.createNotificationChannel(
             NotificationChannel(
+                CHANNEL_BILLS,
+                "Bills due",
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Credit-card bills and other payments with a due date."
+            }
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
                 CHANNEL_SYNC,
                 "Sync",
                 NotificationManager.IMPORTANCE_LOW,
@@ -258,5 +271,15 @@ class OursApp : Application(), Configuration.Provider {
         const val CHANNEL_EXPENSES_ACTIONABLE = "expenses_actionable"
         const val CHANNEL_BUDGET = "budget"
         const val CHANNEL_SYNC = "sync"
+
+        /**
+         * Money that is owed and has a date on it.
+         *
+         * Its own channel rather than sharing the budget one, because the two say
+         * opposite things and a household may reasonably want one and not the other: a
+         * budget alert is advice about spending, while a due date is a deadline with a
+         * late fee behind it. Sharing a channel would mean silencing one silences both.
+         */
+        const val CHANNEL_BILLS = "bills"
     }
 }

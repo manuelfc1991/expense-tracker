@@ -236,6 +236,7 @@ object MonthlyAggregator {
                 minimumPaise = minimums[key] ?: 0L,
                 isCard = cards.containsKey(key),
                 limitPaise = cards[key]?.limitPaise,
+                dueDay = cards[key]?.dueDay,
             )
         }.sortedWith(
             compareByDescending<AccountBalance> { it.balancePaise != null }

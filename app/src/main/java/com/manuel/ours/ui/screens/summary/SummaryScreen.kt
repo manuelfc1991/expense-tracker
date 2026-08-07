@@ -264,7 +264,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         AddAccountDialog(
             members = state.members,
             onDismiss = { addingAccount = false },
-            onConfirm = { key, bank, balance, minimum, isCard, limit, owner ->
+            onConfirm = { key, bank, balance, minimum, isCard, limit, dueDay, owner ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
                 // own screen as "tap to set" rather than only on the owner's. A null
@@ -272,7 +272,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 // what is in it.
                 viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
-                if (isCard) viewModel.setCard(key, limit, null)
+                if (isCard) viewModel.setCard(key, limit, dueDay)
                 owner?.let { viewModel.setAccountOwner(key, it.uid, it.displayName) }
                 addingAccount = false
             },
@@ -286,7 +286,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             account = account,
             members = state.members,
             onDismiss = { settingBalanceKey = null },
-            onConfirm = { edit, minimum, owner ->
+            onConfirm = { edit, minimum, owner, dueDay ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
                     // wipe a balance the person never went near.
@@ -298,6 +298,11 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 }
                 minimum?.let { viewModel.setAccountMinimum(account.key, it) }
                 owner?.let { viewModel.setAccountOwner(account.key, it.uid, it.displayName) }
+                // The limit is carried through untouched: setCard writes both halves of
+                // the rule, so passing only the day would quietly erase the credit limit.
+                if (account.isCard && dueDay != account.dueDay) {
+                    viewModel.setCard(account.key, account.limitPaise, dueDay)
+                }
                 settingBalanceKey = null
             },
         )
@@ -446,6 +451,7 @@ private fun AddAccountDialog(
         minimum: Long?,
         isCard: Boolean,
         limit: Long?,
+        dueDay: Int?,
         owner: Member?,
     ) -> Unit,
 ) {
@@ -457,6 +463,11 @@ private fun AddAccountDialog(
     // held or money owed — and that is not a detail a form field can carry.
     var isCard by rememberSaveable { mutableStateOf(false) }
     var limit by rememberSaveable { mutableStateOf("") }
+    // The day of the month the bill falls due. Stored since cards existed and, until
+    // now, impossible to fill in: every call site passed null, so the field was written,
+    // synced and never populated. It is what lets the app warn about a card whose bank
+    // sends no reminder message of its own.
+    var dueDay by rememberSaveable { mutableStateOf("") }
     // Unclaimed until said otherwise. An account added by hand is the one case where the
     // app could most plausibly guess — you are holding the phone — and guessing here is
     // how a joint account ends up filed as one person's.
@@ -506,6 +517,10 @@ private fun AddAccountDialog(
                 if (isCard) {
                     MicroLabel("Credit limit — optional")
                     MoneyField(limit) { limit = it }
+                    MicroLabel("Bill due on — day of the month, optional")
+                    PlainField(dueDay, "2") {
+                        dueDay = it.filter(Char::isDigit).take(2)
+                    }
                 } else {
                     MicroLabel("Minimum balance")
                     MoneyField(minimum) { minimum = it }
@@ -538,6 +553,9 @@ private fun AddAccountDialog(
                         if (isCard) null else Money.parseToPaise(minimum),
                         isCard,
                         Money.parseToPaise(limit),
+                        // Only a real day of the month. A typo like 45 is no answer, and
+                        // storing it would schedule a reminder that never comes round.
+                        dueDay.toIntOrNull()?.takeIf { it in 1..31 },
                         members.firstOrNull { it.uid == owner },
                     )
                 },
@@ -599,6 +617,23 @@ private fun MoneyField(value: String, onChange: (String) -> Unit) {
 }
 
 /**
+ * "1st", "2nd", "23rd" — a day of the month as somebody would say it.
+ *
+ * The teens are the whole reason this is a function: 11, 12 and 13 take "th" despite
+ * ending in 1, 2 and 3, and every naive version of this gets "11st" wrong.
+ */
+private fun ordinalDay(day: Int): String {
+    val suffix = when {
+        day % 100 in 11..13 -> "th"
+        day % 10 == 1 -> "st"
+        day % 10 == 2 -> "nd"
+        day % 10 == 3 -> "rd"
+        else -> "th"
+    }
+    return "$day$suffix"
+}
+
+/**
  * Whose account this is — recorded, never inferred.
  *
  * Shared is a first-class answer and is offered as one, rather than being what you get
@@ -643,13 +678,18 @@ private fun BalanceDialog(
     account: AccountBalance,
     members: List<Member>,
     onDismiss: () -> Unit,
-    onConfirm: (balance: BalanceEdit?, minimum: Long?, owner: OwnerEdit?) -> Unit,
+    onConfirm: (balance: BalanceEdit?, minimum: Long?, owner: OwnerEdit?, dueDay: Int?) -> Unit,
 ) {
     // Only written when it actually changes. Re-saving the same owner on every visit
     // would bump the rule's `updatedAt` and let this phone win a last-write-wins race it
     // had nothing new to say in — quietly undoing a correction made on the other phone.
     val openingOwner = remember { account.ownerUid }
     var owner by remember { mutableStateOf(account.ownerUid) }
+    // Editable here as well as at the point a card is added, so a card recorded before
+    // due dates existed is not stuck without one. Every field on this screen that could
+    // only be set at creation has eventually turned out to need changing.
+    val openingDueDay = remember { account.dueDay?.toString().orEmpty() }
+    var dueDay by remember { mutableStateOf(openingDueDay) }
     // The figure as it opened, so an untouched field is not re-saved as though somebody
     // typed it. Saving a minimum used to overwrite a bank-quoted balance with an
     // identical hand-entered one, silently downgrading "the bank said" to "you said".
@@ -680,8 +720,13 @@ private fun BalanceDialog(
             ) {
                 MicroLabel("Balance now")
                 MoneyField(text) { text = it }
-                MicroLabel("Minimum balance")
-                MoneyField(minText) { minText = it }
+                if (account.isCard) {
+                    MicroLabel("Bill due on — day of the month")
+                    PlainField(dueDay, "2") { dueDay = it.filter(Char::isDigit).take(2) }
+                } else {
+                    MicroLabel("Minimum balance")
+                    MoneyField(minText) { minText = it }
+                }
                 OwnerPicker(members, owner) { owner = it?.uid }
                 Text(
                     "A balance you type is yours, not the bank's — a real one from a " +
@@ -698,7 +743,8 @@ private fun BalanceDialog(
         confirmButton = {
             // Either field alone is a complete answer: a bank-quoted balance needs only
             // a floor, and a zero-balance account needs only a figure.
-            val touched = text != opening || minPaise != null || owner != openingOwner
+            val touched = text != opening || minPaise != null || owner != openingOwner ||
+                dueDay != openingDueDay
             TextButton(
                 enabled = touched,
                 onClick = {
@@ -718,6 +764,7 @@ private fun BalanceDialog(
                         if (owner == openingOwner) null else {
                             OwnerEdit(owner, members.firstOrNull { it.uid == owner }?.displayName)
                         },
+                        dueDay.toIntOrNull()?.takeIf { it in 1..31 },
                     )
                 },
             ) { Text("Save", color = if (touched) Ours.primary else Ours.onSurfaceMuted) }
@@ -1049,6 +1096,13 @@ private fun WhatsLeft(
                         MicroLabel(
                             buildString {
                                 card.accountTail?.let { append("···· $it") }
+                                // The date the app will warn about, said where the card
+                                // is. A due day nobody can see is a due day nobody
+                                // trusts is set.
+                                card.dueDay?.let {
+                                    if (isNotEmpty()) append(" · ")
+                                    append("due ").append(ordinalDay(it))
+                                }
                                 if (card.balancePaise == null) {
                                     if (isNotEmpty()) append(" · ")
                                     append("tap to set")
