@@ -1,7 +1,7 @@
 {
-  "versionCode": 70,
-  "versionName": "6.8",
-  "notes": "Notifications carry the app's own icon; refunds add up and unlink cleanly.",
+  "versionCode": 71,
+  "versionName": "6.9",
+  "notes": "Swipe between the Summary tabs, and remove an account you added by mistake.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }
