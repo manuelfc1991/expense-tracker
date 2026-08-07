@@ -18,6 +18,15 @@ data class RecurringCharge(
     /** The median, not the mean — one annual price rise should not drag the figure. */
     val typicalPaise: Long,
     val cadence: Cadence,
+    /**
+     * The median gap actually observed, in days.
+     *
+     * Kept alongside [cadence] because a cadence can match at twice its own period: the
+     * matcher allows a ×2 multiple, so a fortnightly charge matches WEEKLY exactly. The
+     * label is then right and the *cost* is wrong, which is the half that reaches the
+     * budget. Zero means "not measured" and falls back to the nominal period.
+     */
+    val observedPeriodDays: Long = 0,
     val occurrences: Int,
     val lastSeenAt: Long,
     val nextExpectedAt: Long,
@@ -29,12 +38,22 @@ data class RecurringCharge(
      * total that added 1200 to 400 would say otherwise.
      */
     val monthlyEquivalentPaise: Long
-        get() = when (cadence) {
-            Cadence.WEEKLY -> typicalPaise * 52 / 12
-            Cadence.MONTHLY -> typicalPaise
-            Cadence.QUARTERLY -> typicalPaise / 3
-            Cadence.YEARLY -> typicalPaise / 12
+        get() {
+            // From the gap actually seen, not the cadence's nominal period.
+            //
+            // The matcher accepts a gap at 1× or 2× the period, so a ₹1,000 fortnightly
+            // charge matched WEEKLY exactly — and this then multiplied by 52/12 and
+            // reported ₹4,333 a month for something that costs ₹2,167. That figure is
+            // committed money in `Pacing`, so it shrank the discretionary budget by
+            // ₹2,166 a month out of nowhere.
+            val days = observedPeriodDays.takeIf { it > 0 } ?: cadence.periodDays.toLong()
+            return typicalPaise * DAYS_PER_MONTH / days
         }
+
+    private companion object {
+        /** 365.25 / 12, rounded — the divisor that turns a period into a monthly cost. */
+        const val DAYS_PER_MONTH = 30L
+    }
 
     enum class Cadence(
         val periodDays: Int,
@@ -113,26 +132,41 @@ object RecurringDetector {
     private fun fromGroup(rows: List<Transaction>): RecurringCharge? {
         if (rows.size < MIN_OCCURRENCES) return null
 
-        val median = rows.map { it.amountPaise }.median()
-        if (median <= 0) return null
-        if (rows.any { abs(it.amountPaise - median).toDouble() / median > AMOUNT_TOLERANCE }) {
-            return null
-        }
+        val medianAll = rows.map { it.amountPaise }.median()
+        if (medianAll <= 0) return null
 
-        val gaps = rows.zipWithNext { a, b -> (b.occurredAt - a.occurredAt) / DAY_MILLIS }
-        if (gaps.any { it <= 0 }) return null
+        // Trim the outliers instead of discarding the charge.
+        //
+        // `any { … } -> return null` threw the whole merchant away for one odd figure:
+        // twenty-four months of ₹649 Netflix plus a single ₹99 charge under the same
+        // payee is 85% off the median, so the entire ₹649-a-month commitment vanished —
+        // taking `monthlyCommitted` to 0 and reporting a month as OnCourse that was not.
+        val kept = rows.filter {
+            abs(it.amountPaise - medianAll).toDouble() / medianAll <= AMOUNT_TOLERANCE
+        }
+        if (kept.size < MIN_OCCURRENCES) return null
+        val median = kept.map { it.amountPaise }.median()
+
+        // Two debits on one day truncate to a gap of 0. Dropping the pair rather than the
+        // whole group, for the same reason: one coincidence should not erase a year of
+        // rent.
+        val gaps = kept.zipWithNext { a, b -> (b.occurredAt - a.occurredAt) / DAY_MILLIS }
+            .filter { it > 0 }
+        if (gaps.isEmpty()) return null
 
         val cadence = cadenceFor(gaps) ?: return null
+        val observedPeriod = gaps.median()
 
         // Step from the last sighting by the cadence rather than by the average gap, so
         // a run that drifted early does not predict a date that keeps sliding.
-        val last = rows.last()
+        val last = kept.last()
         return RecurringCharge(
             merchant = last.merchant,
             category = rows.groupingBy { it.category }.eachCount()
                 .maxByOrNull { it.value }?.key ?: last.category,
             typicalPaise = median,
             cadence = cadence,
+            observedPeriodDays = observedPeriod,
             occurrences = rows.size,
             lastSeenAt = last.occurredAt,
             nextExpectedAt = last.occurredAt + cadence.periodDays * DAY_MILLIS,
@@ -148,14 +182,29 @@ object RecurringDetector {
      * Three times is not allowed: by then the run is too sparse to call a pattern.
      */
     private fun cadenceFor(gaps: List<Long>): RecurringCharge.Cadence? =
-        RecurringCharge.Cadence.entries.firstOrNull { cadence ->
-            gaps.all { gap ->
-                (1..2).any { multiple ->
-                    abs(gap - cadence.periodDays.toLong() * multiple) <=
-                        cadence.toleranceDays.toLong() * multiple
+        RecurringCharge.Cadence.entries
+            // Closest first, not declaration order.
+            //
+            // WEEKLY is declared first and its ×2 window with a doubled tolerance covers
+            // 10–18 days, so every fortnightly charge matched WEEKLY before MONTHLY was
+            // considered — and `monthlyEquivalentPaise` then multiplied it by 52/12,
+            // reporting a ₹1,000 fortnightly charge as ₹4,333 a month instead of ₹2,167.
+            // That figure feeds straight into pacing as committed money.
+            .filter { cadence ->
+                gaps.all { gap ->
+                    (1..2).any { multiple ->
+                        abs(gap - cadence.periodDays.toLong() * multiple) <=
+                            cadence.toleranceDays.toLong() * multiple
+                    }
                 }
             }
-        }
+            .minByOrNull { cadence ->
+                gaps.sumOf { gap ->
+                    (1..2).minOf { multiple ->
+                        abs(gap - cadence.periodDays.toLong() * multiple)
+                    }
+                }
+            }
 
     private fun List<Long>.median(): Long {
         val sorted = sorted()
