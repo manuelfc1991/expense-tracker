@@ -20,6 +20,7 @@ import com.manuel.ours.data.sync.SyncOp
 import com.manuel.ours.data.sync.SyncPayload
 import com.manuel.ours.domain.ReuploadTally
 import com.manuel.ours.domain.Trash
+import com.manuel.ours.domain.model.AccountOwner
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.SplitType
@@ -395,6 +396,51 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /**
+     * Whose each account is, as somebody has said — not as the ledger happens to look.
+     *
+     * Value is `uid|displayName`; an emptied value is the tombstone and leaves the
+     * account unclaimed, which the Accounts panel shows as Shared.
+     */
+    fun observeAccountOwners(): kotlinx.coroutines.flow.Flow<Map<String, AccountOwner>> =
+        sharedRuleDao.observeOfType(RulesRepository.TYPE_OWNER).map { rules ->
+            rules
+                .filter { it.value.isNotBlank() }
+                .mapNotNull { rule ->
+                    val parts = rule.value.split('|')
+                    val uid = parts.getOrNull(0)?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                    rule.ruleKey to AccountOwner(
+                        uid = uid,
+                        displayName = parts.getOrNull(1)?.takeIf(String::isNotBlank).orEmpty(),
+                    )
+                }
+                .toMap()
+        }
+
+    /**
+     * Records whose an account is, or — with a null [uid] — that nobody is claiming it.
+     *
+     * There is no backfill to do alongside this one, and that is deliberate rather than
+     * forgotten. Ownership has never been stored anywhere before, so there is no existing
+     * local state for a sheet to be missing; every account starts unclaimed and stays
+     * that way until somebody says otherwise. Guessing an owner from the ledger to
+     * pre-fill these is exactly the mistake this rule exists to undo.
+     */
+    suspend fun setAccountOwner(key: String, uid: String?, displayName: String?) {
+        if (key.isBlank()) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_OWNER,
+                    ruleKey = key,
+                    value = if (uid.isNullOrBlank()) "" else "$uid|${displayName.orEmpty()}",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
     suspend fun removeCard(key: String) {
         sharedRuleDao.upsertAll(
             listOf(
@@ -439,12 +485,14 @@ class TransactionRepository @Inject constructor(
             observeManualBalances(),
             observeAccountMinimums(),
             observeCards(),
-        ) { all, manual, minimums, cards ->
+            observeAccountOwners(),
+        ) { all, manual, minimums, cards, owners ->
             com.manuel.ours.domain.MonthlyAggregator.accountBalances(
                 transactions = all,
                 manual = manual,
                 minimums = minimums,
                 cards = cards,
+                owners = owners,
                 viewerUid = viewerUid,
                 isOwner = isOwner,
             )

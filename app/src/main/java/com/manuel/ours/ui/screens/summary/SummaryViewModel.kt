@@ -11,6 +11,8 @@ import com.manuel.ours.domain.affordability
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.RecurringDetector
 import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.data.repo.HouseholdRepository
+import com.manuel.ours.domain.model.Member
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.domain.model.Transaction
@@ -70,6 +72,15 @@ data class SummaryUiState(
      * setting today's money against a budget that ran out in June answers nothing.
      */
     val affordability: Affordability? = null,
+    /**
+     * The household, so an account can be handed to a person by name.
+     *
+     * Needed on this screen only to fill the owner picker; the grouping itself reads the
+     * owner recorded on each account and never has to look a member up.
+     */
+    val members: List<Member> = emptyList(),
+    /** Which of [members] is this phone, so their group sorts to the top. */
+    val selfUid: String = "",
 ) {
     /** What the recurring charges add up to per month, cadences reconciled. */
     val committedMonthlyPaise: Long get() = recurring.sumOf { it.monthlyEquivalentPaise }
@@ -79,6 +90,7 @@ data class SummaryUiState(
 class SummaryViewModel @Inject constructor(
     private val repository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
+    private val householdRepository: HouseholdRepository,
     private val prefs: AppPrefs,
 ) : ViewModel() {
 
@@ -119,7 +131,8 @@ class SummaryViewModel @Inject constructor(
                 ),
                 repository.observeBalances(selfUid, owner),
                 budgetRepository.observeOverall(),
-            ) { all, balances, budget ->
+                householdRepository.observeMembers(),
+            ) { all, balances, budget, members ->
                 val currentTxns = MonthlyAggregator.applyFilter(
                     all.filter { txn -> txn.occurredAt in current }, memberFilter, selfUid,
                 )
@@ -182,6 +195,8 @@ class SummaryViewModel @Inject constructor(
                             partialView = !owner,
                         )
                     } else null,
+                    members = members,
+                    selfUid = selfUid,
                 )
             }
         }
@@ -200,6 +215,11 @@ class SummaryViewModel @Inject constructor(
     /** [paise] null forgets the typed figure and hands the account back to the bank's. */
     fun setAccountBalance(key: String, paise: Long?, bank: String?) {
         viewModelScope.launch { repository.setAccountBalance(key, paise, bank) }
+    }
+
+    /** Records whose an account is. A null [uid] hands it back to Shared. */
+    fun setAccountOwner(key: String, uid: String?, displayName: String?) {
+        viewModelScope.launch { repository.setAccountOwner(key, uid, displayName) }
     }
 
     fun setAccountMinimum(key: String, paise: Long) {

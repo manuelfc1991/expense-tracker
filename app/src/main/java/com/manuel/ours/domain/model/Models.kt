@@ -297,6 +297,17 @@ data class CardInfo(
     val dueDay: Int? = null,
 )
 
+/**
+ * Whose an account is, as the household has recorded it.
+ *
+ * The name travels with the uid so a heading can be drawn from this alone; see
+ * `RulesRepository.TYPE_OWNER` for why it is not looked up from the member list.
+ */
+data class AccountOwner(
+    val uid: String,
+    val displayName: String,
+)
+
 data class AccountBalance(
     /** Stable identity: the account number when the bank gives one, else its name. */
     val key: String,
@@ -307,7 +318,20 @@ data class AccountBalance(
     val balancePaise: Long?,
     val asOf: Long?,
     val source: BalanceSource?,
-    val ownerName: String,
+    /**
+     * Whose account the household has **said** this is, and their name for the heading.
+     *
+     * Null is "nobody has claimed it", which is a real answer and not a missing one — it
+     * groups under Shared rather than under a guess.
+     *
+     * This used to be the owner of the most recent payment out of the account, which is
+     * a different question with a different answer: a joint account filed itself under
+     * whoever used it last and flipped as soon as the other person paid for something,
+     * and an account added by hand had never been paid from at all, so it grouped under
+     * a blank name. An owner has to be recorded to be worth showing — see [ownerUid].
+     */
+    val ownerUid: String? = null,
+    val ownerName: String = "",
     /**
      * A credit card, whose balance is money **owed** rather than money held.
      *

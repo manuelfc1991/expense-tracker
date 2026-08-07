@@ -372,12 +372,31 @@ class RulesRepository @Inject constructor(
         const val TYPE_CARD = "card"
 
         /**
+         * **Whose** account this is, as the household has said out loud.
+         *
+         * Key: the account key, same as balances and cards. Value: `uid|displayName`.
+         * An emptied value is the tombstone, and means the account is back to unclaimed.
+         *
+         * Its own rule rather than a field on the balance, because ownership outlives any
+         * particular figure: emptying a balance says "I no longer know what is in it", and
+         * that must not also erase whose it is. It is shared for the ordinary reason — the
+         * household has one set of accounts, and being told on one phone that the SBI
+         * account is Beula's should not leave the other phone still guessing.
+         *
+         * The display name is carried alongside the uid on purpose. The heading has to
+         * read "Beula" the moment the rule arrives, and the member list is itself synced —
+         * so resolving the name through it would leave headings blank for exactly as long
+         * as the two rules were out of step.
+         */
+        const val TYPE_OWNER = "owner"
+
+        /**
          * Everything in `shared_rules` that is worth sending, merchant rules excepted —
          * those are pushed from the table they are authored in.
          */
         private val SHAREABLE_TYPES = setOf(
             TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
-            TYPE_MEMBER, TYPE_CARD,
+            TYPE_MEMBER, TYPE_CARD, TYPE_OWNER,
         )
     }
 }

@@ -2,6 +2,7 @@ package com.manuel.ours.domain
 
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.domain.model.AccountOwner
 import com.manuel.ours.domain.model.BalanceSource
 import com.manuel.ours.domain.model.CardInfo
 import com.manuel.ours.domain.model.ManualBalance
@@ -192,6 +193,8 @@ object MonthlyAggregator {
         minimums: Map<String, Long> = emptyMap(),
         /** Accounts the household has declared to be credit cards, keyed the same way. */
         cards: Map<String, CardInfo> = emptyMap(),
+        /** Whose each account is, as recorded. Absent means unclaimed, never guessed. */
+        owners: Map<String, AccountOwner> = emptyMap(),
         viewerUid: String = "",
         isOwner: Boolean = true,
     ): List<AccountBalance> {
@@ -226,7 +229,10 @@ object MonthlyAggregator {
                     quoted != null -> BalanceSource.BANK
                     else -> null
                 },
-                ownerName = latest?.ownerName.orEmpty(),
+                // Only what somebody has said. `latest?.ownerName` — whoever paid last —
+                // used to sit here, which read as a fact and was not one.
+                ownerUid = owners[key]?.uid,
+                ownerName = owners[key]?.displayName.orEmpty(),
                 minimumPaise = minimums[key] ?: 0L,
                 isCard = cards.containsKey(key),
                 limitPaise = cards[key]?.limitPaise,

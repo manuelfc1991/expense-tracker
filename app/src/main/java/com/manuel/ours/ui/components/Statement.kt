@@ -515,17 +515,25 @@ fun TapeHeader(
     modifier: Modifier = Modifier,
     trailing: String? = null,
     trailingColor: Color = Ours.onSurfaceVariant,
+    /**
+     * The hairline under the label, which is what makes this a section head.
+     *
+     * Dropped for a heading *inside* a section — a person's name over their accounts is
+     * a sub-total, not a new section, and ruling it the same way would make one list of
+     * accounts read as three unrelated ones.
+     */
+    rule: Boolean = true,
 ) {
     Column(modifier.fillMaxWidth()) {
         Row(
-            Modifier.fillMaxWidth().padding(bottom = 7.dp),
+            Modifier.fillMaxWidth().padding(bottom = if (rule) 7.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             MicroLabel(label)
             if (trailing != null) MicroLabel(trailing, color = trailingColor)
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
+        if (rule) Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }
 

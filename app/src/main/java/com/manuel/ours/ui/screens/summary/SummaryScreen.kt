@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
@@ -51,6 +52,7 @@ import java.time.ZoneId
 import java.time.LocalDate
 import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.domain.model.Member
 import com.manuel.ours.domain.model.BalanceSource
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
@@ -200,6 +202,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 item {
                     WhatsLeft(
                         balances = state.balances,
+                        selfUid = state.selfUid,
                         onSet = { settingBalance = it },
                         onAdd = { addingAccount = true },
                     )
@@ -252,8 +255,9 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
     if (addingAccount) {
         AddAccountDialog(
+            members = state.members,
             onDismiss = { addingAccount = false },
-            onConfirm = { key, bank, balance, minimum, isCard, limit ->
+            onConfirm = { key, bank, balance, minimum, isCard, limit, owner ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
                 // own screen as "tap to set" rather than only on the owner's. A null
@@ -262,6 +266,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
                 if (isCard) viewModel.setCard(key, limit, null)
+                owner?.let { viewModel.setAccountOwner(key, it.uid, it.displayName) }
                 addingAccount = false
             },
         )
@@ -270,8 +275,9 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     settingBalance?.let { account ->
         BalanceDialog(
             account = account,
+            members = state.members,
             onDismiss = { settingBalance = null },
-            onConfirm = { edit, minimum ->
+            onConfirm = { edit, minimum, owner ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
                     // wipe a balance the person never went near.
@@ -282,6 +288,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                         viewModel.setAccountBalance(account.key, edit.paise, account.bank)
                 }
                 minimum?.let { viewModel.setAccountMinimum(account.key, it) }
+                owner?.let { viewModel.setAccountOwner(account.key, it.uid, it.displayName) }
                 settingBalance = null
             },
         )
@@ -296,6 +303,16 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
  * included ([Set]). Collapsing the last two onto 0L is what made a zero-balance account
  * impossible to enter.
  */
+/**
+ * A change of owner, as distinct from no change at all.
+ *
+ * `null` from the dialog means untouched; an `OwnerEdit` with a null [uid] means the
+ * household has actively handed the account back to Shared. Collapsing the two onto a
+ * bare `String?` would make "I did not look at this" indistinguishable from "this is
+ * nobody's in particular", and only one of those should write a tombstone.
+ */
+private data class OwnerEdit(val uid: String?, val displayName: String?)
+
 private sealed interface BalanceEdit {
     data object Forget : BalanceEdit
     data class Set(val paise: Long) : BalanceEdit
@@ -411,6 +428,7 @@ private fun LeftAccounts(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddAccountDialog(
+    members: List<Member>,
     onDismiss: () -> Unit,
     onConfirm: (
         key: String,
@@ -419,6 +437,7 @@ private fun AddAccountDialog(
         minimum: Long?,
         isCard: Boolean,
         limit: Long?,
+        owner: Member?,
     ) -> Unit,
 ) {
     var bank by rememberSaveable { mutableStateOf("") }
@@ -429,6 +448,10 @@ private fun AddAccountDialog(
     // held or money owed — and that is not a detail a form field can carry.
     var isCard by rememberSaveable { mutableStateOf(false) }
     var limit by rememberSaveable { mutableStateOf("") }
+    // Unclaimed until said otherwise. An account added by hand is the one case where the
+    // app could most plausibly guess — you are holding the phone — and guessing here is
+    // how a joint account ends up filed as one person's.
+    var owner by rememberSaveable { mutableStateOf<String?>(null) }
 
     val cleanBank = bank.trim()
     val cleanTail = tail.filter(Char::isDigit).takeLast(4)
@@ -478,6 +501,7 @@ private fun AddAccountDialog(
                     MicroLabel("Minimum balance")
                     MoneyField(minimum) { minimum = it }
                 }
+                OwnerPicker(members, owner) { owner = it?.uid }
                 Text(
                     if (isCard) {
                         "Owed is kept apart from what is left — it is money already spent. " +
@@ -505,6 +529,7 @@ private fun AddAccountDialog(
                         if (isCard) null else Money.parseToPaise(minimum),
                         isCard,
                         Money.parseToPaise(limit),
+                        members.firstOrNull { it.uid == owner },
                     )
                 },
             ) { Text("Add", color = if (ready) Ours.primary else Ours.onSurfaceMuted) }
@@ -564,13 +589,58 @@ private fun MoneyField(value: String, onChange: (String) -> Unit) {
     }
 }
 
+/**
+ * Whose account this is — recorded, never inferred.
+ *
+ * Shared is a first-class answer and is offered as one, rather than being what you get
+ * for skipping the question. A joint current account genuinely belongs to the household,
+ * and an account that has simply not been sorted out yet is honestly described the same
+ * way; both are better than the app filing it under whoever happened to pay last.
+ *
+ * Hidden entirely in a one-person household, where the question has no second answer.
+ */
+@Composable
+private fun OwnerPicker(
+    members: List<Member>,
+    selected: String?,
+    onSelect: (Member?) -> Unit,
+) {
+    if (members.size < 2) return
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        MicroLabel("Whose account")
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            members.forEach { member ->
+                OursChip(
+                    label = member.displayName.ifBlank { "Unnamed" },
+                    selected = selected == member.uid,
+                    onClick = { onSelect(member) },
+                )
+            }
+            OursChip(
+                label = "Shared",
+                selected = selected == null,
+                onClick = { onSelect(null) },
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BalanceDialog(
     account: AccountBalance,
+    members: List<Member>,
     onDismiss: () -> Unit,
-    onConfirm: (balance: BalanceEdit?, minimum: Long?) -> Unit,
+    onConfirm: (balance: BalanceEdit?, minimum: Long?, owner: OwnerEdit?) -> Unit,
 ) {
+    // Only written when it actually changes. Re-saving the same owner on every visit
+    // would bump the rule's `updatedAt` and let this phone win a last-write-wins race it
+    // had nothing new to say in — quietly undoing a correction made on the other phone.
+    val openingOwner = remember { account.ownerUid }
+    var owner by remember { mutableStateOf(account.ownerUid) }
     // The figure as it opened, so an untouched field is not re-saved as though somebody
     // typed it. Saving a minimum used to overwrite a bank-quoted balance with an
     // identical hand-entered one, silently downgrading "the bank said" to "you said".
@@ -603,6 +673,7 @@ private fun BalanceDialog(
                 MoneyField(text) { text = it }
                 MicroLabel("Minimum balance")
                 MoneyField(minText) { minText = it }
+                OwnerPicker(members, owner) { owner = it?.uid }
                 Text(
                     "A balance you type is yours, not the bank's — a real one from a " +
                         "message replaces it, and emptying the field hands it back. A " +
@@ -618,7 +689,7 @@ private fun BalanceDialog(
         confirmButton = {
             // Either field alone is a complete answer: a bank-quoted balance needs only
             // a floor, and a zero-balance account needs only a figure.
-            val touched = text != opening || minPaise != null
+            val touched = text != opening || minPaise != null || owner != openingOwner
             TextButton(
                 enabled = touched,
                 onClick = {
@@ -635,6 +706,9 @@ private fun BalanceDialog(
                             else -> paise?.let { BalanceEdit.Set(it) }
                         },
                         minPaise,
+                        if (owner == openingOwner) null else {
+                            OwnerEdit(owner, members.firstOrNull { it.uid == owner }?.displayName)
+                        },
                     )
                 },
             ) { Text("Save", color = if (touched) Ours.primary else Ours.onSurfaceMuted) }
@@ -826,6 +900,8 @@ private fun LedgerLine(
 @Composable
 private fun WhatsLeft(
     balances: List<AccountBalance>,
+    /** This phone's member, so their accounts head the list. */
+    selfUid: String,
     onSet: (AccountBalance) -> Unit,
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
@@ -840,12 +916,51 @@ private fun WhatsLeft(
     val (cards, accounts) = balances.partition { it.isCard }
     val usable = accounts.mapNotNull { it.usablePaise }.sum()
     val owed = cards.mapNotNull { it.balancePaise }.sum()
+
+    // Whose money is where — one household total, then a sub-total per person.
+    //
+    // The grouping is presentation and nothing more. `usable` above is still summed over
+    // every account, because the budget is one cap over one household: a per-person
+    // sub-total that started behaving like a per-person budget would break the agreement
+    // Home, Budgets, the widget and BudgetAlerter all have to keep.
+    //
+    // Grouped on the owner the household **recorded**, never on who last paid from the
+    // account. Anything unclaimed goes to Shared rather than to a guess, for the same
+    // reason an unknown balance is never counted as zero.
+    val groups = accounts
+        .groupBy { it.ownerUid }
+        .entries
+        .sortedWith(
+            // Yours first — it is the list you are looking for — then everyone else by
+            // name, then Shared, which is a leftover and reads as one at the bottom.
+            compareBy(
+                { it.key == null },
+                { if (it.key == selfUid) 0 else 1 },
+                { it.value.firstOrNull()?.ownerName.orEmpty().lowercase() },
+            )
+        )
+    // Until somebody claims an account there is only one group, and heading it "Shared"
+    // would add a word that explains nothing. Headings appear when they mean something.
+    val grouped = groups.size > 1 || groups.any { it.key != null }
+
     Column(
         modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         TapeHeader("What is left", trailing = Money.whole(usable))
-        accounts.forEach { account ->
+        groups.forEach { (ownerUid, group) ->
+        if (grouped) {
+            TapeHeader(
+                label = when {
+                    ownerUid == null -> "Shared"
+                    ownerUid == selfUid -> group.firstOrNull()?.ownerName?.takeIf(String::isNotBlank) ?: "You"
+                    else -> group.firstOrNull()?.ownerName?.takeIf(String::isNotBlank) ?: "Someone else"
+                },
+                trailing = Money.whole(group.mapNotNull { it.usablePaise }.sum()),
+                rule = false,
+            )
+        }
+        group.forEach { account ->
             Row(
                 Modifier.fillMaxWidth().clickable { onSet(account) },
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -901,6 +1016,7 @@ private fun WhatsLeft(
                     MicroLabel("—")
                 }
             }
+        }
         }
 
         if (cards.isNotEmpty()) {
