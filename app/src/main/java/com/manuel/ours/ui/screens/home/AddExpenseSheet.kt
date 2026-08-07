@@ -1,6 +1,8 @@
 package com.manuel.ours.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,12 +39,16 @@ import androidx.compose.ui.unit.dp
 import com.manuel.ours.core.Money
 import com.manuel.ours.core.OursZone
 import com.manuel.ours.domain.model.Category
+import com.manuel.ours.domain.model.shortLabel
+import com.manuel.ours.domain.model.PaidFrom
+import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.ui.components.AccentButton
 import com.manuel.ours.ui.components.CategoryGrid
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
+import com.manuel.ours.ui.components.OursIcon
 import com.manuel.ours.ui.components.SheetField
 import com.manuel.ours.ui.theme.Ours
 import com.manuel.ours.ui.theme.SheetAmountStyle
@@ -61,10 +67,15 @@ import com.manuel.ours.ui.theme.SheetAmountStyle
  * all. So it is also the only thing Save waits for — the sheet does not mark three
  * fields optional and then refuse to proceed without them.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddExpenseSheet(
     onDismiss: () -> Unit,
+    /**
+     * The accounts to offer under "Paid from". Empty is fine — the sheet still offers Cash
+     * and "Not sure", which are the two answers no list of accounts can contain.
+     */
+    accounts: List<AccountBalance> = emptyList(),
     onConfirm: (
         amountPaise: Long,
         merchant: String,
@@ -72,6 +83,8 @@ fun AddExpenseSheet(
         split: SplitType,
         note: String,
         occurredAt: Long,
+        accountTail: String?,
+        bank: String?,
     ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -85,6 +98,10 @@ fun AddExpenseSheet(
     var whenPicked by remember { mutableStateOf<Long?>(null) }
     var pickingDate by remember { mutableStateOf(false) }
     var splitType by remember { mutableStateOf(SplitType.SHARED) }
+    // Cash by default. This sheet exists for the payment no bank messaged about, and that
+    // is overwhelmingly cash — a default of "not sure" would make the common case the one
+    // that needs a tap.
+    var paidFrom by remember { mutableStateOf<PaidFrom>(PaidFrom.Cash) }
 
     val amountFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { amountFocus.requestFocus() }
@@ -183,6 +200,36 @@ fun AddExpenseSheet(
                 )
             }
 
+            // Which account it came out of.
+            //
+            // Nothing filled this in before, and `accountBalances()` discards rows with
+            // neither a tail nor a bank — so every hand-added payment was invisible to the
+            // Accounts tab. Attribution only: selecting an account does not move its
+            // balance, because balances here are quoted by the bank, never derived.
+            MicroLabel("Paid from")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OursChip(
+                    label = "Cash",
+                    selected = paidFrom == PaidFrom.Cash,
+                    icon = OursIcon.Cash,
+                    onClick = { paidFrom = PaidFrom.Cash },
+                )
+                accounts.forEach { account ->
+                    val option = PaidFrom.Account(account.accountTail, account.bank)
+                    OursChip(
+                        label = account.shortLabel(),
+                        selected = paidFrom == option,
+                        icon = OursIcon.Bank,
+                        onClick = { paidFrom = option },
+                    )
+                }
+                OursChip(
+                    label = "Not sure",
+                    selected = paidFrom == PaidFrom.Unknown,
+                    onClick = { paidFrom = PaidFrom.Unknown },
+                )
+            }
+
             MicroLabel("Counts as")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OursChip(
@@ -229,6 +276,8 @@ fun AddExpenseSheet(
                             splitType,
                             note.trim(),
                             whenPicked ?: System.currentTimeMillis(),
+                            paidFrom.accountTail,
+                            paidFrom.bank,
                         )
                     },
                     modifier = Modifier.weight(1f),

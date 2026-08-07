@@ -426,10 +426,14 @@ fun HomeScreen(
       }
 
     if (showAddSheet) {
+        val accounts by viewModel.accounts.collectAsStateWithLifecycle()
         AddExpenseSheet(
             onDismiss = { showAddSheet = false },
-            onConfirm = { amount, merchant, category, split, note, occurredAt ->
-                viewModel.addQuickExpense(amount, merchant, category, split, note, occurredAt)
+            accounts = accounts,
+            onConfirm = { amount, merchant, category, split, note, occurredAt, tail, bank ->
+                viewModel.addQuickExpense(
+                    amount, merchant, category, split, note, occurredAt, tail, bank,
+                )
                 showAddSheet = false
             },
         )

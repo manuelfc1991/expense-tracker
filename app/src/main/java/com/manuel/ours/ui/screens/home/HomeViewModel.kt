@@ -384,6 +384,18 @@ class HomeViewModel @Inject constructor(
         filter.value = value
     }
 
+    /**
+     * The accounts the add sheet offers under "Paid from".
+     *
+     * Its own flow rather than a field on [HomeUiState]: the state is assembled by a
+     * `combine` that is already at its typed arity, and this is read by one sheet that is
+     * usually not on screen.
+     */
+    val accounts: StateFlow<List<com.manuel.ours.domain.model.AccountBalance>> =
+        combine(prefs.selfUid, prefs.householdOwner) { uid, owner -> uid.orEmpty() to owner }
+            .flatMapLatest { (uid, owner) -> transactionRepository.observeBalances(uid, owner) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     fun addQuickExpense(
         amountPaise: Long,
         merchant: String,
@@ -392,6 +404,9 @@ class HomeViewModel @Inject constructor(
         note: String,
         /** When the payment actually happened, which is not always when it was typed in. */
         occurredAt: Long = System.currentTimeMillis(),
+        /** Which account it came out of. Both null means nobody said, which is a real answer. */
+        accountTail: String? = null,
+        bank: String? = null,
     ) {
         viewModelScope.launch {
             transactionRepository.addManual(
@@ -404,6 +419,8 @@ class HomeViewModel @Inject constructor(
                 // empty string that later reads as a note nobody wrote.
                 note = note.trim().takeIf { it.isNotEmpty() },
                 splitType = splitType,
+                accountTail = accountTail,
+                bank = bank,
             )
         }
     }

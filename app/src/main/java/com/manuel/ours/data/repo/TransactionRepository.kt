@@ -182,11 +182,30 @@ class TransactionRepository @Inject constructor(
         // The parser's Kind wins over merchant matching: a card bill payment must not
         // be categorised by whatever its text happens to look like, or it silently
         // rejoins the spend total it was excluded from.
-        val category = when (parsed.kind) {
-            SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
-            SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
-            SmsParser.Kind.TRANSFER -> Category.TRANSFERS
-            SmsParser.Kind.PURCHASE -> Categorizer.categorize(parsed.merchant, parsed.type, rules)
+        // Settling a card whose purchases this app already records is not spending.
+        //
+        // CARD_PAYMENT counts, deliberately: on this ledger the bill was the only record a
+        // card left, so excluding it hid the money rather than avoiding a double count.
+        // A registered card changes that for itself and for nothing else — its purchases
+        // arrive one by one, so counting the bill as well counts them twice.
+        //
+        // Matched on the card's own last four, named in the bill message ("SuperCard ending
+        // 8842"). Deliberately narrow: where the message does not say which card, this does
+        // nothing and the bill keeps counting, because the alternative is quietly removing
+        // spending the app cannot prove is recorded elsewhere.
+        val registeredCards = cardKeys()
+        val settlesTrackedCard = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT &&
+            listOfNotNull(parsed.accountTail, parsed.counterpartyTail).any { it in registeredCards }
+
+        val category = when {
+            settlesTrackedCard -> Category.SELF_TRANSFER
+            else -> when (parsed.kind) {
+                SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
+                SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
+                SmsParser.Kind.TRANSFER -> Category.TRANSFERS
+                SmsParser.Kind.PURCHASE ->
+                    Categorizer.categorize(parsed.merchant, parsed.type, rules)
+            }
         }
 
         val txn = Transaction(
@@ -319,6 +338,62 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /**
+     * The accounts the household has declared to be credit cards.
+     *
+     * Value is `limitPaise|dueDay`, both optional — a card works without either, it just
+     * cannot say how much room is left or when the bill lands.
+     */
+    fun observeCards(): kotlinx.coroutines.flow.Flow<Map<String, com.manuel.ours.domain.model.CardInfo>> =
+        sharedRuleDao.observeOfType(RulesRepository.TYPE_CARD).map { rules ->
+            rules
+                // An emptied value is this store's tombstone: the household removed the card.
+                .filter { it.value.isNotBlank() }
+                .associate { rule ->
+                    val parts = rule.value.split('|')
+                    rule.ruleKey to com.manuel.ours.domain.model.CardInfo(
+                        limitPaise = parts.getOrNull(0)?.takeIf(String::isNotBlank)?.toLongOrNull(),
+                        dueDay = parts.getOrNull(1)?.takeIf(String::isNotBlank)?.toIntOrNull(),
+                    )
+                }
+        }
+
+    /** Keys of every account the household has declared a credit card. */
+    private suspend fun cardKeys(): Set<String> =
+        sharedRuleDao.all()
+            .filter { it.type == RulesRepository.TYPE_CARD && it.value.isNotBlank() }
+            .map { it.ruleKey }
+            .toSet()
+
+    /** Declares an account to be a credit card, or clears it when [limitPaise] and day are null. */
+    suspend fun setCard(key: String, limitPaise: Long?, dueDay: Int?) {
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_CARD,
+                    ruleKey = key,
+                    value = "${limitPaise ?: ""}|${dueDay ?: ""}",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
+    suspend fun removeCard(key: String) {
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_CARD,
+                    ruleKey = key,
+                    value = "",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
     fun observeAccountMinimums(): kotlinx.coroutines.flow.Flow<Map<String, Long>> =
         sharedRuleDao.observeOfType(TYPE_MIN_BALANCE).map { rules ->
             rules.mapNotNull { r -> r.value.toLongOrNull()?.let { r.ruleKey to it } }.toMap()
@@ -348,11 +423,13 @@ class TransactionRepository @Inject constructor(
             observeAll(),
             observeManualBalances(),
             observeAccountMinimums(),
-        ) { all, manual, minimums ->
+            observeCards(),
+        ) { all, manual, minimums, cards ->
             com.manuel.ours.domain.MonthlyAggregator.accountBalances(
                 transactions = all,
                 manual = manual,
                 minimums = minimums,
+                cards = cards,
                 viewerUid = viewerUid,
                 isOwner = isOwner,
             )
@@ -404,6 +481,16 @@ class TransactionRepository @Inject constructor(
             }
     }
 
+    /**
+     * @param accountTail last four of the account it came out of, when the household says.
+     * @param bank the institution, or "Cash". Both null means nobody said, which is a real
+     *   answer and is stored as one rather than guessed at.
+     *
+     * These used to be unset on every hand-added row, and `accountBalances()` opens by
+     * discarding anything with neither — so a manual payment was not merely unattributed,
+     * it was invisible to the Accounts tab. The sheet that exists for payments no bank
+     * messaged about was the one place nothing filled the account in.
+     */
     suspend fun addManual(
         amountPaise: Long,
         type: TxnType,
@@ -412,6 +499,8 @@ class TransactionRepository @Inject constructor(
         occurredAt: Long,
         note: String?,
         splitType: SplitType,
+        accountTail: String? = null,
+        bank: String? = null,
     ): Transaction {
         val self = prefs.snapshot()
         val txn = Transaction(
@@ -423,6 +512,8 @@ class TransactionRepository @Inject constructor(
             occurredAt = occurredAt,
             note = note,
             splitType = splitType,
+            accountTail = accountTail,
+            bank = bank,
             source = TxnSource.MANUAL,
             ownerUid = self.selfUid ?: "local",
             ownerName = self.selfName ?: "Me",

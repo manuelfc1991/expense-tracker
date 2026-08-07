@@ -3,6 +3,7 @@ package com.manuel.ours.domain
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.BalanceSource
+import com.manuel.ours.domain.model.CardInfo
 import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
@@ -182,6 +183,8 @@ object MonthlyAggregator {
         transactions: List<Transaction>,
         manual: Map<String, ManualBalance> = emptyMap(),
         minimums: Map<String, Long> = emptyMap(),
+        /** Accounts the household has declared to be credit cards, keyed the same way. */
+        cards: Map<String, CardInfo> = emptyMap(),
         viewerUid: String = "",
         isOwner: Boolean = true,
     ): List<AccountBalance> {
@@ -193,7 +196,7 @@ object MonthlyAggregator {
                 byAccount[key].orEmpty().any { it.ownerUid == viewerUid } ||
                 manual[key]?.ownerUid == viewerUid
         }
-        val keys = (byAccount.keys + manual.keys + minimums.keys).filter(visible)
+        val keys = (byAccount.keys + manual.keys + minimums.keys + cards.keys).filter(visible)
         return keys.map { key ->
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
@@ -218,6 +221,8 @@ object MonthlyAggregator {
                 },
                 ownerName = latest?.ownerName.orEmpty(),
                 minimumPaise = minimums[key] ?: 0L,
+                isCard = cards.containsKey(key),
+                limitPaise = cards[key]?.limitPaise,
             )
         }.sortedWith(
             compareByDescending<AccountBalance> { it.balancePaise != null }

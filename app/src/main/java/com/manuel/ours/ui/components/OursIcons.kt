@@ -100,6 +100,13 @@ object OursIcon {
     @DrawableRes val Message = R.drawable.ic_envelope
 
     // Illustrative marks for empty states and onboarding.
+    // Where money sits, for "Paid from" and the Accounts tab. The drawables were
+    // generated with the rest of the set and had no accessor until there was a screen
+    // that named an account.
+    @DrawableRes val Cash = R.drawable.ic_cash
+    @DrawableRes val Bank = R.drawable.ic_bank
+    @DrawableRes val CreditCard = R.drawable.ic_credit_card
+
     @DrawableRes val Inbox = R.drawable.ic_inbox
     @DrawableRes val NoResults = R.drawable.ic_inbox_stack
     @DrawableRes val Household = R.drawable.ic_people

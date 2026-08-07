@@ -195,6 +195,11 @@ class SummaryViewModel @Inject constructor(
         viewModelScope.launch { repository.setAccountMinimum(key, paise) }
     }
 
+    /** Declares an account to be a credit card — its balance is owed, not held. */
+    fun setCard(key: String, limitPaise: Long?, dueDay: Int?) {
+        viewModelScope.launch { repository.setCard(key, limitPaise, dueDay) }
+    }
+
     fun setMonth(value: YearMonth) {
         // Never let the pager run into the future — an empty "next month" chart
         // looks like data loss.

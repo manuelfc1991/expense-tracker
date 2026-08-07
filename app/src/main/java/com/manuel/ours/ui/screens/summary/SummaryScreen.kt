@@ -60,6 +60,7 @@ import com.manuel.ours.export.ExportManager
 import com.manuel.ours.ui.components.EmptyState
 import com.manuel.ours.ui.components.SummarySkeleton
 import com.manuel.ours.ui.components.AmountColumn
+import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.OursIcon
 import com.manuel.ours.ui.components.OursIconButton
 import com.manuel.ours.ui.components.OursIconView
@@ -240,7 +241,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     if (addingAccount) {
         AddAccountDialog(
             onDismiss = { addingAccount = false },
-            onConfirm = { key, bank, balance, minimum ->
+            onConfirm = { key, bank, balance, minimum, isCard, limit ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
                 // own screen as "tap to set" rather than only on the owner's. A null
@@ -248,6 +249,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 // what is in it.
                 viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
+                if (isCard) viewModel.setCard(key, limit, null)
                 addingAccount = false
             },
         )
@@ -398,12 +400,23 @@ private fun LeftAccounts(
 @Composable
 private fun AddAccountDialog(
     onDismiss: () -> Unit,
-    onConfirm: (key: String, bank: String, balance: Long?, minimum: Long?) -> Unit,
+    onConfirm: (
+        key: String,
+        bank: String,
+        balance: Long?,
+        minimum: Long?,
+        isCard: Boolean,
+        limit: Long?,
+    ) -> Unit,
 ) {
     var bank by remember { mutableStateOf("") }
     var tail by remember { mutableStateOf("") }
     var balance by remember { mutableStateOf("") }
     var minimum by remember { mutableStateOf("") }
+    // Asked first and in words, because it decides which total the account joins — money
+    // held or money owed — and that is not a detail a form field can carry.
+    var isCard by remember { mutableStateOf(false) }
+    var limit by remember { mutableStateOf("") }
 
     val cleanBank = bank.trim()
     val cleanTail = tail.filter(Char::isDigit).takeLast(4)
@@ -420,17 +433,48 @@ private fun AddAccountDialog(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                MicroLabel("Bank")
-                PlainField(bank, "Kerala Gramin Bank") { bank = it }
+                MicroLabel("What kind")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OursChip(
+                        label = "Bank account",
+                        selected = !isCard,
+                        icon = OursIcon.Bank,
+                        onClick = { isCard = false },
+                    )
+                    OursChip(
+                        label = "Credit card",
+                        selected = isCard,
+                        icon = OursIcon.CreditCard,
+                        onClick = { isCard = true },
+                    )
+                }
+                MicroLabel(if (isCard) "Card" else "Bank")
+                PlainField(
+                    bank,
+                    if (isCard) "Utkarsh SuperCard" else "Kerala Gramin Bank",
+                ) { bank = it }
                 MicroLabel("Last four digits — optional")
-                PlainField(tail, "3062") { tail = it.filter(Char::isDigit).take(4) }
-                MicroLabel("Balance now")
+                PlainField(tail, if (isCard) "8842" else "3062") {
+                    tail = it.filter(Char::isDigit).take(4)
+                }
+                MicroLabel(if (isCard) "Owed now" else "Balance now")
                 MoneyField(balance) { balance = it }
-                MicroLabel("Minimum balance")
-                MoneyField(minimum) { minimum = it }
+                if (isCard) {
+                    MicroLabel("Credit limit — optional")
+                    MoneyField(limit) { limit = it }
+                } else {
+                    MicroLabel("Minimum balance")
+                    MoneyField(minimum) { minimum = it }
+                }
                 Text(
-                    "The balance is yours, not the bank's — a real one from a message " +
-                        "replaces it once this account starts sending them.",
+                    if (isCard) {
+                        "Owed is kept apart from what is left — it is money already spent. " +
+                            "If this card's purchases reach the app by SMS, paying its bill " +
+                            "will not be counted as spending a second time."
+                    } else {
+                        "The balance is yours, not the bank's — a real one from a message " +
+                            "replaces it once this account starts sending them."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.onSurfaceVariant,
                 )
@@ -444,7 +488,11 @@ private fun AddAccountDialog(
                         cleanTail.ifEmpty { cleanBank },
                         cleanBank,
                         Money.parseToPaise(balance),
-                        Money.parseToPaise(minimum),
+                        // A card has no minimum to hold; it has a limit, which is a
+                        // different thing and is stored on the card rule instead.
+                        if (isCard) null else Money.parseToPaise(minimum),
+                        isCard,
+                        Money.parseToPaise(limit),
                     )
                 },
             ) { Text("Add", color = if (ready) Ours.primary else Ours.onSurfaceMuted) }
@@ -771,13 +819,21 @@ private fun WhatsLeft(
     modifier: Modifier = Modifier,
 ) {
     val today = remember { OursZone.today() }
-    val usable = balances.mapNotNull { it.usablePaise }.sum()
+    // Two blocks, never one total.
+    //
+    // A card balance is money **owed**. This panel's figure is what `Affordability`
+    // spends against, so folding card debt into it would report more to spend than
+    // exists — the opposite of the truth. They are different quantities and they get
+    // different words: "left" is capacity, "owed" is a bill already run up.
+    val (cards, accounts) = balances.partition { it.isCard }
+    val usable = accounts.mapNotNull { it.usablePaise }.sum()
+    val owed = cards.mapNotNull { it.balancePaise }.sum()
     Column(
         modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         TapeHeader("What is left", trailing = Money.whole(usable))
-        balances.forEach { account ->
+        accounts.forEach { account ->
             Row(
                 Modifier.fillMaxWidth().clickable { onSet(account) },
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -833,6 +889,60 @@ private fun WhatsLeft(
                     MicroLabel("—")
                 }
             }
+        }
+
+        if (cards.isNotEmpty()) {
+            TapeHeader("Owed on cards", trailing = Money.whole(owed))
+            cards.forEach { card ->
+                Row(
+                    Modifier.fillMaxWidth().clickable { onSet(card) },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text(
+                            card.bank ?: "Card",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Ours.onSurface,
+                        )
+                        MicroLabel(
+                            buildString {
+                                card.accountTail?.let { append("···· $it") }
+                                if (card.balancePaise == null) {
+                                    if (isNotEmpty()) append(" · ")
+                                    append("tap to set")
+                                }
+                            },
+                        )
+                        // How much room is left, which is the figure a card is actually
+                        // used against. Only when both halves are known — a limit with no
+                        // outstanding, or the reverse, cannot say anything true.
+                        val limit = card.limitPaise
+                        val outstanding = card.balancePaise
+                        if (limit != null && outstanding != null) {
+                            MicroLabel(
+                                "${Money.whole((limit - outstanding).coerceAtLeast(0L))} " +
+                                    "of ${Money.whole(limit)} still free",
+                            )
+                        }
+                    }
+                    if (card.balancePaise != null) {
+                        AmountColumn(card.balancePaise!!)
+                    } else {
+                        MicroLabel("—")
+                    }
+                }
+            }
+            Text(
+                "Owed is not subtracted from what is left. It is money you have already " +
+                    "spent and not yet paid.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.onSurfaceVariant,
+            )
         }
 
         if (balances.isEmpty()) {

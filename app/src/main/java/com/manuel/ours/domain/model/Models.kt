@@ -249,6 +249,54 @@ data class Budget(
  * number — which is fine as long as the screen says so. A balance presented without its
  * date is the app claiming to know something it does not.
  */
+/**
+ * The wallet, as an answer to "paid from".
+ *
+ * Not an account any bank knows, and deliberately stored in `bank` rather than left blank:
+ * `accountBalances()` discards rows with neither a tail nor a bank, so "blank" would mean the
+ * payment vanished from the Accounts tab — which is the whole defect this answers.
+ */
+const val CASH_ACCOUNT = "Cash"
+
+/**
+ * Which account a hand-added payment came out of.
+ *
+ * Three answers, and [Unknown] is as real as the other two — a person who cannot remember
+ * should not be made to guess, and a guess stored as fact is worse than a blank.
+ */
+sealed interface PaidFrom {
+    val accountTail: String?
+    val bank: String?
+
+    object Cash : PaidFrom {
+        override val accountTail: String? = null
+        override val bank: String = CASH_ACCOUNT
+    }
+
+    /** Nobody said. Stored as nothing, and reported as unknown rather than summed as zero. */
+    object Unknown : PaidFrom {
+        override val accountTail: String? = null
+        override val bank: String? = null
+    }
+
+    data class Account(
+        override val accountTail: String?,
+        override val bank: String?,
+    ) : PaidFrom
+}
+
+/**
+ * What the household told us about a credit card.
+ *
+ * @param limitPaise the credit limit, when they know it. Buys one thing — "still free" —
+ *   and the card works without it.
+ * @param dueDay day of the month the bill falls due, or null.
+ */
+data class CardInfo(
+    val limitPaise: Long? = null,
+    val dueDay: Int? = null,
+)
+
 data class AccountBalance(
     /** Stable identity: the account number when the bank gives one, else its name. */
     val key: String,
@@ -260,6 +308,15 @@ data class AccountBalance(
     val asOf: Long?,
     val source: BalanceSource?,
     val ownerName: String,
+    /**
+     * A credit card, whose balance is money **owed** rather than money held.
+     *
+     * Never summed with the others. The Accounts tab totals "what is left" and
+     * `Affordability` spends against it, so folding ₹4,200 of card debt into that total
+     * would report ₹4,200 more to spend than exists — the opposite of the truth.
+     */
+    val isCard: Boolean = false,
+    val limitPaise: Long? = null,
     /**
      * What the bank makes you keep in the account, which is not yours to spend.
      *
@@ -423,4 +480,16 @@ data class HouseholdMember(
     /** "You" for yourself, first names for everyone else — chips are narrow. */
     val chipLabel: String
         get() = if (isSelf) "Me" else displayName.trim().split(" ").firstOrNull().orEmpty()
+}
+
+/**
+ * "Kerala Gramin ···3062", or just the bank when it never named an account.
+ *
+ * Short enough for a chip: the bank's own name is already long, and the tail is what
+ * distinguishes two accounts at the same bank.
+ */
+fun AccountBalance.shortLabel(): String {
+    val name = bank ?: accountTail?.let { "Account" } ?: key
+    val tail = accountTail?.takeIf { it.isNotBlank() }
+    return if (tail != null) "$name ···$tail" else name
 }

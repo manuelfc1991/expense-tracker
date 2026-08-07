@@ -350,12 +350,24 @@ class RulesRepository @Inject constructor(
         const val TYPE_MEMBER = "member"
 
         /**
+         * An account the household says is a **credit card**.
+         *
+         * Key: the account key, same as balances. Value: `limitPaise|dueDay`, both optional.
+         *
+         * Its own type rather than a flag on the balance rule, because it changes which
+         * total the account joins — a card balance is money owed, and adding it to "what is
+         * left" would report more to spend than exists. A rule that decides a sign belongs
+         * where it can be read without parsing something else first.
+         */
+        const val TYPE_CARD = "card"
+
+        /**
          * Everything in `shared_rules` that is worth sending, merchant rules excepted —
          * those are pushed from the table they are authored in.
          */
         private val SHAREABLE_TYPES = setOf(
             TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
-            TYPE_MEMBER,
+            TYPE_MEMBER, TYPE_CARD,
         )
     }
 }
