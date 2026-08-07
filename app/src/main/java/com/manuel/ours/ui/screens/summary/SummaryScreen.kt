@@ -92,7 +92,14 @@ import java.util.Locale
 @Composable
 fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var settingBalance by rememberSaveable { mutableStateOf<AccountBalance?>(null) }
+    // The account's key, not the account.
+    //
+    // `AccountBalance` is a plain data class and cannot go in a Bundle, so holding one
+    // here crashed the app the moment this state was saved — the same defect that took
+    // the add sheet down. A key is a String, and it is the better thing to hold anyway:
+    // the balance is a live figure, and a copy captured when the dialog opened would go
+    // on showing the old number after a message from the bank corrected it underneath.
+    var settingBalanceKey by rememberSaveable { mutableStateOf<String?>(null) }
     var addingAccount by rememberSaveable { mutableStateOf(false) }
     var tab by remember { mutableStateOf(SummaryTab.Month) }
     val context = LocalContext.current
@@ -203,7 +210,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                     WhatsLeft(
                         balances = state.balances,
                         selfUid = state.selfUid,
-                        onSet = { settingBalance = it },
+                        onSet = { settingBalanceKey = it.key },
                         onAdd = { addingAccount = true },
                     )
                 }
@@ -272,11 +279,13 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         )
     }
 
-    settingBalance?.let { account ->
+    // Resolved fresh on every recomposition, so the dialog follows the live balance. A key
+    // whose account has disappeared closes the dialog rather than showing a stale one.
+    settingBalanceKey?.let { key -> state.balances.firstOrNull { it.key == key } }?.let { account ->
         BalanceDialog(
             account = account,
             members = state.members,
-            onDismiss = { settingBalance = null },
+            onDismiss = { settingBalanceKey = null },
             onConfirm = { edit, minimum, owner ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
@@ -289,7 +298,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 }
                 minimum?.let { viewModel.setAccountMinimum(account.key, it) }
                 owner?.let { viewModel.setAccountOwner(account.key, it.uid, it.displayName) }
-                settingBalance = null
+                settingBalanceKey = null
             },
         )
     }

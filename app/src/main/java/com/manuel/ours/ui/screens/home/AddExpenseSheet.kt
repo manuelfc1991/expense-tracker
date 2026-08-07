@@ -30,6 +30,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,7 +106,9 @@ fun AddExpenseSheet(
     // Cash by default. This sheet exists for the payment no bank messaged about, and that
     // is overwhelmingly cash — a default of "not sure" would make the common case the one
     // that needs a tap.
-    var paidFrom by rememberSaveable { mutableStateOf<PaidFrom>(PaidFrom.Cash) }
+    var paidFrom by rememberSaveable(stateSaver = PaidFromSaver) {
+        mutableStateOf<PaidFrom>(PaidFrom.Cash)
+    }
 
     val amountFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { amountFocus.requestFocus() }
@@ -303,6 +307,44 @@ fun AddExpenseSheet(
  * and could not be reconciled against anything. Snapped to midday in the household's zone rather
  * than midnight, so it cannot land in the previous day for a reader east of it.
  */
+/**
+ * Puts a [PaidFrom] in a Bundle, which it cannot go in by itself.
+ *
+ * `rememberSaveable` does not fail when the value is stored — it fails when Android asks
+ * for the state back, which is a frame later and somewhere else entirely. A sealed
+ * interface handed to it straight took the whole app down the moment the sheet's state
+ * was saved, with a stack trace pointing at Choreographer rather than at this line.
+ *
+ * Three strings, because that is all the type is: which kind, and the two nullable fields
+ * `Account` carries. Blank means null — a payment from an account with no digits and no
+ * bank is not an account anybody could name.
+ */
+internal val PaidFromSaver: Saver<PaidFrom, Any> = listSaver(
+    save = { paidFrom ->
+        when (paidFrom) {
+            is PaidFrom.Cash -> listOf("cash", "", "")
+            is PaidFrom.Unknown -> listOf("unknown", "", "")
+            is PaidFrom.Account -> listOf(
+                "account",
+                paidFrom.accountTail.orEmpty(),
+                paidFrom.bank.orEmpty(),
+            )
+        }
+    },
+    restore = { saved ->
+        when (saved.getOrNull(0)) {
+            "cash" -> PaidFrom.Cash
+            "account" -> PaidFrom.Account(
+                accountTail = saved.getOrNull(1)?.takeIf(String::isNotBlank),
+                bank = saved.getOrNull(2)?.takeIf(String::isNotBlank),
+            )
+            // Anything unreadable becomes "nobody said", which is a state the app already
+            // handles everywhere. Guessing Cash here would invent a fact about a payment.
+            else -> PaidFrom.Unknown
+        }
+    },
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ManualDatePicker(
@@ -343,3 +385,6 @@ private fun ManualDatePicker(
         DatePicker(state = state, title = null)
     }
 }
+
+/** Exposed so [com.manuel.ours.core.SaveableStateTest] can prove the saved form is Bundle-safe. */
+internal val paidFromSaverForTest: Saver<PaidFrom, Any> get() = PaidFromSaver
