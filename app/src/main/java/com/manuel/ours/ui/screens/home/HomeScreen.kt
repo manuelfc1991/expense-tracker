@@ -112,9 +112,11 @@ fun HomeScreen(
     onSort: () -> Unit,
     onSetBudget: () -> Unit,
     onOpenDeleteRequests: () -> Unit = {},
+    onOpenPossiblePayments: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val possiblePayments by viewModel.possiblePayments.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showAddSheet by remember { mutableStateOf(false) }
 
@@ -350,6 +352,27 @@ fun HomeScreen(
                         },
                         actionLabel = "Review",
                         onAction = onOpenDeleteRequests,
+                    )
+                }
+            }
+
+            // Senders that wrote something payment-shaped and that nobody has vouched
+            // for. Surfaced here for the same reason Sort is: the failures that cost this
+            // household most were silent, and a queue nobody is told about is one nobody
+            // empties.
+            if (possiblePayments > 0) {
+                item {
+                    Notice(
+                        tone = Ours.warning,
+                        title = if (possiblePayments == 1) {
+                            "1 possible payment"
+                        } else {
+                            "$possiblePayments possible payments"
+                        },
+                        body = "From senders we don't know. Nothing here is in your " +
+                            "total until you say what it is.",
+                        actionLabel = "Review",
+                        onAction = onOpenPossiblePayments,
                     )
                 }
             }

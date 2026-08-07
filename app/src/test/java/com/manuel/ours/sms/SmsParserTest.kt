@@ -326,13 +326,16 @@ class SmsParserTest {
     }
 
     /**
-     * Bank-shaped is not enough on its own: this names no bank, so it stays discarded.
-     * [SenderDiscoveryTest] covers the unknown header that does name one.
+     * Bank-shaped but naming no bank: not read, and not thrown away either.
+     *
+     * It becomes a question — see [PossiblePaymentsTest]. The invariant that matters here
+     * is the one that was always true: it is not an expense, so it is in no total.
      */
     @Test
-    fun `unknown brand sender ignored`() {
-        assertThat(ignored("AD-ZZZZZZ", "Rs.100 debited from a/c XX1111 at SOMEWHERE"))
-            .isEqualTo(SmsParser.Reason.UNKNOWN_SENDER)
+    fun `unknown brand sender is held rather than counted`() {
+        val result = parser.parse("AD-ZZZZZZ", "Rs.100 debited from a/c XX1111 at SOMEWHERE", now)
+        assertThat(result).isInstanceOf(SmsParser.Result.Unrecognised::class.java)
+        assertThat(result).isNotInstanceOf(SmsParser.Result.Expense::class.java)
     }
 
     @Test

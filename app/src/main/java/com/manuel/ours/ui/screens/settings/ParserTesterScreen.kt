@@ -111,6 +111,26 @@ fun ParserTesterScreen(onBack: () -> Unit) {
                     )
                 }
 
+                is SmsParser.Result.Unrecognised -> ResultCard(
+                    title = "Held for you to confirm",
+                    color = Ours.warning,
+                ) {
+                    Field("Sender", result.header)
+                    Field(
+                        "Amount",
+                        result.amountPaise?.let { Money.format(it, withDecimals = true) } ?: "—",
+                    )
+                    Field("Type", result.type?.name ?: "—")
+                    Text(
+                        text = "This reads like a payment, but the sender is not a bank we " +
+                            "know and the message does not name one. It waits under " +
+                            "Possible payments and counts towards nothing until you say " +
+                            "what it is.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Ours.onSurfaceVariant,
+                    )
+                }
+
                 is SmsParser.Result.Ignored -> ResultCard(
                     title = "Ignored",
                     color = Ours.error,

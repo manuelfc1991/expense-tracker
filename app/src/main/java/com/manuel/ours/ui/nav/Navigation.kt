@@ -84,6 +84,7 @@ object Routes {
     const val RULES = "rules"
     const val SHEET_SETUP = "sheet_setup"
     const val DELETE_REQUESTS = "delete_requests"
+    const val POSSIBLE_PAYMENTS = "possible_payments"
     const val BACKUP = "backup"
     const val TRASH = "trash"
     const val TXN_DETAIL = "txn/{txnId}"
@@ -277,6 +278,9 @@ fun OursNavHost(
                         }
                     },
                     onOpenDeleteRequests = { navController.navigate(Routes.DELETE_REQUESTS) },
+                    onOpenPossiblePayments = {
+                        navController.navigate(Routes.POSSIBLE_PAYMENTS)
+                    },
                 )
             }
 
@@ -357,6 +361,12 @@ fun OursNavHost(
                 com.manuel.ours.ui.screens.requests.DeleteRequestsScreen(
                     onBack = { navController.popBackStack() },
                     onTransactionClick = { navController.navigate(Routes.txnDetail(it)) },
+                )
+            }
+
+            composable(Routes.POSSIBLE_PAYMENTS) {
+                com.manuel.ours.ui.screens.pending.PossiblePaymentsScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
 

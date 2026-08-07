@@ -143,17 +143,23 @@ class SenderDiscoveryTest {
     // ─── The shape gate ──────────────────────────────────────────────────────
 
     /**
-     * Bank-shaped, but naming no bank. Discarded — and this is the deliberate limit of
-     * the feature, not an oversight.
+     * Bank-shaped, but naming no bank. **Not adopted** — which is the deliberate limit of
+     * this feature — and not silently dropped either: it becomes a question.
+     *
+     * The distinction is the whole point. Adoption means counted; a question means held.
+     * See [PossiblePaymentsTest] for what happens to it next.
      */
     @Test
-    fun `an unknown header that names no bank is still ignored`() {
+    fun `an unknown header that names no bank is held, never adopted`() {
         val result = parser.parse(
             "AD-ZZZBNK-S",
             "Rs.899.00 debited from A/c XX7788 on 06AUG2026 11:02:44. Avl Bal Rs.4,120.50",
             0L,
         )
-        assertThat(result).isInstanceOf(SmsParser.Result.Ignored::class.java)
+        assertThat(result).isInstanceOf(SmsParser.Result.Unrecognised::class.java)
+        assertThat(result).isNotInstanceOf(SmsParser.Result.Expense::class.java)
+        // And nothing was learned from it, so the next message asks again rather than counting.
+        assertThat(BankRules.forSender("AD-ZZZBNK-S")).isNull()
     }
 
     /**
@@ -169,7 +175,7 @@ class SenderDiscoveryTest {
      * caught any of them.
      */
     @Test
-    fun `the bank-shaped messages that are not banks are all refused`() {
+    fun `the bank-shaped messages that are not banks are never counted`() {
         val impostors = mapOf(
             "AD-EPFOHO-S" to
                 "Dear 1234, your passbook balance against KRKTM****5678 is Rs. 61,989/-. " +
@@ -190,9 +196,13 @@ class SenderDiscoveryTest {
                 "Dear Customer, your payment of Rs. 340 using Myntra Gift Card ****1234 " +
                 "balance is successful. Updated Myntra Gift Card balance: Rs. 34.00",
         )
+        // The invariant is not which branch they take — some are payment-shaped enough to
+        // be worth asking about — but that **not one of them is ever an expense**. Shape is
+        // enough to ask and never enough to count.
         impostors.forEach { (sender, body) ->
-            assertThat(parser.parse(sender, body, 0L))
-                .isInstanceOf(SmsParser.Result.Ignored::class.java)
+            val result = parser.parse(sender, body, 0L)
+            assertThat(result).isNotInstanceOf(SmsParser.Result.Expense::class.java)
+            assertThat(BankRules.forSender(sender)).isNull()
         }
     }
 

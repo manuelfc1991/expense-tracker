@@ -42,6 +42,7 @@ class RealInboxAuditTest {
         var expense = 0
         var reminder = 0
         val ignored = LinkedHashMap<String, Int>()
+        val held = LinkedHashMap<String, Int>()
         val byBank = LinkedHashMap<String, Int>()
         var spentPaise = 0L
 
@@ -55,6 +56,8 @@ class RealInboxAuditTest {
                     }
                 }
                 is SmsParser.Result.BillReminder -> reminder++
+                is SmsParser.Result.Unrecognised ->
+                    held[r.header] = (held[r.header] ?: 0) + 1
                 is SmsParser.Result.Ignored ->
                     ignored[r.reason.name] = (ignored[r.reason.name] ?: 0) + 1
             }
@@ -84,6 +87,8 @@ class RealInboxAuditTest {
         println("=== August debits total: ${"%,.2f".format(aug / 100.0)}")
         println("--- by bank")
         byBank.entries.sortedByDescending { it.value }.forEach { println("    %5d  %s".format(it.value, it.key)) }
+        println("--- held for confirmation (payment-shaped, sender unvouched)")
+        held.entries.sortedByDescending { it.value }.forEach { println("    %5d  %s".format(it.value, it.key)) }
         println("--- ignored")
         ignored.entries.sortedByDescending { it.value }.forEach { println("    %5d  %s".format(it.value, it.key)) }
     }

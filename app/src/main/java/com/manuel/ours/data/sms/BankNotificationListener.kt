@@ -4,6 +4,7 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.manuel.ours.data.prefs.AppPrefs
+import com.manuel.ours.data.repo.PendingSenderRepository
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.work.SyncWorker
@@ -29,6 +30,7 @@ class BankNotificationListener : NotificationListenerService() {
     @Inject lateinit var repository: TransactionRepository
     @Inject lateinit var prefs: AppPrefs
     @Inject lateinit var notifier: IngestNotifier
+    @Inject lateinit var pendingSenders: PendingSenderRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -68,6 +70,7 @@ class BankNotificationListener : NotificationListenerService() {
                     }
                 }
                 is SmsParser.Result.BillReminder -> notifier.saveReminder(result)
+                is SmsParser.Result.Unrecognised -> pendingSenders.record(result, sbn.postTime)
                 else -> Unit
             }
         }

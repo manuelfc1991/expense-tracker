@@ -269,3 +269,25 @@ data class ReminderEntity(
     val text: String,
     val dismissed: Boolean,
 )
+
+/**
+ * A sender that writes payment-shaped messages and that nobody has vouched for.
+ *
+ * One row per header, not per message: 99 unrecognised headers on the real phone carried
+ * 1,386 messages, and asking about each message is 1,386 decisions where asking about each
+ * sender is at most 99 — in practice the handful that mention an amount at all.
+ *
+ * **Never synced.** It holds message text, which is treated exactly as `rawSms` is: it stays
+ * on the phone that received it. What travels is the *answer*, as a `sender` shared rule.
+ */
+@Entity(tableName = "pending_senders")
+data class PendingSenderEntity(
+    @PrimaryKey val header: String,
+    val messageCount: Int,
+    val firstAt: Long,
+    val lastAt: Long,
+    /** The most recent message, shown so a person can recognise what this is. */
+    val sampleBody: String,
+    /** The most recent amount, for the figure on the row. Null when none could be read. */
+    val lastAmountPaise: Long?,
+)

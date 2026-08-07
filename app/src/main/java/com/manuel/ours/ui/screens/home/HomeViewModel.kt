@@ -146,6 +146,7 @@ class HomeViewModel @Inject constructor(
     private val budgetRepository: BudgetRepository,
     private val prefs: AppPrefs,
     private val reminderDao: com.manuel.ours.data.db.ReminderDao,
+    private val pendingSenders: com.manuel.ours.data.repo.PendingSenderRepository,
     syncEventDao: SyncEventDao,
 ) : ViewModel() {
 
@@ -395,6 +396,13 @@ class HomeViewModel @Inject constructor(
         combine(prefs.selfUid, prefs.householdOwner) { uid, owner -> uid.orEmpty() to owner }
             .flatMapLatest { (uid, owner) -> transactionRepository.observeBalances(uid, owner) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * How many senders are waiting to be answered. Its own flow for the same reason
+     * [accounts] is: the state above is assembled by a `combine` already at its arity.
+     */
+    val possiblePayments: StateFlow<Int> = pendingSenders.observeCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun addQuickExpense(
         amountPaise: Long,

@@ -3,6 +3,7 @@ package com.manuel.ours.di
 import android.content.Context
 import androidx.room.Room
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import com.manuel.ours.data.db.PendingSenderDao
 import com.manuel.ours.data.db.SharedRuleDao
 import com.manuel.ours.data.db.AppDatabase
 import com.manuel.ours.data.db.BudgetDao
@@ -53,6 +54,7 @@ object AppModule {
                 AppDatabase.MIGRATION_7_8,
                 AppDatabase.MIGRATION_8_9,
                 AppDatabase.MIGRATION_9_10,
+                AppDatabase.MIGRATION_10_11,
             )
             // No destructive fallback.
             //
@@ -72,6 +74,9 @@ object AppModule {
     @Provides fun provideMemberDao(db: AppDatabase): MemberDao = db.memberDao()
     @Provides fun provideReminderDao(db: AppDatabase): ReminderDao = db.reminderDao()
     @Provides fun provideSharedRuleDao(db: AppDatabase): SharedRuleDao = db.sharedRuleDao()
+
+    @Provides fun providePendingSenderDao(db: AppDatabase): PendingSenderDao =
+        db.pendingSenderDao()
 
     @Provides
     @Singleton

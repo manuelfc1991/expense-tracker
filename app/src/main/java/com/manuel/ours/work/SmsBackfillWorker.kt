@@ -14,6 +14,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.manuel.ours.data.prefs.AppPrefs
+import com.manuel.ours.data.repo.PendingSenderRepository
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.data.sms.SmsParser
 import dagger.assisted.Assisted
@@ -35,6 +36,7 @@ class SmsBackfillWorker @AssistedInject constructor(
     private val parser: SmsParser,
     private val repository: TransactionRepository,
     private val prefs: AppPrefs,
+    private val pendingSenders: PendingSenderRepository,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -95,6 +97,10 @@ class SmsBackfillWorker @AssistedInject constructor(
                     is SmsParser.Result.Expense -> {
                         if (repository.ingestParsed(result.txn) != null) imported++
                     }
+                    // Payment-shaped, from a sender nobody has vouched for. Held for a
+                    // one-tap answer rather than discarded — a header the app has never
+                    // heard of is exactly how a bank goes missing without anyone noticing.
+                    is SmsParser.Result.Unrecognised -> pendingSenders.record(result, date)
                     else -> Unit // ignored + reminders are not expenses
                 }
 

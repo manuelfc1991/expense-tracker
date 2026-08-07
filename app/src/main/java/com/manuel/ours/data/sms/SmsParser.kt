@@ -26,6 +26,21 @@ class SmsParser {
             val dueAt: Long? = null,
         ) : Result
         data class Ignored(val reason: Reason) : Result
+
+        /**
+         * Payment-shaped, from a sender we cannot vouch for.
+         *
+         * Not an expense and not a rejection — a question. Adopting an unknown sender on
+         * the shape of its message alone was measured against 2,810 real messages and read
+         * an EPF passbook line as ₹61,989 of income, so shape is enough to *ask* and not
+         * enough to *count*. These are held until somebody says which they are.
+         */
+        data class Unrecognised(
+            val header: String,
+            val amountPaise: Long?,
+            val type: TxnType?,
+            val body: String,
+        ) : Result
     }
 
     enum class Reason {
@@ -117,7 +132,7 @@ class SmsParser {
         // the shape of the message itself, which is the thing that actually decides.
         val rule = known
             ?: provisionalRule(sender, body)
-            ?: return Result.Ignored(Reason.UNKNOWN_SENDER)
+            ?: return unrecognised(sender, body)
 
         // A sender the app only started reading part-way through its own history.
         // `receivedAt == 0` means "no time given", which only happens in tests.
@@ -211,6 +226,44 @@ class SmsParser {
         if (!looksLikeBankAlert(body)) return null
         val named = BankRules.bankNamedIn(body) ?: return null
         return BankRule(bank = named, headers = listOf(header))
+    }
+
+    /**
+     * What to do with a sender we cannot vouch for.
+     *
+     * If the message is payment-shaped it becomes a question rather than a discard — the
+     * failures that cost this household most were silent, and a header nobody has heard of
+     * is exactly how a bank disappears. If it is not payment-shaped, or it is one of the
+     * things that only looks like one, it is dropped as before.
+     *
+     * The reject rules are applied here too, and must be. They normally run *after* the
+     * sender gate, so without this an OTP quoting a debit — bank-shaped by every measure —
+     * would queue up asking whether its sender is a bank.
+     */
+    private fun unrecognised(sender: String, body: String): Result {
+        val header = BankRules.normaliseHeader(sender)
+            ?: return Result.Ignored(Reason.UNKNOWN_SENDER)
+        if (header.length !in 3..15 || header.none { it.isLetter() }) {
+            return Result.Ignored(Reason.UNKNOWN_SENDER)
+        }
+        if (!looksLikeBankAlert(body)) return Result.Ignored(Reason.UNKNOWN_SENDER)
+
+        // The precise reason, not a blanket UNKNOWN_SENDER. The Parser Tester explains
+        // whichever comes back, and "this looks like an OTP" is a far more useful answer
+        // than "we don't know this sender" when the sender is beside the point.
+        val lower = body.lowercase()
+        when {
+            looksLikeOtp(lower) -> return Result.Ignored(Reason.OTP)
+            looksFailed(lower) -> return Result.Ignored(Reason.FAILED_TRANSACTION)
+            isNotATransaction(lower) -> return Result.Ignored(Reason.NOT_A_TRANSACTION)
+            looksPromotional(lower) -> return Result.Ignored(Reason.PROMOTIONAL)
+        }
+        return Result.Unrecognised(
+            header = header,
+            amountPaise = extractAmount(body),
+            type = detectType(lower),
+            body = body.trim(),
+        )
     }
 
     /**

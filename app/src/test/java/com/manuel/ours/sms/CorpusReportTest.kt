@@ -38,6 +38,7 @@ class CorpusReportTest {
         var spendPaise = 0L
         var cardPayPaise = 0L
         var transferPaise = 0L
+        var unrecognised = 0
         val badMerchants = mutableListOf<String>()
 
         file.readLines().filter { it.isNotBlank() }.forEach { line ->
@@ -72,6 +73,8 @@ class CorpusReportTest {
                 }
                 is SmsParser.Result.BillReminder ->
                     ignored.merge("BILL_REMINDER", 1, Int::plus)
+                // Payment-shaped, sender unvouched: a question, not a result.
+                is SmsParser.Result.Unrecognised -> unrecognised++
                 is SmsParser.Result.Ignored ->
                     ignored.merge(r.reason.name, 1, Int::plus)
             }

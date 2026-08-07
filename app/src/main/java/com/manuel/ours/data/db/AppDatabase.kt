@@ -15,12 +15,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemberEntity::class,
         ReminderEntity::class,
         SharedRuleEntity::class,
+        PendingSenderEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sharedRuleDao(): SharedRuleDao
+    abstract fun pendingSenderDao(): PendingSenderDao
     abstract fun transactionDao(): TransactionDao
     abstract fun syncEventDao(): SyncEventDao
     abstract fun peerCursorDao(): PeerCursorDao
@@ -88,6 +90,30 @@ abstract class AppDatabase : RoomDatabase() {
          * message id, and NULL is the honest way to say so. Two NULLs must never match, which
          * is why the comparison in SmsDeduplicator requires both sides to be present.
          */
+        /**
+         * Senders that write payment-shaped messages and that nobody has vouched for.
+         *
+         * A queue rather than a decision: adopting an unknown sender on the shape of its
+         * message alone was measured against 2,810 real messages and read an EPF passbook
+         * line as ₹61,989 of income. Shape is enough to ask and not enough to count.
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS pending_senders (
+                        header TEXT NOT NULL PRIMARY KEY,
+                        messageCount INTEGER NOT NULL,
+                        firstAt INTEGER NOT NULL,
+                        lastAt INTEGER NOT NULL,
+                        sampleBody TEXT NOT NULL,
+                        lastAmountPaise INTEGER
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN bankMessageId TEXT")

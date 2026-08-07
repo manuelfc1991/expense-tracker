@@ -417,3 +417,25 @@ interface SharedRuleDao {
     @Query("SELECT * FROM shared_rules WHERE updatedAt > :since")
     suspend fun changedSince(since: Long): List<SharedRuleEntity>
 }
+
+@Dao
+interface PendingSenderDao {
+
+    @Query("SELECT * FROM pending_senders ORDER BY lastAt DESC")
+    fun observeAll(): Flow<List<PendingSenderEntity>>
+
+    @Query("SELECT COUNT(*) FROM pending_senders")
+    fun observeCount(): Flow<Int>
+
+    @Query("SELECT * FROM pending_senders WHERE header = :header")
+    suspend fun find(header: String): PendingSenderEntity?
+
+    @Upsert
+    suspend fun upsert(row: PendingSenderEntity)
+
+    @Query("DELETE FROM pending_senders WHERE header = :header")
+    suspend fun delete(header: String)
+
+    @Query("DELETE FROM pending_senders")
+    suspend fun clear()
+}
