@@ -400,7 +400,13 @@ data class MonthSummary(
     val topMerchants: List<MerchantTotal>,
     val biggestExpense: Transaction?,
     val insights: List<Insight>,
-    /** Debits kept out of [totalSpentPaise] — card bills, transfers, savings. */
+    /**
+     * Debits kept out of [totalSpentPaise] — savings, Ours, and income.
+     *
+     * **Not** card bills or transfers, whatever their names suggest: both carry
+     * `MoneyFlow.SPENDING` and both count, deliberately. The same wrong claim was fixed
+     * on `NON_SPEND` and survived here.
+     */
     val excluded: List<CategoryTotal> = emptyList(),
     /** Money moved into deposits and investments this month. */
     val totalSavedPaise: Long = 0L,

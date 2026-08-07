@@ -47,7 +47,18 @@ class BudgetAlerter @Inject constructor(
 
         val today = LocalDate.now(MonthlyAggregator.ZONE)
         val range = MonthlyAggregator.monthRange(today.year, today.monthValue)
-        val transactions = txnDao.getBetween(range.first, range.last + 1).map { it.toDomain() }
+        // Floored at the tracking start, like every screen.
+        //
+        // Home and Summary read through TransactionRepository, which clamps the range;
+        // this went to the DAO directly and so counted months the household has retired.
+        // The 24-month lookback below matters more: it fed the detector a different
+        // history than Home's, so the two produced different commitments and therefore
+        // different pacing — while this file's own comment claims they use "the same
+        // window, with the same detector, as Home and Summary".
+        val startAt = prefs.trackingStartAtOnce()
+        val transactions = txnDao
+            .getBetween(maxOf(range.first, startAt), range.last + 1)
+            .map { it.toDomain() }
         val monthKey = "${today.year}-${today.monthValue}"
 
         // Detected over the same window, with the same detector, as Home and Summary.
@@ -57,7 +68,9 @@ class BudgetAlerter @Inject constructor(
                 today.minusMonths(RecurringDetector.LOOKBACK_MONTHS).year,
                 today.minusMonths(RecurringDetector.LOOKBACK_MONTHS).monthValue,
             )
-            val history = txnDao.getBetween(lookback.first, range.last + 1).map { it.toDomain() }
+            val history = txnDao
+                .getBetween(maxOf(lookback.first, startAt), range.last + 1)
+                .map { it.toDomain() }
             val recurring = RecurringDetector.detect(history)
             Pacing.of(
                 spentPaise = MonthlyAggregator.totalSpent(transactions),

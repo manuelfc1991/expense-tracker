@@ -46,7 +46,12 @@ object Money {
      * paise, a floored total sits above a column that visibly adds up to more than it,
      * and the page stops reconciling.
      */
-    fun whole(paise: Long): String = format(paise - paise % 100)
+    // floorDiv, not `paise - paise % 100`.
+    //
+    // Kotlin's `%` keeps the sign, so the subtraction rounds a negative *up*: −₹123.45
+    // came out as "−₹123", understating the deficit. The doc below promises rounding
+    // down precisely because a capacity that rounds up promises money that is not there.
+    fun whole(paise: Long): String = format(Math.floorDiv(paise, 100L) * 100L)
 
     /**
      * "₹1,23,456.78" — the full figure, two places always.

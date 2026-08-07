@@ -271,6 +271,13 @@ class HomeViewModel @Inject constructor(
                 allTxns.filter { it.occurredAt in thisMonth }
             )
 
+            // Detected once, and used by both the affordability figure and the pacing
+            // line. Household-wide and unfiltered, exactly like the ruler above them: the
+            // budget is one cap over one household, so narrowing the view must not change
+            // what the household is allowed to spend today.
+            val householdRecurring = RecurringDetector.detect(allTxns)
+            val committedRemaining = MonthlyAggregator.committedRemaining(householdRecurring)
+
             // Look across both months, not just the current one: a partner who
             // spent nothing so far this month is still a partner.
             // The placeholder owner is *me before I had an id*, never a second
@@ -293,14 +300,18 @@ class HomeViewModel @Inject constructor(
                 spentThisMonth = spent,
                 householdSpentThisMonth = householdSpent,
                 budgetPaise = params.budget,
-                // Commitments are left out here and counted on Summary, where the
-                // recurring charges are already detected over two years of history.
-                // Home would need that whole window for a single line of caption, and a
-                // figure that disagreed with Summary's would be worse than no figure.
+                // The same commitments Summary uses, and for the same reason the comment
+                // here used to give for omitting them: a figure that disagreed with
+                // Summary's would be worse than no figure. It did disagree — Home said
+                // ₹18,000 safe to spend where Summary said ₹3,000 — because the argument
+                // for leaving them out ("Home would need the whole window") stopped being
+                // true once Home began detecting recurring charges for pacing, twenty
+                // lines below.
                 affordability = affordability(
                     budgetPaise = params.budget,
                     householdSpentPaise = householdSpent,
                     balances = balances,
+                    committedRemainingPaise = committedRemaining,
                     partialView = !params.owner,
                 ),
                 syncError = params.syncError,
@@ -310,18 +321,13 @@ class HomeViewModel @Inject constructor(
                 staleFor = params.lastSync
                     .takeIf { it > 0L && System.currentTimeMillis() - it > STALE_AFTER_MS }
                     ?.let { relativeAge(System.currentTimeMillis() - it) },
-                pacing = run {
-                    // Household-wide and unfiltered, exactly like the ruler it sits under: the
-                    // budget is one cap over one household, so narrowing the view must not
-                    // change what the household is allowed to spend today.
-                    val recurring = RecurringDetector.detect(allTxns)
-                    Pacing.of(
-                        spentPaise = householdSpent,
-                        budgetPaise = params.budget,
-                        monthlyCommittedPaise = recurring.sumOf { it.monthlyEquivalentPaise },
-                        committedRemainingPaise = MonthlyAggregator.committedRemaining(recurring),
-                    )
-                },
+                pacing = Pacing.of(
+                    spentPaise = householdSpent,
+                    budgetPaise = params.budget,
+                    monthlyCommittedPaise = householdRecurring
+                        .sumOf { it.monthlyEquivalentPaise },
+                    committedRemainingPaise = committedRemaining,
+                ),
                 vsLastMonthPercent = if (priorSpent > 0) {
                     (spent - priorSpent) * 100f / priorSpent
                 } else null,

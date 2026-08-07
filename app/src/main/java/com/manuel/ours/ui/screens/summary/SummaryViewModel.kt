@@ -127,10 +127,21 @@ class SummaryViewModel @Inject constructor(
                     all.filter { txn -> txn.occurredAt in priorRange }, memberFilter, selfUid,
                 )
                 // Detected over the whole window, but through the same member filter —
-                // "Aarav's commitments" has to mean Aarav's.
+                // "Aarav's commitments" has to mean Aarav's. This drives the Committed
+                // *list*, which is a per-member view and should follow the chip.
                 val recurring = RecurringDetector.detect(
                     MonthlyAggregator.applyFilter(all, memberFilter, selfUid)
                 )
+
+                // Unfiltered, for the affordability figure only.
+                //
+                // That figure is measured against household-wide spend and a household-wide
+                // cap, so feeding it per-member commitments made a household number move
+                // when you tapped a member chip: selecting "Me" dropped a partner's ₹15,000
+                // commitment and raised what the household could apparently afford by
+                // ₹15,000. The budget is one cap over one household — narrowing the view
+                // must never change it.
+                val householdRecurring = RecurringDetector.detect(all)
 
                 // Household-wide and for the month on screen, matching the budget it is
                 // measured against. Stepping back to July asks what was affordable in
@@ -145,7 +156,7 @@ class SummaryViewModel @Inject constructor(
                 // make every past month look poorer than it was.
                 val viewingNow = ym == YearMonth.now(MonthlyAggregator.ZONE)
                 val committed = if (viewingNow) {
-                    MonthlyAggregator.committedRemaining(recurring)
+                    MonthlyAggregator.committedRemaining(householdRecurring)
                 } else 0L
 
                 SummaryUiState(

@@ -107,16 +107,23 @@ object MonthlyAggregator {
      * inside it, so a month where you saved hard doesn't read as a month where you
      * overspent.
      */
+    /**
+     * Netted, like the spending headline.
+     *
+     * A ₹50,000 FD reversed the next day still reported "₹50,000 saved this month", and
+     * because `totalSpent` *did* net it, spent + excluded no longer reconciled with what
+     * actually left the accounts.
+     */
     fun totalSaved(transactions: List<Transaction>): Long =
         transactions
             .filter { it.type == TxnType.DEBIT && it.category.flow == MoneyFlow.SAVING }
-            .sumOf { it.amountPaise }
+            .sumOf { netSpent(it) }
 
     /** What [totalSpent] left out, so the difference can be shown rather than hidden. */
     fun excludedFromSpend(transactions: List<Transaction>): Long =
         transactions
             .filter { it.type == TxnType.DEBIT && !it.category.countsAsSpending }
-            .sumOf { it.amountPaise }
+            .sumOf { netSpent(it) }
 
     /**
      * Money arriving that the household actually earned.
@@ -452,7 +459,7 @@ object MonthlyAggregator {
             .filter { it.type == TxnType.DEBIT && !it.category.countsAsSpending }
             .groupBy { it.category }
             .map { (cat, list) ->
-                CategoryTotal(cat, list.sumOf { it.amountPaise }, list.size)
+                CategoryTotal(cat, list.sumOf { netSpent(it) }, list.size)
             }
             .sortedByDescending { it.totalPaise }
 }
