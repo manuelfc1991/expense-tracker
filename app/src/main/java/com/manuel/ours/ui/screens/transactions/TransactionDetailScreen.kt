@@ -586,7 +586,7 @@ private fun RenameDialog(
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Remember account ${'$'}accountTail",
+                                "Remember account ···$accountTail",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Ours.onSurface,
                             )
@@ -808,7 +808,12 @@ private fun RefundPickerSheet(
                             enabled = chosen != null,
                             dimWhenDisabled = true,
                             onClick = {
-                                val debit = candidates.first { it.txn.id == chosen }.txn
+                                // firstOrNull, not first. `candidates` is a live flow: the
+                                // chosen debit can leave it — deleted or refunded on the
+                                // other phone — while the sheet is open, and `chosen`
+                                // stays set, so the button threw NoSuchElementException.
+                                val debit = candidates.firstOrNull { it.txn.id == chosen }?.txn
+                                    ?: return@AccentButton
                                 // Capped at the purchase: a refund larger than the thing it
                                 // refunds is a mis-link, not a windfall.
                                 onPick(debit.id, minOf(credit.amountPaise, debit.amountPaise))

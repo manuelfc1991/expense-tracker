@@ -763,6 +763,8 @@ class TransactionRepository @Inject constructor(
             counterpartyTail = txn.counterpartyTail,
             refundsTxnId = txn.refundsTxnId,
             refundedPaise = txn.refundedPaise,
+            bankMessageId = txn.bankMessageId,
+            balancePaise = txn.balancePaise,
             rawSms = txn.rawSms,
         )
         eventDao.append(

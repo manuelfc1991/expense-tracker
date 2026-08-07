@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -135,14 +136,24 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                 )
             }
 
-            items(state.categoryProgress.size) { index ->
+            // Keyed by category, never by index.
+            //
+            // The list is sorted by spend off a live flow, so an arriving SMS can reorder
+            // it. With index keys the open editor and its remembered text stayed with the
+            // *slot*: type a limit for Food, let a payment push another category above it,
+            // and Save wrote Food's figure onto whatever had taken its place. A stable key
+            // moves the state with the row.
+            items(
+                state.categoryProgress,
+                key = { it.category.name },
+            ) { progress ->
                 CategoryBudgetRow(
-                    progress = state.categoryProgress[index],
+                    progress = progress,
                     onSetLimit = { limit ->
-                        viewModel.setCategoryBudget(state.categoryProgress[index].category, limit)
+                        viewModel.setCategoryBudget(progress.category, limit)
                     },
                     onClearLimit = {
-                        viewModel.clearBudget(state.categoryProgress[index].category)
+                        viewModel.clearBudget(progress.category)
                     },
                 )
             }

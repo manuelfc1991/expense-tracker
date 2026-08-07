@@ -177,12 +177,28 @@ class SyncEngine @Inject constructor(
         deleteRequestedBy = deleteRequestedBy,
         amountEditedAt = amountEditedAt,
         counterpartyTail = counterpartyTail,
+        refundsTxnId = refundsTxnId,
+        refundedPaise = refundedPaise,
         // Prefer whatever we already hold: our own copy came from this phone's
         // inbox and is authoritative. Fall back to the peer's only when we have none.
         rawSms = existing?.rawSms ?: rawSms,
+        // Same rule for everything else that is a property of the *message* rather than
+        // of the edit. These were not carried at all, so an incoming edit blanked them.
+        //
+        // `bankMessageId` is the one that bites: it is the only thing tying Kerala
+        // Gramin's two SMS for one debit together, so a row the partner recategorised
+        // came back with it null and the next rescan re-imported the duplicate — the
+        // ₹8,955.79-counted-twice bug, re-armed by a sync.
+        bankMessageId = existing?.bankMessageId ?: bankMessageId,
+        balancePaise = existing?.balancePaise ?: balancePaise,
+        deletedAt = existing?.deletedAt,
         deleted = false,
-        dedupeKey = SmsDeduplicator.bucketKey(amountPaise, occurredAt, refNo),
-        dedupeAt = occurredAt,
+        dedupeKey = existing?.dedupeKey
+            ?: SmsDeduplicator.bucketKey(amountPaise, occurredAt, refNo),
+        // Never recomputed from occurredAt. For a date-only card message occurredAt is
+        // midnight while dedupeAt is the delivery time, and `findNearby` matches on
+        // dedupeAt — so overwriting it with midnight silently breaks dedup for that row.
+        dedupeAt = existing?.dedupeAt ?: occurredAt,
         updatedAtLamport = event.lamport,
         updatedByDevice = event.deviceId,
     )

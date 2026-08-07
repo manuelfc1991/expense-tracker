@@ -64,6 +64,16 @@ data class SyncPayload(
     val refundsTxnId: String? = null,
     val refundedPaise: Long = 0,
     /**
+     * The bank's own message id, and the balance it quoted.
+     *
+     * Both are properties of the message a row came from, so the phone that received it
+     * has the better copy — but a row the *peer* received and this phone did not has no
+     * other source, and without them the partner's Accounts panel has no bank-stated
+     * balance at all. Defaulted, so an older build's JSON still parses.
+     */
+    val bankMessageId: String? = null,
+    val balancePaise: Long? = null,
+    /**
      * The original bank message, so a mis-parse can be diagnosed on either phone.
      *
      * **This is the most sensitive field in the payload** — it carries the account tail

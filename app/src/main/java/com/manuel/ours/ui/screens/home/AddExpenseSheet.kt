@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,20 +91,20 @@ fun AddExpenseSheet(
     ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var amountText by remember { mutableStateOf("") }
-    var merchant by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(Category.FOOD) }
+    var amountText by rememberSaveable { mutableStateOf("") }
+    var merchant by rememberSaveable { mutableStateOf("") }
+    var note by rememberSaveable { mutableStateOf("") }
+    var category by rememberSaveable { mutableStateOf(Category.FOOD) }
     // "Now" is the default, so the common case still costs nothing. Without this row a cash
     // lunch entered in the evening lands in the wrong hour — and entered after midnight, in the
     // wrong day's subtotal, which is the one figure a statement has to get right.
-    var whenPicked by remember { mutableStateOf<Long?>(null) }
+    var whenPicked by rememberSaveable { mutableStateOf<Long?>(null) }
     var pickingDate by remember { mutableStateOf(false) }
-    var splitType by remember { mutableStateOf(SplitType.SHARED) }
+    var splitType by rememberSaveable { mutableStateOf(SplitType.SHARED) }
     // Cash by default. This sheet exists for the payment no bank messaged about, and that
     // is overwhelmingly cash — a default of "not sure" would make the common case the one
     // that needs a tap.
-    var paidFrom by remember { mutableStateOf<PaidFrom>(PaidFrom.Cash) }
+    var paidFrom by rememberSaveable { mutableStateOf<PaidFrom>(PaidFrom.Cash) }
 
     val amountFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { amountFocus.requestFocus() }

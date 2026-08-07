@@ -100,6 +100,20 @@ data class BackupTxn(
     val amountEditedAt: Long? = null,
     val counterpartyTail: String? = null,
     val balancePaise: Long? = null,
+    /**
+     * Added with schema 10 and 9; the backup format was not updated with them.
+     *
+     * `bankMessageId` matters most on exactly the day the backup is used. The documented
+     * recovery is restore-then-backfill, and a restored row with a null message id
+     * dedupes against nothing — so Kerala Gramin's two SMS for one debit, three minutes
+     * apart and outside the time window, both import. The ₹8,955.79 double-count returns
+     * on the day the household is relying on this file.
+     *
+     * Defaulted, so a file written by an older build still parses.
+     */
+    val bankMessageId: String? = null,
+    val refundsTxnId: String? = null,
+    val refundedPaise: Long = 0,
     val dedupeKey: String,
     val dedupeAt: Long,
     val updatedAtLamport: Long = 0L,
@@ -245,6 +259,9 @@ fun TransactionEntity.toBackup() = BackupTxn(
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,
     balancePaise = balancePaise,
+    bankMessageId = bankMessageId,
+    refundsTxnId = refundsTxnId,
+    refundedPaise = refundedPaise,
     dedupeKey = dedupeKey,
     dedupeAt = dedupeAt,
     updatedAtLamport = updatedAtLamport,
@@ -274,6 +291,9 @@ fun BackupTxn.toEntity() = TransactionEntity(
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,
     balancePaise = balancePaise,
+    bankMessageId = bankMessageId,
+    refundsTxnId = refundsTxnId,
+    refundedPaise = refundedPaise,
     dedupeKey = dedupeKey,
     dedupeAt = dedupeAt,
     updatedAtLamport = updatedAtLamport,
