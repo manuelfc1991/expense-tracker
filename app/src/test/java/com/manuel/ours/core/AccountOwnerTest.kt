@@ -140,6 +140,40 @@ class AccountOwnerTest {
         assertThat(spendable(claimed)).isEqualTo(spendable(unclaimed))
     }
 
+    /**
+     * A partner's account counts towards what the household can spend. Decided, 7 Aug 2026.
+     *
+     * The panel had always behaved this way without saying so, and grouping by person is
+     * what finally made it visible — "₹10,314 · Beula", sitting inside a figure headed
+     * *safe to spend*. Asked directly, the household confirmed it: her money is household
+     * money, and her spending from it personally does not change that.
+     *
+     * Worth a test precisely because the code looks the same either way. The alternative
+     * answer would have made this account a savings-like exclusion and turned every
+     * transfer to it into money leaving the pot rather than moving within it — and
+     * nothing in the source would have flagged the change of mind.
+     */
+    @Test
+    fun `a partner's account counts towards what the household can spend`() {
+        val balances = MonthlyAggregator.accountBalances(
+            transactions = listOf(debit("3062", "manuel", "Manuel", 2_000L)),
+            manual = mapOf(
+                "SBI" to ManualBalance(10_314_54, 5_000L, "State Bank of India", "manuel")
+            ),
+            owners = mapOf(
+                "3062" to AccountOwner("manuel", "Manuel"),
+                "SBI" to AccountOwner("beula", "Beula"),
+            ),
+        )
+        val result = affordability(
+            budgetPaise = 38_500_00,
+            householdSpentPaise = 0,
+            balances = balances,
+        )
+        // Both accounts, not just the one belonging to whoever is holding the phone.
+        assertThat(result.usablePaise).isEqualTo(9_649_00 + 10_314_54)
+    }
+
     /** Sub-totals add up to the household total, which is what makes the panel readable. */
     @Test
     fun `per-person subtotals sum to the household total`() {

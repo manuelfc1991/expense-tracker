@@ -1,7 +1,7 @@
 {
-  "versionCode": 63,
-  "versionName": "6.1",
-  "notes": "Two rounds of testing, and the defects they turned up. Card debt is no longer counted as money you can spend; the over-budget alert can actually fire; a charge paid on the 1st is no longer owed all month; sync stops dropping columns and stops marking events delivered to nobody; and nothing you type is lost when the phone rotates.",
+  "versionCode": 64,
+  "versionName": "6.2",
+  "notes": "Accounts are grouped by whoever owns them, with a Shared group for the rest.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25566242
 }
