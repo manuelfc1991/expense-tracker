@@ -22,6 +22,7 @@ import com.google.android.gms.nearby.connection.Strategy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
@@ -58,13 +59,28 @@ class NearbyTransport @Inject constructor(
     /** endpointId -> peer deviceId, advertised in the connection name. */
     private val peerDeviceIds = ConcurrentHashMap<String, String>()
 
+    /**
+     * One round at a time.
+     *
+     * This is a @Singleton and both `NearbySyncService` and the periodic `SyncWorker` can
+     * drive an exchange. A second `pull` cleared `received` and replaced
+     * `exchangeComplete` while the first was awaiting it, so the first round returned an
+     * empty peer list — read as "nothing to merge" rather than as an error — and had its
+     * outgoing blob swapped mid-flight.
+     */
+    private val roundLock = kotlinx.coroutines.sync.Mutex()
+
+    @Volatile
     private var pending: List<SyncEvent> = emptyList()
+    @Volatile
     private var exchangeComplete: CompletableDeferred<Unit>? = null
 
     /** Whether this round actually reached a peer. See [push]. */
+    @Volatile
     private var reachedPeer = false
 
     /** Encrypted blob to transmit this round, prepared before the session opens. */
+    @Volatile
     private var outgoing: String? = null
 
     override suspend fun isAvailable(): Boolean = withContext(Dispatchers.IO) {
@@ -99,6 +115,7 @@ class NearbyTransport @Inject constructor(
      */
     override suspend fun pull(selfDeviceId: String): List<SyncEvent> =
         withContext(Dispatchers.IO) {
+          roundLock.withLock {
             if (!hasPermissions()) return@withContext emptyList()
             val householdId = prefs.snapshot().householdId ?: return@withContext emptyList()
 
@@ -138,6 +155,7 @@ class NearbyTransport @Inject constructor(
             } finally {
                 stop()
             }
+          }
         }
 
     /**

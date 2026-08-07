@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.semantics
@@ -143,11 +144,11 @@ fun SettingsScreen(
     // code. A single repeated tap is something a thumb can do by accident on a screen
     // people scroll; this cannot happen without meaning it.
     var versionTaps by remember { mutableIntStateOf(0) }
-    var unlockRefused by remember { mutableStateOf(false) }
-    var showInvite by remember { mutableStateOf(false) }
-    var showSheet by remember { mutableStateOf(false) }
-    var openGroup by remember { mutableStateOf<SettingsGroup?>(null) }
-    var search by remember { mutableStateOf("") }
+    var unlockRefused by rememberSaveable { mutableStateOf(false) }
+    var showInvite by rememberSaveable { mutableStateOf(false) }
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    var openGroup by rememberSaveable { mutableStateOf<SettingsGroup?>(null) }
+    var search by rememberSaveable { mutableStateOf("") }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -298,7 +299,7 @@ fun SettingsScreen(
             val running = progress == "Syncing…"
 
             val nearbyPermissions = remember { NearbyTransport.requiredPermissions() }
-            var nearbyDenied by remember { mutableStateOf(false) }
+            var nearbyDenied by rememberSaveable { mutableStateOf(false) }
             val nearbyLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
             ) { result ->
@@ -471,7 +472,7 @@ fun SettingsScreen(
 
         item {
             var granted by remember { mutableStateOf(viewModel.hasSmsPermission()) }
-            val scan by viewModel.observeScanProgress()
+            val scan by remember { viewModel.observeScanProgress() }
                 .collectAsStateWithLifecycle(initialValue = null)
             val scanning = scan?.let { !it.finished && it.total > 0 } == true
 
@@ -485,7 +486,7 @@ fun SettingsScreen(
                 if (granted) viewModel.rescanMessages()
             }
 
-            var picking by remember { mutableStateOf(false) }
+            var picking by rememberSaveable { mutableStateOf(false) }
             val start = state.trackingStartAt
 
             Panel {
@@ -602,7 +603,9 @@ fun SettingsScreen(
                 )
                 if (scanning) {
                     LinearProgressIndicator(
-                        progress = { scan!!.fraction },
+                        // scan?.fraction: `observeProgress` emits null once WorkManager prunes the
+                        // finished work, and this lambda is read in the draw phase.
+                        progress = { scan?.fraction ?: 0f },
                         color = Ours.primary,
                         trackColor = Ours.outlineVariant,
                         modifier = Modifier.fillMaxWidth().height(3.dp),

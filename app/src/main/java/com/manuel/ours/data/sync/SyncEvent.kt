@@ -28,10 +28,12 @@ data class SyncEvent(
 /**
  * The transaction as it crosses the wire.
  *
- * [rawSms] is included at the user's explicit request, so wrong parses can be
- * diagnosed by reading the sheet. Be aware of what that means: the original bank
- * message carries your **account tail and running balance**, and the sheet transport
- * writes plaintext. The Bluetooth and folder transports still encrypt it.
+ * [rawSms] rides along so a wrong parse can be diagnosed on the other phone.
+ *
+ * It no longer reaches the sheet: `SheetTransport.push` redacts it before serialising.
+ * The Bluetooth and folder transports carry it, encrypted. This comment used to say the
+ * sheet wrote it in plaintext, which stopped being true when `redactForSheet` was added —
+ * and a stale warning about privacy is the kind that gets "corrected" back into a leak.
  */
 @Serializable
 data class SyncPayload(
@@ -79,9 +81,11 @@ data class SyncPayload(
      * **This is the most sensitive field in the payload** — it carries the account tail
      * and the running balance in the bank's own words. On the folder and Bluetooth
      * transports it is AES-256-GCM encrypted per line and never appears in the clear.
-     * On the Sheet transport it does: the script writes it into an `Original message`
-     * column in plaintext. That is the stated cost of a ledger you can open and repair,
-     * and it is the reason Sheet sync carries a warning the other transports do not.
+     *
+     * It does **not** reach the sheet at all: `SheetTransport.redactForSheet` strips it on
+     * the way out. It used to be written into an `Original message` column, and that is
+     * what the paragraph here described; the redaction replaced it, and the description
+     * outlived the behaviour.
      */
     val rawSms: String? = null,
 )

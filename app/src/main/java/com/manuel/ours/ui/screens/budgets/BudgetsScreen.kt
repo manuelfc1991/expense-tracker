@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,8 +67,8 @@ import com.manuel.ours.ui.theme.colorForCategory
 @Composable
 fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var editingOverall by remember { mutableStateOf(false) }
-    var confirmingReset by remember { mutableStateOf(false) }
+    var editingOverall by rememberSaveable { mutableStateOf(false) }
+    var confirmingReset by rememberSaveable { mutableStateOf(false) }
     // Nothing to reset when the household has never set a cap, and an action that would
     // do nothing is worse than no action: it reads as broken rather than as inapplicable.
     val anyBudgetSet = state.overallLimit != null ||
@@ -252,7 +253,7 @@ private fun CategoryBudgetRow(
     onSetLimit: (Long) -> Unit,
     onClearLimit: () -> Unit,
 ) {
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     val limit = progress.limitPaise
     val fraction = if (limit != null && limit > 0) progress.spentPaise.toFloat() / limit else 0f
     val over = limit != null && progress.spentPaise > limit
@@ -332,7 +333,7 @@ private fun BudgetEditor(
     onClear: (() -> Unit)? = null,
 ) {
     var text by remember { mutableStateOf(initial?.let { (it / 100).toString() } ?: "") }
-    var confirmingClear by remember { mutableStateOf(false) }
+    var confirmingClear by rememberSaveable { mutableStateOf(false) }
     val rupees = text.toLongOrNull()
     val valid = rupees != null && rupees > 0
 

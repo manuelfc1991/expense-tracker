@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -237,7 +238,7 @@ private fun IntroPages(index: Int, onNext: () -> Unit) {
 
 @Composable
 private fun AccountStep(onContinue: (String) -> Unit) {
-    var name by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
     Step(
         label = "Your name",
         content = {
@@ -260,6 +261,9 @@ private fun AccountStep(onContinue: (String) -> Unit) {
     )
 }
 
+/** What `CryptoBox.generateInviteSecret` produces. */
+private const val INVITE_CODE_LENGTH = 6
+
 @Composable
 private fun HouseholdStep(
     inviteSecret: String?,
@@ -267,7 +271,7 @@ private fun HouseholdStep(
     onJoin: (String) -> Unit,
     onContinue: () -> Unit,
 ) {
-    var joinCode by remember { mutableStateOf("") }
+    var joinCode by rememberSaveable { mutableStateOf("") }
 
     if (inviteSecret != null) {
         Step(
@@ -300,12 +304,24 @@ private fun HouseholdStep(
                     onValueChange = { joinCode = it.uppercase() },
                     placeholder = "Invite code",
                 )
+                // Says why nothing happened.
+                //
+                // The button below silently did nothing for a code under six characters —
+                // always enabled, no message — so a mistyped code looked like a broken
+                // app on the one screen a new person has no other way through.
+                if (joinCode.isNotBlank() && joinCode.trim().length < INVITE_CODE_LENGTH) {
+                    MicroLabel(
+                        "An invite code is $INVITE_CODE_LENGTH characters.",
+                        color = Ours.warning,
+                    )
+                }
             },
             actions = {
                 AccentButton("Create a new household", onClick = onCreate)
                 GhostButton(
                     label = "Join household",
-                    onClick = { if (joinCode.trim().length >= 6) onJoin(joinCode.trim()) },
+                    onClick = { onJoin(joinCode.trim()) },
+                    enabled = joinCode.trim().length >= INVITE_CODE_LENGTH,
                 )
             },
         )

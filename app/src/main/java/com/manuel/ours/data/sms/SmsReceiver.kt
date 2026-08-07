@@ -38,7 +38,12 @@ class SmsReceiver : BroadcastReceiver() {
         // Multipart messages arrive as several PDUs of one logical SMS — join them
         // before parsing or a long alert gets truncated mid-amount.
         val sender = messages.first().displayOriginatingAddress ?: return
-        val body = messages.joinToString("") { it.displayMessageBody.orEmpty() }
+        // Capped. A concatenated SMS has no ceiling, and the parser runs a dozen regexes
+        // over whatever arrives — several with adjacent unbounded quantifiers. No bank
+        // alert is anywhere near this long, so the tail can only be padding.
+        val body = messages
+            .joinToString("") { it.displayMessageBody.orEmpty() }
+            .take(MAX_BODY_CHARS)
         val receivedAt = messages.first().timestampMillis
 
         val pending = goAsync()
@@ -69,6 +74,11 @@ class SmsReceiver : BroadcastReceiver() {
                 pending.finish()
             }
         }
+    }
+
+    private companion object {
+        /** Four full SMS segments. A real bank alert is a fifth of this. */
+        const val MAX_BODY_CHARS = 1_600
     }
 
 }

@@ -439,13 +439,18 @@ fun GhostButton(
     modifier: Modifier = Modifier,
     /** For the rare secondary action that is destructive. Accent by default. */
     tint: Color = Ours.primary,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(percent = 50))
-            .border(1.dp, Ours.outline, RoundedCornerShape(percent = 50))
-            .clickable(onClick = onClick)
+            .border(
+                1.dp,
+                if (enabled) Ours.outline else Ours.outlineVariant,
+                RoundedCornerShape(percent = 50),
+            )
+            .clickable(enabled = enabled, onClick = onClick)
             // Both this and [AccentButton] are exactly Space.target tall, so the pair cannot
             // disagree by a pixel — which is what the hand-tuned 13dp was compensating for.
             .height(Space.target),
@@ -454,7 +459,7 @@ fun GhostButton(
         Text(
             label,
             style = MaterialTheme.typography.labelLarge,
-            color = tint,
+            color = if (enabled) tint else Ours.onSurfaceMuted,
         )
     }
 }

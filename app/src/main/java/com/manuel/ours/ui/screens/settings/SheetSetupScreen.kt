@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,7 +109,7 @@ private val steps = listOf(
 fun SheetSetupScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val script = remember { context.readSyncScript() }
-    var copied by remember { mutableStateOf(false) }
+    var copied by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
             // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the

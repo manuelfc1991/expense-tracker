@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,9 +86,9 @@ fun CaptureSheetContent(
     onRename: (name: String, rememberAccount: Boolean) -> Unit,
     onNote: (String) -> Unit,
 ) {
-    var showAllCategories by remember { mutableStateOf(false) }
-    var renaming by remember { mutableStateOf<String?>(null) }
-    var noting by remember { mutableStateOf<String?>(null) }
+    var showAllCategories by rememberSaveable { mutableStateOf(false) }
+    var renaming by rememberSaveable { mutableStateOf<String?>(null) }
+    var noting by rememberSaveable { mutableStateOf<String?>(null) }
 
     val unnamed = txn.merchant.equals(UNKNOWN_PAYEE, ignoreCase = true)
 

@@ -737,7 +737,25 @@ class TransactionRepository @Inject constructor(
     }
 
     /** Room write + outbound log append. Never call one without the other. */
+    /**
+     * Restored once, before this phone can mint its first event.
+     *
+     * The clock is constructed at 0 and repopulated from DataStore inside a coroutine at
+     * application start. An SMS arriving as the process launches races that read:
+     * `SmsReceiver` launches straight into `ingestParsed`, and if it wins, the new
+     * transaction is stamped lamport 1. `LogMerger.wins` then lets any older copy of the
+     * row beat it, so the partner's phone discards a real payment as stale — silently,
+     * with nothing in the log. Doing the restore here makes the invariant the code's
+     * rather than the startup order's.
+     */
+    private val clockRestored = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private suspend fun ensureClockRestored() {
+        if (clockRestored.compareAndSet(false, true)) clock.observe(prefs.readLamport())
+    }
+
     private suspend fun saveAndLog(txn: Transaction, dedupeKey: String, dedupeAt: Long) {
+        ensureClockRestored()
         val lamport = clock.tick()
         val deviceId = prefs.deviceId()
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -49,8 +51,8 @@ import com.manuel.ours.ui.theme.ValueTextStyle
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParserTesterScreen(onBack: () -> Unit) {
-    var sender by remember { mutableStateOf("AD-HDFCBK") }
-    var body by remember { mutableStateOf("") }
+    var sender by rememberSaveable { mutableStateOf("AD-HDFCBK") }
+    var body by rememberSaveable { mutableStateOf("") }
     val parser = remember { SmsParser() }
 
     val result = remember(sender, body) {
@@ -59,6 +61,10 @@ fun ParserTesterScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        // The whole point of this screen is the result card under the field. With
+        // enableEdgeToEdge the window does not shrink, so after pasting an SMS into the
+        // multi-line body the answer sat under the keyboard with no way to scroll to it.
+        modifier = Modifier.imePadding(),
             // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
             // outer Scaffold's padding, so consuming system-bar insets again inset every
             // one of these screens twice — most visibly the full-bleed QR viewfinder.

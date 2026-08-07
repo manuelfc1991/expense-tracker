@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +71,7 @@ fun RulesScreen(
     viewModel: RulesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var expanded by remember { mutableStateOf<Category?>(null) }
+    var expanded by rememberSaveable { mutableStateOf<Category?>(null) }
 
     Scaffold(
             // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
@@ -229,7 +230,7 @@ private fun RuleChip(rule: Rule, onRemove: () -> Unit) {
 
 @Composable
 private fun AddRuleField(onAdd: (String) -> Unit) {
-    var text by remember { mutableStateOf("") }
+    var text by rememberSaveable { mutableStateOf("") }
     val valid = text.trim().length >= 3
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

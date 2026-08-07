@@ -206,7 +206,14 @@ data class SyncEventEntity(
     val lamport: Long,
     val deviceId: String,
     val ownerUid: String,
-    /** JSON of the transaction, minus rawSms. Null for DELETE tombstones. */
+    /**
+     * JSON of the transaction, **including rawSms**.
+     *
+     * The redaction is not here — `SheetTransport.push` strips it on the way out, so the
+     * sheet never sees message text while the local log and the Bluetooth transport do.
+     * This comment used to claim the payload was written without it, which would send
+     * anyone "fixing" the code in exactly the wrong direction.
+     */
     val payloadJson: String?,
     val wallClock: Long,
     val pushed: Boolean,

@@ -114,6 +114,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * The gap at the bottom of the list.
+         *
+         * Schema 1 predates `dedupeAt`, and no 1→2 migration was ever written — so a
+         * device still on v1 throws "A migration from 1 to 2 was required but not found"
+         * at first open and the app will not launch, against data that cannot be
+         * recovered any other way. Almost certainly nobody is on v1; the cost of being
+         * wrong about that is total, and the fix is four lines.
+         *
+         * `occurredAt` as the default matches what v2 wrote for existing rows.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN dedupeAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE transactions SET dedupeAt = occurredAt WHERE dedupeAt = 0")
+            }
+        }
+
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN bankMessageId TEXT")

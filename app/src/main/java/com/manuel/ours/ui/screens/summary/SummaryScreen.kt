@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -89,8 +90,8 @@ import java.util.Locale
 @Composable
 fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var settingBalance by remember { mutableStateOf<AccountBalance?>(null) }
-    var addingAccount by remember { mutableStateOf(false) }
+    var settingBalance by rememberSaveable { mutableStateOf<AccountBalance?>(null) }
+    var addingAccount by rememberSaveable { mutableStateOf(false) }
     var tab by remember { mutableStateOf(SummaryTab.Month) }
     val context = LocalContext.current
     val summary = state.summary
@@ -131,7 +132,18 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
         if (state.loading || summary == null) {
             item { SummarySkeleton(Modifier.padding(horizontal = Space.edge, vertical = Space.s4)) }
-        } else if (summary.totalSpentPaise == 0L && summary.totalReceivedPaise == 0L) {
+        } else if (
+            summary.totalSpentPaise == 0L &&
+            summary.totalReceivedPaise == 0L &&
+            tab == SummaryTab.Month
+        ) {
+            // Only the Month tab is empty, and only the Month tab is replaced.
+            //
+            // This branch used to swallow the whole body including the tab bar, so a quiet
+            // month — or a fresh install — hid "What is left", every recorded balance and
+            // the way to add an account. Balances are explicitly *not* month-scoped, so
+            // there was nothing empty about them.
+            item { SummaryTabs(selected = tab, onSelect = { tab = it }) }
             item {
                 EmptyState(
                     title = "Nothing in ${state.yearMonth.format(OursZone.month)}",
@@ -409,14 +421,14 @@ private fun AddAccountDialog(
         limit: Long?,
     ) -> Unit,
 ) {
-    var bank by remember { mutableStateOf("") }
-    var tail by remember { mutableStateOf("") }
-    var balance by remember { mutableStateOf("") }
-    var minimum by remember { mutableStateOf("") }
+    var bank by rememberSaveable { mutableStateOf("") }
+    var tail by rememberSaveable { mutableStateOf("") }
+    var balance by rememberSaveable { mutableStateOf("") }
+    var minimum by rememberSaveable { mutableStateOf("") }
     // Asked first and in words, because it decides which total the account joins — money
     // held or money owed — and that is not a detail a form field can carry.
-    var isCard by remember { mutableStateOf(false) }
-    var limit by remember { mutableStateOf("") }
+    var isCard by rememberSaveable { mutableStateOf(false) }
+    var limit by rememberSaveable { mutableStateOf("") }
 
     val cleanBank = bank.trim()
     val cleanTail = tail.filter(Char::isDigit).takeLast(4)

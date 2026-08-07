@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,15 +98,15 @@ fun TransactionDetailScreen(
     onBack: () -> Unit,
     viewModel: TransactionDetailViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.observe(txnId)
+    val state by remember(txnId) { viewModel.observe(txnId) }
         .collectAsStateWithLifecycle(initialValue = DetailState.Loading)
     val txn = (state as? DetailState.Found)?.txn
     /** Non-null while the rename dialog is open; holds the text being edited. */
-    var renaming by remember { mutableStateOf<String?>(null) }
-    var editingAmount by remember { mutableStateOf<String?>(null) }
-    var editingNote by remember { mutableStateOf<String?>(null) }
-    var confirmingDelete by remember { mutableStateOf(false) }
-    var pickingRefund by remember { mutableStateOf(false) }
+    var renaming by rememberSaveable { mutableStateOf<String?>(null) }
+    var editingAmount by rememberSaveable { mutableStateOf<String?>(null) }
+    var editingNote by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    var pickingRefund by rememberSaveable { mutableStateOf(false) }
 
     editingNote?.let { draft ->
         NoteDialog(
@@ -357,7 +358,7 @@ fun TransactionDetailScreen(
             // undone. Only a person can say which credits are refunds — matching on amount is the
             // trap this exists to avoid — so it is asked, once, and only where it can apply.
             if (current.type == TxnType.CREDIT) {
-                val purchase by viewModel.refundedPurchase(current.refundsTxnId)
+                val purchase by remember(current.refundsTxnId) { viewModel.refundedPurchase(current.refundsTxnId) }
                     .collectAsStateWithLifecycle(initialValue = null)
 
                 if (current.refundsTxnId == null) {
@@ -736,9 +737,9 @@ private fun RefundPickerSheet(
 ) {
     if (credit == null) return
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val candidates by viewModel.refundCandidates(credit)
+    val candidates by remember(credit) { viewModel.refundCandidates(credit) }
         .collectAsStateWithLifecycle(initialValue = emptyList())
-    var chosen by remember { mutableStateOf<String?>(null) }
+    var chosen by rememberSaveable { mutableStateOf<String?>(null) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

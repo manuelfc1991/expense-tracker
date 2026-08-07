@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,9 +89,9 @@ fun TransactionsScreen(
     viewModel: TransactionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var bulkCategorize by remember { mutableStateOf(false) }
-    var showFilterSheet by remember { mutableStateOf(false) }
-    var confirmingDelete by remember { mutableStateOf(false) }
+    var bulkCategorize by rememberSaveable { mutableStateOf(false) }
+    var showFilterSheet by rememberSaveable { mutableStateOf(false) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
     // Back should close the selection, not the screen. Leaving a selection open while
     // navigating away is how a bulk delete gets aimed at rows the reader forgot about.
