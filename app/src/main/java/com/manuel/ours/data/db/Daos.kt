@@ -84,6 +84,17 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getById(id: String): TransactionEntity?
 
+    /**
+     * Every live credit claiming to refund one purchase.
+     *
+     * A purchase can be refunded more than once — a multi-item order returned piece by
+     * piece is the ordinary case — so what the debit records has to be derived from all
+     * of them rather than overwritten by the latest. Soft-deleted rows are excluded: a
+     * deleted refund is not refunding anything.
+     */
+    @Query("SELECT * FROM transactions WHERE refundsTxnId = :debitId AND deleted = 0")
+    suspend fun refundsFor(debitId: String): List<TransactionEntity>
+
     /** Includes soft-deleted rows, which [getById] deliberately does not. */
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getByIdIncludingDeleted(id: String): TransactionEntity?

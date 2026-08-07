@@ -130,7 +130,7 @@ class SmsBackfillWorker @AssistedInject constructor(
         val notification = androidx.core.app.NotificationCompat.Builder(
             context, com.manuel.ours.OursApp.CHANNEL_SYNC,
         )
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setSmallIcon(com.manuel.ours.R.drawable.ic_notification)
             .setContentTitle("Reading your messages")
             .setContentText("Importing expenses from the last 6 months")
             .setOngoing(true)

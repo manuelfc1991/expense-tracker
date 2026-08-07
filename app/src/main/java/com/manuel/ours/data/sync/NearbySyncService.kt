@@ -58,7 +58,7 @@ class NearbySyncService : Service() {
 
     private fun buildNotification(): Notification =
         NotificationCompat.Builder(this, OursApp.CHANNEL_SYNC)
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setSmallIcon(com.manuel.ours.R.drawable.ic_notification)
             .setContentTitle("Nearby sync on")
             .setContentText("Syncing with your household over Bluetooth")
             .setPriority(NotificationCompat.PRIORITY_LOW)

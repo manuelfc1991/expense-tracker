@@ -133,10 +133,13 @@ object MonthlyAggregator {
      * not earnings, and counting it would show a spectacular "income" month every time a deposit
      * matures.
      *
-     * A linked refund is excluded from both sides: `linkRefund` moves the credit to
-     * SELF_TRANSFER, whose flow is NEUTRAL, so it already falls out here — and the
-     * `refundsTxnId` check is belt and braces for a row whose category was changed by hand
-     * afterwards. Money coming back is not income; it is a purchase being undone.
+     * A linked refund is excluded by the `refundsTxnId` check alone, and that is the whole
+     * mechanism rather than a backstop. `linkRefund` used to move the credit to
+     * SELF_TRANSFER as well, which meant `unlinkRefund` had to put a category back and had
+     * nothing recording what it had been — so an undo overwrote hand-made corrections with
+     * a guess. The link is the fact; the category is left as the household set it.
+     *
+     * Money coming back is not income; it is a purchase being undone.
      */
     fun totalReceived(transactions: List<Transaction>): Long =
         transactions

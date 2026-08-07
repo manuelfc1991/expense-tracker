@@ -891,23 +891,53 @@ class TransactionRepository @Inject constructor(
         val debit = txnDao.getById(debitId) ?: return
         if (credit.type != TxnType.CREDIT.name || debit.type != TxnType.DEBIT.name) return
 
-        // Capped at the purchase: a refund larger than the thing it refunds is a mis-link, not a
-        // windfall, and letting it through would make the month's spending negative.
-        val amount = refundedPaise.coerceIn(0, debit.amountPaise)
-
-        // The category moves too. A linked credit stops being Income and becomes a movement, which
-        // is what keeps it out of *both* totals rather than only out of spending.
+        // The category is deliberately left alone.
+        //
+        // This used to move the credit to SELF_TRANSFER, and `unlinkRefund` then had to
+        // put a category back — which it did by writing INCOME unconditionally, because
+        // nothing had recorded what the category was before. So linking and unlinking a
+        // credit somebody had hand-categorised silently replaced their correction with a
+        // guess. An undo that cannot restore what it overwrote is not an undo.
+        //
+        // Nothing needed the rewrite. `totalReceived` is the only total that treats
+        // credits specially and it already requires `refundsTxnId == null`, so a linked
+        // credit is out of income whatever its category says; `byCategory` and
+        // `spendable` both filter to DEBIT, so no chart ever sees it. The link itself is
+        // the fact — deriving from it beats duplicating it into a second field that can
+        // then disagree.
         saveAndLog(
-            credit.copy(
-                refundsTxnId = debitId,
-                category = Category.SELF_TRANSFER.name,
-                needsReview = false,
-            ).toDomain(),
+            credit.copy(refundsTxnId = debitId, needsReview = false).toDomain(),
             credit.dedupeKey,
             credit.dedupeAt,
         )
+        recomputeRefunded(debitId)
+    }
+
+    /**
+     * Sets a purchase's refunded total to the sum of every credit linked to it.
+     *
+     * Assignment, not addition, and recomputed from the table rather than adjusted — so
+     * it is idempotent, and it repairs a row that a half-finished earlier write left
+     * wrong instead of compounding it.
+     *
+     * `linkRefund` used to write `debit.copy(refundedPaise = amount)`, which *replaced*
+     * the figure. A ₹5,000 order refunded ₹2,000 and then ₹3,000 recorded ₹3,000 rather
+     * than ₹5,000, leaving ₹2,000 of spending on the books that had been given back —
+     * and unlinking either half zeroed the lot, losing the other. The app invites this:
+     * `observeRefundCandidates` deliberately keeps offering a partly-refunded purchase.
+     *
+     * Still capped at the purchase. A refund larger than the thing it refunds is a
+     * mis-link, not a windfall, and uncapped it would make the month's spending negative.
+     */
+    private suspend fun recomputeRefunded(debitId: String) {
+        val debit = txnDao.getById(debitId) ?: return
+        val total = txnDao.refundsFor(debitId)
+            .filter { it.type == TxnType.CREDIT.name }
+            .sumOf { it.amountPaise }
+            .coerceIn(0, debit.amountPaise)
+        if (debit.refundedPaise == total) return
         saveAndLog(
-            debit.copy(refundedPaise = amount).toDomain(),
+            debit.copy(refundedPaise = total).toDomain(),
             debit.dedupeKey,
             debit.dedupeAt,
         )
@@ -922,14 +952,17 @@ class TransactionRepository @Inject constructor(
     suspend fun unlinkRefund(creditId: String) {
         val credit = txnDao.getById(creditId) ?: return
         val debitId = credit.refundsTxnId ?: return
-        txnDao.getById(debitId)?.let { debit ->
-            saveAndLog(debit.copy(refundedPaise = 0).toDomain(), debit.dedupeKey, debit.dedupeAt)
-        }
+        // The credit's own category is left exactly as it was — see `linkRefund`. This
+        // used to write INCOME, which was right for most credits and wrong for any the
+        // household had corrected by hand.
         saveAndLog(
-            credit.copy(refundsTxnId = null, category = Category.INCOME.name).toDomain(),
+            credit.copy(refundsTxnId = null).toDomain(),
             credit.dedupeKey,
             credit.dedupeAt,
         )
+        // After the credit is cleared, so the sum no longer counts it — and so any other
+        // refund against the same purchase keeps its share.
+        recomputeRefunded(debitId)
     }
 
     /** Debits from the last 60 days that a refund could plausibly be cancelling. */

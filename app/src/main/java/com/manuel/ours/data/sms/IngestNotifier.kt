@@ -70,7 +70,7 @@ class IngestNotifier @Inject constructor(
 
         budgetAlerter.checkAndConsume().forEach { alert ->
             val notification = NotificationCompat.Builder(context, OursApp.CHANNEL_BUDGET)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setSmallIcon(com.manuel.ours.R.drawable.ic_notification)
                 .setContentTitle(alert.title)
                 .setContentText(alert.body)
                 .setAutoCancel(true)
@@ -180,7 +180,7 @@ class IngestNotifier @Inject constructor(
         }
 
         val builder = NotificationCompat.Builder(context, OursApp.CHANNEL_EXPENSES_ACTIONABLE)
-            .setSmallIcon(android.R.drawable.ic_menu_info_details)
+            .setSmallIcon(com.manuel.ours.R.drawable.ic_notification)
             // Kept for the lock screen, Wear and any surface that ignores custom views.
             .setContentTitle(title)
             .setContentText(subtitle)

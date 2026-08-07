@@ -110,7 +110,7 @@ class DueBillsWorker @AssistedInject constructor(
             manager.notify(
                 alert.key.hashCode(),
                 NotificationCompat.Builder(context, OursApp.CHANNEL_BILLS)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setSmallIcon(com.manuel.ours.R.drawable.ic_notification)
                     .setContentTitle(title)
                     .setContentText(body)
                     .setAutoCancel(true)

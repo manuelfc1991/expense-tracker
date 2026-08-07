@@ -1,7 +1,7 @@
 {
-  "versionCode": 69,
-  "versionName": "6.7",
-  "notes": "Bill reminders check on launch too, and interest credits stop being asked about.",
+  "versionCode": 70,
+  "versionName": "6.8",
+  "notes": "Notifications carry the app's own icon; refunds add up and unlink cleanly.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25582626
+  "sizeBytes": 25584650
 }
