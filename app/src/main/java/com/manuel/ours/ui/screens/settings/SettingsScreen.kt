@@ -773,24 +773,32 @@ fun SettingsScreen(
 
                 // Above the version row rather than below it. This is the only answer in
                 // the app to a lost handset, and everything under it is housekeeping.
-                Hairline()
-                PanelRow(
-                    title = "Trash",
-                    caption = "Deleted entries, and ${com.manuel.ours.domain.Trash.WINDOW_DAYS} " +
-                        "days to change your mind",
-                    onClick = onOpenTrash,
-                    trailing = {
-                        if (trashCount > 0) StatePill("$trashCount", PillTone.Neutral)
-                    },
-                )
+                //
+                // Drawn here **only on the single page**. The index already lifts these two
+                // to its own root card, on the reasoning that "I deleted something" and "the
+                // phone is gone" are not housekeeping beside a version number — but they
+                // were lifted without being removed from here, so the index showed each of
+                // them twice: once at the root and again inside This app.
+                if (!state.settingsIndex) {
+                    Hairline()
+                    PanelRow(
+                        title = "Trash",
+                        caption = "Deleted entries, and " +
+                            "${com.manuel.ours.domain.Trash.WINDOW_DAYS} days to change your mind",
+                        onClick = onOpenTrash,
+                        trailing = {
+                            if (trashCount > 0) StatePill("$trashCount", PillTone.Neutral)
+                        },
+                    )
 
-                Hairline()
-                PanelRow(
-                    title = "Backup & restore",
-                    caption = "Manual entries and your category corrections live only on " +
-                        "this phone — a rescan cannot bring them back",
-                    onClick = onOpenBackup,
-                )
+                    Hairline()
+                    PanelRow(
+                        title = "Backup & restore",
+                        caption = "Manual entries and your category corrections live only on " +
+                            "this phone — a rescan cannot bring them back",
+                        onClick = onOpenBackup,
+                    )
+                }
 
                 Hairline()
                 PanelRow(
