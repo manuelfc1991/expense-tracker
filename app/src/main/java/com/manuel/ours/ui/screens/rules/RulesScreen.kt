@@ -72,7 +72,11 @@ fun RulesScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf<Category?>(null) }
 
-    Scaffold(modifier = Modifier.imePadding(), containerColor = Ours.surface) { padding ->
+    Scaffold(
+            // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
+            // outer Scaffold's padding, so consuming system-bar insets again inset every
+            // one of these screens twice — most visibly the full-bleed QR viewfinder.
+            contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),modifier = Modifier.imePadding(), containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),

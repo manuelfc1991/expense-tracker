@@ -437,6 +437,8 @@ fun GhostButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** For the rare secondary action that is destructive. Accent by default. */
+    tint: Color = Ours.primary,
 ) {
     Box(
         modifier
@@ -452,7 +454,7 @@ fun GhostButton(
         Text(
             label,
             style = MaterialTheme.typography.labelLarge,
-            color = Ours.primary,
+            color = tint,
         )
     }
 }

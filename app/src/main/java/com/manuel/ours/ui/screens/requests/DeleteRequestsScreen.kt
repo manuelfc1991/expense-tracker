@@ -13,6 +13,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.manuel.ours.ui.components.GhostButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,8 +51,40 @@ fun DeleteRequestsScreen(
     viewModel: DeleteRequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    /** Non-null while the "are you sure" is up; holds the id being approved. */
+    var confirming by rememberSaveable { mutableStateOf<String?>(null) }
 
-    Scaffold(containerColor = Ours.surface) { padding ->
+    confirming?.let { id ->
+        AlertDialog(
+            onDismissRequest = { confirming = null },
+            containerColor = Ours.surfaceContainer,
+            title = { Text("Delete this entry?", color = Ours.onSurface) },
+            text = {
+                Text(
+                    "It goes from both phones, and waits in Trash for " +
+                        "${com.manuel.ours.domain.Trash.WINDOW_DAYS} days in case you " +
+                        "change your mind.",
+                    color = Ours.onSurfaceVariant,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.approve(id); confirming = null }) {
+                    Text("Delete", color = Ours.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = null }) {
+                    Text("Cancel", color = Ours.onSurfaceVariant)
+                }
+            },
+        )
+    }
+
+    Scaffold(
+            // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
+            // outer Scaffold's padding, so consuming system-bar insets again inset every
+            // one of these screens twice — most visibly the full-bleed QR viewfinder.
+            contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
@@ -91,23 +129,30 @@ fun DeleteRequestsScreen(
                             onClick = { onTransactionClick(request.transaction.id) },
                             modifier = Modifier.padding(horizontal = Space.edge),
                         )
+                        // Real buttons, and a confirmation on the destructive one.
+                        //
+                        // These were two 11sp captions with a bare `clickable` — about
+                        // 14dp tall and 18dp apart — and the left one irreversibly
+                        // removed a row from both phones with no confirm step. Every
+                        // other destructive path in the app asks first and offers a 48dp
+                        // target; this one, which acts on somebody *else's* request, did
+                        // neither.
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(18.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Space.edge, vertical = Space.s2),
+                            horizontalArrangement = Arrangement.spacedBy(Space.s2),
                         ) {
-                            MicroLabel(
-                                "Delete it",
-                                color = Ours.error,
-                                modifier = Modifier.clickable {
-                                    viewModel.approve(request.transaction.id)
-                                },
+                            GhostButton(
+                                label = "Keep it",
+                                onClick = { viewModel.reject(request.transaction.id) },
+                                modifier = Modifier.weight(1f),
                             )
-                            MicroLabel(
-                                "Keep it",
-                                color = Ours.primary,
-                                modifier = Modifier.clickable {
-                                    viewModel.reject(request.transaction.id)
-                                },
+                            GhostButton(
+                                label = "Delete it",
+                                onClick = { confirming = request.transaction.id },
+                                tint = Ours.error,
+                                modifier = Modifier.weight(1f),
                             )
                         }
                     }

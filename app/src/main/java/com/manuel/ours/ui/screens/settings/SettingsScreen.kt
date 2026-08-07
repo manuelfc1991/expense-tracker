@@ -51,6 +51,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -747,7 +752,7 @@ fun SettingsScreen(
                             // The fill, not the text tone: the swatch is a filled circle, and
                             // it has to show the colour the buttons will actually be.
                             colour = a.fill,
-                            selected = state.accent == a,
+                            isSelected = state.accent == a,
                             label = a.label,
                             onClick = { viewModel.setAccentColor(a) },
                         )
@@ -1481,10 +1486,24 @@ private fun PanelRow(
 @Composable
 private fun AccentSwatch(
     colour: Color,
-    selected: Boolean,
+    isSelected: Boolean,
     label: String,
     onClick: () -> Unit,
 ) {
+    // A 34dp swatch inside a full-size target, and a name on every one of them.
+    //
+    // The clickable used to come *after* the padding, so only about 27dp of the 34 was
+    // tappable; and the only contentDescription was on the tick drawn when a swatch was
+    // already selected, so TalkBack announced five unlabelled buttons and one named one.
+    Box(
+        Modifier
+            .size(Space.target)
+            .clip(CircleShape)
+            .clickable(onClick = onClick, onClickLabel = label)
+            .semantics { contentDescription = label; role = Role.RadioButton }
+            .semantics { selected = isSelected },
+        contentAlignment = Alignment.Center,
+    ) {
     Box(
         Modifier
             .size(34.dp)
@@ -1492,17 +1511,16 @@ private fun AccentSwatch(
             // The ring sits outside the fill rather than over it, so the colour being
             // judged is never the colour with a line through it.
             .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) Ours.onSurface else Ours.outlineVariant,
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) Ours.onSurface else Ours.outlineVariant,
                 shape = CircleShape,
             )
-            .padding(if (selected) 4.dp else 3.dp)
+            .padding(if (isSelected) 4.dp else 3.dp)
             .clip(CircleShape)
-            .background(colour)
-            .clickable(onClick = onClick),
+            .background(colour),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected) {
+        if (isSelected) {
             OursIconView(
                 OursIcon.Done,
                 contentDescription = label,
@@ -1510,6 +1528,7 @@ private fun AccentSwatch(
                 modifier = Modifier.size(13.dp),
             )
         }
+    }
     }
 }
 

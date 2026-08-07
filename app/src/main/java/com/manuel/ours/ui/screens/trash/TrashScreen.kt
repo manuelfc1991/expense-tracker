@@ -93,6 +93,10 @@ fun TrashScreen(
     }
 
     Scaffold(
+            // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
+            // outer Scaffold's padding, so consuming system-bar insets again inset every
+            // one of these screens twice — most visibly the full-bleed QR viewfinder.
+            contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         containerColor = Ours.surface,
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->

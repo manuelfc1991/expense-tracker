@@ -4,6 +4,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import com.manuel.ours.ui.theme.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -144,6 +146,11 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
                 else Modifier.border(1.dp, cell.tint?.copy(alpha = 0.5f) ?: Ours.outlineVariant, shape)
             )
             .clickable(onClick = cell.onClick)
+            // heightIn, not more padding: the cells sit in a fixed grid and growing the
+            // padding would grow the grid. 9dp of padding around a 12sp label left them
+            // about 34dp tall — under the app's own `Space.targetTight` floor, on the
+            // picker used by four screens.
+            .heightIn(min = Space.targetTight)
             .padding(vertical = 9.dp, horizontal = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,

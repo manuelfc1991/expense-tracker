@@ -86,7 +86,11 @@ fun QrScannerScreen(
         ActivityResultContracts.RequestPermission()
     ) { hasPermission = it }
 
-    Scaffold(containerColor = Ours.surface) { padding ->
+    Scaffold(
+            // contentWindowInsets = WindowInsets(0): the NavHost already sits inside the
+            // outer Scaffold's padding, so consuming system-bar insets again inset every
+            // one of these screens twice — most visibly the full-bleed QR viewfinder.
+            contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),containerColor = Ours.surface) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             if (!hasPermission) {
                 Column(

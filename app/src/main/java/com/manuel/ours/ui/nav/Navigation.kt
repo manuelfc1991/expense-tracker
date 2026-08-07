@@ -34,6 +34,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -413,9 +414,17 @@ fun OursNavHost(
         }
     }
 
-    // Deep link from the "new expense" notification.
+    // Deep link from the "new expense" notification, followed exactly once.
+    //
+    // `initialTransactionId` comes from the Activity's intent, which is never cleared, and
+    // this keyed on it — so every activity recreation re-navigated. Tap the notification,
+    // press back to Home, rotate the phone, and you were thrown into that transaction
+    // again, and again on the next rotation. A flag that survives recreation is what makes
+    // "once" mean once.
+    var deepLinkFollowed by rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(initialTransactionId) {
-        if (!initialTransactionId.isNullOrBlank()) {
+        if (!initialTransactionId.isNullOrBlank() && !deepLinkFollowed) {
+            deepLinkFollowed = true
             navController.navigate(Routes.txnDetail(initialTransactionId))
         }
     }
