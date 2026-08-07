@@ -1,5 +1,6 @@
 package com.manuel.ours.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -27,6 +28,18 @@ data class TransactionEntity(
     val occurredAt: Long,
     val accountTail: String?,
     val refNo: String?,
+    /**
+     * The bank's own identifier for the message this row came from ("Msg Id 2644123773").
+     *
+     * Identity, not reference. Kerala Gramin sends two SMS for one debit — one with a UPI
+     * reference and one without — and the only thing they share is this number. Dedup
+     * could not see it: the refs could not match when only one message had one, and the
+     * pair landed three minutes and change apart, just outside the window. ₹8,955.79 of
+     * one month was counted twice as a result.
+     *
+     * Never shown. `refNo` is what a person quotes at the bank; this is bookkeeping.
+     */
+    val bankMessageId: String? = null,
     val bank: String?,
     val note: String?,
     val splitType: String,
@@ -54,6 +67,33 @@ data class TransactionEntity(
     val amountEditedAt: Long? = null,
     /** Last digits of the account paid, when the bank named one. See SmsParser. */
     val counterpartyTail: String? = null,
+    /**
+     * On a **credit**: the purchase this refund cancels, or null if it is ordinary income.
+     *
+     * Every credit that is not a maturing investment becomes Income, so a ₹2,000 return left the
+     * ledger with a ₹2,000 debit *and* a ₹2,000 credit: net worth right, spending overstated by
+     * ₹2,000, and the budget charged for a purchase that was undone.
+     *
+     * Never inferred. Two ₹2,000 movements in a month are far more often two real payments than
+     * a purchase and its refund, and this household has already been bitten by a matcher that
+     * was too eager — two ₹10,000 movements a minute apart, an FD maturing and rent paid to a
+     * person, both real.
+     */
+    val refundsTxnId: String? = null,
+    /**
+     * On a **debit**: how much of it has been refunded. Zero for almost every row.
+     *
+     * Partial is the common case for a multi-item order, so this is an amount rather than a flag —
+     * the purchase keeps whatever the refund does not cancel.
+     */
+    // The SQL default is declared, not just the Kotlin one.
+    //
+    // A Kotlin default satisfies the constructor but is invisible to Room's schema, so the
+    // exported schema would record no default while MIGRATION_8_9 adds `DEFAULT 0`. Room compares
+    // the two at open time, and a mismatch there is a crash on launch against the only copy of
+    // this household's ledger.
+    @ColumnInfo(defaultValue = "0")
+    val refundedPaise: Long = 0,
     /** The bank's own closing balance for [accountTail], when the message carried one. */
     val balancePaise: Long? = null,
     /**
@@ -107,6 +147,7 @@ fun TransactionEntity.toDomain() = Transaction(
     amountEditedAt = amountEditedAt,
     counterpartyTail = counterpartyTail,
     balancePaise = balancePaise,
+    bankMessageId = bankMessageId,
 )
 
 fun Transaction.toEntity(
@@ -123,6 +164,7 @@ fun Transaction.toEntity(
     occurredAt = occurredAt,
     accountTail = accountTail,
     refNo = refNo,
+    bankMessageId = bankMessageId,
     bank = bank,
     note = note,
     splitType = splitType.name,
@@ -226,4 +268,26 @@ data class ReminderEntity(
     val dueAt: Long,
     val text: String,
     val dismissed: Boolean,
+)
+
+/**
+ * A sender that writes payment-shaped messages and that nobody has vouched for.
+ *
+ * One row per header, not per message: 99 unrecognised headers on the real phone carried
+ * 1,386 messages, and asking about each message is 1,386 decisions where asking about each
+ * sender is at most 99 — in practice the handful that mention an amount at all.
+ *
+ * **Never synced.** It holds message text, which is treated exactly as `rawSms` is: it stays
+ * on the phone that received it. What travels is the *answer*, as a `sender` shared rule.
+ */
+@Entity(tableName = "pending_senders")
+data class PendingSenderEntity(
+    @PrimaryKey val header: String,
+    val messageCount: Int,
+    val firstAt: Long,
+    val lastAt: Long,
+    /** The most recent message, shown so a person can recognise what this is. */
+    val sampleBody: String,
+    /** The most recent amount, for the figure on the row. Null when none could be read. */
+    val lastAmountPaise: Long?,
 )

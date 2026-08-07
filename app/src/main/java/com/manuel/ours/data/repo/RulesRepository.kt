@@ -82,6 +82,7 @@ class RulesRepository @Inject constructor(
 
         publishSelf()
         publishExistingBudgets()
+        publishDiscoveredSenders()
         apply()
 
         val mine = localRules(remoteByKey)
@@ -157,6 +158,42 @@ class RulesRepository @Inject constructor(
                     type = TYPE_BUDGET,
                     ruleKey = it.categoryKey,
                     value = it.limitPaise.toString(),
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            }
+        )
+    }
+
+    /**
+     * Writes down the headers this phone worked out for itself.
+     *
+     * [BankRules.rememberDiscovered] only lives in memory, so without this a header
+     * deduced from the shape of a message is forgotten at the next process death and
+     * re-deduced from scratch — and it never reaches the other phone at all, which is
+     * the half that matters. A bank sends to both handsets; only one of them needs to
+     * meet the new header first.
+     *
+     * Only fills gaps, and deliberately treats *any* existing sender rule as a gap
+     * already filled — including an empty one. An emptied value is this store's
+     * tombstone, so a header a person looked at and rejected must stay rejected rather
+     * than being rediscovered and republished on the next message that arrives.
+     */
+    private suspend fun publishDiscoveredSenders() {
+        val discovered = BankRules.discoveredSenders()
+        if (discovered.isEmpty()) return
+        val known = sharedRuleDao.all()
+            .filter { it.type == TYPE_SENDER }
+            .map { it.ruleKey.uppercase() }
+            .toSet()
+        val fresh = discovered.filterKeys { it.uppercase() !in known }
+        if (fresh.isEmpty()) return
+        sharedRuleDao.upsertAll(
+            fresh.map { (header, bank) ->
+                SharedRuleEntity(
+                    type = TYPE_SENDER,
+                    ruleKey = header,
+                    value = bank,
                     updatedAt = System.currentTimeMillis(),
                     deviceId = prefs.deviceId(),
                 )
@@ -313,12 +350,24 @@ class RulesRepository @Inject constructor(
         const val TYPE_MEMBER = "member"
 
         /**
+         * An account the household says is a **credit card**.
+         *
+         * Key: the account key, same as balances. Value: `limitPaise|dueDay`, both optional.
+         *
+         * Its own type rather than a flag on the balance rule, because it changes which
+         * total the account joins — a card balance is money owed, and adding it to "what is
+         * left" would report more to spend than exists. A rule that decides a sign belongs
+         * where it can be read without parsing something else first.
+         */
+        const val TYPE_CARD = "card"
+
+        /**
          * Everything in `shared_rules` that is worth sending, merchant rules excepted —
          * those are pushed from the table they are authored in.
          */
         private val SHAREABLE_TYPES = setOf(
             TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
-            TYPE_MEMBER,
+            TYPE_MEMBER, TYPE_CARD,
         )
     }
 }

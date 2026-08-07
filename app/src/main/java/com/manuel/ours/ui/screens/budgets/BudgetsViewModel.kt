@@ -7,7 +7,6 @@ import com.manuel.ours.data.repo.BudgetRepository
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.model.Category
-import com.manuel.ours.domain.model.MemberFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted

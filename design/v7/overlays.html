@@ -1,0 +1,619 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — Sheets, dialogs and overlays</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Screens 3 of 3</p>
+  <h1>Sheets, dialogs and overlays</h1>
+  <p class="doc-lede">
+    Everything that appears <em>over</em> a screen: four bottom sheets, nine dialogs, the popup
+    that runs when the app is closed, and the notification. Together these are where most of the
+    app’s real work happens — a payment is categorised from a sheet or a notification far more
+    often than from any screen.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html" aria-current="page">Sheets &amp; dialogs</a>
+    <a href="screens-accounts.html">Accounts &amp; cards</a>
+    <a href="screens-lock.html">Unlock</a>
+  </nav>
+</header>
+
+<!-- ══ WHICH CONTAINER ═════════════════════════════════════════════════ -->
+<section class="doc-sec" id="which">
+  <h2>Which container, and why</h2>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:150px">Container</th><th style="width:220px">For</th><th>Rule</th></tr>
+    <tr><td><strong>Bottom sheet</strong></td><td>A task with more than one field, or a grid.</td>
+      <td>Modal, 28dp top corners, grabber, dismissible by drag or scrim. Never hosts a live
+        text field if it can appear <em>unbidden</em> — see the capture sheet below.</td></tr>
+    <tr><td><strong>Dialog</strong></td><td>One question, or one irreversible confirmation.</td>
+      <td>Names the object it is about. A confirmation that does not say <em>which</em> row is
+        answered from memory of which one was tapped, which is the mistake it exists to catch.</td></tr>
+    <tr><td><strong>Snackbar</strong></td><td>Something happened, and it may be undone.</td>
+      <td>One per batch. Clears the nav bar and the FAB. No action when there is genuinely
+        nothing to undo.</td></tr>
+    <tr><td><strong>Notification</strong></td><td>A payment landed while the app was closed.</td>
+      <td>Three one-tap categories, because Android renders at most three actions and silently
+        drops the rest.</td></tr>
+    <tr><td><strong>Overlay activity</strong></td><td>The same prompt, over another app.</td>
+      <td>Only when the app is <em>not</em> in the foreground, only when the row is uncategorised,
+        and only while the overlay permission holds. Never replaces the notification.</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ══ SHEETS ══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="sheets">
+  <h2>Bottom sheets</h2>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.35">
+            <span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹21,979.40</p>
+            <div class="ruler" style="margin-top:14px"><div class="fill" style="width:68%"></div></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <span class="micro">New expense</span>
+            <div class="money-input"><span class="cur">₹</span><span class="num">450.75<span class="caret" style="height:30px"></span></span></div>
+            <div class="field-line"><span class="fl-input ph">Who did you pay?</span>
+              <span class="micro accent">Optional</span></div>
+            <span class="micro">Category</span>
+            <div class="cat-grid">
+              <span class="cat-cell c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+              <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+              <span class="cat-cell c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport</span>
+              <span class="cat-cell c-shopping"><svg><use href="#i-bag"/></svg>Shopping</span>
+              <span class="cat-cell c-bills"><svg><use href="#i-lightning-charge"/></svg>Bills</span>
+              <span class="cat-cell c-rent"><svg><use href="#i-house-door"/></svg>Rent</span>
+            </div>
+            <span class="micro">When</span>
+            <div class="chiprow">
+              <span class="chip" aria-selected="true">Now</span>
+              <span class="chip">Earlier today</span>
+              <span class="chip">Pick a date</span></div>
+            <span class="micro">Counts as</span>
+            <div class="chiprow">
+              <span class="chip" aria-selected="true">Household</span>
+              <span class="chip">Personal</span></div>
+            <div class="field-line"><span class="fl-input ph">Add a note</span>
+              <span class="micro accent">Optional</span></div>
+            <div class="row" style="gap:8px;margin-top:16px">
+              <button class="btn btn-outline" style="flex:1">Cancel</button>
+              <button class="btn btn-filled" style="flex:1">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Add expense</b>For the payment no bank messaged you about — cash, which is the reason this sheet exists.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.35">
+            <span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹21,828.40</p>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet" style="background:var(--surface-c)">
+            <div class="grabber"></div>
+            <div class="row"><span class="avatar lg c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="grow"><span class="t-body-l" style="font-weight:600;display:block">Unknown payee</span>
+                <span class="micro" style="margin-top:4px">Kerala Gramin · just now</span></span></div>
+            <p class="t-display-s">₹151</p>
+            <span class="micro">Who was this?</span>
+            <div class="field-line"><span class="fl-input ph">Tap to name — account ····4657</span>
+              <span class="micro accent">Name</span></div>
+            <span class="micro">Category</span>
+            <div class="chiprow">
+              <span class="chip tinted c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+              <span class="chip tinted c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport</span>
+              <span class="chip tinted c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+              <span class="chip">All ›</span></div>
+            <div class="field-line"><span class="fl-input ph">Add a note</span>
+              <span class="micro accent">Optional</span></div>
+            <div class="row" style="gap:8px;margin-top:16px">
+              <button class="btn btn-outline" style="flex:1">Later</button>
+              <button class="btn btn-filled" style="flex:1">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Capture</b>The payment you just made, while you still remember what it was for. Appears <em>only</em> when the app is already open.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.35">
+            <div class="field-filled"><svg><use href="#i-search"/></svg>
+              <span class="fl-input ph">Search merchant or note</span></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <span class="micro">Filter by category</span>
+            <div class="cat-grid">
+              <span class="cat-cell c-food"><svg><use href="#i-cup-hot"/></svg>Food <span class="n">5</span></span>
+              <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries <span class="n">6</span></span>
+              <span class="cat-cell c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport <span class="n">2</span></span>
+              <span class="cat-cell c-shopping"><svg><use href="#i-bag"/></svg>Shopping <span class="n">1</span></span>
+              <span class="cat-cell c-bills"><svg><use href="#i-lightning-charge"/></svg>Bills <span class="n">2</span></span>
+              <span class="cat-cell c-rent" aria-selected="true"><svg><use href="#i-house-door"/></svg>Rent <span class="n">1</span></span>
+              <span class="cat-cell c-health empty"><svg><use href="#i-heart-pulse"/></svg>Health <span class="n">0</span></span>
+              <span class="cat-cell c-education empty"><svg><use href="#i-book"/></svg>Education <span class="n">0</span></span>
+              <span class="cat-cell c-fun empty"><svg><use href="#i-film"/></svg>Fun <span class="n">0</span></span>
+              <span class="cat-cell c-travel empty"><svg><use href="#i-airplane"/></svg>Travel <span class="n">0</span></span>
+              <span class="cat-cell c-savings"><svg><use href="#i-graph-up-arrow"/></svg>Savings <span class="n">1</span></span>
+              <span class="cat-cell c-emi empty"><svg><use href="#i-bank"/></svg>EMI <span class="n">0</span></span>
+              <span class="cat-cell c-neutral"><svg><use href="#i-arrow-left-right"/></svg>Transfers <span class="n">1</span></span>
+              <span class="cat-cell c-neutral empty"><svg><use href="#i-credit-card"/></svg>Card bill <span class="n">0</span></span>
+              <span class="cat-cell c-neutral empty"><svg><use href="#i-arrow-left-right"/></svg>Ours <span class="n">0</span></span>
+              <span class="cat-cell c-income"><svg><use href="#i-cash-coin"/></svg>Income <span class="n">1</span></span>
+              <span class="cat-cell warn"><svg><use href="#i-three-dots"/></svg>Untagged <span class="n">4</span></span>
+            </div>
+            <div class="row" style="gap:8px;margin-top:16px">
+              <button class="btn btn-outline" style="flex:1">Clear</button>
+              <button class="btn btn-filled" style="flex:1">Show 1</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Category filter</b>“Show 1”, not “Apply” — the button says what is on the other side of it, so a filter that would empty the screen reads <em>Show 0</em> before you tap.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.35">
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <span class="micro">Keecheril St</span>
+            <p class="t-title-m">12 payments · ₹1,812.00</p>
+            <div class="cat-grid">
+              <span class="cat-cell c-food"><svg><use href="#i-cup-hot"/></svg>Food</span>
+              <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+              <span class="cat-cell c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport</span>
+              <span class="cat-cell c-shopping"><svg><use href="#i-bag"/></svg>Shopping</span>
+              <span class="cat-cell c-bills"><svg><use href="#i-lightning-charge"/></svg>Bills</span>
+              <span class="cat-cell c-rent"><svg><use href="#i-house-door"/></svg>Rent</span>
+              <span class="cat-cell c-health"><svg><use href="#i-heart-pulse"/></svg>Health</span>
+              <span class="cat-cell c-education"><svg><use href="#i-book"/></svg>Education</span>
+              <span class="cat-cell c-fun"><svg><use href="#i-film"/></svg>Fun</span>
+              <span class="cat-cell c-travel"><svg><use href="#i-airplane"/></svg>Travel</span>
+              <span class="cat-cell c-savings"><svg><use href="#i-graph-up-arrow"/></svg>Savings</span>
+              <span class="cat-cell c-emi"><svg><use href="#i-bank"/></svg>EMI</span>
+              <span class="cat-cell c-neutral"><svg><use href="#i-arrow-left-right"/></svg>Transfers</span>
+              <span class="cat-cell c-neutral"><svg><use href="#i-credit-card"/></svg>Card bill</span>
+              <span class="cat-cell c-neutral"><svg><use href="#i-arrow-left-right"/></svg>Ours</span>
+              <span class="cat-cell c-income"><svg><use href="#i-cash-coin"/></svg>Income</span>
+            </div>
+            <span class="micro">Applies to all 12, and every future payment to this payee</span>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Category picker</b>The same grid as the detail screen, the add sheet and the filter — one list, one order, one place each category lives.</p>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="spec-block">
+      <h3>Why the capture sheet cannot host a text field</h3>
+      <p>
+        It appears <strong>unbidden</strong>, over whatever you were reading, a second after the
+        bank messages you. Raising a keyboard inside it would shove the whole sheet up the screen
+        the moment it arrived. So naming and noting open a <em>dialog</em> instead — but the line
+        they open from is drawn identically to the one on the add sheet, because to the person
+        using it there is no difference between the two.
+      </p>
+      <p>
+        The add sheet has the opposite constraint: you asked for it, so its keyboard opens
+        immediately, on the amount. The amount is the only field that cannot be guessed,
+        corrected later from a message, or left out — an expense with an amount and nothing else
+        is still a true row, while one with a payee and no amount is not a row at all. So it is
+        also the only thing Save waits for.
+      </p>
+    </div>
+    <div class="spec-block">
+      <h3>What each sheet asks for</h3>
+      <ul class="spec-list">
+        <li><span class="k">Add</span><span class="v">Amount (required), payee, category, when,
+          household/personal, note. An unnamed row saves as “Cash”, which is a truer answer than
+          an empty payee column that reads as a parsing failure six months later.</span></li>
+        <li><span class="k">Capture</span><span class="v">Only what the bank left out. A named
+          merchant needs a category and nothing else; an unnamed debit leads with the question
+          nobody else can answer and offers the destination account, because naming that once
+          names every payment to it.</span></li>
+        <li><span class="k">Filter</span><span class="v">Every category with its count,
+          <em>including the zeroes</em>. The count is the answer to “did anything land under
+          Health this month”, and hiding an empty category would send you looking elsewhere for
+          something that was never there.</span></li>
+        <li><span class="k">Picker</span><span class="v">One tap, no confirm. It is used dozens of
+          times in a Sort session and a confirm step would double the work.</span></li>
+      </ul>
+      <div class="note-box fix">
+        <p class="nb-title">New in v7</p>
+        <p>
+          The add sheet gets a <strong>When</strong> row. Without it, a cash lunch entered in the
+          evening lands in the wrong hour and — entered after midnight — the wrong day’s
+          subtotal. “Now” stays the default, so the common case still costs nothing.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DIALOGS ═════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="dialogs">
+  <h2>Dialogs</h2>
+  <p class="sec-lede">
+    Nine of them. Four ask a question, five confirm something that cannot be casually undone.
+    Every confirmation names its object and states honestly what is recoverable — a confirmation
+    that overstates the damage is one people learn to dismiss unread, which costs exactly the
+    protection it was added for.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <p class="t-display-m">₹2,358.19</p></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Delete this entry?</p>
+            <p class="dl-body">Reliance Smart, ₹2,358.19. It goes from both phones, and waits in
+              Trash for 30 days in case you change your mind.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text" style="color:var(--error)">Delete</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Delete — owner</b>Names the row <em>with paise</em>. This is the one place paise are the identifier: ₹450 read off a row printed ₹450.75 invites a second look at whether it is the right entry.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <p class="t-display-m">₹1,299.00</p></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Ask to remove this?</p>
+            <p class="dl-body">Amazon, ₹1,299.00. The household owner has to agree, and it still
+              counts until they do.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Ask</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Delete — member</b>Different verb, different consequence. “Ask” is not destructive, so it does not take the error colour.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <div class="tape row between"><span class="micro">3 selected</span></div></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Delete 3 transactions?</p>
+            <p class="dl-body">They go from both phones. Undo is offered for a few seconds
+              afterwards, and they wait in Trash for 30 days after that.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text" style="color:var(--error)">Delete</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Bulk delete</b>Asked <em>before</em> the batch goes, not just offered back afterwards — Undo covers a delete you noticed, this covers the one you did not.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <span class="micro">Unknown payee</span></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Who was this?</p>
+            <div class="field-line focused" style="margin-top:8px">
+              <span class="fl-input" style="background:var(--primary-container);padding:0 3px">Unknown payee</span></div>
+            <div class="row top" style="gap:12px;margin-top:16px">
+              <span class="switch" role="switch" aria-checked="true"><i></i></span>
+              <span class="grow"><span class="t-body-m" style="display:block">Remember account 4657</span>
+                <span class="micro" style="margin-top:4px">Names every payment to it, past and future</span></span></div>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Rename</b>Prefilled and fully selected, because the common case is replacing a placeholder outright — “Unknown payee” has no useful prefix to keep. The switch defaults on when the bank named an account.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <p class="t-display-m">₹2,358.19</p></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Correct the amount</p>
+            <div class="field-line focused" style="margin-top:8px">
+              <span class="fl-input" style="background:var(--primary-container);padding:0 3px">2358.19</span></div>
+            <p class="t-body-s" style="color:var(--warning);margin-top:12px">The bank’s figure is
+              not kept. This row will be marked as edited.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Correct amount</b>Deliberately plain and deliberately hard to reach — behind the developer unlock. An amount is evidence, not interpretation.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <span class="micro">Kerala Gramin</span></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Kerala Gramin</p>
+            <span class="micro" style="margin-top:12px">Balance now</span>
+            <div class="money-input" style="margin-top:6px"><span class="cur" style="font-size:22px">₹</span>
+              <span class="num" style="font-size:22px">10149</span></div>
+            <hr class="hair">
+            <span class="micro" style="margin-top:12px">Minimum balance</span>
+            <div class="money-input" style="margin-top:6px"><span class="cur" style="font-size:22px">₹</span>
+              <span class="num" style="font-size:22px">500</span></div>
+            <hr class="hair">
+            <p class="t-body-s" style="color:var(--on-surface-variant);margin-top:12px">A balance
+              you type is yours, not the bank’s — a real one from a message replaces it, and
+              emptying the field hands it back. A zero is a figure, not an empty field: type 0
+              for an account that really is empty.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Balance</b>Three answers are possible and all three differ: leave it alone, forget my figure, or record <em>this</em> number — zero included. Collapsing the last two onto 0 made a zero-balance account impossible to enter.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <span class="micro">Budgets</span></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Reset all budgets?</p>
+            <p class="dl-body">The monthly budget and every category limit are dropped, on both
+              phones. Spending itself is untouched — only the caps go.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text" style="color:var(--error)">Reset</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Reset budgets</b>Confirmed, unlike a single-budget clear: this drops everything at once, it travels to the other phone, and retyping it is not one number but all of them.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <span class="micro">Backup</span></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Restore this backup?</p>
+            <p class="dl-body">Taken 4 Aug 2026, 9:12 pm on Ours 5.17. 412 expenses, 36 shared
+              rules, 24 payee rules, 5 budgets.</p>
+            <p class="dl-body" style="margin-top:12px">Nothing already on this phone is removed.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Restore</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Restore</b>States what is in the file before opening it, and that the operation only ever adds — a restore that might delete is one nobody dares run.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.3">
+            <span class="micro">Note</span></div>
+          <div class="scrim"></div>
+          <div class="dialog">
+            <p class="dl-title">Note</p>
+            <div class="field-line focused" style="margin-top:8px;min-height:72px;align-items:flex-start;padding-top:8px">
+              <span class="fl-input">Anu’s birthday cake<span class="caret"></span></span></div>
+            <p class="t-body-s" style="color:var(--on-surface-muted);margin-top:10px">Only you and
+              your household see this.</p>
+            <div class="dl-actions">
+              <button class="btn btn-text">Cancel</button>
+              <button class="btn btn-text">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Note</b>The only field holding something the bank could never have sent, and the only defence against a row that made sense in August and is a mystery by December. Clearing it removes the note rather than storing a blank.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ POPUP ═══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="popup">
+  <h2>The popup, and the notification</h2>
+  <p class="sec-lede">
+    Most payments are made with the app closed, so most categorising happens here. Two surfaces
+    for one moment: the notification always arrives, and the popup is offered on top of it when
+    the household has asked for it and Android still permits it.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar" style="background:#101820;color:#e8eef4"><span>9:41</span>
+          <span class="sb-icons"><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen" style="background:linear-gradient(165deg,#1b2836,#0e141c);position:relative">
+          <div style="padding:16px" class="stack-3">
+            <div class="notif">
+              <div class="nf-app"><svg><use href="#i-receipt"/></svg>Ours · now</div>
+              <span class="t-display-s" style="display:block;margin-top:4px">₹151.00</span>
+              <div style="font-size:13px;color:var(--on-surface)" class="cut">Keecheril St</div>
+              <span class="micro">Tap a category below</span>
+              <div class="nf-actions"><button>Food</button><button>Groceries</button><button>Transport</button></div>
+            </div>
+            <div class="notif" style="opacity:.85">
+              <div class="nf-app"><svg><use href="#i-exclamation-triangle"/></svg>Ours · 2m</div>
+              <div style="font-size:14px;font-weight:600;margin-top:4px">₹292 a day for the rest of August</div>
+              <div style="font-size:13px;color:var(--on-surface-variant)">₹9,710 left, less ₹2,400
+                still committed, over 25 days.</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Notification shade</b>Drawn by the app, not by Android — this is the surface the household sees most often, and a default notification would make it look like a different product.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar" style="background:#14161c;color:#e8eef4"><span>9:41</span>
+          <span class="sb-icons"><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen" style="background:#14161c;position:relative">
+          <div style="padding:16px;opacity:.35" class="stack-3">
+            <div style="height:44px;background:#22252d;border-radius:12px"></div>
+            <div style="height:130px;background:#22252d;border-radius:12px"></div>
+            <div style="height:80px;background:#22252d;border-radius:12px"></div>
+            <div style="height:110px;background:#22252d;border-radius:12px"></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet" style="background:var(--surface-c);border-radius:var(--shape-xl)">
+            <div class="grabber"></div>
+            <div class="row"><span class="avatar lg c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="grow"><span class="t-body-l" style="font-weight:600;display:block">Keecheril St</span>
+                <span class="micro" style="margin-top:4px">Kerala Gramin · just now</span></span></div>
+            <p class="t-display-s">₹151</p>
+            <span class="micro">Category</span>
+            <div class="chiprow">
+              <span class="chip tinted c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+              <span class="chip tinted c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+              <span class="chip">All ›</span></div>
+            <div class="field-line"><span class="fl-input ph">Add a note</span>
+              <span class="micro accent">Optional</span></div>
+            <div class="row" style="gap:8px;margin-top:16px">
+              <button class="btn btn-outline" style="flex:1">Later</button>
+              <button class="btn btn-filled" style="flex:1">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Popup over another app</b>The same prompt as the capture sheet, in a transparent-window activity. Same content, different container — and they must not become different prompts.</p>
+    </div>
+
+    <div class="spec-block" style="flex:1 1 300px;min-width:300px">
+      <h3>Four conditions, and two cannot be cached</h3>
+      <p>All of these must hold before the popup launches:</p>
+      <ol>
+        <li>The popup is switched on.</li>
+        <li>The row is one nobody has categorised. A payment the app already understands has
+          nothing to ask, and a popup that appears anyway is just an interruption.</li>
+        <li>Android still grants the overlay permission — <strong>revocable in system settings at
+          any time</strong>, without the app being told.</li>
+        <li>No screen of this app is already in front. With Ours open, the in-app sheet is showing
+          the same prompt and a second window over it would be absurd.</li>
+      </ol>
+      <p>
+        The launch can still be refused — the permission is necessary, not sufficient — and
+        Android throws rather than returning false when it does. So the call is guarded, and the
+        notification is <em>never</em> replaced: if the launch fails, or the popup is swiped away
+        undecided, the notification is still in the tray.
+      </p>
+      <div class="note-box warn">
+        <p class="nb-title">The prompt is supposed to fade away</p>
+        <p>
+          When the app is confident about a payee, no category buttons are shown and no popup
+          appears. As the rules accumulate, this whole surface should be seen less and less. A
+          prompt on every purchase forever is a tax, not a feature.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MENUS ═══════════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="menus">
+  <h2>Menus and the share sheet</h2>
+  <div class="demo ours" data-theme="dark">
+    <div class="demo-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+      <div class="cell"><span class="demo-lbl">Overflow menu — export</span>
+        <div style="background:var(--surface-c-high);border-radius:var(--shape-xs);padding:8px 0;width:200px;box-shadow:0 8px 24px -6px var(--shadow)">
+          <button class="prow" style="padding:0 16px;min-height:48px"><span class="pr-main">
+            <span class="pr-title" style="font-weight:400">Export CSV</span></span></button>
+          <button class="prow" style="padding:0 16px;min-height:48px"><span class="pr-main">
+            <span class="pr-title" style="font-weight:400">Export PDF</span></span></button>
+          <hr class="hair" style="margin:6px 0">
+          <button class="prow" style="padding:0 16px;min-height:48px"><span class="pr-main">
+            <span class="pr-title" style="font-weight:400">Sync now</span></span></button>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          48dp rows, 4dp corner, level-4 surface. Used only where a bar has more actions than it
+          has room for — which in this app is Summary and nowhere else.</p></div>
+
+      <div class="cell"><span class="demo-lbl">Share — Android’s own, not ours</span>
+        <div style="background:var(--surface-c-low);border-radius:var(--shape-xl) var(--shape-xl) 0 0;padding:18px;width:220px">
+          <div class="grabber"></div>
+          <p class="t-title-s">ours-august-2026.csv</p>
+          <p class="micro" style="margin-top:6px">19 entries · 4 KB</p>
+          <div class="row" style="gap:14px;margin-top:16px">
+            <span style="text-align:center"><span class="avatar lg c-groceries" style="margin:0 auto"><svg><use href="#i-envelope"/></svg></span>
+              <span class="micro" style="margin-top:6px">Mail</span></span>
+            <span style="text-align:center"><span class="avatar lg c-transport" style="margin:0 auto"><svg><use href="#i-folder2-open"/></svg></span>
+              <span class="micro" style="margin-top:6px">Files</span></span>
+            <span style="text-align:center"><span class="avatar lg c-neutral" style="margin:0 auto"><svg><use href="#i-download"/></svg></span>
+              <span class="micro" style="margin-top:6px">Drive</span></span>
+          </div>
+        </div>
+        <p class="micro" style="margin-top:10px;text-transform:none;letter-spacing:0;line-height:1.5">
+          The share sheet is the system’s and is not restyled. What Ours controls is the filename
+          and the preview line above it, which is the part that tells you what you are about to
+          send.</p></div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script src="theme.js"></script>

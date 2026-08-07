@@ -29,20 +29,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.domain.Trash
 import com.manuel.ours.domain.model.Transaction
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.MicroLabel
+import com.manuel.ours.ui.components.OursSelectionBar
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.components.TransactionListRow
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val EDGE = 15.dp
 
 /**
  * What has been deleted, and how long it can still be brought back.
@@ -90,7 +93,7 @@ fun TrashScreen(
     }
 
     Scaffold(
-        containerColor = Ours.ink,
+        containerColor = Ours.surface,
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->
         LazyColumn(
@@ -98,38 +101,32 @@ fun TrashScreen(
             contentPadding = PaddingValues(bottom = 40.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = if (state.selectionMode) "Clear selection" else "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable {
-                            if (state.selectionMode) viewModel.clearSelection() else onBack()
-                        },
-                    )
-                    Text(
-                        text = if (state.selectionMode) "${state.selected.size} SELECTED" else "TRASH",
-                        style = WordmarkStyle,
-                        color = if (state.selectionMode) Ours.accent else Ours.text,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (state.selectionMode) {
-                        Text(
-                            text = "Put back",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Ours.accent,
-                            modifier = Modifier.clickable { viewModel.restoreSelected() },
-                        )
+                if (state.selectionMode) {
+                    OursSelectionBar(
+                        selectedCount = state.selected.size,
+                        onClear = { viewModel.clearSelection() },
+                    ) {
+                        // A real button, not a 12sp label. Putting something back is the only
+                        // action on this screen and the reason anyone opens it.
+                        androidx.compose.material3.TextButton(
+                            onClick = { viewModel.restoreSelected() },
+                        ) {
+                            Text(
+                                "Put back",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Ours.primary,
+                            )
+                        }
+                    }
+                } else {
+                    OursTopBar(title = "Trash", onBack = onBack) {
+                        if (state.items.isNotEmpty()) MicroLabel("${state.items.size}")
                     }
                 }
             }
 
             item {
-                Column(Modifier.fillMaxWidth().padding(horizontal = EDGE)) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = Space.edge)) {
                     TapeHeader(
                         "DELETED",
                         trailing = if (state.items.isEmpty()) null else "${state.items.size}",
@@ -166,8 +163,8 @@ fun TrashScreen(
                         text = "Tap to open an entry, hold to choose several. Entries leave " +
                             "this list ${Trash.WINDOW_DAYS} days after they were deleted.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textLabel,
-                        modifier = Modifier.padding(horizontal = EDGE, vertical = 14.dp),
+                        color = Ours.onSurfaceMuted,
+                        modifier = Modifier.padding(horizontal = Space.edge, vertical = 14.dp),
                     )
                 }
             }
@@ -191,25 +188,25 @@ private fun EmptyBin() {
     ) {
         // The wastebasket, the same glyph the delete button on an entry uses — this is
         // where that button sends things, and drawing the two differently would hide the
-        // connection. It was BiIcon.Activity, which is the receipt used for the ledger
+        // connection. It was OursIcon.Activity, which is the receipt used for the ledger
         // itself: the one icon in the set that means the opposite of an empty bin.
-        BiIconView(
-            BiIcon.Delete,
+        OursIconView(
+            OursIcon.Delete,
             contentDescription = null,
-            tint = Ours.textLabel,
+            tint = Ours.onSurfaceMuted,
             modifier = Modifier.size(30.dp),
         )
         Text(
             "Nothing deleted in the last ${Trash.WINDOW_DAYS} days.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Text(
             "Anything you delete waits here for ${Trash.WINDOW_DAYS} days, so a mistake " +
                 "stays a mistake and does not become a loss.",
             style = MaterialTheme.typography.bodySmall,
-            color = Ours.textLabel,
+            color = Ours.onSurfaceMuted,
             textAlign = TextAlign.Center,
         )
     }
@@ -223,9 +220,7 @@ private fun EmptyBin() {
  * places it.
  */
 private fun caption(txn: Transaction, now: Long): String {
-    val day = Instant.ofEpochMilli(txn.occurredAt)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+    val day = OursZone.format(txn.occurredAt, OursZone.day)
     val left = txn.deletedAt?.let { Trash.expiryLabel(it, now) }
     return listOfNotNull(txn.category.label, day, left).joinToString(" · ")
 }
@@ -237,10 +232,10 @@ private fun caption(txn: Transaction, now: Long): String {
  */
 @Composable
 private fun urgency(txn: Transaction, now: Long): Color {
-    val days = txn.deletedAt?.let { Trash.daysLeft(it, now) } ?: return Ours.textLabel
+    val days = txn.deletedAt?.let { Trash.daysLeft(it, now) } ?: return Ours.onSurfaceMuted
     return when {
-        days <= 3 -> Ours.negative
+        days <= 3 -> Ours.error
         days <= 14 -> Ours.warning
-        else -> Ours.textLabel
+        else -> Ours.onSurfaceMuted
     }
 }

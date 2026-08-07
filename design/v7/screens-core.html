@@ -1,0 +1,1395 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — Core screens</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Screens 1 of 3</p>
+  <h1>The five tabs</h1>
+  <p class="doc-lede">
+    Home, Activity, Summary, Budgets and Settings — the screens reachable from the bottom bar,
+    each with its states. Everything is drawn at <strong>360 × 780 CSS px = 360dp</strong>, the
+    compact window class, at 1:1. A 48px target in a mockup here is a 48dp target on the phone.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html" aria-current="page">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+    <a href="screens-accounts.html">Accounts &amp; cards</a>
+    <a href="screens-lock.html">Unlock</a>
+  </nav>
+</header>
+
+<!-- ═════════════════════════════ HOME ═════════════════════════════════ -->
+<section class="doc-sec" id="home">
+  <h2>01 · Home</h2>
+
+  <div class="pair">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <span class="appbar-title" style="padding-left:8px"><span class="wordmark">Ours</span></span>
+            <span class="pill ok"><svg><use href="#i-check-circle"/></svg>4m</span>
+            <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button>
+          </div>
+          <div class="screen-body pad stack-5">
+            <div>
+              <span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p>
+            </div>
+
+            <div class="stack-3">
+              <div class="ruler"><div class="fill" style="width:68%"></div></div>
+              <hr class="hair">
+              <div class="row between">
+                <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+                <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+                <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span>
+              </div>
+              <div>
+                <span class="micro">A day from here</span>
+                <span class="val ok" style="display:block;margin-top:5px">₹400</span>
+                <p class="t-body-s" style="color:var(--on-surface-muted);margin-top:6px">25 days
+                  left, after ₹1,200 still committed.</p>
+              </div>
+            </div>
+
+            <div>
+              <span class="micro">Daily · August</span>
+              <div class="daily" style="margin:10px 0 8px">
+                <i style="height:14%"></i><i style="height:8%"></i><i style="height:36%"></i><i style="height:22%"></i>
+                <i style="height:5%"></i><i style="height:48%"></i><i style="height:100%" class="peak"></i>
+                <i style="height:18%"></i><i style="height:31%"></i><i style="height:4%"></i><i style="height:26%"></i>
+                <i style="height:52%"></i><i style="height:12%"></i><i style="height:19%"></i><i style="height:41%"></i>
+                <i style="height:8%"></i><i style="height:23%"></i><i style="height:3%"></i><i style="height:37%"></i>
+                <i style="height:15%"></i><i style="height:29%"></i><i style="height:6%"></i><i style="height:44%"></i>
+                <i style="height:11%"></i><i style="height:20%"></i><i style="height:33%"></i><i style="height:7%"></i>
+                <i style="height:25%"></i><i style="height:16%"></i><i style="height:9%"></i><i style="height:4%"></i>
+              </div>
+              <div class="row between"><span class="axis">1</span>
+                <span class="axis">7 · ₹6,905.00</span><span class="axis">31</span></div>
+            </div>
+
+            <div>
+              <span class="micro">Household</span>
+              <div class="split" style="margin:10px 0 10px">
+                <i style="flex:66;background:var(--primary-fixed)"></i>
+                <i style="flex:34;background:var(--cat-shopping)"></i></div>
+              <div class="legend">
+                <span class="lg-item"><span class="dot" style="background:var(--primary-fixed)"></span>You
+                  <b class="val" style="font-size:12px">14,512.40</b></span>
+                <span class="lg-item"><span class="dot" style="background:var(--cat-shopping)"></span>Anu
+                  <b class="val" style="font-size:12px">7,467.00</b></span></div>
+            </div>
+
+            <div class="chiprow">
+              <span class="chip" aria-selected="true">Everyone</span>
+              <span class="chip">You</span><span class="chip">Anu</span></div>
+
+            <button class="action-card">
+              <span class="grow"><span class="ac-title" style="display:block">Sort 4 expenses</span>
+                <span class="micro on-fill" style="margin-top:4px">3 groups · about 3 taps</span></span>
+              <svg><use href="#i-chevron-right"/></svg></button>
+
+            <div>
+              <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+              <button class="entry" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                  <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+              <button class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                  <span class="micro">Groceries · 11:20 am</span></span><span class="amt">376.00</span></button>
+              <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                  <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button>
+            </div>
+          </div>
+
+          <button class="fab" aria-label="Add expense"><svg><use href="#i-plus-lg"/></svg></button>
+
+          <div class="navbar">
+            <button class="nav-item" aria-selected="true"><span class="nav-ind">
+              <svg><use href="#i-house-fill"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind">
+              <svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind">
+              <svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind">
+              <svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind">
+              <svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Success state</b>The whole argument of the screen, in order.</p>
+    </div>
+
+    <div class="spec-block">
+      <h3>Purpose</h3>
+      <p>
+        Answer “are we alright this month?” in one glance, before any scrolling. Everything
+        below the fold is supporting evidence.
+      </p>
+
+      <ul class="spec-list">
+        <li><span class="k">Order</span><span class="v">
+          The sequence <em>is</em> the argument: what you spent → how that sits against the
+          budget → when it happened → who spent it → the one thing worth doing about it →
+          today’s rows. The list of individual transactions comes <strong>last</strong> because
+          it is the least useful thing here, and it is what every other expense app leads with.
+        </span></li>
+        <li><span class="k">Wireframe</span><span class="v">
+          <pre class="wire">┌─────────────────────────────────┐
+│ OURS            [4m ✓]  ⌕       │  app bar, sync pill
+├─────────────────────────────────┤
+│ SPENT THIS MONTH                │  micro
+│ ₹21,979.40                      │  display large, counts up
+│                                 │
+│ ▏▏▏▏▏▏▏▏▏▏▏░░░░░░               │  ruler 68%
+│ ─────────────────────────────── │
+│ BUDGET    USED       LEFT       │
+│ ₹32K      68%        ₹10,021    │
+│                                 │
+│ DAILY · AUGUST                  │
+│ ▁▂▅▃▁▆█▂▄▁▃▆▂▃▅▁▃▁▄▂▃▁▅         │
+│ 1          7 · ₹6,905        31 │
+│                                 │
+│ HOUSEHOLD                       │
+│ ████████████████░░░░░░░         │
+│ ● You 14,512  ● Anu 7,467       │
+│                                 │
+│ (Everyone) ( You ) ( Anu )      │  member chips
+│                                 │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │
+│ ┃ Sort 4 expenses           › ┃ │  the one primary action
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+│                                 │
+│ TODAY                  ₹597.00  │  tape header + subtotal
+│ ▣ Keecheril St        151.00    │
+│ ▣ Reliance Smart      376.00    │
+│ ▣ Vezhampasser         70.00    │   ⊕ FAB
+├─────────────────────────────────┤
+│  ⌂     ▤⁴    ◔     ▭     ⚙      │  bottom nav
+└─────────────────────────────────┘</pre>
+        </span></li>
+        <li><span class="k">Components</span><span class="v">
+          Top app bar · status pill · micro-label · display-large amount (count-up) · ruler ·
+          label-over-value ×3 · daily columns · split bar + legend · filter chips · action card ·
+          tape header · statement entry ×n · FAB · bottom nav with badge
+        </span></li>
+        <li><span class="k">Interactions</span><span class="v">
+          <ul>
+            <li>Hero figure counts up once, over 500ms, on first composition only.</li>
+            <li>Tap the ruler area with no budget set → Budgets.</li>
+            <li>Sync pill → sync now; it becomes a spinner, then reports the result.</li>
+            <li>Member chip → filters the rows and the hero figure, <em>never</em> the ruler.</li>
+            <li>Row tap → entry detail. No swipe actions (see Components).</li>
+            <li>FAB → the add sheet, keyboard already on the amount.</li>
+            <li>Pull down → sync, with the ribbon reporting the outcome.</li>
+          </ul>
+        </span></li>
+        <li><span class="k">Nav</span><span class="v">
+          Start destination. Out to: entry detail, Sort, Budgets, Delete requests, add sheet.
+          The tab bar stays visible on entry detail, because a row opens by tapping a list and
+          reads as a place <em>inside</em> Activity rather than somewhere you were taken —
+          people reach for Home, and with the bar gone tapping where Home should be does
+          nothing, which is indistinguishable from the app having frozen.
+        </span></li>
+        <li><span class="k">Improved</span><span class="v"><ul>
+          <li class="win">Search moves into the app bar. It was only on Activity, so finding a
+            payee meant changing tab first.</li>
+          <li class="win">Untagged count becomes a nav badge, visible from every screen instead
+            of only from Home.</li>
+          <li class="win">FAB is 56dp and shrinks on scroll instead of vanishing.</li>
+          <li class="win">The three budget figures reflow to two lines at large font scales
+            rather than crushing.</li>
+          <li class="win">The screen edge is 16dp, not 15dp.</li>
+        </ul></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The budget knows what day it is</h3>
+  <p>
+    New in v7, and the highest-priority finding in <code>docs/REVIEW.md</code>. On the morning
+    that review was written, Home read <strong>74% used, ₹9,710 left, meter green</strong> — on
+    the <strong>6th of a 31-day month</strong>. Straight-line pace would be about 19%. The screen
+    said nothing, because nothing in the budget path took the date as an input:
+    <code>fraction = spent / budget</code>, and <code>BudgetAlerter</code>’s thresholds are a
+    flat <code>listOf(100, 80)</code> that fire identically on the 3rd and the 28th. Telling a
+    household whether it is <em>on course</em> is the entire job of a budget, and it was the one
+    question this could not answer.
+  </p>
+
+  <div class="note-box warn">
+    <p class="nb-title">Why the obvious fix is the wrong one</p>
+    <p>
+      Dividing the budget by days elapsed would cry wolf every month in this household. The
+      daily bars for August show <strong>₹16,955.79 on day 3 — 59% of the month’s spending in a
+      single day</strong>, which is rent and a card bill landing together. Any linear pace model
+      reports a household that pays rent on the 1st as catastrophically overspent for the first
+      fortnight, every single month. An alert that is wrong every month is an alert people
+      switch off.
+    </p>
+  </div>
+
+  <div class="note-box fix">
+    <p class="nb-title">Pace the discretionary money, not the total</p>
+    <p>
+      The figure is <code>(budgetLeft − stillCommitted) ÷ daysRemaining</code>. Rent on the 1st
+      never triggers it, because rent was <em>committed</em> and is now paid — and
+      <code>MonthlyAggregator.committedRemaining()</code> already excludes anything whose date
+      has passed. So the line answers the question a household actually asks: <em>what can I
+      spend today without missing the cap.</em> Every input already exists;
+      <code>RecurringDetector</code> finds what repeats and <code>Affordability</code> already
+      reasons about commitments.
+    </p>
+    <p>
+      It also becomes the honest thing to alert on. <code>BudgetAlerter</code> stops firing at
+      flat percentages and fires when the <strong>daily allowance itself</strong> falls through a
+      floor or goes negative — which is late in a bad month and never in a normal one.
+    </p>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹8,240.00</p></div>
+          <div class="stack-3">
+            <div class="ruler"><div class="fill" style="width:21%"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹38.5K</span></span>
+              <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">21%</span></span>
+              <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹30,260</span></span></div>
+            <div>
+              <span class="micro">A day from here</span>
+              <span class="val ok" style="display:block;margin-top:5px">₹1,170</span>
+              <p class="t-body-s" style="color:var(--on-surface-muted);margin-top:6px">24 days
+                left, after ₹2,180 still committed.</p></div>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>On course</b>Green. The daily figure is comfortable, so the line is a reassurance and asks for nothing.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹28,763.20</p></div>
+          <div class="stack-3">
+            <div class="ruler"><div class="fill" style="width:74%"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹38.5K</span></span>
+              <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">74%</span></span>
+              <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹9,710</span></span></div>
+            <div>
+              <span class="micro warn">A day from here</span>
+              <span class="val" style="display:block;margin-top:5px;color:var(--warning)">₹292</span>
+              <p class="t-body-s" style="color:var(--warning);margin-top:6px">Three quarters of the
+                budget is gone on the 6th. What is left is ₹292 a day for 25 days, after ₹2,400
+                still committed.</p></div>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Tight — the exact case the review found</b>Same figures the app showed in green and said nothing about. Amber on the pace, not on the total: 74% is not itself wrong, ₹292 a day for 25 days is.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹36,900.00</p></div>
+          <div class="stack-3">
+            <div class="ruler"><div class="fill" style="width:96%"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹38.5K</span></span>
+              <span style="text-align:center"><span class="micro">Used</span><span class="val bad" style="display:block;margin-top:5px">96%</span></span>
+              <span style="text-align:right"><span class="micro">Left</span><span class="val bad" style="display:block;margin-top:5px">₹1,600</span></span></div>
+            <hr class="hair">
+            <p class="t-body-s" style="color:var(--error)">₹2,400 is still committed this month and
+              only ₹1,600 is left — <b>₹800 short</b> before anyone spends anything else.</p>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Short</b>When the commitments outrun what is left there is no daily figure to print, so the line says the shortfall instead of dividing into a negative.</p>
+    </div>
+  </div>
+
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:110px">State</th><th style="width:170px">Condition</th><th>Line</th></tr>
+    <tr><td>On course</td><td class="mono">daily ≥ 0.8 × even&nbsp;pace</td>
+      <td>“A DAY FROM HERE · ₹1,170” in <code>success</code>, with the days and commitments beside
+        it. No sentence — nothing needs saying.</td></tr>
+    <tr><td>Tight</td><td class="mono">daily &lt; 0.8 × even&nbsp;pace</td>
+      <td>Amber, plus one sentence naming what happened. The alert fires here, once per month, not
+        per threshold crossing.</td></tr>
+    <tr><td>Short</td><td class="mono">committed &gt; budgetLeft</td>
+      <td>No daily figure — dividing into a negative produces a number that reads as an allowance.
+        The shortfall is stated instead, in <code>error</code>.</td></tr>
+    <tr><td>No budget</td><td class="mono">budget == null</td>
+      <td>Line absent entirely. There is nothing to pace against, and inventing one would invent
+        a budget the household never set.</td></tr>
+    <tr><td>Unknown</td><td class="mono">no commitments detected</td>
+      <td>“A DAY FROM HERE · ₹388 · 25 days left”. The commitments clause is dropped rather than
+        printed as ₹0 — three sightings are needed before a charge is called recurring, so early
+        months genuinely do not know.</td></tr>
+  </table>
+  </div>
+
+  <h3>The budget line is still one cap over one household</h3>
+  <div class="note-box">
+    <p>
+      When a member chip narrows the view, the hero figure follows it and the
+      <strong>ruler does not</strong>. The budget is a single cap over the whole household, so
+      measuring one member against it made “Left” grow every time the view was narrowed —
+      which is the one direction a budget figure must never move for free. The screen says so
+      in a caption rather than letting the two look like the same measurement. The pacing line
+      follows the ruler, for the same reason.
+    </p>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month · You</span>
+            <p class="t-display-l" style="margin-top:8px">₹14,512.40</p></div>
+          <div class="stack-3">
+            <div class="ruler"><div class="fill" style="width:68%"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+              <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+              <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span>
+            </div>
+            <span class="micro warn">Budget counts the whole household</span>
+          </div>
+          <div class="chiprow"><span class="chip">Everyone</span>
+            <span class="chip" aria-selected="true">You</span><span class="chip">Anu</span></div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Filtered to one member</b>Hero follows the filter; the ruler stays household-wide and says so.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹35,204.00</p></div>
+          <div class="stack-3">
+            <div class="ruler over"><div class="fill" style="width:100%"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+              <span style="text-align:center"><span class="micro">Used</span><span class="val bad" style="display:block;margin-top:5px">110%</span></span>
+              <span style="text-align:right"><span class="micro">Over</span><span class="val bad" style="display:block;margin-top:5px">₹3,204</span></span>
+            </div>
+            <p class="t-body-s" style="color:var(--warning)">Your accounts hold ₹10,149 — less
+              than the budget still allows. Safe to spend: ₹10,149.</p>
+          </div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Over budget</b>“LEFT” becomes “OVER”. The reality check appears only when the accounts are the tighter of the two.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-exclamation-triangle"/></svg></span></div>
+        <div class="screen"><div class="screen-body pad stack-4" style="padding-top:12px">
+          <div><span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹0.00</p></div>
+          <div class="stack-3">
+            <div class="ruler"><div class="fill" style="width:0"></div></div>
+            <hr class="hair">
+            <div class="row between">
+              <span><span class="micro">Budget</span><span class="val muted" style="display:block;margin-top:5px">Not set</span></span>
+              <span class="micro accent" style="padding-top:16px">Set one</span></div>
+          </div>
+          <div class="notice bad">
+            <p class="nt-title">Nothing is being tracked</p>
+            <p class="nt-body">Ours can’t read your bank messages, so no expenses are being
+              recorded.</p>
+            <button class="btn btn-outline block" style="min-height:40px">Turn on SMS access</button></div>
+          <div class="tape row between"><span class="micro">Recent</span><span class="micro accent">See all</span></div>
+          <div class="empty-state" style="padding:24px 12px"><svg><use href="#i-receipt"/></svg>
+            <p class="em-title">Nothing yet this month</p>
+            <p class="em-body">Expenses appear here as your bank messages arrive.</p></div>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Empty + permission missing</b>An unmarked ruler, not a filled one — drawing a bar with nothing behind it would invent a budget nobody set.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-slash"/></svg></span></div>
+        <div class="screen">
+          <div class="stale-ribbon"><svg><use href="#i-cloud-slash"/></svg>
+            <span class="micro grow">Offline · 3 changes waiting</span>
+            <span class="micro accent">Retry</span></div>
+          <div class="screen-body pad stack-4" style="padding-top:12px">
+            <div><span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p></div>
+            <div class="stack-3">
+              <div class="ruler"><div class="fill" style="width:68%"></div></div>
+              <hr class="hair">
+              <p class="t-body-s" style="color:var(--on-surface-muted)">This is everything
+                <em>this</em> phone knows. Anything Anu paid since 6:41 am has not arrived yet.</p>
+            </div>
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+            <button class="entry last" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Offline</b>The figure is not hidden or greyed — it is correct, just possibly incomplete, and the caption says exactly which part.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ ACTIVITY ═══════════════════════════════ -->
+<section class="doc-sec" id="activity">
+  <h2>02 · Activity</h2>
+
+  <div class="pair">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <span class="appbar-title" style="padding-left:8px"><span class="wordmark">Activity</span></span>
+            <span class="micro">19 entries</span>
+            <button class="ico-btn" aria-label="Sort untagged"><svg><use href="#i-tag"/></svg></button>
+          </div>
+          <div class="pad" style="padding-bottom:8px">
+            <div class="field-filled"><svg><use href="#i-search"/></svg>
+              <span class="fl-input ph">Search merchant or note</span></div>
+          </div>
+          <div class="pad chiprow" style="padding-bottom:8px">
+            <span class="chip" aria-selected="true">All <span class="n">19</span></span>
+            <span class="chip tinted c-groceries"><svg><use href="#i-basket"/></svg>Groceries <span class="n">6</span></span>
+            <span class="chip tinted c-food"><svg><use href="#i-cup-hot"/></svg>Food <span class="n">5</span></span>
+            <span class="chip warn"><svg><use href="#i-three-dots"/></svg>Untagged <span class="n">4</span></span>
+            <span class="chip tinted c-bills"><svg><use href="#i-lightning-charge"/></svg>Bills <span class="n">2</span></span>
+            <span class="chip">More ›</span>
+          </div>
+          <div class="screen-body pad">
+            <div class="tape sticky row between" style="padding-top:8px"><span class="micro">Today</span>
+              <span class="micro">₹597.00</span></div>
+            <button class="entry" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">7:48 am · You</span></span><span class="amt">151.00</span></button>
+            <button class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                <span class="micro">11:20 am · Anu</span></span><span class="amt">376.00</span></button>
+            <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                <span class="micro warn">Untagged · 6:05 pm · You</span></span><span class="amt dim">70.00</span></button>
+            <div class="tape row between" style="margin-top:16px;padding-top:8px">
+              <span class="micro">Tue 4 Aug</span><span class="micro">₹1,449.00</span></div>
+            <button class="entry" style="margin-top:8px"><span class="avatar c-shopping"><svg><use href="#i-bag"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Amazon</span>
+                <span class="micro">2:14 pm · Anu</span></span><span class="amt">1,299.00</span></button>
+            <button class="entry last"><span class="avatar c-transport"><svg><use href="#i-fuel-pump"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Indian Oil</span>
+                <span class="micro">8:02 am · You</span></span><span class="amt">150.00</span></button>
+            <div class="tape row between" style="margin-top:16px;padding-top:8px">
+              <span class="micro">Mon 3 Aug</span><span class="micro">₹2,358.19</span></div>
+            <button class="entry last" style="margin-top:8px"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                <span class="micro">7:12 pm · You</span></span><span class="amt">2,358.19</span></button>
+          </div>
+          <div class="navbar">
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-house"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item" aria-selected="true"><span class="nav-badge">4</span>
+              <span class="nav-ind"><svg><use href="#i-receipt-cutoff"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Success state</b>The full statement. Date rules stick to the top while you scroll.</p>
+    </div>
+
+    <div class="spec-block">
+      <h3>Purpose</h3>
+      <p>
+        Every line, printed the same way as on Home. This is where you find a particular
+        payment, correct a batch, or check a day against a bank statement.
+      </p>
+
+      <ul class="spec-list">
+        <li><span class="k">Why sticky</span><span class="v">
+          When every row is structurally alike, the date rule is the only thing telling you
+          where you are, so it pins to the top and carries the day’s subtotal with it.
+        </span></li>
+        <li><span class="k">Chips</span><span class="v">
+          Only what the month actually contains, biggest first, and they <strong>wrap rather
+          than scroll</strong>. The row used to be all eighteen categories in enum order,
+          scrolling horizontally — three and a half fit, and eleven of them could only ever
+          return an empty screen. Android draws no scrollbar, so off-screen chips are not
+          merely out of reach: there is nothing to say they exist. <em>More ›</em> opens the
+          full grid, including the zero counts, because “did anything land under Health this
+          month” is a real question and the count is its answer.
+        </span></li>
+        <li><span class="k">Components</span><span class="v">
+          App bar (+ selection variant) · search field · filter chips · active-filter line ·
+          sticky tape headers · statement entry with owner · selection toolbar · snackbar ·
+          confirm dialog · category picker sheet · filter sheet · bottom nav
+        </span></li>
+        <li><span class="k">Interactions</span><span class="v"><ul>
+          <li>Tap a row → detail. <strong>Long-press</strong> → selection mode.</li>
+          <li>In selection mode a tap picks rather than opens, so building a set is not
+            interrupted by a screen change.</li>
+          <li>Back closes the selection before it closes the screen — leaving with a selection
+            open is how an action gets aimed at rows the reader has forgotten about.</li>
+          <li>Bulk delete asks first, <em>then</em> offers undo, <em>then</em> keeps 30 days in
+            Trash. Three defences, because what a bulk delete destroys can include hand-made
+            entries that exist in no backup.</li>
+          <li>Search filters as you type; the count and total update in the app bar.</li>
+        </ul></span></li>
+        <li><span class="k">Nav</span><span class="v">
+          Tab 2. Out to: entry detail, Sort. Sheets: category picker, category filter.
+        </span></li>
+        <li><span class="k">Improved</span><span class="v"><ul>
+          <li class="win">Selection actions become 48dp icon buttons with Delete moved to the
+            far end and given the error colour. They were four identical 9sp words with Delete
+            in the middle.</li>
+          <li class="win">Search gets a 48dp pill and reports “4 of 19 · ₹3,182.40” so a
+            filtered ledger can be reconciled.</li>
+          <li class="win">Sort is a labelled icon button in the bar rather than a 9sp text link,
+            and it is always present — Home only offers it while something is untagged, so the
+            moment the last row was categorised the screen became unreachable.</li>
+        </ul></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar select">
+            <button class="ico-btn" aria-label="Clear selection"><svg><use href="#i-x-lg"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">3 selected</span></span>
+            <button class="ico-btn" aria-label="Select all visible"><svg><use href="#i-check-lg"/></svg></button>
+            <button class="ico-btn" aria-label="Set category"><svg><use href="#i-tag"/></svg></button>
+            <button class="ico-btn danger" aria-label="Delete selected"><svg><use href="#i-trash"/></svg></button>
+          </div>
+          <div class="screen-body pad" style="padding-top:8px">
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+            <button class="entry selected" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">7:48 am · You</span></span><span class="amt">151.00</span></button>
+            <button class="entry selected"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                <span class="micro">11:20 am · Anu</span></span><span class="amt">376.00</span></button>
+            <button class="entry selected last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                <span class="micro warn">Untagged · 6:05 pm · You</span></span><span class="amt dim">70.00</span></button>
+          </div>
+          <div class="snackbar"><span class="grow">3 transactions deleted</span>
+            <button class="sb-action">Undo</button></div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Selection + snackbar</b>One snackbar for the batch. Selection tints the row and marks its edge — no checkbox column, so nothing shifts sideways.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Activity</span></span>
+            <span class="micro">3 of 19</span></div>
+          <div class="pad" style="padding-bottom:8px">
+            <div class="field-filled"><svg><use href="#i-search"/></svg>
+              <span class="fl-input ph">Search merchant or note</span></div></div>
+          <div class="pad" style="padding-bottom:8px">
+            <div class="notice compact info" style="--tone:var(--warning)">
+              <span class="micro warn">Untagged</span>
+              <span class="grow micro">3 entries · ₹1,318.00</span>
+              <button class="ico-btn sm" aria-label="Clear filter"><svg><use href="#i-x-lg"/></svg></button></div></div>
+          <div class="screen-body pad">
+            <div class="tape row between" style="padding-top:8px"><span class="micro">Today</span>
+              <span class="micro">₹70.00</span></div>
+            <button class="entry last" style="margin-top:8px"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button>
+            <div class="tape row between" style="margin-top:16px;padding-top:8px">
+              <span class="micro">Sun 2 Aug</span><span class="micro">₹1,248.00</span></div>
+            <button class="entry" style="margin-top:8px"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Unknown payee</span>
+                <span class="micro warn">Untagged · 4:31 pm</span></span><span class="amt dim">1,000.00</span></button>
+            <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">PAYTM*QR</span>
+                <span class="micro warn">Untagged · 9:12 am</span></span><span class="amt dim">248.00</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Filtered</b>Once a filter is chosen the chips get out of the way and a line that cannot scroll away says what is shown, what it comes to, and how to leave.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Activity</span></span>
+            <span class="micro">0 of 19</span></div>
+          <div class="pad" style="padding-bottom:8px">
+            <div class="field-filled"><svg><use href="#i-search"/></svg>
+              <span class="fl-input">xyzzy</span>
+              <button class="ico-btn sm" aria-label="Clear"><svg><use href="#i-x-lg"/></svg></button></div></div>
+          <div class="screen-body pad">
+            <div class="empty-state"><svg><use href="#i-inboxes"/></svg>
+              <p class="em-title">Nothing matches “xyzzy”</p>
+              <p class="em-body">Search looks at the payee and your notes, not the bank’s
+                original message.</p>
+              <button class="btn btn-text">Clear search</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>No results</b>Says what search covers, so a failed search teaches something instead of just failing.</p>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <p class="nb-title">Why the filter line cannot scroll away</p>
+    <p>
+      The old row left the selected chip highlighted among the others, which fails in a way
+      that is easy to miss: filter to Rent, scroll the strip back to the left, and the screen is
+      indistinguishable from an unfiltered one that happens to be short. Hidden rows then read
+      as <em>absent</em> rows, which is the worst thing a filter can do to a ledger. The line
+      sits where the chips were, states what is being shown and how much it comes to, and
+      carries its own way out. Tapping its body reopens the sheet, because having decided to
+      filter, the next thing you usually want is a <em>different</em> filter rather than none.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ SUMMARY ════════════════════════════════ -->
+<section class="doc-sec" id="summary">
+  <h2>03 · Summary</h2>
+
+  <div class="pair">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button>
+            <button class="ico-btn" aria-label="Export"><svg><use href="#i-download"/></svg></button>
+          </div>
+          <div class="tabs">
+            <button class="tab" aria-selected="true">Month</button>
+            <button class="tab">Accounts</button>
+            <button class="tab">Committed</button>
+          </div>
+          <div class="screen-body pad stack-5" style="padding-top:16px">
+            <div><span class="micro">Net this month</span>
+              <p class="t-display-m ok" style="margin-top:8px">+₹16,260.60</p></div>
+
+            <div><hr class="hair">
+              <div class="row between" style="margin-top:12px">
+                <span><span class="micro">Earned</span><span class="val" style="display:block;margin-top:5px">₹58,200.00</span></span>
+                <span style="text-align:center"><span class="micro">Spent</span><span class="val" style="display:block;margin-top:5px">₹21,979.40</span></span>
+                <span style="text-align:right"><span class="micro">Saved</span><span class="val ok" style="display:block;margin-top:5px">₹20,000.00</span></span>
+              </div></div>
+
+            <div><hr class="hair">
+              <div class="row between" style="margin-top:12px;align-items:flex-end">
+                <span class="micro">Left our accounts</span><span class="amt">44,304.40</span></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant);margin-top:6px">Spending,
+                savings, and money moved between our accounts</p></div>
+
+            <div class="stack-3">
+              <div class="tape row between"><span class="micro">Where it went</span>
+                <span class="micro">₹21,979.40</span></div>
+              <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+                <b style="font-size:13px">Groceries</b><span class="amt">8,412.00</span></div>
+                <div class="meter" style="--c:var(--cat-groceries)"><i style="width:38%"></i></div></div>
+              <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+                <b style="font-size:13px">Food</b><span class="amt">5,934.00</span></div>
+                <div class="meter" style="--c:var(--cat-food)"><i style="width:27%"></i></div></div>
+              <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+                <b style="font-size:13px">Bills</b><span class="amt">3,516.00</span></div>
+                <div class="meter" style="--c:var(--cat-bills)"><i style="width:16%"></i></div></div>
+              <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+                <b style="font-size:13px">Transport</b><span class="amt">2,198.00</span></div>
+                <div class="meter" style="--c:var(--cat-transport)"><i style="width:10%"></i></div></div>
+              <div><div class="row between" style="align-items:flex-end;margin-bottom:6px">
+                <b style="font-size:13px">Rent</b><span class="amt">1,919.40</span></div>
+                <div class="meter" style="--c:var(--cat-rent)"><i style="width:9%"></i></div></div>
+            </div>
+
+            <div class="notice dashed">
+              <div class="row between"><b style="font-size:13px">Not counted</b><span class="amt">22,325.00</span></div>
+              <div class="row"><svg style="width:13px;height:13px;color:var(--on-surface-variant)"><use href="#i-graph-up-arrow"/></svg>
+                <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Savings</span>
+                <span class="amt dim">20,000.00</span></div>
+              <div class="row"><svg style="width:13px;height:13px;color:var(--on-surface-variant)"><use href="#i-arrow-left-right"/></svg>
+                <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Ours</span>
+                <span class="amt dim">2,325.00</span></div>
+              <p class="nt-body">Money put aside is still yours, so it is not spending. Money
+                moved between our own accounts never left the household. Both still come off
+                your balance.</p></div>
+
+            <div class="stack-2">
+              <div class="tape row between"><span class="micro">Safe to spend</span>
+                <span class="micro">₹10,021</span></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">Your budget is the
+                limit. The accounts hold ₹128 more than it allows.</p>
+              <hr class="hair">
+              <div class="row between"><span style="font-size:13px">Budget left</span>
+                <b style="font-size:13px">₹10,021</b></div>
+              <div class="row between"><span style="font-size:13px;color:var(--on-surface-variant)">In the accounts</span>
+                <span style="font-size:13px;color:var(--on-surface-variant)">₹10,149</span></div>
+              <p class="t-body-s" style="color:var(--on-surface-muted)">The budget counts
+                spending only. ₹20,000 put aside and ₹2,325 moved between our accounts left the
+                accounts this month without touching it.</p>
+            </div>
+          </div>
+          <div class="navbar">
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-house"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item" aria-selected="true"><span class="nav-ind"><svg><use href="#i-pie-chart-fill"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Month tab</b>Net rather than spend, because ₹21,979 spent is good news on ₹58,200 earned.</p>
+    </div>
+
+    <div class="spec-block">
+      <h3>Purpose</h3>
+      <p>
+        Account for the month. Spending alone cannot say whether it went well — ₹21,979 spent
+        is good news on ₹58,200 earned and bad news on ₹18,000 — so the headline is what
+        actually <em>changed</em>, and spend is demoted to one of three supporting figures.
+      </p>
+
+      <ul class="spec-list">
+        <li><span class="k">Three ideas</span><span class="v">
+          Easy to conflate and kept apart on purpose.
+          <strong>Spending</strong> is what was consumed, and excludes savings and
+          self-transfers — fold those in and a month of hard saving reads as a month of
+          overspending. <strong>Left our accounts</strong> is every debit including both.
+          <strong>Budget vs balance</strong> is permission versus capacity, and you can only
+          spend the smaller.
+        </span></li>
+        <li><span class="k">Tabs</span><span class="v">
+          New in v7. The screen was one 1,000dp scroll holding a retrospective, a per-account
+          register and a forward-looking commitments list — three different questions. Month
+          answers “where did it go”, Accounts answers “what is actually there”, Committed
+          answers “what is already spoken for”.
+        </span></li>
+        <li><span class="k">Components</span><span class="v">
+          App bar with month stepper · tabs · display-medium signed figure ·
+          label-over-value ×3 · tape headers · ranked bars · dashed exclusion panel ·
+          ledger lines · data table · balance dialogs · export buttons
+        </span></li>
+        <li><span class="k">Interactions</span><span class="v"><ul>
+          <li>Chevrons step the month; swipe left/right does the same.</li>
+          <li>Export → share sheet, CSV or PDF, for the month in view.</li>
+          <li>An account row → the balance dialog, which distinguishes “leave it alone” from
+            “forget my figure” from “record zero”.</li>
+        </ul></span></li>
+        <li><span class="k">Nav</span><span class="v">Tab 3. No child screens; everything is dialogs and the share sheet.</span></li>
+        <li><span class="k">Improved</span><span class="v"><ul>
+          <li class="win">Tabs, so each question is one screenful.</li>
+          <li class="win">Export moves to an app-bar icon; it was two full-width ghost buttons
+            at the very bottom of the longest screen in the app.</li>
+          <li class="win">Ranked bars show every category, never a silent top-six. Truncating
+            made the bars add up to less than the Spent figure directly above them, so the
+            section simply looked wrong.</li>
+          <li class="win">Bars are scaled to the month’s total, not the largest category —
+            otherwise the top bar is full-width by definition and always reads “all of it”.</li>
+        </ul></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab">Month</button>
+            <button class="tab" aria-selected="true">Accounts</button><button class="tab">Committed</button></div>
+          <div class="screen-body pad stack-4" style="padding-top:16px">
+            <div class="tape row between"><span class="micro">What is left</span><span class="micro">₹10,149</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">Kerala Gramin</b>
+                <span class="micro" style="margin-top:3px">···· 3062 · today</span>
+                <span class="micro" style="margin-top:3px">of ₹10,149 · ₹500 must stay</span></td>
+                <td class="r"><span class="amt">9,649.00</span></td></tr>
+              <tr><td><b style="font-size:13px">Federal</b>
+                <span class="micro warn" style="margin-top:3px">···· 4657 · you said, 3 days ago</span></td>
+                <td class="r"><span class="amt">500.00</span></td></tr>
+              <tr><td><b style="font-size:13px">ICICI</b>
+                <span class="micro" style="margin-top:3px">···· 3008 · tap to set</span></td>
+                <td class="r"><span class="micro">—</span></td></tr>
+            </table>
+            <p class="t-body-s" style="color:var(--warning)">One account has no balance
+              recorded, so the real figure is higher.</p>
+            <button class="btn btn-outline block"><svg><use href="#i-plus-lg"/></svg>Add an account</button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Accounts tab</b>The only quoted figures on the screen. Amber marks one nobody’s bank stands behind; an em dash means unknown, which is never summed as zero.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab">Month</button><button class="tab">Accounts</button>
+            <button class="tab" aria-selected="true">Committed</button></div>
+          <div class="screen-body pad stack-2" style="padding-top:16px">
+            <div class="tape row between"><span class="micro">Committed</span>
+              <span class="micro">₹8,940 a month</span></div>
+            <button class="entry" style="margin-top:6px"><span class="avatar c-rent"><svg><use href="#i-house-door"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Sreedhar K</span>
+                <span class="micro">Monthly · next 1 Sep</span></span><span class="amt">6,500.00</span></button>
+            <button class="entry"><span class="avatar c-emi"><svg><use href="#i-bank"/></svg></span>
+              <span class="e-main"><span class="e-name cut">HDFC EMI</span>
+                <span class="micro">Monthly · next 5 Sep</span></span><span class="amt">1,840.00</span></button>
+            <button class="entry last"><span class="avatar c-bills"><svg><use href="#i-lightning-charge"/></svg></span>
+              <span class="e-main"><span class="e-name cut">KSEB</span>
+                <span class="micro">Every 2 months · 12 Sep</span></span><span class="amt">1,200.00</span></button>
+            <p class="t-body-s" style="color:var(--on-surface-muted);margin-top:12px">Nothing here
+              is declared by a bank — it is inferred from repetition, so the count of sightings
+              is shown. Three is the fewest that can be told from a coincidence.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Committed tab</b>The header total reconciles cadences, so a two-monthly charge and a monthly one can be read against each other rather than added as written.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">March 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab" aria-selected="true">Month</button>
+            <button class="tab">Accounts</button><button class="tab">Committed</button></div>
+          <div class="screen-body pad" style="padding-top:16px">
+            <div class="empty-state"><svg><use href="#i-inbox"/></svg>
+              <p class="em-title">Nothing in March 2026</p>
+              <p class="em-body">Tracking starts on 12 April. Move the start date back in
+                Settings and these months return.</p>
+              <button class="btn btn-text">Change the start date</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Empty month</b>Names the reason — a retired month looks identical to a month with no spending unless the screen says which it is.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab" aria-selected="true">Month</button>
+            <button class="tab">Accounts</button><button class="tab">Committed</button></div>
+          <div class="screen-body pad stack-4" style="padding-top:16px">
+            <div><span class="skel h11" style="width:96px;display:block"></span>
+              <span class="skel h44" style="width:70%;display:block;margin-top:10px"></span></div>
+            <hr class="hair">
+            <div class="row between" style="gap:12px">
+              <span class="grow"><span class="skel h11" style="width:70%;display:block"></span>
+                <span class="skel h13" style="width:90%;display:block;margin-top:6px"></span></span>
+              <span class="grow"><span class="skel h11" style="width:70%;display:block"></span>
+                <span class="skel h13" style="width:90%;display:block;margin-top:6px"></span></span>
+              <span class="grow"><span class="skel h11" style="width:70%;display:block"></span>
+                <span class="skel h13" style="width:90%;display:block;margin-top:6px"></span></span></div>
+            <div class="skel h11" style="width:120px;margin-top:12px"></div>
+            <div class="stack-3">
+              <div><span class="skel h13" style="width:40%;display:block;margin-bottom:8px"></span>
+                <span class="skel" style="height:6px;width:100%;display:block"></span></div>
+              <div><span class="skel h13" style="width:32%;display:block;margin-bottom:8px"></span>
+                <span class="skel" style="height:6px;width:100%;display:block"></span></div>
+              <div><span class="skel h13" style="width:28%;display:block;margin-bottom:8px"></span>
+                <span class="skel" style="height:6px;width:100%;display:block"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Loading</b>Aggregating a month over hundreds of rows takes real time, so the shape arrives first.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ BUDGETS ════════════════════════════════ -->
+<section class="doc-sec" id="budgets">
+  <h2>04 · Budgets</h2>
+
+  <div class="pair rev">
+    <div class="spec-block">
+      <h3>Purpose</h3>
+      <p>
+        Set one cap, and optionally a cap per category. Measured on the same ruler Home uses,
+        so “68%” means the same thing on both screens.
+      </p>
+      <ul class="spec-list">
+        <li><span class="k">Ruler vs meter</span><span class="v">
+          The overall budget gets the tick scale, because it is the one you check against a
+          decision. The per-category rows get plain meters — a dozen tick scales stacked up
+          stops reading as measurement and starts reading as texture.
+        </span></li>
+        <li><span class="k">Bar colour</span><span class="v">
+          A category keeps its own hue until it is in trouble, then takes the semantic one:
+          amber past 80%, red past 100%. A red bar has to mean “over” everywhere, so a category
+          whose own hue happens to be red cannot own that meaning.
+        </span></li>
+        <li><span class="k">Components</span><span class="v">
+          App bar · display-large figure · ruler · label-over-value ×3 · tape header ·
+          category rows with avatar + meter · inline budget editor · confirm dialogs
+        </span></li>
+        <li><span class="k">Interactions</span><span class="v"><ul>
+          <li>A category row expands into an editor in place, so you never lose your position
+            in a list of sixteen.</li>
+          <li>Whole rupees only — the digit filter means the keyboard cannot produce paise, and
+            a budget with paise in it is a number nobody chose.</li>
+          <li>“Clear this budget” sits <em>below</em> the Cancel/Save pair, not beside it:
+            removing a cap is not the third of three equal choices, and it is confirmed,
+            because the label sits directly under Save and the two do opposite things.</li>
+          <li>“Reset all budgets” is confirmed separately — it drops the overall cap and every
+            category at once, on both phones, and retyping them is not one number but all of
+            them.</li>
+        </ul></span></li>
+        <li><span class="k">Nav</span><span class="v">Tab 4. Reached also from Home’s “Set one”, with the same nav options so the back stack does not grow a second Budgets entry each time.</span></li>
+        <li><span class="k">Improved</span><span class="v"><ul>
+          <li class="win">Editor fields are 48dp and the amount is <code>displayMedium</code>
+            rather than <code>displayLarge</code>, so a six-figure budget no longer overflows.</li>
+          <li class="win">A category with no limit shows a hairline track rather than nothing,
+            so every row has the same height and the list stops jumping as limits are added.</li>
+          <li class="win">Bottom padding drops from 96dp to 40dp — nothing floats over this
+            list, so 96dp was a screen-height of blank below the last panel.</li>
+        </ul></span></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Budgets</span></span>
+            <button class="ico-btn accent" aria-label="Edit monthly budget"><svg><use href="#i-tag"/></svg></button></div>
+          <div class="screen-body pad stack-5" style="padding-top:8px">
+            <div>
+              <span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p>
+              <div class="ruler" style="margin-top:14px"><div class="fill" style="width:68%"></div></div>
+              <div class="row between" style="margin-top:12px">
+                <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+                <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+                <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span>
+              </div>
+            </div>
+
+            <div class="tape row between"><span class="micro">Per category</span>
+              <span class="micro">4 of 16 capped</span></div>
+
+            <div class="stack-4">
+              <div class="stack-2">
+                <div class="row"><span class="avatar sm c-groceries"><svg><use href="#i-basket"/></svg></span>
+                  <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Groceries</span>
+                    <span class="micro" style="margin-top:3px">of ₹9K</span></span>
+                  <span class="val">8,412.00</span></div>
+                <div class="meter" style="--c:var(--warning)"><i style="width:93%"></i></div></div>
+
+              <div class="stack-2">
+                <div class="row"><span class="avatar sm c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                  <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Food</span>
+                    <span class="micro" style="margin-top:3px">of ₹5K</span></span>
+                  <span class="val">5,934.00</span></div>
+                <div class="meter" style="--c:var(--error)"><i style="width:100%"></i></div></div>
+
+              <div class="stack-2">
+                <div class="row"><span class="avatar sm c-bills"><svg><use href="#i-lightning-charge"/></svg></span>
+                  <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Bills</span>
+                    <span class="micro" style="margin-top:3px">of ₹6K</span></span>
+                  <span class="val">3,516.00</span></div>
+                <div class="meter" style="--c:var(--cat-bills)"><i style="width:59%"></i></div></div>
+
+              <div class="stack-2">
+                <div class="row"><span class="avatar sm c-transport"><svg><use href="#i-fuel-pump"/></svg></span>
+                  <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Transport</span>
+                    <span class="micro" style="margin-top:3px">No limit</span></span>
+                  <span class="val">2,198.00</span></div>
+                <div class="meter"><i style="width:0"></i></div></div>
+
+              <div class="stack-2">
+                <div class="row"><span class="avatar sm c-shopping"><svg><use href="#i-bag"/></svg></span>
+                  <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Shopping</span>
+                    <span class="micro" style="margin-top:3px">No limit</span></span>
+                  <span class="val">1,299.00</span></div>
+                <div class="meter"><i style="width:0"></i></div></div>
+            </div>
+
+            <div style="background:var(--surface-c-low);border-radius:var(--shape-md);padding:16px" class="stack-3">
+              <span class="micro">Rent limit</span>
+              <div class="money-input"><span class="cur">₹</span><span class="num">7000<span class="caret" style="height:30px"></span></span></div>
+              <div class="row" style="gap:8px">
+                <button class="btn btn-outline" style="flex:1">Cancel</button>
+                <button class="btn btn-filled" style="flex:1"><svg><use href="#i-check-lg"/></svg>Save</button></div>
+              <button class="btn btn-text" style="color:var(--error);padding:0;min-height:40px;justify-content:flex-start">Clear this budget</button>
+            </div>
+
+            <button class="btn btn-text" style="color:var(--error);min-height:48px">Reset all budgets</button>
+          </div>
+          <div class="navbar">
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-house"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item" aria-selected="true"><span class="nav-ind"><svg><use href="#i-wallet-fill"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Success + inline editor</b>Amber at 93%, red once over. An uncapped row keeps its track so the list does not jump.</p>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Budgets</span></span></div>
+          <div class="screen-body pad stack-5" style="padding-top:8px">
+            <div><span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p></div>
+            <button class="action-card">
+              <span class="grow"><span class="ac-title" style="display:block">Set a monthly budget</span>
+                <span class="micro on-fill" style="margin-top:4px">One number · everything else is optional</span></span>
+              <svg><use href="#i-chevron-right"/></svg></button>
+            <div class="empty-state" style="padding:32px 12px"><svg><use href="#i-wallet2"/></svg>
+              <p class="em-title">No caps yet</p>
+              <p class="em-body">A single monthly figure is enough to make Home’s ruler mean
+                something. Per-category limits are for later, if ever.</p></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Empty</b>One number asked for, and the copy says the rest is optional — the per-category list is not shown until there is a cap to measure against.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Budgets</span></span></div>
+          <div class="screen-body pad" style="padding-top:8px">
+            <div class="stack-3">
+              <span class="micro">Spent this month</span>
+              <p class="t-display-l">₹35,204.00</p>
+              <div class="ruler over"><div class="fill" style="width:100%"></div></div>
+              <div class="row between">
+                <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+                <span style="text-align:center"><span class="micro">Used</span><span class="val bad" style="display:block;margin-top:5px">110%</span></span>
+                <span style="text-align:right"><span class="micro">Over</span><span class="val bad" style="display:block;margin-top:5px">₹3,204</span></span></div>
+            </div>
+            <div class="notice bad" style="margin-top:20px">
+              <p class="nt-title">Over on 2 categories</p>
+              <p class="nt-body">Food is ₹934 past its ₹5,000 cap and Groceries is ₹412 past
+                ₹8,000. The overall cap went 12 days into the month.</p></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Over budget</b>The ruler fills completely and changes colour rather than running past its own end, which would just look broken.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ SETTINGS ═══════════════════════════════ -->
+<section class="doc-sec" id="settings">
+  <h2>05 · Settings</h2>
+
+  <div class="note-box warn">
+    <p class="nb-title">v7 picks one layout</p>
+    <p>
+      The current build ships <strong>both</strong> a one-page scroll and a five-row index, with
+      a chip behind the developer unlock to switch between them — indecision shipped as a
+      preference. v7 keeps the index, because five rows that each report their own state is a
+      status report as well as a menu, and adds a search field, because a 1,669-line settings
+      screen is not navigable by scrolling.
+    </p>
+  </div>
+
+  <div class="pair">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title" style="padding-left:8px"><span class="wordmark">Settings</span></span>
+            <span class="pill ok"><svg><use href="#i-check-circle"/></svg>Synced</span></div>
+          <div class="pad" style="padding-bottom:8px">
+            <div class="field-filled"><svg><use href="#i-search"/></svg>
+              <span class="fl-input ph">Search settings</span></div></div>
+          <div class="screen-body pad stack-3" style="padding-top:8px">
+            <div class="notice compact">
+              <span class="micro warn">Needs you</span>
+              <span class="grow" style="font-size:12px;color:var(--on-surface-variant)">Notification access is off — no expenses are being read</span>
+              <svg style="width:16px;height:16px;color:var(--warning);flex:0 0 16px"><use href="#i-chevron-right"/></svg></div>
+
+            <div class="panel">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Household</span>
+                <span class="pr-cap">Manuel, Anu · 2 delete requests</span></span>
+                <span class="pill warn">2</span><svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Sync</span>
+                <span class="pr-cap">Sheet on · Bluetooth on · synced 4m ago</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">What becomes an entry</span>
+                <span class="pr-cap">From SMS, since 12 April 2026</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">When a payment happens</span>
+                <span class="pr-cap warn">Notification on · popup needs permission</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">This app</span>
+                <span class="pr-cap">Ours 5.18 (218) · up to date</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+            </div>
+
+            <div class="panel">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Trash</span>
+                <span class="pr-cap">Deleted entries, and 30 days to change your mind</span></span>
+                <span class="pill">5</span><svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Backup &amp; restore</span>
+                <span class="pr-cap">Manual entries and your category corrections live only on
+                  this phone — a rescan cannot bring them back</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+            </div>
+
+            <p class="t-body-s" style="color:var(--on-surface-muted)">The database on this phone
+              is encrypted with a key held in the Android Keystore. Bluetooth sync is encrypted
+              end to end. Sheet sync is not — it writes plain text, so that you can read and fix
+              the sheet yourself. Your original bank messages are stripped before anything is
+              written there.</p>
+          </div>
+          <div class="navbar">
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-house"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item" aria-selected="true"><span class="nav-badge dot"></span>
+              <span class="nav-ind"><svg><use href="#i-gear-fill"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Index</b>Each row reports its own state, so the menu doubles as a status report.</p>
+    </div>
+
+    <div class="spec-block">
+      <h3>Purpose</h3>
+      <p>
+        Nearly every switch here has a consequence worth a sentence — what sheet sync costs you
+        in privacy, what nearby sync costs in battery — so the prose is the point and the
+        control is the footnote. That inverts the usual preference-list shape, where the
+        caption is a grey afterthought under the title.
+      </p>
+
+      <ul class="spec-list">
+        <li><span class="k">Needs you</span><span class="v">
+          Drawn only when something is actually broken, and absent entirely when nothing is — a
+          banner that is always there stops being read. Amber rather than red: nothing is lost,
+          something is merely not running.
+          <br><br>
+          This exists because <strong>every failure this app has actually had</strong> was a
+          permission that was off while everything else looked fine: <code>POST_NOTIFICATIONS</code>
+          never requested, notification access never granted, and the overlay permission, which
+          Android can revoke at any time without telling anyone. A screen that only reveals that
+          once you scroll to the right section will not catch it.
+        </span></li>
+        <li><span class="k">Five pages</span><span class="v"><ul>
+          <li><strong>Household</strong> — who lives here, the invite QR and code, delete requests.</li>
+          <li><strong>Sync</strong> — sheet URL behind a disclosure, Bluetooth toggle, sync now.</li>
+          <li><strong>What becomes an entry</strong> — SMS / Notifications / Manual, the tracking
+            start date, rescan, rules, parser tester.</li>
+          <li><strong>When a payment happens</strong> — the notification and the popup, which are
+            one decision made twice and were five sections apart.</li>
+          <li><strong>This app</strong> — theme, contrast, accent, app lock, version and update.</li>
+        </ul></span></li>
+        <li><span class="k">Components</span><span class="v">
+          App bar · search · compact notice · panel · panel rows with pill / switch / spinner ·
+          disclosure rows · segmented buttons · accent swatches · QR plate · date picker ·
+          linear progress · confirm dialogs
+        </span></li>
+        <li><span class="k">Interactions</span><span class="v"><ul>
+          <li>Search filters rows across all five pages and shows the page each match lives on.</li>
+          <li>Back closes an open page before it closes the screen.</li>
+          <li>Permission rows are drawn whether or not the permission is granted. Shown only
+            while missing, a row disappears the moment it starts working — so there is no way to
+            check it later and no way back to the system page to change your mind. Both of these
+            permissions are revocable outside the app, which makes “currently granted” a fact
+            worth being able to look up.</li>
+          <li>Seven taps on the version, then one on the household code, unlocks developer mode,
+            and it counts down out loud from four remaining. A hidden sequence with no feedback
+            is indistinguishable from one that does not work.</li>
+        </ul></span></li>
+        <li><span class="k">Nav</span><span class="v">
+          Tab 5. Out to: Rules, Parser tester, Sheet setup, QR scanner, Delete requests, Backup,
+          Trash. Each of those is on the <a href="screens-flows.html">Flows</a> page.
+        </span></li>
+        <li><span class="k">Improved</span><span class="v"><ul>
+          <li class="win">One layout instead of two behind a flag.</li>
+          <li class="win">A search field, which is the only realistic way into a screen this size.</li>
+          <li class="win">Trash and Backup lift out of “This app” into their own panel — they are
+            the answers to “I deleted something” and “the phone is gone”, not housekeeping
+            beside a version number.</li>
+          <li class="win">Theme / contrast use segmented buttons rather than chip rows, which is
+            what MD3 has for a small exclusive set.</li>
+        </ul></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">Sync</span></span></div>
+          <div class="screen-body pad stack-3" style="padding-top:8px">
+            <div class="panel">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Sheet sync</span>
+                <span class="pr-cap">On — both phones read the same sheet</span></span>
+                <span class="pill ok">On</span><svg class="chev" style="transform:rotate(-90deg)"><use href="#i-chevron-right"/></svg></button>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">Paste the Apps Script
+                URL from your Google Sheet. Use the same URL on your partner’s phone and you’ll
+                both see every expense, wherever you are.</p>
+              <button class="btn btn-outline block" style="min-height:40px">How do I set this up?</button>
+              <div class="field-filled boxy"><span class="fl-input cut">https://script.google.com/macros/s/AKfy…/exec</span></div>
+              <p class="t-body-s" style="color:var(--success)">Connected — “Ours household ledger”</p>
+              <button class="btn btn-outline block" style="min-height:40px">Re-upload everything in scope</button>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">For a sheet you
+                recreated or cleared. The phone otherwise believes it already sent everything,
+                and only new expenses would appear.</p>
+              <p class="t-body-s" style="color:var(--warning)">64 expenses from before 12 April
+                2026 will not be sent. Retiring a month keeps it off the sheet and off the other
+                phone, not just off this screen.</p>
+              <div class="notice">
+                <p class="nt-body">Anyone with this URL can read and change your expenses — treat
+                  it like a password. Amounts, merchants and account tails are stored in the
+                  clear; the original bank messages are stripped before they are sent.</p></div>
+              <hr class="hair">
+              <div class="prow" style="cursor:default"><span class="pr-main">
+                <span class="pr-title">Keep syncing when nearby</span>
+                <span class="pr-cap">Instant sync the moment you’re in the same room, over
+                  Bluetooth, with no internet and nothing written to the sheet. Costs some
+                  battery.</span></span>
+                <span class="switch" role="switch" aria-checked="true"><i></i></span></div>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main"><span class="pr-title">Sync now</span>
+                <span class="pr-cap accent">Syncing… 34 of 61 events</span></span>
+                <span class="spinner"></span></button>
+              <div class="prog-lin"><i style="width:56%"></i></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Sync page, mid-sync</b>The result of the last run wins over “synced 4m ago” — what it did is more useful than when it happened.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">This app</span></span></div>
+          <div class="screen-body pad stack-3" style="padding-top:8px">
+            <div class="panel">
+              <span class="micro">Appearance</span>
+              <div class="segmented" role="group"><button aria-pressed="false">System</button>
+                <button aria-pressed="false">Light</button><button aria-pressed="true">Dark</button></div>
+              <span class="micro">Contrast</span>
+              <div class="segmented" role="group"><button aria-pressed="true">Crisp</button>
+                <button aria-pressed="false">Soft</button></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">Printed contrast —
+                near-black on near-white. Sharpest, and the most tiring over a long sitting.</p>
+              <span class="micro">Accent</span>
+              <div class="swatch-row">
+                <span class="swatch" aria-pressed="true" style="--c:#2F5BFF"><i></i></span>
+                <span class="swatch" style="--c:#5B4BE0"><i></i></span>
+                <span class="swatch" style="--c:#8A4BD8"><i></i></span>
+                <span class="swatch" style="--c:#A8459B"><i></i></span>
+                <span class="swatch" style="--c:#0E9C93"><i></i></span>
+                <span class="swatch" style="--c:#1E86D6"><i></i></span></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">Only the blue-to-violet
+                arc and teal are offered. Green means money arriving here, amber a warning and
+                red a loss — an accent taken from any of those would make the interface say
+                something it does not mean.</p>
+              <hr class="hair">
+              <div class="prow" style="cursor:default"><span class="pr-main">
+                <span class="pr-title">Require unlock</span>
+                <span class="pr-cap">Fingerprint, face or screen lock when you open Ours. Stays
+                  unlocked for a minute if you switch away, so it doesn’t nag on every glance.</span></span>
+                <span class="switch" role="switch" aria-checked="true"><i></i></span></div>
+              <hr class="hair">
+              <button class="prow"><span class="pr-main">
+                <span class="pr-title">Ours 5.18 (218)</span>
+                <span class="pr-cap accent">5.19 available</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></button>
+              <p class="t-body-s" style="color:var(--on-surface)">Trash as a statement, not a
+                stack of cards</p>
+              <button class="btn btn-filled block">Download 5.19</button>
+              <p class="t-body-s" style="color:var(--on-surface-muted)">A build signed by a
+                different key is refused.</p>
+              <hr class="hair">
+              <div class="row between"><span class="micro">Household code</span>
+                <span class="val">7K4M-92XQ</span></div>
+              <div class="row between"><span class="micro">Entries</span>
+                <span class="val">429</span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>This app</b>Segmented buttons for exclusive sets; swatches for the accent, because the colour is the thing being chosen.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script src="theme.js"></script>

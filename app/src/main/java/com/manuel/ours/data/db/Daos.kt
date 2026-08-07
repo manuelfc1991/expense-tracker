@@ -117,6 +117,41 @@ interface TransactionDao {
     suspend fun findByRef(refNo: String): TransactionEntity?
 
     /**
+     * The same three lookups, **including rows that were deleted**.
+     *
+     * Dedup that only sees live rows cannot see a deletion, so a rescan re-imported every
+     * message whose row somebody had removed — the tombstone was invisible and the message
+     * looked new. Six rows deleted on 6 August came back on the next rescan and put ₹50,955
+     * of duplicates into a month that had just been cleaned up.
+     *
+     * A deleted row is still proof the message was seen. What it means is *not* "import
+     * this again", it is "we have met this one and the household said no".
+     */
+    @Query("SELECT * FROM transactions WHERE refNo = :refNo LIMIT 1")
+    suspend fun findByRefEvenIfDeleted(refNo: String): TransactionEntity?
+
+    @Query("SELECT * FROM transactions WHERE bankMessageId = :id LIMIT 1")
+    suspend fun findByMessageIdEvenIfDeleted(id: String): TransactionEntity?
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE amountPaise = :amountPaise AND dedupeAt BETWEEN :fromAt AND :toAt
+        """
+    )
+    suspend fun findNearbyEvenIfDeleted(
+        amountPaise: Long, fromAt: Long, toAt: Long,
+    ): List<TransactionEntity>
+
+    /**
+     * The bank's own message id, which is the only thing tying Kerala Gramin's two
+     * SMS for one debit together. Probed directly because the pair falls outside the
+     * time window `findNearby` searches.
+     */
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND bankMessageId = :id LIMIT 1")
+    suspend fun findByMessageId(id: String): TransactionEntity?
+
+    /**
      * Rows carrying this person's name under some *other* id.
      *
      * A reinstall mints a fresh uid, and rows synced back from the sheet keep the old
@@ -145,11 +180,20 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND deleteRequestedBy IS NOT NULL")
     fun observeDeleteRequestCount(): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1")
-    fun observeNeedsReviewCount(): Flow<Int>
+    /**
+     * Both of these take the tracking-start cutoff, and must.
+     *
+     * Without it the badge counted rows every list on the app deliberately hides: this
+     * household tracks from 1 August, four `needsReview` rows sit before it, and the
+     * Activity tab therefore advertised four pieces of work that led to an empty Sort
+     * screen and an "Untagged 0" filter. A count you cannot act on is worse than none —
+     * it sends someone looking for work that is not there.
+     */
+    @Query("SELECT COUNT(*) FROM transactions WHERE deleted = 0 AND needsReview = 1 AND occurredAt >= :since")
+    fun observeNeedsReviewCount(since: Long): Flow<Int>
 
-    @Query("SELECT * FROM transactions WHERE deleted = 0 AND needsReview = 1 ORDER BY occurredAt DESC")
-    fun observeNeedsReview(): Flow<List<TransactionEntity>>
+    @Query("SELECT * FROM transactions WHERE deleted = 0 AND needsReview = 1 AND occurredAt >= :since ORDER BY occurredAt DESC")
+    fun observeNeedsReview(since: Long): Flow<List<TransactionEntity>>
 
     @Query(
         """
@@ -399,4 +443,26 @@ interface SharedRuleDao {
 
     @Query("SELECT * FROM shared_rules WHERE updatedAt > :since")
     suspend fun changedSince(since: Long): List<SharedRuleEntity>
+}
+
+@Dao
+interface PendingSenderDao {
+
+    @Query("SELECT * FROM pending_senders ORDER BY lastAt DESC")
+    fun observeAll(): Flow<List<PendingSenderEntity>>
+
+    @Query("SELECT COUNT(*) FROM pending_senders")
+    fun observeCount(): Flow<Int>
+
+    @Query("SELECT * FROM pending_senders WHERE header = :header")
+    suspend fun find(header: String): PendingSenderEntity?
+
+    @Upsert
+    suspend fun upsert(row: PendingSenderEntity)
+
+    @Query("DELETE FROM pending_senders WHERE header = :header")
+    suspend fun delete(header: String)
+
+    @Query("DELETE FROM pending_senders")
+    suspend fun clear()
 }

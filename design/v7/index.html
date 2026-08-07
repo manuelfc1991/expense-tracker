@@ -1,0 +1,547 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — a Material 3 redesign</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours · v7 · August 2026</p>
+  <h1>Statement, on Material 3</h1>
+  <p class="doc-lede">
+    A complete redesign of <strong>Ours</strong> — the Android expense tracker that parses Indian
+    bank and UPI SMS and keeps two phones in one household in step. Every screen, every sheet,
+    every dialog, every state, in light and dark, with the design system behind it.
+  </p>
+  <p class="doc-lede">
+    <strong>What this is not:</strong> a replacement for the app’s visual identity. The governing
+    idea — <em>a bank SMS is a machine-printed statement line</em> — is the best thing about this
+    product and v7 keeps it intact. What v7 replaces is the <em>system</em> underneath: MD3 colour
+    roles instead of bespoke names, a 4dp grid instead of 15/7/9/11/13dp, real touch targets
+    instead of tappable 9dp glyphs, and the three UI states the app currently has no design for
+    at all.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html" aria-current="page">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+    <a href="screens-accounts.html">Accounts &amp; cards</a>
+    <a href="screens-lock.html">Unlock</a>
+  </nav>
+</header>
+
+<!-- ══ THE PACKAGE ═════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="package">
+  <h2>The package</h2>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:190px">Page</th><th>Contains</th></tr>
+    <tr><td><a href="design-system.html"><strong>Design system</strong></a></td>
+      <td>Six principles · the full MD3 colour scheme in light and dark with every contrast ratio
+        measured · twelve category hues validated against three dichromacies · the 21-role type
+        scale · spacing, shape, elevation and motion tokens · icon guidelines with all 60 glyphs ·
+        the accessibility audit · window size classes · Figma and Compose handoff.</td></tr>
+    <tr><td><a href="components.html"><strong>Components</strong></a></td>
+      <td>The five UI states on one component, then every control in every state: buttons, FABs,
+        icon buttons, chips, switches, segmented buttons, category grids, text fields, search,
+        money input, list rows, panels, data tables, app bars, bottom nav, nav rail, tabs, pills,
+        badges, notices, snackbars, progress, skeletons, empty states, rulers, meters, charts,
+        date and time pickers, notifications, the widget.</td></tr>
+    <tr><td><a href="screens-core.html"><strong>Core screens</strong></a></td>
+      <td>The five tabs — Home, Activity, Summary, Budgets, Settings — each with purpose,
+        wireframe, hi-fi mockup, component list, interactions, navigation and what changed. 17
+        phone mockups.</td></tr>
+    <tr><td><a href="screens-flows.html"><strong>Flows</strong></a></td>
+      <td>The twelve child screens: onboarding (5 steps), entry detail, Sort, Trash, Delete
+        requests, <strong>marking a refund</strong> (new), Rules, Parser tester, Sheet setup, QR
+        scanner, Backup, and the lock gate. 28 phone mockups.</td></tr>
+    <tr><td><a href="overlays.html"><strong>Sheets &amp; dialogs</strong></a></td>
+      <td>Four bottom sheets, nine dialogs, the overlay popup, the notification shade, menus and
+        the share sheet. 17 phone mockups.</td></tr>
+    <tr><td><code>ours.css</code></td>
+      <td>The system as CSS custom properties. Every mockup on every page is built from these
+        tokens — change one here and it changes everywhere, which is the only way a design
+        document can be trusted.</td></tr>
+    <tr><td><code>sprite.js</code></td>
+      <td>All 60 icons, converted straight from the app’s own Android vector drawables. A glyph in
+        a mockup is byte-for-byte the glyph that ships.</td></tr>
+  </table>
+  </div>
+  <p style="font-size:14px">
+    Use the <strong>Dark / Light</strong> switch in the top-right of any page. Light is not an
+    inversion of dark here, so both are worth checking — that is the whole reason the switch
+    exists.
+  </p>
+</section>
+
+<!-- ══ AT A GLANCE ═════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="glance">
+  <h2>The redesign at a glance</h2>
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <span class="appbar-title" style="padding-left:8px"><span class="wordmark">Ours</span></span>
+            <span class="pill ok"><svg><use href="#i-check-circle"/></svg>4m</span>
+            <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button></div>
+          <div class="screen-body pad stack-5">
+            <div><span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p></div>
+            <div class="stack-3">
+              <div class="ruler"><div class="fill" style="width:68%"></div></div>
+              <hr class="hair">
+              <div class="row between">
+                <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+                <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+                <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span></div></div>
+            <div><span class="micro">Daily · August</span>
+              <div class="daily" style="margin:10px 0 8px">
+                <i style="height:14%"></i><i style="height:8%"></i><i style="height:36%"></i><i style="height:22%"></i>
+                <i style="height:5%"></i><i style="height:48%"></i><i style="height:100%" class="peak"></i>
+                <i style="height:18%"></i><i style="height:31%"></i><i style="height:4%"></i><i style="height:26%"></i>
+                <i style="height:52%"></i><i style="height:12%"></i><i style="height:19%"></i><i style="height:41%"></i>
+                <i style="height:8%"></i><i style="height:23%"></i><i style="height:3%"></i><i style="height:37%"></i>
+                <i style="height:15%"></i><i style="height:29%"></i><i style="height:6%"></i><i style="height:44%"></i>
+                <i style="height:11%"></i><i style="height:20%"></i><i style="height:33%"></i><i style="height:7%"></i>
+                <i style="height:25%"></i><i style="height:16%"></i><i style="height:9%"></i><i style="height:4%"></i></div>
+              <div class="row between"><span class="axis">1</span>
+                <span class="axis">7 · ₹6,905.00</span><span class="axis">31</span></div></div>
+            <button class="action-card">
+              <span class="grow"><span class="ac-title" style="display:block">Sort 4 expenses</span>
+                <span class="micro on-fill" style="margin-top:4px">3 groups · about 3 taps</span></span>
+              <svg><use href="#i-chevron-right"/></svg></button>
+            <div>
+              <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+              <button class="entry" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                  <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+              <button class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                  <span class="micro">Groceries · 11:20 am</span></span><span class="amt">376.00</span></button>
+              <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                  <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button></div>
+          </div>
+          <button class="fab" aria-label="Add expense"><svg><use href="#i-plus-lg"/></svg></button>
+          <div class="navbar">
+            <button class="nav-item" aria-selected="true"><span class="nav-ind"><svg><use href="#i-house-fill"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Home · dark</b>The order is the argument: what you spent, how that sits, when, then the one thing worth doing.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours ours-light locked" data-theme="light"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons">
+          <svg><use href="#i-cloud-check"/></svg><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <span class="appbar-title" style="padding-left:8px"><span class="wordmark">Ours</span></span>
+            <span class="pill ok"><svg><use href="#i-check-circle"/></svg>4m</span>
+            <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button></div>
+          <div class="screen-body pad stack-5">
+            <div><span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p></div>
+            <div class="stack-3">
+              <div class="ruler"><div class="fill" style="width:68%"></div></div>
+              <hr class="hair">
+              <div class="row between">
+                <span><span class="micro">Budget</span><span class="val" style="display:block;margin-top:5px">₹32K</span></span>
+                <span style="text-align:center"><span class="micro">Used</span><span class="val ok" style="display:block;margin-top:5px">68%</span></span>
+                <span style="text-align:right"><span class="micro">Left</span><span class="val ok" style="display:block;margin-top:5px">₹10,021</span></span></div></div>
+            <div><span class="micro">Daily · August</span>
+              <div class="daily" style="margin:10px 0 8px">
+                <i style="height:14%"></i><i style="height:8%"></i><i style="height:36%"></i><i style="height:22%"></i>
+                <i style="height:5%"></i><i style="height:48%"></i><i style="height:100%" class="peak"></i>
+                <i style="height:18%"></i><i style="height:31%"></i><i style="height:4%"></i><i style="height:26%"></i>
+                <i style="height:52%"></i><i style="height:12%"></i><i style="height:19%"></i><i style="height:41%"></i>
+                <i style="height:8%"></i><i style="height:23%"></i><i style="height:3%"></i><i style="height:37%"></i>
+                <i style="height:15%"></i><i style="height:29%"></i><i style="height:6%"></i><i style="height:44%"></i>
+                <i style="height:11%"></i><i style="height:20%"></i><i style="height:33%"></i><i style="height:7%"></i>
+                <i style="height:25%"></i><i style="height:16%"></i><i style="height:9%"></i><i style="height:4%"></i></div>
+              <div class="row between"><span class="axis">1</span>
+                <span class="axis">7 · ₹6,905.00</span><span class="axis">31</span></div></div>
+            <button class="action-card">
+              <span class="grow"><span class="ac-title" style="display:block">Sort 4 expenses</span>
+                <span class="micro on-fill" style="margin-top:4px">3 groups · about 3 taps</span></span>
+              <svg><use href="#i-chevron-right"/></svg></button>
+            <div>
+              <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+              <button class="entry" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                  <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+              <button class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                  <span class="micro">Groceries · 11:20 am</span></span><span class="amt">376.00</span></button>
+              <button class="entry last"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+                <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                  <span class="micro warn">Untagged · 6:05 pm</span></span><span class="amt dim">70.00</span></button></div>
+          </div>
+          <button class="fab" aria-label="Add expense"><svg><use href="#i-plus-lg"/></svg></button>
+          <div class="navbar">
+            <button class="nav-item" aria-selected="true"><span class="nav-ind"><svg><use href="#i-house-fill"/></svg></span><span class="nav-lbl">Home</span></button>
+            <button class="nav-item"><span class="nav-badge">4</span><span class="nav-ind"><svg><use href="#i-receipt"/></svg></span><span class="nav-lbl">Activity</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-pie-chart"/></svg></span><span class="nav-lbl">Summary</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-wallet2"/></svg></span><span class="nav-lbl">Budgets</span></button>
+            <button class="nav-item"><span class="nav-ind"><svg><use href="#i-gear"/></svg></span><span class="nav-lbl">Settings</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Home · light</b>Ink on paper, with its own validated hues. The same layout, not an inverted one.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar select">
+            <button class="ico-btn" aria-label="Clear selection"><svg><use href="#i-x-lg"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">3 selected</span></span>
+            <button class="ico-btn" aria-label="Select all"><svg><use href="#i-check-lg"/></svg></button>
+            <button class="ico-btn" aria-label="Set category"><svg><use href="#i-tag"/></svg></button>
+            <button class="ico-btn danger" aria-label="Delete selected"><svg><use href="#i-trash"/></svg></button></div>
+          <div class="screen-body pad" style="padding-top:8px">
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+            <button class="entry selected" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">7:48 am · You</span></span><span class="amt">151.00</span></button>
+            <button class="entry selected"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Reliance Smart</span>
+                <span class="micro">11:20 am · Anu</span></span><span class="amt">376.00</span></button>
+            <button class="entry selected"><span class="avatar c-neutral"><svg><use href="#i-three-dots"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Vezhampasser</span>
+                <span class="micro warn">Untagged · 6:05 pm · You</span></span><span class="amt dim">70.00</span></button>
+            <div class="tape row between" style="margin-top:16px;padding-top:8px">
+              <span class="micro">Tue 4 Aug</span><span class="micro">₹1,449.00</span></div>
+            <button class="entry" style="margin-top:8px"><span class="avatar c-shopping"><svg><use href="#i-bag"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Amazon</span>
+                <span class="micro">2:14 pm · Anu</span></span><span class="amt">1,299.00</span></button>
+            <button class="entry last"><span class="avatar c-transport"><svg><use href="#i-fuel-pump"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Indian Oil</span>
+                <span class="micro">8:02 am · You</span></span><span class="amt">150.00</span></button>
+          </div>
+          <div class="snackbar"><span class="grow">3 transactions deleted</span>
+            <button class="sb-action">Undo</button></div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Selection</b>Delete moved to the far end and given the error colour. It was third of four identical 9sp words, between two harmless ones.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-slash"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar">
+            <span class="appbar-title" style="padding-left:8px"><span class="wordmark">Ours</span></span>
+            <span class="pill warn">3 waiting</span>
+            <button class="ico-btn" aria-label="Search"><svg><use href="#i-search"/></svg></button></div>
+          <div class="stale-ribbon"><svg><use href="#i-cloud-slash"/></svg>
+            <span class="micro grow">Offline · last synced 3h ago</span>
+            <span class="micro accent">Retry</span></div>
+          <div class="screen-body pad stack-4" style="padding-top:12px">
+            <div><span class="micro">Spent this month</span>
+              <p class="t-display-l" style="margin-top:8px">₹21,979.40</p></div>
+            <div class="ruler"><div class="fill" style="width:68%"></div></div>
+            <p class="t-body-s" style="color:var(--on-surface-muted)">This is everything
+              <em>this</em> phone knows. Anything Anu paid since 6:41 am has not arrived yet.</p>
+            <div class="notice bad">
+              <p class="nt-title">Sync failed</p>
+              <p class="nt-body">The sheet returned a Google login page instead of your data. That
+                usually means the deployment’s access is not set to “Anyone”.</p>
+              <div class="row" style="gap:8px">
+                <button class="btn btn-outline" style="flex:1;min-height:40px;font-size:12px">Try again</button>
+                <button class="btn btn-text" style="flex:1;min-height:40px;font-size:12px">Fix the sheet</button></div></div>
+            <div class="tape row between"><span class="micro">Today</span><span class="micro">₹597.00</span></div>
+            <button class="entry last" style="margin-top:8px"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="e-main"><span class="e-name cut">Keecheril St</span>
+                <span class="micro">Food · 7:48 am</span></span><span class="amt">151.00</span></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Offline + error</b>Neither of these exists in the app today. For a two-phone ledger, “what is stale” is the normal condition of the second phone, not a corner case.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WHAT CHANGED ════════════════════════════════════════════════════ -->
+<section class="doc-sec" id="changed">
+  <h2>What changed, and why</h2>
+  <p class="sec-lede">
+    Twenty-three changes, ordered by how much they matter. Every one came out of reading the app’s
+    own source or <code>docs/REVIEW.md</code> — several are problems the code comments already
+    admit to, and three are the money-model findings that review rates highest.
+  </p>
+
+  <h3>Accessibility — five systematic failures</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">1</td>
+      <td>Tap targets are the glyph itself: back arrows <span class="fail">16dp</span>, bill
+        dismiss <span class="fail">13dp</span>, detail delete <span class="fail">15dp</span>, and
+        the rule-chip delete at <span class="fail">9dp</span> — the smallest target in the app, on
+        a destructive action.</td>
+      <td>48dp minimum everywhere, 40dp only where two controls are unavoidably adjacent, never
+        below the 24dp WCAG floor. The glyph stays small; the target does not.</td></tr>
+    <tr><td class="mono">2</td>
+      <td>Accent-as-text is <span class="fail">3.80:1</span> on near-black — and accent text is
+        used for “Sort”, “Edit”, “See all”, “Put back” on nearly every screen.</td>
+      <td>The role is split: <code>primary</code> for text at <span class="pass">11.16:1</span>,
+        <code>primaryFixed</code> for fills. This is what MD3’s <em>fixed</em> roles are for.</td></tr>
+    <tr><td class="mono">3</td>
+      <td>The 9sp micro-label, which captions every figure on every screen — below MD3’s
+        <code>labelSmall</code> floor.</td>
+      <td>11sp floor for all text. Tracking carries the “caption” signal, not smallness.</td></tr>
+    <tr><td class="mono">4</td>
+      <td>Light captions at <span class="fail">4.25:1</span> and Shopping at
+        <span class="fail">2.90:1</span> — both failures the source comments name and accept.</td>
+      <td>Every role re-derived and measured. Worst text pair in v7:
+        <span class="pass">5.00:1</span>.</td></tr>
+    <tr><td class="mono">5</td>
+      <td>Food and Education are near-identical to a deuteranope; three to four category pairs
+        collapse in each theme. The source states this and accepts it.</td>
+      <td>Lightness is allowed to vary, which restores separation once hue is gone.
+        <span class="pass">0 of 66</span> pairs collapse, in both themes, under all three
+        dichromacies.</td></tr>
+  </table>
+  </div>
+
+  <h3>States — three of five were missing</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">6</td>
+      <td><strong>No offline design at all.</strong> Sync state is a pill on Home and nothing
+        else.</td>
+      <td>A ribbon under the app bar that distinguishes what is certainly current (this phone’s
+        own SMS) from what may be missing (the other phone, since a named time). Figures are never
+        hidden — they are correct, just possibly incomplete.</td></tr>
+    <tr><td class="mono">7</td>
+      <td><strong>No error surface</strong> outside a red sentence inside a Settings
+        disclosure.</td>
+      <td>A notice that names the cause, offers one fix, and leaves the data visible beneath it.</td></tr>
+    <tr><td class="mono">8</td>
+      <td>Loading is a skeleton on Home and the words “Reading the month” everywhere else.</td>
+      <td>One skeleton system, shaped like the content, at the real row height. Nothing under
+        200ms shows anything — a flash is worse than a wait.</td></tr>
+    <tr><td class="mono">9</td>
+      <td>Empty states are one line of grey text.</td>
+      <td>Icon, a sentence about the world, a body line about why that is fine, and an action only
+        when there is genuinely one to take.</td></tr>
+  </table>
+  </div>
+
+  <h3>Interaction hazards</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">10</td>
+      <td>The bulk-selection toolbar is four identical 9sp uppercase words — <code>All ·
+        Categorize · Delete · Done</code> — with Delete third, between two harmless ones. What it
+        destroys can include hand-made entries that exist in no backup.</td>
+      <td>48dp icon buttons, Delete at the far end in the error colour, away from where a thumb
+        reaching for “done” lands. Confirm dialog and undo both kept.</td></tr>
+    <tr><td class="mono">11</td>
+      <td>The add button vanishes the moment the list moves, so the only way to add an expense is
+        unavailable during the gesture people use while looking for it.</td>
+      <td>Shrinks to the 40dp variant on scroll-down, restores at rest. The list keeps its bottom
+        padding, so the original concern — never covering an amount — still holds.</td></tr>
+    <tr><td class="mono">12</td>
+      <td>Two “Delete it / Keep it” text links 18dp apart, doing opposite irreversible things.</td>
+      <td>Two 40dp buttons with clear space, and an undo on approval.</td></tr>
+  </table>
+  </div>
+
+  <h3>Findability</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">13</td>
+      <td>The untagged count lives only on Home, so a household with 94 unsorted rows has no idea
+        until it happens to look.</td>
+      <td>A badge on the Activity tab, visible from everywhere, with a spoken label.</td></tr>
+    <tr><td class="mono">14</td>
+      <td>Search exists only on Activity, so finding a payee means changing tab first.</td>
+      <td>In the app bar on Home too, and Settings gets its own — a 1,669-line settings screen is
+        not navigable by scrolling.</td></tr>
+    <tr><td class="mono">15</td>
+      <td>The bottom bar has no active indicator and 9sp uppercase labels — the hardest text in
+        the app to read, on the thing you navigate by.</td>
+      <td>An MD3 indicator in <code>secondaryContainer</code>, so the tab is unmistakable and the
+        accent stays unique to actions. Labels 12sp sentence case.</td></tr>
+    <tr><td class="mono">16</td>
+      <td>Summary is one 1,000dp scroll holding three different questions.</td>
+      <td>Three tabs: Month, Accounts, Committed. Export moves to an app-bar icon from the very
+        bottom of the longest screen in the app.</td></tr>
+    <tr><td class="mono">17</td>
+      <td>Settings ships <em>both</em> layouts with a chip behind the developer unlock to choose —
+        indecision shipped as a preference.</td>
+      <td>One layout: the index, because five rows that report their own state is a status report
+        as well as a menu.</td></tr>
+  </table>
+  </div>
+
+  <h3>Gaps that are functional, not cosmetic</h3>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">18</td>
+      <td>The add sheet has no date or time field, so a cash lunch entered in the evening lands in
+        the wrong hour — and entered after midnight, the wrong day’s subtotal.</td>
+      <td>A <em>When</em> row: Now / Earlier today / Pick a date, with Now as the default so the
+        common case still costs nothing. MD3 date and time pickers are specified.</td></tr>
+    <tr><td class="mono">19</td>
+      <td>No response to window size at all — one 360dp layout everywhere, including a rotated
+        Android 16 handset and any foldable.</td>
+      <td>Three window classes: bottom bar under 600dp, navigation rail above it, two-pane
+        list-plus-detail at 840dp — which the detail screen already is.</td></tr>
+    <tr><td class="mono">20</td>
+      <td>The widget prints a bare percentage: “68% of ₹32K”.</td>
+      <td>The ruler, which answers “am I fine” in one look. The whole point of a widget is
+        glancing rather than reading.</td></tr>
+  </table>
+  </div>
+
+  <h3>The money model — from <code>docs/REVIEW.md</code></h3>
+  <p>
+    Three of that review’s four findings are design problems as much as code problems, so v7
+    answers them. The fourth — the missing test floor over <code>ui</code> and
+    <code>data/repo</code> — is not something a mockup can fix, and is left where the review put
+    it.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:56px">#</th><th style="width:250px">Now</th><th>v7</th></tr>
+    <tr><td class="mono">21</td>
+      <td><strong>The budget has no idea what day it is.</strong> On the morning the review was
+        written Home read <span class="fail">74% used, ₹9,710 left, meter green</span> — on the
+        <strong>6th of a 31-day month</strong>, where straight-line pace is about 19%. Nothing in
+        the budget path takes the date as an input, and <code>BudgetAlerter</code>’s flat
+        <code>listOf(100, 80)</code> fires identically on the 3rd and the 28th.</td>
+      <td>A pacing line: <strong>“A DAY FROM HERE · ₹292 · 25 days left, after ₹2,400 still
+        committed”</strong>. It paces the <em>discretionary</em> money —
+        <code>(budgetLeft − stillCommitted) ÷ daysRemaining</code> — so rent on the 1st never
+        triggers it, and the alert fires on the daily figure rather than on a percentage. Three
+        states plus two edge cases are specified on the
+        <a href="screens-core.html#home">Home</a> page.</td></tr>
+    <tr><td class="mono">22</td>
+      <td><strong>A refund is income, and the purchase it undoes still counts as spending.</strong>
+        Every credit that is not a maturing investment becomes Income, so a ₹2,000 return leaves
+        the ledger with a ₹2,000 debit <em>and</em> a ₹2,000 credit. Net worth is right; spending
+        is overstated by ₹2,000 and the budget has been charged for a purchase that was undone.</td>
+      <td>A deliberate <strong>“This is a refund”</strong> action on a credit, which asks which
+        purchase it cancels — manual and auditable, because matching on amount is the trap that
+        has already bitten this household. Four-step flow on the
+        <a href="screens-flows.html#refund">Flows</a> page, including how the pair reads afterwards
+        and where it lands in “Not counted”.</td></tr>
+    <tr><td class="mono">23</td>
+      <td><strong>Two timezones in one app.</strong> Money is bucketed in
+        <code>Asia/Kolkata</code>; every date the interface formats uses
+        <code>systemDefault()</code> — including the tracking-start picker. Both phones are in IST
+        today, so nothing is visibly wrong until one of them travels.</td>
+      <td>One zone for both, stated as a design rule rather than an implementation detail: it is
+        what makes a day’s subtotal equal the sum of the rows printed under it. The full date
+        format table is on the <a href="design-system.html#type">Design system</a> page.</td></tr>
+  </table>
+  </div>
+
+  <div class="note-box">
+    <p class="nb-title">What v7 deliberately does not change</p>
+    <p>
+      The printed-statement row, with its shared right-hand amount column and no ₹ per line. The
+      ruler as discrete ticks. One accent and one primary action per screen. Hairlines instead of
+      elevation. Ranked bars instead of a donut. Label above value. The absence of swipe actions.
+      “Say what is missing, never no data.” Every one of those is a decision the app got right,
+      several of them after getting it wrong first, and the source comments record why. A redesign
+      that discarded them would be a different product wearing the same name.
+    </p>
+  </div>
+</section>
+
+<!-- ══ IMPLEMENTATION ══════════════════════════════════════════════════ -->
+<section class="doc-sec" id="implementation">
+  <h2>Implementing it</h2>
+  <p class="sec-lede">
+    Ordered so that each step is shippable on its own and none of them requires the next one.
+  </p>
+  <div class="tbl-scroll">
+  <table class="spec-table">
+    <tr><th style="width:70px">Step</th><th style="width:240px">Change</th><th>Touches</th></tr>
+    <tr><td class="mono">1</td><td><strong>Tokens.</strong> Rename <code>OursColors</code> fields
+      to the MD3 roles, add <code>primary</code>/<code>primaryFixed</code>, drop in the measured
+      values and the new category maps.</td>
+      <td><code>ui/theme/Color.kt</code>, <code>Theme.kt</code>. Mechanical, and it fixes failures
+        2, 4 and 5 on its own.</td></tr>
+    <tr><td class="mono">2</td><td><strong>Type.</strong> 9sp → 11sp on
+      <code>MicroLabelStyle</code> and <code>labelSmall</code>; align the rest of the scale.</td>
+      <td><code>Type.kt</code>. Expect 4–6px of extra height per captioned figure; the mockups are
+        drawn at the new size and still fit.</td></tr>
+    <tr><td class="mono">3</td><td><strong>Targets.</strong> Wrap every tappable glyph in a 48dp
+      <code>IconButton</code>.</td>
+      <td>Every screen, but each edit is one line. This is the highest-value change in the set.</td></tr>
+    <tr><td class="mono">4</td><td><strong>Spacing and shape.</strong> 15dp → 16dp edge; the
+      7/9/11/13dp paddings onto the 4dp grid; <code>OursShapes</code> onto the MD3 scale.</td>
+      <td><code>Type.kt</code> shapes, and the <code>EDGE</code> constant each screen declares —
+        which should become one shared token rather than eight copies.</td></tr>
+    <tr><td class="mono">5</td><td><strong>App bar and nav.</strong> One <code>OursTopBar</code>
+      with title / back / selection variants; nav indicator and badge.</td>
+      <td><code>ui/nav/Navigation.kt</code>, plus deleting the hand-rolled header row from each of
+        the sixteen screens that has one.</td></tr>
+    <tr><td class="mono">6</td><td><strong>The three missing states.</strong> An offline ribbon, an
+      error notice, one skeleton system.</td>
+      <td>New components, then wiring per screen. The only step that needs new view-model state:
+        each screen needs to know “last synced” and “last error”.</td></tr>
+    <tr><td class="mono">7</td><td><strong>Commitment-aware pacing.</strong> The daily-allowance
+      line on Home, and <code>BudgetAlerter</code> firing on it rather than on flat
+      percentages.</td>
+      <td>No new data — <code>committedRemaining()</code>, <code>RecurringDetector</code> and
+        <code>Affordability</code> all exist. The review estimates about a day, and rates it first
+        of everything on its own list.</td></tr>
+    <tr><td class="mono">8</td><td><strong>The refund action.</strong> A field on both
+      transactions, a picker sheet, and <code>totalSpent</code>/<code>totalReceived</code> honouring
+      it.</td>
+      <td>The model change is small; the interface is the part that needed designing, and it is
+        specified. Syncs as an ordinary last-write-wins field.</td></tr>
+    <tr><td class="mono">9</td><td><strong>One timezone constant.</strong></td>
+      <td>An hour, and it closes a trap rather than a bug. Worth doing before anyone travels.</td></tr>
+    <tr><td class="mono">10</td><td><strong>Structure.</strong> Summary tabs, Settings search, the
+      When row on the add sheet.</td>
+      <td>Feature work. Independent of everything above.</td></tr>
+    <tr><td class="mono">11</td><td><strong>Window classes.</strong> Rail and two-pane.</td>
+      <td>The largest single change, and the one with the least urgency — worth doing when there
+        is a tablet or a foldable in the household to test on.</td></tr>
+  </table>
+  </div>
+
+  <div class="note-box warn">
+    <p class="nb-title">Two things to check before touching the app</p>
+    <p>
+      Release builds must use <code>ours-release.jks</code>. A build signed with any other key
+      cannot install over what is on the phones, and the only way past that is an uninstall —
+      which destroys manual entries and hand-made category corrections that exist in no backup
+      and cannot be rebuilt from SMS. If <code>keystore.properties</code> is missing, the build
+      still succeeds and silently produces an unsigned APK.
+    </p>
+    <p>
+      And run Gradle from the repository root. From a subdirectory it silently does nothing, which
+      has already led once to a stale APK being installed and a fix reported as shipped when it
+      was not.
+    </p>
+  </div>
+</section>
+
+</div>
+
+<script src="theme.js"></script>

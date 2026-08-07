@@ -26,6 +26,21 @@ class SmsParser {
             val dueAt: Long? = null,
         ) : Result
         data class Ignored(val reason: Reason) : Result
+
+        /**
+         * Payment-shaped, from a sender we cannot vouch for.
+         *
+         * Not an expense and not a rejection — a question. Adopting an unknown sender on
+         * the shape of its message alone was measured against 2,810 real messages and read
+         * an EPF passbook line as ₹61,989 of income, so shape is enough to *ask* and not
+         * enough to *count*. These are held until somebody says which they are.
+         */
+        data class Unrecognised(
+            val header: String,
+            val amountPaise: Long?,
+            val type: TxnType?,
+            val body: String,
+        ) : Result
     }
 
     enum class Reason {
@@ -44,6 +59,14 @@ class SmsParser {
          * re-states a purchase that is already recorded, so counting it double-bills you.
          */
         NOT_A_TRANSACTION,
+
+        /**
+         * Older than the date this sender started being read. See [BankRule.notBefore].
+         *
+         * Not a fault in the message — it parses perfectly. It predates the point the
+         * household chose to start counting this account from.
+         */
+        BEFORE_SENDER_START,
     }
 
     /** What kind of money movement this is — decides whether it counts as spending. */
@@ -85,6 +108,8 @@ class SmsParser {
          */
         val counterpartyTail: String?,
         val refNo: String?,
+        /** The bank's own id for this message, when it gives one. See [MESSAGE_ID]. */
+        val messageId: String?,
         val balancePaise: Long?,
         val occurredAt: Long,
         val rawBody: String,
@@ -99,11 +124,39 @@ class SmsParser {
          * resolution.
          */
         val dedupeAt: Long = occurredAt,
+        /**
+         * False when the sender is one we cannot vouch for and the message was read anyway.
+         *
+         * Such a row is a real payment as far as the app can tell, and it counts — but the
+         * app has no idea who sent it, so it is flagged for review and lands under Untagged
+         * where it can be found and removed alongside the others.
+         */
+        val senderVouched: Boolean = true,
     )
 
-    fun parse(sender: String, body: String, receivedAt: Long): Result {
-        val rule = BankRules.forSender(sender)
-            ?: return Result.Ignored(Reason.UNKNOWN_SENDER)
+    /**
+     * @param readEveryPayment adopt a payment-shaped message from **any** sender rather
+     *   than holding it for confirmation. See `AppPrefs.readEveryPayment` for the trade.
+     */
+    fun parse(
+        sender: String,
+        body: String,
+        receivedAt: Long,
+        readEveryPayment: Boolean = false,
+    ): Result {
+        val known = BankRules.forSender(sender)
+        // A header we do not recognise is not proof this is not a bank. Fall through to
+        // the shape of the message itself, which is the thing that actually decides.
+        val rule = known
+            ?: provisionalRule(sender, body)
+            ?: adoptedRule(sender, body, readEveryPayment)
+            ?: return unrecognised(sender, body)
+
+        // A sender the app only started reading part-way through its own history.
+        // `receivedAt == 0` means "no time given", which only happens in tests.
+        if (rule.notBefore > 0L && receivedAt > 0L && receivedAt < rule.notBefore) {
+            return Result.Ignored(Reason.BEFORE_SENDER_START)
+        }
 
         val lower = body.lowercase()
 
@@ -131,6 +184,16 @@ class SmsParser {
         val merchant = extractMerchant(body, rule)
         val parsedDate = extractDateTime(body)
 
+        // Learn only from a message that survived every reject rule above. An OTP quoting
+        // a debit is bank-shaped and must teach us nothing, or one such message enrols a
+        // sender whose every future OTP then arrives as an expense.
+        // Only remember a header whose bank we actually identified. A sender adopted on
+        // shape alone has the header itself as its "bank", and learning that would dress a
+        // guess up as knowledge — and quietly promote it past the review flag next time.
+        if (known == null && BankRules.bankNamedIn(body) != null) {
+            BankRules.rememberDiscovered(sender, rule.bank)
+        }
+
         return Result.Expense(
             ParsedTxn(
                 amountPaise = amount,
@@ -140,6 +203,7 @@ class SmsParser {
                 accountTail = extractAccountTail(body),
                 counterpartyTail = extractCounterpartyTail(body),
                 refNo = extractRefNo(body),
+                messageId = extractMessageId(body),
                 balancePaise = extractBalance(body),
                 occurredAt = parsedDate?.epochMillis ?: receivedAt,
                 rawBody = body,
@@ -147,8 +211,117 @@ class SmsParser {
                 // A date without a clock time cannot separate two transactions on the
                 // same day, so dedup uses when the message actually arrived instead.
                 dedupeAt = if (parsedDate?.hasTime == true) parsedDate.epochMillis else receivedAt,
+                // Vouched when the table knew the header, or the message named a bank we
+                // know. Anything else was taken on the shape of the text alone.
+                senderVouched = known != null || BankRules.bankNamedIn(body) != null,
             )
         )
+    }
+
+    // -- Recognising a bank we were never told about ------------------------------
+
+    /**
+     * A rule for a sender the table has never heard of, or null to leave it discarded.
+     *
+     * The compiled header table cannot be complete. A bank can register a new DLT header
+     * whenever it likes, and when it does the failure is silent: no error, no unparsed
+     * count, just money that stops appearing. That is how `FEDSMS` cost this household a
+     * credit from the account it already tracked under `FEDBNK`.
+     *
+     * So identity falls back to evidence, and it takes **two** things: the message must
+     * have the shape of a bank alert *and* name, in words, a bank this app already
+     * knows. Banks sign their messages — "-Federal Bank", "-Utkarsh SFBL" — and that
+     * signature is what separates a real alert from everything else shaped like one.
+     *
+     * Shape alone was tried first and is not enough. Audited against this household's
+     * 2,810 messages, 99 headers were unrecognised and six of them carried
+     * bank-shaped text: an EPF passbook notice, an Amazon Pay balance, a fuel loyalty
+     * receipt, a Myntra gift card and two trading spams. Shape alone read the EPF
+     * balance as ₹61,989 of income. Requiring the signature rejects all six and still
+     * catches the header that started this — `FEDSMS`, which says "Federal Bank" in
+     * its last two words.
+     *
+     * The cost is honest: a bank in neither the table nor the message text is still
+     * missed, and is still fixed by teaching the header through the sheet.
+     */
+    private fun provisionalRule(sender: String, body: String): BankRule? {
+        val header = BankRules.normaliseHeader(sender) ?: return null
+        // A DLT header is alphabetic and short. Anything else is a person or a shortcode.
+        if (header.length !in 3..15) return null
+        if (header.none { it.isLetter() }) return null
+        if (!looksLikeBankAlert(body)) return null
+        val named = BankRules.bankNamedIn(body) ?: return null
+        return BankRule(bank = named, headers = listOf(header))
+    }
+
+    /**
+     * A rule for a payment-shaped message from a sender nobody can vouch for.
+     *
+     * Only when the household has asked for it. The bank is the header itself, which is
+     * honest — it is all we know — and the row is flagged unvouched so it is findable.
+     */
+    private fun adoptedRule(sender: String, body: String, enabled: Boolean): BankRule? {
+        if (!enabled) return null
+        val header = BankRules.normaliseHeader(sender) ?: return null
+        if (header.length !in 3..15 || header.none { it.isLetter() }) return null
+        if (!looksLikeBankAlert(body)) return null
+        return BankRule(bank = header, headers = listOf(header))
+    }
+
+    /**
+     * What to do with a sender we cannot vouch for.
+     *
+     * If the message is payment-shaped it becomes a question rather than a discard — the
+     * failures that cost this household most were silent, and a header nobody has heard of
+     * is exactly how a bank disappears. If it is not payment-shaped, or it is one of the
+     * things that only looks like one, it is dropped as before.
+     *
+     * The reject rules are applied here too, and must be. They normally run *after* the
+     * sender gate, so without this an OTP quoting a debit — bank-shaped by every measure —
+     * would queue up asking whether its sender is a bank.
+     */
+    private fun unrecognised(sender: String, body: String): Result {
+        val header = BankRules.normaliseHeader(sender)
+            ?: return Result.Ignored(Reason.UNKNOWN_SENDER)
+        if (header.length !in 3..15 || header.none { it.isLetter() }) {
+            return Result.Ignored(Reason.UNKNOWN_SENDER)
+        }
+        if (!looksLikeBankAlert(body)) return Result.Ignored(Reason.UNKNOWN_SENDER)
+
+        // The precise reason, not a blanket UNKNOWN_SENDER. The Parser Tester explains
+        // whichever comes back, and "this looks like an OTP" is a far more useful answer
+        // than "we don't know this sender" when the sender is beside the point.
+        val lower = body.lowercase()
+        when {
+            looksLikeOtp(lower) -> return Result.Ignored(Reason.OTP)
+            looksFailed(lower) -> return Result.Ignored(Reason.FAILED_TRANSACTION)
+            isNotATransaction(lower) -> return Result.Ignored(Reason.NOT_A_TRANSACTION)
+            looksPromotional(lower) -> return Result.Ignored(Reason.PROMOTIONAL)
+        }
+        return Result.Unrecognised(
+            header = header,
+            amountPaise = extractAmount(body),
+            type = detectType(lower),
+            body = body.trim(),
+        )
+    }
+
+    /**
+     * Three signals, all required.
+     *
+     * Any two of them occur innocently — a delivery notice has an amount and a reference
+     * number, a reminder has an amount and the word "paid". It is the account or card
+     * number alongside a settled verb and a real amount that makes it banking, and that
+     * combination is what keeps "never miss a bank" from becoming "every shop is a bank".
+     */
+    private fun looksLikeBankAlert(body: String): Boolean {
+        val lower = body.lowercase()
+        if (!DEBIT_VERB.containsMatchIn(lower) && !CREDIT_VERB.containsMatchIn(lower)) return false
+        if (extractAmount(body) == null) return false
+        return ACCOUNT_TAIL.containsMatchIn(body) ||
+            BALANCE_CLAUSE.containsMatchIn(body) ||
+            UPI_REFERENCE.containsMatchIn(lower) ||
+            REF_NO.containsMatchIn(body)
     }
 
     // -- Reject heuristics --------------------------------------------------------
@@ -232,7 +405,13 @@ class SmsParser {
      * both is the single biggest source of inflated monthly totals.
      */
     private fun isCardBillPayment(lower: String): Boolean {
-        val mentionsCard = "credit card" in lower || "card payment" in lower
+        // Any word ending in "card", not the literal phrase "credit card".
+        //
+        // Utkarsh calls its card a **SuperCard**: "We have received payment of INR
+        // 1,778.00 for your SuperCard ending 1234". That is a bill being settled, and
+        // missing it counts the bill *and* the 251 individual card debits that built it
+        // — the double-count this whole branch exists to prevent.
+        val mentionsCard = CARD_WORD.containsMatchIn(lower)
         val isPayment = ("payment of" in lower && "received" in lower) ||
             "payment received" in lower ||
             "bharat bill payment" in lower ||
@@ -319,6 +498,9 @@ class SmsParser {
 
     fun extractRefNo(body: String): String? =
         REF_NO.find(body)?.groupValues?.get(1)
+
+    fun extractMessageId(body: String): String? =
+        MESSAGE_ID.find(body)?.groupValues?.get(1)
 
     /**
      * Merchant / counterparty, or null when we genuinely cannot tell.
@@ -447,14 +629,25 @@ class SmsParser {
             RegexOption.IGNORE_CASE,
         )
 
+        /**
+         * The separator is `[\s:=-]*`, not a space or a colon.
+         *
+         * Federal writes "BAL-Rs.3000.23-Federal Bank". Every other bank in the table
+         * writes "Avl Bal: Rs.3000.23", so the clause expected whitespace or a colon and
+         * stopped dead at the hyphen — the balance went unrecorded on an account whose
+         * ₹3,000 minimum is the reason the balance is worth recording at all.
+         *
+         * The leading `\b` matters once the separator is that permissive: without it
+         * "global 500" offers "bal" + " " + "500" and reports a balance of ₹500.
+         */
         val BALANCE_CLAUSE = Regex(
-            "(?:avl(?:\\.|able)?\\s*(?:bal|balance)|a/c\\s*bal(?:ance)?|clr\\s*bal|" +
-                "bal(?:ance)?\\s*(?:is|:)?)\\s*:?\\s*$CURRENCY?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)",
+            "\\b(?:avl(?:\\.|able)?\\s*(?:bal|balance)|a/c\\s*bal(?:ance)?|clr\\s*bal|" +
+                "bal(?:ance)?\\s*(?:is|:)?)[\\s:=-]*$CURRENCY?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)",
             RegexOption.IGNORE_CASE,
         )
 
         val BALANCE_MARKER = Regex(
-            "(avl bal|available balance|a/c bal|clear balance|clr bal)",
+            "(avl bal|available balance|a/c bal|clear balance|clr bal|\\bbal\\s*[-:=])",
             RegexOption.IGNORE_CASE,
         )
 
@@ -484,12 +677,35 @@ class SmsParser {
             RegexOption.IGNORE_CASE,
         )
 
+        /** "credit card", "SuperCard", "OneCard", or a plain "card". */
+        val CARD_WORD = Regex("\\b[a-z]*card\\b", RegexOption.IGNORE_CASE)
+
         val OTP_BARE = Regex("\\b\\d{4,8}\\b\\s+is\\s+your", RegexOption.IGNORE_CASE)
         val CURRENCY_PRESENT = Regex(CURRENCY, RegexOption.IGNORE_CASE)
 
         val ACCOUNT_TAIL = Regex(
             "(?:a/c|ac|acct|account|card|xx|x{2,}|\\*{2,})\\s*(?:no\\.?)?\\s*" +
                 "(?:ending\\s*)?(?:x+|\\*+)?\\s*(\\d{4})\\b",
+            RegexOption.IGNORE_CASE,
+        )
+
+        /**
+         * The bank's own identifier for the message: "Msg Id 2644123773".
+         *
+         * Kerala Gramin sends **two** SMS for one debit — a detailed one carrying a UPI
+         * reference and a bare one carrying none — and both quote the same `Msg Id`. To
+         * the deduplicator they looked like two payments: the references could not match
+         * because only one message had one, and the pair arrived just over three minutes
+         * apart, a hair outside [SmsDeduplicator.WINDOW_MS]. A ₹1,778 card bill and a
+         * ₹7,177.79 one were each counted twice, ₹8,955.79 of a single month.
+         *
+         * Deliberately *not* folded into [REF_NO]. That value is shown on the detail
+         * screen as the reference to quote at the bank, and a message id is not one —
+         * and where a message carries both, the leftmost match would win and change
+         * which number people see.
+         */
+        val MESSAGE_ID = Regex(
+            "\\bmsg(?:\\s*|-)?id\\s*[:.\\-]?\\s*([0-9]{6,20})",
             RegexOption.IGNORE_CASE,
         )
 

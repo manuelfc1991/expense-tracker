@@ -109,7 +109,7 @@ class SummaryViewModel @Inject constructor(
             // told apart from a coincidence. The window is anchored to the month being
             // viewed rather than to today, so stepping back a year shows what was
             // recurring *then* instead of what recurs now.
-            val lookback = ym.minusMonths(RECURRING_LOOKBACK_MONTHS)
+            val lookback = ym.minusMonths(RecurringDetector.LOOKBACK_MONTHS)
             val lookbackStart =
                 MonthlyAggregator.monthRange(lookback.year, lookback.monthValue).first
 
@@ -195,6 +195,11 @@ class SummaryViewModel @Inject constructor(
         viewModelScope.launch { repository.setAccountMinimum(key, paise) }
     }
 
+    /** Declares an account to be a credit card — its balance is owed, not held. */
+    fun setCard(key: String, limitPaise: Long?, dueDay: Int?) {
+        viewModelScope.launch { repository.setCard(key, limitPaise, dueDay) }
+    }
+
     fun setMonth(value: YearMonth) {
         // Never let the pager run into the future — an empty "next month" chart
         // looks like data loss.
@@ -207,7 +212,6 @@ class SummaryViewModel @Inject constructor(
          * Two years. Enough for a yearly charge to be seen three times, which is the
          * fewest that can be told apart from a coincidence.
          */
-        const val RECURRING_LOOKBACK_MONTHS = 24L
     }
 
     fun previousMonth() = setMonth(yearMonth.value.minusMonths(1))

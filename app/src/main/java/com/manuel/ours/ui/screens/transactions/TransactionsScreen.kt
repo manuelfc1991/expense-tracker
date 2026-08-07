@@ -49,20 +49,24 @@ import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryFilter
 import com.manuel.ours.domain.model.MemberFilter
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.GhostButton
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.StatementSkeleton
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursSelectionBar
+import com.manuel.ours.ui.components.OursTopBar
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.CategoryFilterSheet
 import com.manuel.ours.ui.components.CategoryPickerSheet
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.domain.Trash
 import com.manuel.ours.ui.components.TransactionListRow
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 
-private val EDGE = 15.dp
 
 /**
  * The full statement.
@@ -80,6 +84,7 @@ private val EDGE = 15.dp
 fun TransactionsScreen(
     onTransactionClick: (String) -> Unit,
     onSort: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: TransactionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -134,11 +139,11 @@ fun TransactionsScreen(
         val rows = if (n == 1) "1 transaction" else "$n transactions"
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            containerColor = Ours.surface,
+            containerColor = Ours.surfaceContainer,
             title = {
                 Text(
                     if (isOwner) "Delete $rows?" else "Ask to remove $rows?",
-                    color = Ours.text,
+                    color = Ours.onSurface,
                 )
             },
             text = {
@@ -155,7 +160,7 @@ fun TransactionsScreen(
                             "count until they do."
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -164,11 +169,11 @@ fun TransactionsScreen(
                         confirmingDelete = false
                         viewModel.deleteSelectedWithUndo()
                     },
-                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.negative) }
+                ) { Text(if (isOwner) "Delete" else "Ask", color = Ours.error) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmingDelete = false }) {
-                    Text("Cancel", color = Ours.textSecondary)
+                    Text("Cancel", color = Ours.onSurfaceVariant)
                 }
             },
         )
@@ -179,49 +184,45 @@ fun TransactionsScreen(
     // innerPadding, so consuming it again inset the screen twice and cost ~73dp — the
     // list stopped short of the tab bar with a dead band under the last row.
     Scaffold(
-        containerColor = Ours.ink,
+        modifier = modifier,
+        containerColor = Ours.surface,
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { _ ->
         Column(Modifier.fillMaxSize()) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    if (state.selectionMode) "${state.selected.size} SELECTED" else "ACTIVITY",
-                    style = WordmarkStyle,
-                    color = if (state.selectionMode) Ours.accent else Ours.text,
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+            if (state.selectionMode) {
+                // The bar this replaces was four identical 9sp uppercase words —
+                // All · Categorize · Delete · Done — with **Delete third, between two harmless
+                // ones**, each a bare text label with no target padding. A bulk delete can take
+                // hand-made entries that exist in no backup, so three things changed: 48dp icon
+                // buttons, Delete moved to the far end where a thumb reaching for "done" cannot
+                // land on it, and it takes the error colour. The confirm and the undo stay.
+                OursSelectionBar(
+                    selectedCount = state.selected.size,
+                    onClear = { viewModel.clearSelection() },
                 ) {
-                    if (state.selectionMode) {
-                        MicroLabel(
-                            "All",
-                            color = Ours.textSecondary,
-                            modifier = Modifier.clickable { viewModel.selectAllVisible() },
-                        )
-                        MicroLabel(
-                            "Categorize",
-                            color = Ours.accent,
-                            modifier = Modifier.clickable { bulkCategorize = true },
-                        )
-                        MicroLabel(
-                            "Delete",
-                            color = Ours.negative,
-                            modifier = Modifier.clickable { confirmingDelete = true },
-                        )
-                        MicroLabel(
-                            "Done",
-                            color = Ours.textSecondary,
-                            modifier = Modifier.clickable { viewModel.clearSelection() },
-                        )
-                        return@Row
-                    }
-                    // "3 of 19" while filtered. A filtered screen that still claims the
-                    // month's full count is describing a list nobody is looking at.
+                    OursIconButton(
+                        icon = OursIcon.Check,
+                        contentDescription = "Select all shown",
+                        onClick = { viewModel.selectAllVisible() },
+                        tint = Ours.onSecondaryContainer,
+                    )
+                    OursIconButton(
+                        icon = OursIcon.Categorise,
+                        contentDescription = "Set a category for the selected entries",
+                        onClick = { bulkCategorize = true },
+                        tint = Ours.onSecondaryContainer,
+                    )
+                    OursIconButton(
+                        icon = OursIcon.Delete,
+                        contentDescription = "Delete the selected entries",
+                        onClick = { confirmingDelete = true },
+                        tint = Ours.error,
+                    )
+                }
+            } else {
+                OursTopBar(title = "Activity") {
+                    // "3 of 19" while filtered. A filtered screen that still claims the month's
+                    // full count is describing a list nobody is looking at.
                     MicroLabel(
                         if (state.filtering) {
                             "${state.shownCount} of ${state.baseCount}"
@@ -229,18 +230,14 @@ fun TransactionsScreen(
                             "${state.shownCount} ${if (state.shownCount == 1) "entry" else "entries"}"
                         }
                     )
-                    // The only permanent way into Sort.
-                    //
-                    // Home shows a "Sort N expenses" card, but the mockup only draws it
-                    // when something is untagged — so the moment the last one was
-                    // categorised the screen became unreachable from anywhere in the
-                    // app. Sort still does useful work then (it is where a wrong
-                    // category gets corrected in bulk), and a screen you can only reach
-                    // by first letting your data get messy is not a feature.
-                    MicroLabel(
-                        "Sort",
-                        color = Ours.accent,
-                        modifier = Modifier.clickable(onClick = onSort),
+                    // The only permanent way into Sort. Home shows a "Sort N expenses" card, but
+                    // only while something is untagged — so the moment the last one was
+                    // categorised the screen became unreachable from anywhere in the app.
+                    OursIconButton(
+                        icon = OursIcon.Categorise,
+                        contentDescription = "Sort untagged expenses",
+                        onClick = onSort,
+                        tint = Ours.primary,
                     )
                 }
             }
@@ -248,12 +245,12 @@ fun TransactionsScreen(
             SearchField(
                 query = state.query,
                 onQueryChange = viewModel::setQuery,
-                modifier = Modifier.padding(horizontal = EDGE, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = Space.edge, vertical = 8.dp),
             )
 
             if (state.hasPartner) {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     OursChip(
@@ -293,15 +290,15 @@ fun TransactionsScreen(
                     tint = if (state.categoryFilter == CategoryFilter.Untagged) {
                         Ours.warning
                     } else {
-                        Ours.accent
+                        Ours.primary
                     },
                     onOpen = { showFilterSheet = true },
                     onClear = { viewModel.setCategoryFilter(CategoryFilter.All) },
-                    modifier = Modifier.padding(horizontal = EDGE, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = Space.edge, vertical = 6.dp),
                 )
             } else {
                 FlowRow(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 6.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -317,7 +314,7 @@ fun TransactionsScreen(
                             label = filter.label(),
                             selected = false,
                             count = count,
-                            icon = BiIcon.forCategory(category ?: Category.OTHER),
+                            icon = OursIcon.forCategory(category ?: Category.OTHER),
                             iconTint = if (filter == CategoryFilter.Untagged) Ours.warning
                             else category?.let { Ours.forCategory(it) },
                             tint = if (filter == CategoryFilter.Untagged) Ours.warning else null,
@@ -333,19 +330,36 @@ fun TransactionsScreen(
             }
 
             when {
-                state.loading -> QuietEmpty(
-                    "Reading the month",
-                    modifier = Modifier.padding(top = 32.dp),
+                // A skeleton at the real row height, not a line of text: nothing moves when the
+                // rows arrive, and it says what is coming rather than that something is happening.
+                state.loading -> StatementSkeleton(
+                    Modifier.padding(horizontal = Space.edge, vertical = Space.s3),
                 )
 
-                state.groups.isEmpty() -> QuietEmpty(
-                    text = if (state.query.isNotBlank()) {
+                state.groups.isEmpty() -> EmptyState(
+                    title = if (state.query.isNotBlank()) {
                         "Nothing matches \"${state.query}\""
+                    } else if (state.filtering) {
+                        "Nothing under ${state.categoryFilter.label()}"
                     } else {
                         "Nothing recorded yet"
                     },
-                    icon = BiIcon.NoResults,
-                    modifier = Modifier.padding(top = 32.dp),
+                    body = if (state.query.isNotBlank()) {
+                        "Search looks at the payee and your notes, not the bank's original message."
+                    } else null,
+                    icon = OursIcon.NoResults,
+                    // An action only where there is genuinely one to take.
+                    action = if (state.query.isNotBlank() || state.filtering) {
+                        {
+                            GhostButton(
+                                label = if (state.query.isNotBlank()) "Clear search" else "Clear filter",
+                                onClick = {
+                                    if (state.query.isNotBlank()) viewModel.setQuery("")
+                                    else viewModel.setCategoryFilter(CategoryFilter.All)
+                                },
+                            )
+                        }
+                    } else null,
                 )
 
                 else -> LazyColumn(
@@ -354,12 +368,12 @@ fun TransactionsScreen(
                     state.groups.forEach { group ->
                         stickyHeader(key = "header-${group.label}") {
                             // Opaque, or the rows scroll visibly through the rule.
-                            Box(Modifier.background(Ours.ink)) {
+                            Box(Modifier.background(Ours.surface)) {
                                 TapeHeader(
                                     label = group.label,
                                     trailing = Money.exact(group.totalPaise),
                                     modifier = Modifier.padding(
-                                        horizontal = EDGE,
+                                        horizontal = Space.edge,
                                         vertical = 8.dp,
                                     ),
                                 )
@@ -481,15 +495,15 @@ private fun SearchField(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
-            .background(Ours.surface)
+            .background(Ours.surfaceContainer)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(9.dp),
     ) {
-        BiIconView(
-            BiIcon.Search,
+        OursIconView(
+            OursIcon.Search,
             contentDescription = null,
-            tint = Ours.textSecondary,
+            tint = Ours.onSurfaceVariant,
             modifier = Modifier.size(14.dp),
         )
         Box(Modifier.weight(1f)) {
@@ -497,7 +511,7 @@ private fun SearchField(
                 Text(
                     "Search merchant or note",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Ours.textLabel,
+                    color = Ours.onSurfaceMuted,
                 )
             }
             BasicTextField(
@@ -506,19 +520,21 @@ private fun SearchField(
                 singleLine = true,
                 textStyle = LocalTextStyle.current.merge(
                     MaterialTheme.typography.bodyMedium
-                ).copy(color = Ours.text),
-                cursorBrush = SolidColor(Ours.accent),
+                ).copy(color = Ours.onSurface),
+                cursorBrush = SolidColor(Ours.primary),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         if (query.isNotEmpty()) {
-            BiIconView(
-                BiIcon.Dismiss,
+            OursIconButton(
+                icon = OursIcon.Dismiss,
                 contentDescription = "Clear search",
-                tint = Ours.textSecondary,
-                modifier = Modifier
-                    .size(13.dp)
-                    .clickable { onQueryChange("") },
+                onClick = { onQueryChange("") },
+                tint = Ours.onSurfaceVariant,
+                glyph = 16.dp,
+                // 40dp: it sits inside the field, so a full 48 would make the field taller
+                // than the 48dp the field itself already is.
+                size = Space.targetTight,
             )
         }
     }

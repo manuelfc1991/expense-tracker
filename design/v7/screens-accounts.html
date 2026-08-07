@@ -1,0 +1,421 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — Accounts, cards and unrecognised messages</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Proposed · not yet built</p>
+  <h1>Accounts, cards and unrecognised messages</h1>
+  <p class="doc-lede">
+    Three requests, and one money-model consequence that has to be settled before any of them
+    ships. Every screen here is a proposal — nothing on this page exists in the app yet, which is
+    why it is a separate document rather than an edit to the built ones.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+    <a href="screens-accounts.html" aria-current="page">Accounts &amp; cards</a>
+    <a href="screens-lock.html">Unlock</a>
+  </nav>
+</header>
+
+<!-- ────────────────────────────────────────────────────────────── 13 -->
+<section class="doc-sec" id="paid-from">
+  <h2>13 · Paid from</h2>
+
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Purpose.</strong> Say which account a hand-added payment came out of.
+  </p>
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Why it is needed.</strong> <code>addManual</code> writes no account and no bank, and
+    <code>accountBalances()</code> begins by discarding every row that has neither
+    (<code>filter { !it.accountTail.isNullOrBlank() || it.bank != null }</code>). So a hand-added
+    payment is not merely unattributed — it is invisible to the Accounts tab entirely. The parser
+    fills this in from the message; the sheet that exists precisely for payments no bank messaged
+    about is the one place nothing fills it in at all.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:12px;opacity:.35">
+            <span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹30,168.20</p>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <span class="micro">New expense</span>
+            <div class="money-input"><span class="cur">₹</span><span class="num">450.75<span class="caret" style="height:30px"></span></span></div>
+            <div class="field-line"><span class="fl-input ph">Who did you pay?</span>
+              <span class="micro accent">Optional</span></div>
+            <span class="micro">Paid from</span>
+            <div class="chiprow">
+              <span class="chip" aria-selected="true"><svg><use href="#i-cash"/></svg>Cash</span>
+              <span class="chip"><svg><use href="#i-bank"/></svg>Kerala Gramin ···3062</span>
+              <span class="chip"><svg><use href="#i-bank"/></svg>Federal ···4657</span>
+              <span class="chip"><svg><use href="#i-credit-card"/></svg>SuperCard ···8842</span>
+              <span class="chip">Not sure</span></div>
+            <span class="micro">Category</span>
+            <div class="cat-grid">
+              <span class="cat-cell c-food" aria-selected="true"><svg><use href="#i-cup-hot"/></svg>Food</span>
+              <span class="cat-cell c-groceries"><svg><use href="#i-basket"/></svg>Groceries</span>
+              <span class="cat-cell c-transport"><svg><use href="#i-fuel-pump"/></svg>Transport</span>
+            </div>
+            <div class="row" style="gap:8px;margin-top:16px">
+              <button class="btn btn-outline" style="flex:1">Cancel</button>
+              <button class="btn btn-filled" style="flex:1">Save</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Add expense</b>Cash is the filled chip, because this sheet exists for
+        the payment no bank messaged about and cash is what that usually means.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">Entry</span></span></div>
+          <div class="screen-body pad stack-3" style="padding-top:8px">
+            <div class="row"><span class="avatar lg c-food"><svg><use href="#i-cup-hot"/></svg></span>
+              <span class="grow"><span style="font-size:13px;font-weight:600;display:block">Keecheril St</span>
+                <span class="micro" style="margin-top:4px">6 Aug 2026 · 6:18 pm</span></span></div>
+            <p class="t-display-m">₹140.00</p>
+            <div class="tape row between"><span class="micro">Where it came from</span></div>
+            <table class="dtable">
+              <tr><td><span class="micro">Paid by</span></td><td class="r"><b style="font-size:13px">Manuel</b></td></tr>
+              <tr><td><span class="micro">Paid from</span></td>
+                <td class="r"><span class="chip" style="display:inline-flex"><svg><use href="#i-cash"/></svg>Cash</span></td></tr>
+              <tr><td><span class="micro">Detected from</span></td><td class="r"><span class="micro">you</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>On the entry</b>The same row the parser fills for an SMS, in the same
+        place, editable. A hand-added row and a parsed one read identically.</p>
+    </div>
+  </div>
+
+  <ul class="spec-list">
+    <li><span class="k">Components</span><span class="v">
+      Sheet · money input · chip row (single-select) · category grid · filled and outline buttons.
+      Nothing new — the chip row is the one already used for When and Counts as.
+    </span></li>
+    <li><span class="k">Where the options come from</span><span class="v">
+      <code>accountBalances()</code>, which already knows every account the household transacts
+      through, plus two answers it cannot know: <strong>Cash</strong> and <strong>Not sure</strong>.
+      Both are real answers and neither should be a blank.
+    </span></li>
+    <li><span class="k">What it must not do</span><span class="v">
+      Selecting an account must <strong>not</strong> move that account's balance. Balances in this
+      app are quoted, never derived — “the app never sees a cash deposit or a silent interest
+      credit, so a balance computed by adding up transactions would drift from the truth and never
+      find its way back”. Attribution answers <em>which account</em>, not <em>how much is in it</em>.
+    </span></li>
+    <li><span class="k">Interactions</span><span class="v"><ul>
+      <li>One tap sets it; there is no confirm step, because it is one field of a form that already
+        has Save.</li>
+      <li>Chips scroll horizontally when a household has more accounts than fit.</li>
+      <li>“Not sure” is not a failure state — it is stored as unknown and the Accounts tab reports
+        it as unknown, the same way it already reports a balance nobody has quoted.</li>
+    </ul></span></li>
+    <li><span class="k">Improved</span><span class="v"><ul>
+      <li class="win">Hand-added rows stop being invisible to Accounts.</li>
+      <li class="win">The capture sheet gets the same row, so a payment caught from a notification
+        is attributable too.</li>
+    </ul></span></li>
+  </ul>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 14 -->
+<section class="doc-sec" id="cards">
+  <h2>14 · Credit cards in Accounts</h2>
+
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Purpose.</strong> Add a credit card alongside bank accounts, and show what is owed on
+    it rather than what is in it.
+  </p>
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>The rule this hangs on.</strong> A card balance is a <em>debt</em>. The Accounts tab
+    totals “what is left”, and <code>Affordability</code> spends against it. Adding ₹4,200 of card
+    debt to that total would tell the household it has ₹4,200 more to spend than it does — the
+    exact opposite of the truth. So cards are a second block with its own total, and its own word:
+    <strong>owed</strong>, never <strong>left</strong>.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab">Month</button>
+            <button class="tab" aria-selected="true">Accounts</button><button class="tab">Committed</button></div>
+          <div class="screen-body pad stack-4" style="padding-top:16px">
+            <div class="tape row between"><span class="micro">What is left</span><span class="micro">₹10,149</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">Kerala Gramin</b>
+                <span class="micro" style="margin-top:3px">···· 3062 · today</span></td>
+                <td class="r"><span class="amt">9,649.00</span></td></tr>
+              <tr><td><b style="font-size:13px">Federal</b>
+                <span class="micro" style="margin-top:3px">···· 4657 · today</span></td>
+                <td class="r"><span class="amt">500.00</span></td></tr>
+            </table>
+
+            <div class="tape row between"><span class="micro">Owed on cards</span><span class="micro">₹4,200</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">Utkarsh SuperCard</b>
+                <span class="micro" style="margin-top:3px">RuPay ···· 8842 · due 18 Aug</span>
+                <span class="micro" style="margin-top:3px">₹15,800 of ₹20,000 still free</span></td>
+                <td class="r"><span class="amt">4,200.00</span></td></tr>
+            </table>
+            <p class="t-body-s" style="color:var(--on-surface-variant)">Owed is not subtracted from
+              what is left. It is money you have already spent and not yet paid.</p>
+            <button class="btn btn-outline block"><svg><use href="#i-plus-lg"/></svg>Add an account</button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Accounts, with a card</b>Two blocks, two words. “Left” is capacity;
+        “owed” is a bill already run up. Summing them would be a lie in whichever direction you did it.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+          <div class="screen-body pad" style="padding-top:16px;opacity:.35">
+            <div class="tape row between"><span class="micro">What is left</span><span class="micro">₹10,149</span></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <span class="micro">Add an account</span>
+            <div class="stack-2" style="margin-top:10px">
+              <div class="panel row"><span class="avatar lg"><svg><use href="#i-bank"/></svg></span>
+                <span class="grow"><b style="font-size:13px;display:block">Bank account</b>
+                  <span class="micro" style="margin-top:3px">Money you have</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></div>
+              <div class="panel row"><span class="avatar lg"><svg><use href="#i-credit-card"/></svg></span>
+                <span class="grow"><b style="font-size:13px;display:block">Credit card</b>
+                  <span class="micro" style="margin-top:3px">Money you owe</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></div>
+              <div class="panel row"><span class="avatar lg"><svg><use href="#i-cash"/></svg></span>
+                <span class="grow"><b style="font-size:13px;display:block">Cash</b>
+                  <span class="micro" style="margin-top:3px">A wallet, not an account</span></span>
+                <svg class="chev"><use href="#i-chevron-right"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>What kind</b>The choice is made first and in words, because it decides
+        which total the account joins — and that is not a detail a form field can carry.</p>
+    </div>
+
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">Credit card</span></span></div>
+          <div class="screen-body pad stack-3" style="padding-top:8px">
+            <div class="field-line"><span class="fl-input">Utkarsh SuperCard</span></div>
+            <span class="micro">Network</span>
+            <div class="chiprow">
+              <span class="chip" aria-selected="true">RuPay</span>
+              <span class="chip">Visa</span><span class="chip">Mastercard</span></div>
+            <div class="field-line"><span class="fl-input">Last 4 digits · 8842</span></div>
+            <div class="field-line"><span class="fl-input">Credit limit · ₹20,000</span>
+              <span class="micro accent">Optional</span></div>
+            <div class="field-line"><span class="fl-input">Bill due on · 18th</span>
+              <span class="micro accent">Optional</span></div>
+            <div class="notice">
+              <svg><use href="#i-question-circle"/></svg>
+              <span>Its purchases already arrive by SMS, so the bill you pay will not be counted
+                as spending a second time.</span></div>
+            <button class="btn btn-filled block">Add card</button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Adding the card</b>The limit is optional and buys one thing: “still
+        free”. Without it the card still works, it just cannot say how much room is left.</p>
+    </div>
+  </div>
+
+  <ul class="spec-list">
+    <li><span class="k">Never summed together</span><span class="v">
+      Two totals, never one. <code>Affordability</code> reads “what is left”; the owed figure is
+      reported beside it and never enters it. An account with no balance recorded is already
+      counted-and-reported rather than summed as zero, and a card follows the same rule.
+    </span></li>
+    <li><span class="k">The card bill stops double-counting</span><span class="v">
+      This is the part that is not cosmetic. <code>Category.CARD_PAYMENT</code> counts as spending
+      today, deliberately: “on this ledger not one of 460 rows was an individual card purchase, so
+      the bill is the <em>only</em> record”. The SuperCard breaks that — its purchases arrive from
+      <code>UTKSPR</code> and have been read since 1 August. Registering a card here is what tells
+      the app that <em>this</em> card's purchases are recorded, so <em>this</em> card's bill must
+      not be. The ICICI card, whose purchases still never arrive, keeps counting its bill.
+      <strong>Per card, not per category</strong> — which is exactly why it belongs in an account
+      the household creates rather than in a rule in the code.
+    </span></li>
+    <li><span class="k">Components</span><span class="v">
+      Chooser sheet · text fields · chip row · notice · filled button · the existing accounts table
+      with a second block and its own tape header.
+    </span></li>
+    <li><span class="k">Nav</span><span class="v">Summary → Accounts → Add an account → kind → form.
+      Back at any point keeps nothing.</span></li>
+  </ul>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 15 -->
+<section class="doc-sec" id="unrecognised">
+  <h2>15 · Possible payments</h2>
+
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Purpose.</strong> Never silently miss a payment, whoever sent the message — without
+    silently counting one that is not a payment.
+  </p>
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Why it is a queue and not automatic.</strong> The request was to track any message
+    carrying a payment, debit or credit keyword. That exact rule was built and measured against
+    this household's 2,810 real messages first. Ninety-nine sender headers were unrecognised; six
+    of them wrote something with an amount, a settled verb and a masked number, and
+    <strong>none of the six was a bank</strong> — an EPF passbook line, an Amazon Pay balance, a
+    fuel loyalty receipt, a Myntra gift card and two trading spams. The rule read the EPF line as
+    <strong>₹61,989 of income</strong> and accepted an SMS advertising a shortened link.
+    <br><br>
+    So the catch is kept wide and the <em>counting</em> is what waits. Everything that looks like a
+    payment is captured; anything from a sender we cannot vouch for lands here first, and one tap
+    settles it forever.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">Possible payments</span></span>
+            <span class="micro" style="padding-right:12px">3</span></div>
+          <div class="screen-body pad stack-3" style="padding-top:12px">
+            <p class="t-body-s" style="color:var(--on-surface-variant)">These look like payments but
+              came from senders we do not know. Nothing here is in your total yet.</p>
+
+            <div class="panel" style="background:var(--surface-c-low)">
+              <div class="row"><span class="avatar lg c-neutral"><svg><use href="#i-question-circle"/></svg></span>
+                <span class="grow"><span style="font-size:13px;font-weight:600;display:block">IDFCFB</span>
+                  <span class="micro" style="margin-top:4px">2 messages · first on 4 Aug</span></span>
+                <span class="amt">2,340.00</span></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">“INR 2,340.00 debited from
+                A/c XX9931 on 04AUG26 at BIGBAZAAR”</p>
+              <div class="chiprow">
+                <span class="chip" aria-selected="true"><svg><use href="#i-check"/></svg>Yes, my bank</span>
+                <span class="chip">Not a payment</span></div>
+              <span class="micro">Applies to both, and everything IDFCFB sends from now on</span>
+            </div>
+
+            <div class="panel" style="background:var(--surface-c-low)">
+              <div class="row"><span class="avatar lg c-neutral"><svg><use href="#i-question-circle"/></svg></span>
+                <span class="grow"><span style="font-size:13px;font-weight:600;display:block">EPFOHO</span>
+                  <span class="micro" style="margin-top:4px">1 message · 2 Aug</span></span>
+                <span class="amt">61,989.00</span></div>
+              <p class="t-body-s" style="color:var(--on-surface-variant)">“your passbook balance
+                against KRKTM···5678 is Rs. 61,989/-”</p>
+              <div class="chiprow">
+                <span class="chip">Yes, my bank</span>
+                <span class="chip" aria-selected="true">Not a payment</span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>The queue</b>Grouped by sender, not by message — the decision is about
+        who sent it, and answering once should settle every message they ever send.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><span class="appbar-title"><span class="wordmark">Home</span></span></div>
+          <div class="screen-body pad stack-3" style="padding-top:12px">
+            <span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:8px">₹30,168.20</p>
+            <button class="action-card">
+              <span class="grow"><span class="ac-title" style="display:block">3 possible payments</span>
+                <span class="micro on-fill" style="margin-top:4px">From senders we don't know · about 2 taps</span></span>
+              <svg><use href="#i-chevron-right"/></svg></button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>How you find it</b>The same action card Sort uses, and the same
+        promise: it says how much work, and it disappears when there is none.</p>
+    </div>
+
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Back"><svg><use href="#i-arrow-left"/></svg></button>
+            <span class="appbar-title"><span class="wordmark">Possible payments</span></span></div>
+          <div class="screen-body pad" style="padding-top:40px">
+            <div class="empty-state">
+              <svg><use href="#i-inbox"/></svg>
+              <b>Nothing waiting</b>
+              <span class="micro">Every sender that has messaged you about money is one you have
+                already answered for.</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Empty</b>A fact, not “no data”. Reached only by going looking, since
+        the card on Home is gone when this is empty.</p>
+    </div>
+  </div>
+
+  <ul class="spec-list">
+    <li><span class="k">What gets caught</span><span class="v">
+      An amount, a settled verb (debited / credited / paid / spent / received / withdrawn) and an
+      account, card or reference number. Known senders go straight to the ledger as they do today.
+      Unknown ones come here. A sender that names a bank we already know
+      (“-Federal Bank”, “-Utkarsh SFBL”) skips the queue — that is already built.
+    </span></li>
+    <li><span class="k">One tap, forever</span><span class="v">
+      “Yes, my bank” writes the header into the shared sender rules, so it travels to the other
+      phone over the sheet and neither of you is ever asked again. “Not a payment” writes the same
+      rule with an empty value, which is this store's tombstone — the sender is not re-proposed on
+      its next message.
+    </span></li>
+    <li><span class="k">Not in the total until answered</span><span class="v">
+      The rows exist but are excluded from every figure, exactly as a row before the tracking-start
+      cutoff is. The screen says so in the first line, because a number that is “nearly your
+      spending” is worse than one that is plainly not.
+    </span></li>
+    <li><span class="k">Why grouped by sender</span><span class="v">
+      Ninety-nine unknown headers produced 1,386 messages on the real phone. Asked message by
+      message that is 1,386 decisions; asked sender by sender it is at most ninety-nine, and in
+      practice the six that carry an amount at all.
+    </span></li>
+    <li><span class="k">Improved</span><span class="v"><ul>
+      <li class="win">A bank that changes its header is caught the same day instead of going
+        unnoticed for months — the FEDSMS and UTKSPR failures both surface here on the first
+        message.</li>
+      <li class="win">The decision is reversible: Settings → Auto-assign rules lists sender rules
+        alongside merchant ones, and clearing one puts the sender back in the queue.</li>
+    </ul></span></li>
+  </ul>
+</section>
+
+</div>
+<script src="theme.js"></script>

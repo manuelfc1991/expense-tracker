@@ -33,8 +33,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
-import com.manuel.ours.ui.theme.SheetAmountStyle
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -57,24 +57,27 @@ import com.manuel.ours.domain.model.CategoryTotal
 import com.manuel.ours.domain.model.MoneyFlow
 import com.manuel.ours.domain.model.MonthSummary
 import com.manuel.ours.export.ExportManager
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.SummarySkeleton
 import com.manuel.ours.ui.components.AmountColumn
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursChip
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.LabelOverValue
 import com.manuel.ours.ui.components.Meter
 import com.manuel.ours.ui.components.MicroLabel
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.StatementEntry
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.MonthTitleStyle
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.colorForCategory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val EDGE = 15.dp
 
 /**
  * The month, told as a net figure rather than a spend figure.
@@ -88,6 +91,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var settingBalance by remember { mutableStateOf<AccountBalance?>(null) }
     var addingAccount by remember { mutableStateOf(false) }
+    var tab by remember { mutableStateOf(SummaryTab.Month) }
     val context = LocalContext.current
     val summary = state.summary
 
@@ -98,38 +102,55 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     ) {
         item {
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
+                Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 4.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BiIconView(
-                    BiIcon.PreviousMonth,
+                OursIconButton(
+                    icon = OursIcon.PreviousMonth,
                     contentDescription = "Previous month",
-                    tint = Ours.textSecondary,
-                    modifier = Modifier.size(18.dp).clickable { viewModel.previousMonth() },
+                    onClick = { viewModel.previousMonth() },
+                    tint = Ours.onSurfaceVariant,
+                    glyph = 20.dp,
                 )
                 Text(
-                    text = state.yearMonth
-                        .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
-                        .uppercase(),
+                    text = state.yearMonth.format(OursZone.month).uppercase(),
                     style = MonthTitleStyle,
-                    color = Ours.text,
-                    modifier = Modifier.padding(horizontal = 22.dp),
+                    color = Ours.onSurface,
+                    modifier = Modifier.padding(horizontal = Space.s2),
                 )
-                BiIconView(
-                    BiIcon.NextMonth,
+                OursIconButton(
+                    icon = OursIcon.NextMonth,
                     contentDescription = "Next month",
-                    tint = Ours.textSecondary,
-                    modifier = Modifier.size(18.dp).clickable { viewModel.nextMonth() },
+                    onClick = { viewModel.nextMonth() },
+                    tint = Ours.onSurfaceVariant,
+                    glyph = 20.dp,
                 )
             }
         }
 
         if (state.loading || summary == null) {
-            item { QuietEmpty("Working out the month", modifier = Modifier.padding(top = 32.dp)) }
+            item { SummarySkeleton(Modifier.padding(horizontal = Space.edge, vertical = Space.s4)) }
         } else if (summary.totalSpentPaise == 0L && summary.totalReceivedPaise == 0L) {
-            item { QuietEmpty("Nothing yet this month", modifier = Modifier.padding(top = 32.dp)) }
+            item {
+                EmptyState(
+                    title = "Nothing in ${state.yearMonth.format(OursZone.month)}",
+                    body = "Nothing was earned or spent in this month, or tracking starts after it.",
+                    icon = OursIcon.Inbox,
+                )
+            }
         } else {
+            // Three questions, three tabs.
+            //
+            // This was one continuous scroll holding a retrospective ("where did it go"), a
+            // per-account register ("what is actually there") and a forward-looking commitments
+            // list ("what is already spoken for"). Three different questions, and reaching the
+            // third meant scrolling past both of the others every time.
+            item {
+                SummaryTabs(selected = tab, onSelect = { tab = it })
+            }
+
+            if (tab == SummaryTab.Month) {
             item { NetHeadline(summary) }
             item { EarnedSpentSaved(summary) }
             item { LeftAccounts(state.leftAccountsPaise, summary) }
@@ -141,10 +162,11 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             if (summary.excluded.isNotEmpty()) {
                 item { NotCounted(summary) }
             }
+            }
 
             // The budget and the balances reconciled, directly above the per-account
             // detail that backs the capacity half of it.
-            state.affordability?.let { afford ->
+            if (tab == SummaryTab.Accounts) state.affordability?.let { afford ->
                 item {
                     SafeToSpend(
                         state = afford,
@@ -162,21 +184,36 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             // itself is filtered, rather than the panel being hidden — a partner has to
             // be able to record their own balances even if the household's full position
             // is not theirs to read.
-            item {
-                WhatsLeft(
-                    balances = state.balances,
-                    onSet = { settingBalance = it },
-                    onAdd = { addingAccount = true },
-                )
+            if (tab == SummaryTab.Accounts) {
+                item {
+                    WhatsLeft(
+                        balances = state.balances,
+                        onSet = { settingBalance = it },
+                        onAdd = { addingAccount = true },
+                    )
+                }
             }
 
-            if (state.recurring.isNotEmpty()) {
-                item { Committed(state.recurring, state.committedMonthlyPaise) }
+            if (tab == SummaryTab.Committed) {
+                if (state.recurring.isNotEmpty()) {
+                    item { Committed(state.recurring, state.committedMonthlyPaise) }
+                } else {
+                    item {
+                        EmptyState(
+                            title = "Nothing repeating yet",
+                            body = "A charge is called recurring after three sightings — the " +
+                                "fewest that can be told from a coincidence. Rent and bills " +
+                                "appear here once they have happened three times.",
+                            icon = OursIcon.Sync,
+                        )
+                    }
+                }
             }
 
+            if (tab == SummaryTab.Month) {
             item {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
                     GhostButton(
@@ -197,13 +234,14 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                     )
                 }
             }
+            }
         }
     }
 
     if (addingAccount) {
         AddAccountDialog(
             onDismiss = { addingAccount = false },
-            onConfirm = { key, bank, balance, minimum ->
+            onConfirm = { key, bank, balance, minimum, isCard, limit ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
                 // own screen as "tap to set" rather than only on the owner's. A null
@@ -211,6 +249,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 // what is in it.
                 viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
+                if (isCard) viewModel.setCard(key, limit, null)
                 addingAccount = false
             },
         )
@@ -255,9 +294,9 @@ private fun NetHeadline(summary: MonthSummary, modifier: Modifier = Modifier) {
     val net = summary.netPaise
     // Green only when you actually kept something. A negative month rendered in the
     // positive colour would be the app telling you a comfortable lie.
-    val color = if (net >= 0) Ours.positive else Ours.negative
+    val color = if (net >= 0) Ours.success else Ours.error
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         MicroLabel("Net this month")
@@ -273,7 +312,7 @@ private fun NetHeadline(summary: MonthSummary, modifier: Modifier = Modifier) {
 
 @Composable
 private fun EarnedSpentSaved(summary: MonthSummary, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth().padding(horizontal = EDGE)) {
+    Column(modifier.fillMaxWidth().padding(horizontal = Space.edge)) {
         HairlineRule()
         Row(
             Modifier.fillMaxWidth().padding(top = 11.dp),
@@ -288,7 +327,7 @@ private fun EarnedSpentSaved(summary: MonthSummary, modifier: Modifier = Modifie
             LabelOverValue(
                 label = "Saved",
                 value = Money.exact(summary.totalSavedPaise),
-                valueColor = if (summary.totalSavedPaise > 0) Ours.positive else Ours.text,
+                valueColor = if (summary.totalSavedPaise > 0) Ours.success else Ours.onSurface,
                 alignment = Alignment.End,
             )
         }
@@ -316,7 +355,7 @@ private fun LeftAccounts(
 ) {
     val moved = leftPaise - summary.totalSpentPaise - summary.totalSavedPaise
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         HairlineRule()
@@ -335,7 +374,7 @@ private fun LeftAccounts(
                 if (moved > 0) append(", and money moved between our accounts")
             },
             style = MaterialTheme.typography.bodySmall,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
         )
     }
 }
@@ -361,12 +400,23 @@ private fun LeftAccounts(
 @Composable
 private fun AddAccountDialog(
     onDismiss: () -> Unit,
-    onConfirm: (key: String, bank: String, balance: Long?, minimum: Long?) -> Unit,
+    onConfirm: (
+        key: String,
+        bank: String,
+        balance: Long?,
+        minimum: Long?,
+        isCard: Boolean,
+        limit: Long?,
+    ) -> Unit,
 ) {
     var bank by remember { mutableStateOf("") }
     var tail by remember { mutableStateOf("") }
     var balance by remember { mutableStateOf("") }
     var minimum by remember { mutableStateOf("") }
+    // Asked first and in words, because it decides which total the account joins — money
+    // held or money owed — and that is not a detail a form field can carry.
+    var isCard by remember { mutableStateOf(false) }
+    var limit by remember { mutableStateOf("") }
 
     val cleanBank = bank.trim()
     val cleanTail = tail.filter(Char::isDigit).takeLast(4)
@@ -374,28 +424,59 @@ private fun AddAccountDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
+        containerColor = Ours.surfaceContainer,
         title = {
-            Text("Add an account", style = MaterialTheme.typography.titleMedium, color = Ours.text)
+            Text("Add an account", style = MaterialTheme.typography.titleMedium, color = Ours.onSurface)
         },
         text = {
             Column(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                MicroLabel("Bank")
-                PlainField(bank, "Kerala Gramin Bank") { bank = it }
+                MicroLabel("What kind")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OursChip(
+                        label = "Bank account",
+                        selected = !isCard,
+                        icon = OursIcon.Bank,
+                        onClick = { isCard = false },
+                    )
+                    OursChip(
+                        label = "Credit card",
+                        selected = isCard,
+                        icon = OursIcon.CreditCard,
+                        onClick = { isCard = true },
+                    )
+                }
+                MicroLabel(if (isCard) "Card" else "Bank")
+                PlainField(
+                    bank,
+                    if (isCard) "Utkarsh SuperCard" else "Kerala Gramin Bank",
+                ) { bank = it }
                 MicroLabel("Last four digits — optional")
-                PlainField(tail, "3062") { tail = it.filter(Char::isDigit).take(4) }
-                MicroLabel("Balance now")
+                PlainField(tail, if (isCard) "8842" else "3062") {
+                    tail = it.filter(Char::isDigit).take(4)
+                }
+                MicroLabel(if (isCard) "Owed now" else "Balance now")
                 MoneyField(balance) { balance = it }
-                MicroLabel("Minimum balance")
-                MoneyField(minimum) { minimum = it }
+                if (isCard) {
+                    MicroLabel("Credit limit — optional")
+                    MoneyField(limit) { limit = it }
+                } else {
+                    MicroLabel("Minimum balance")
+                    MoneyField(minimum) { minimum = it }
+                }
                 Text(
-                    "The balance is yours, not the bank's — a real one from a message " +
-                        "replaces it once this account starts sending them.",
+                    if (isCard) {
+                        "Owed is kept apart from what is left — it is money already spent. " +
+                            "If this card's purchases reach the app by SMS, paying its bill " +
+                            "will not be counted as spending a second time."
+                    } else {
+                        "The balance is yours, not the bank's — a real one from a message " +
+                            "replaces it once this account starts sending them."
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             }
         },
@@ -407,13 +488,17 @@ private fun AddAccountDialog(
                         cleanTail.ifEmpty { cleanBank },
                         cleanBank,
                         Money.parseToPaise(balance),
-                        Money.parseToPaise(minimum),
+                        // A card has no minimum to hold; it has a limit, which is a
+                        // different thing and is stored on the card rule instead.
+                        if (isCard) null else Money.parseToPaise(minimum),
+                        isCard,
+                        Money.parseToPaise(limit),
                     )
                 },
-            ) { Text("Add", color = if (ready) Ours.accent else Ours.textLabel) }
+            ) { Text("Add", color = if (ready) Ours.primary else Ours.onSurfaceMuted) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     )
 }
@@ -427,7 +512,7 @@ private fun PlainField(value: String, hint: String, onChange: (String) -> Unit) 
                 Text(
                     hint,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Ours.textLabel,
+                    color = Ours.onSurfaceMuted,
                 )
             }
             BasicTextField(
@@ -436,8 +521,8 @@ private fun PlainField(value: String, hint: String, onChange: (String) -> Unit) 
                 singleLine = true,
                 textStyle = LocalTextStyle.current
                     .merge(MaterialTheme.typography.bodyLarge)
-                    .copy(color = Ours.text),
-                cursorBrush = SolidColor(Ours.accent),
+                    .copy(color = Ours.onSurface),
+                cursorBrush = SolidColor(Ours.primary),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -452,7 +537,7 @@ private fun MoneyField(value: String, onChange: (String) -> Unit) {
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("₹", style = MaterialTheme.typography.headlineSmall, color = Ours.textLabel)
+        Text("₹", style = MaterialTheme.typography.headlineSmall, color = Ours.onSurfaceMuted)
         BasicTextField(
             value = value,
             onValueChange = { onChange(it.filter { c -> c.isDigit() || c == '.' }.take(12)) },
@@ -460,8 +545,8 @@ private fun MoneyField(value: String, onChange: (String) -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             textStyle = LocalTextStyle.current
                 .merge(MaterialTheme.typography.headlineSmall)
-                .copy(color = Ours.text),
-            cursorBrush = SolidColor(Ours.accent),
+                .copy(color = Ours.onSurface),
+            cursorBrush = SolidColor(Ours.primary),
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -486,12 +571,12 @@ private fun BalanceDialog(
     val minPaise = Money.parseToPaise(minText)
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Ours.surface,
+        containerColor = Ours.surfaceContainer,
         title = {
             Text(
                 account.bank ?: "This account",
                 style = MaterialTheme.typography.titleMedium,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
         },
         text = {
@@ -514,7 +599,7 @@ private fun BalanceDialog(
                         "account, and comes off the figure on the summary — 0 for a " +
                         "zero-balance account.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             }
         },
@@ -540,10 +625,10 @@ private fun BalanceDialog(
                         minPaise,
                     )
                 },
-            ) { Text("Save", color = if (touched) Ours.accent else Ours.textLabel) }
+            ) { Text("Save", color = if (touched) Ours.primary else Ours.onSurfaceMuted) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.textSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
         },
     )
 }
@@ -580,7 +665,7 @@ private fun SafeToSpend(
     val usable = state.usablePaise
 
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
         TapeHeader("Safe to spend", trailing = Money.whole(safe))
@@ -609,7 +694,7 @@ private fun SafeToSpend(
                         "No budget is set, so nothing is capping it."
             },
             style = MaterialTheme.typography.bodySmall,
-            color = if (state.overBudget) Ours.negative else Ours.textSecondary,
+            color = if (state.overBudget) Ours.error else Ours.onSurfaceVariant,
         )
 
         HairlineRule()
@@ -651,7 +736,7 @@ private fun SafeToSpend(
                     append(" left the accounts this month without touching it.")
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textLabel,
+                color = Ours.onSurfaceMuted,
             )
         }
 
@@ -674,7 +759,7 @@ private fun SafeToSpend(
             Text(
                 "Counting your accounts only.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textLabel,
+                color = Ours.onSurfaceMuted,
             )
         }
     }
@@ -697,16 +782,16 @@ private fun LedgerLine(
             label,
             style = MaterialTheme.typography.bodyMedium,
             // The binding constraint is the one that matters; the other is context.
-            color = if (dim) Ours.textSecondary else Ours.text,
+            color = if (dim) Ours.onSurfaceVariant else Ours.onSurface,
         )
         Text(
             value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (dim) FontWeight.Normal else FontWeight.SemiBold,
             color = when {
-                negative -> Ours.negative
-                dim -> Ours.textSecondary
-                else -> Ours.text
+                negative -> Ours.error
+                dim -> Ours.onSurfaceVariant
+                else -> Ours.onSurface
             },
         )
     }
@@ -733,14 +818,22 @@ private fun WhatsLeft(
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val today = remember { LocalDate.now() }
-    val usable = balances.mapNotNull { it.usablePaise }.sum()
+    val today = remember { OursZone.today() }
+    // Two blocks, never one total.
+    //
+    // A card balance is money **owed**. This panel's figure is what `Affordability`
+    // spends against, so folding card debt into it would report more to spend than
+    // exists — the opposite of the truth. They are different quantities and they get
+    // different words: "left" is capacity, "owed" is a bill already run up.
+    val (cards, accounts) = balances.partition { it.isCard }
+    val usable = accounts.mapNotNull { it.usablePaise }.sum()
+    val owed = cards.mapNotNull { it.balancePaise }.sum()
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         TapeHeader("What is left", trailing = Money.whole(usable))
-        balances.forEach { account ->
+        accounts.forEach { account ->
             Row(
                 Modifier.fillMaxWidth().clickable { onSet(account) },
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -754,15 +847,11 @@ private fun WhatsLeft(
                         account.bank ?: "Account",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                     val age = account.asOf?.let { at ->
                         when (
-                            val days = ChronoUnit.DAYS.between(
-                                Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault())
-                                    .toLocalDate(),
-                                today,
-                            )
+                            val days = ChronoUnit.DAYS.between(OursZone.dateOf(at), today)
                         ) {
                             0L -> "today"
                             1L -> "yesterday"
@@ -783,7 +872,7 @@ private fun WhatsLeft(
                         },
                         // Amber for a figure nobody's bank stands behind.
                         color = if (account.source == BalanceSource.HAND) Ours.warning
-                        else Ours.textLabel,
+                        else Ours.onSurfaceMuted,
                     )
                     // The held floor, spelled out, because the figure on the right is
                     // the balance minus this and that difference is otherwise invisible.
@@ -802,12 +891,66 @@ private fun WhatsLeft(
             }
         }
 
+        if (cards.isNotEmpty()) {
+            TapeHeader("Owed on cards", trailing = Money.whole(owed))
+            cards.forEach { card ->
+                Row(
+                    Modifier.fillMaxWidth().clickable { onSet(card) },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text(
+                            card.bank ?: "Card",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Ours.onSurface,
+                        )
+                        MicroLabel(
+                            buildString {
+                                card.accountTail?.let { append("···· $it") }
+                                if (card.balancePaise == null) {
+                                    if (isNotEmpty()) append(" · ")
+                                    append("tap to set")
+                                }
+                            },
+                        )
+                        // How much room is left, which is the figure a card is actually
+                        // used against. Only when both halves are known — a limit with no
+                        // outstanding, or the reverse, cannot say anything true.
+                        val limit = card.limitPaise
+                        val outstanding = card.balancePaise
+                        if (limit != null && outstanding != null) {
+                            MicroLabel(
+                                "${Money.whole((limit - outstanding).coerceAtLeast(0L))} " +
+                                    "of ${Money.whole(limit)} still free",
+                            )
+                        }
+                    }
+                    if (card.balancePaise != null) {
+                        AmountColumn(card.balancePaise!!)
+                    } else {
+                        MicroLabel("—")
+                    }
+                }
+            }
+            Text(
+                "Owed is not subtracted from what is left. It is money you have already " +
+                    "spent and not yet paid.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Ours.onSurfaceVariant,
+            )
+        }
+
         if (balances.isEmpty()) {
             Text(
                 "Nothing here yet. An account appears on its own once a payment goes " +
                     "through it — or you can put one in now.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textSecondary,
+                color = Ours.onSurfaceVariant,
             )
         }
 
@@ -822,9 +965,9 @@ private fun WhatsLeft(
                 "Add an account",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.accent,
+                color = Ours.primary,
             )
-            Text("+", style = MaterialTheme.typography.headlineSmall, color = Ours.accent)
+            Text("+", style = MaterialTheme.typography.headlineSmall, color = Ours.primary)
         }
     }
 }
@@ -856,7 +999,7 @@ private fun WhereItWent(summary: MonthSummary, modifier: Modifier = Modifier) {
     // The month total, not the biggest category. See [RankedBar].
     val total = summary.totalSpentPaise.takeIf { it > 0 } ?: 1L
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         // A rule under it, as in the mockup: this is a section head like "Today" on
@@ -879,7 +1022,7 @@ private fun RankedBar(entry: CategoryTotal, totalSpentPaise: Long) {
                 text = entry.category.label,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
                 maxLines = 1,
                 modifier = Modifier.weight(1f, fill = false),
             )
@@ -912,8 +1055,8 @@ private fun NotCounted(summary: MonthSummary, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = EDGE)
-            .dashedBorder(Ours.hairline, 13.dp)
+            .padding(horizontal = Space.edge)
+            .dashedBorder(Ours.outlineVariant, 13.dp)
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
@@ -926,7 +1069,7 @@ private fun NotCounted(summary: MonthSummary, modifier: Modifier = Modifier) {
                 "Not counted",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             AmountColumn(summary.excludedPaise)
         }
@@ -936,16 +1079,16 @@ private fun NotCounted(summary: MonthSummary, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
             ) {
-                BiIconView(
-                    BiIcon.forCategory(entry.category),
+                OursIconView(
+                    OursIcon.forCategory(entry.category),
                     contentDescription = null,
-                    tint = Ours.textSecondary,
+                    tint = Ours.onSurfaceVariant,
                     modifier = Modifier.size(13.dp),
                 )
                 Text(
                     entry.category.label,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
                 AmountColumn(entry.totalPaise, dim = true)
@@ -969,14 +1112,14 @@ private fun NotCounted(summary: MonthSummary, modifier: Modifier = Modifier) {
                 append("Both still come off your balance.")
             }.trim(),
             style = MaterialTheme.typography.bodySmall,
-            color = Ours.textSecondary,
+            color = Ours.onSurfaceVariant,
         )
     }
 }
 
 @Composable
 private fun HairlineRule() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
 }
 
 /** Dashed outline. Compose has no dashed-border modifier, so it is drawn. */
@@ -1010,7 +1153,7 @@ private fun Committed(
     monthlyTotalPaise: Long,
     modifier: Modifier = Modifier,
 ) {
-    val dateFormat = remember { DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()) }
+    val dateFormat = OursZone.day
 
     Column(
         modifier.fillMaxWidth(),
@@ -1023,7 +1166,7 @@ private fun Committed(
         TapeHeader(
             "Committed",
             trailing = "${Money.whole(monthlyTotalPaise)} a month",
-            modifier = Modifier.padding(horizontal = EDGE),
+            modifier = Modifier.padding(horizontal = Space.edge),
         )
         charges.forEachIndexed { index, charge ->
             val next = remember(charge.nextExpectedAt) {
@@ -1039,8 +1182,57 @@ private fun Committed(
                 // The entry does not inset itself — the caller owns the edge, as on
                 // Home. Without this the avatar sits on the screen border and the
                 // amount is clipped.
-                modifier = Modifier.padding(horizontal = EDGE),
+                modifier = Modifier.padding(horizontal = Space.edge),
             )
         }
+    }
+}
+
+/** The three questions this screen answers, which are not the same question. */
+private enum class SummaryTab(val label: String) {
+    Month("Month"),
+    Accounts("Accounts"),
+    Committed("Committed"),
+}
+
+/**
+ * Primary tabs, the one place in this app that has them.
+ *
+ * A tab is right here and nowhere else: the three panes are peers over the same month, none is a
+ * step in a job, and each is a screenful on its own. Anywhere else in this app that would be a
+ * navigation destination.
+ */
+@Composable
+private fun SummaryTabs(selected: SummaryTab, onSelect: (SummaryTab) -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth()) {
+            SummaryTab.entries.forEach { entry ->
+                val active = entry == selected
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clickable { onSelect(entry) }
+                        .height(Space.target),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    Text(
+                        entry.label,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (active) Ours.primary else Ours.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = Space.s2),
+                    )
+                    // The indicator, drawn as a box rather than a border so the inactive tabs
+                    // keep exactly the same height and nothing shifts as you switch.
+                    Box(
+                        Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(3.dp)
+                            .background(if (active) Ours.primary else Color.Transparent)
+                    )
+                }
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }

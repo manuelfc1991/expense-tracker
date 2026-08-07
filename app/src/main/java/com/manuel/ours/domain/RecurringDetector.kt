@@ -61,6 +61,19 @@ data class RecurringCharge(
  */
 object RecurringDetector {
 
+    /**
+     * How far back a commitment has to be looked for.
+     *
+     * A pattern needs history to be visible at all: three monthly sightings is four months of
+     * data, and a yearly charge needs two years before it can be called yearly.
+     *
+     * It lives here rather than on a screen because **two screens depend on getting the same
+     * answer.** Summary shows the commitments and Home paces the budget against them, and a Home
+     * figure that disagreed with Summary's would be worse than no figure at all. Sharing the
+     * window — and the detector — makes them agree by construction rather than by care.
+     */
+    const val LOOKBACK_MONTHS = 24L
+
     /** Two of anything is a coincidence. Three is the earliest a pattern can exist. */
     private const val MIN_OCCURRENCES = 3
 

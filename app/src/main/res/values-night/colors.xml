@@ -3,20 +3,27 @@
     <!--
       The window behind everything, before Compose has drawn a pixel.
 
-      This had no night value at all, so `windowBackground` resolved to the light
-      #FBF9FE on every device including a dark-mode one — which is the white flash on
-      launch. It was always there; adding a dark splash in front of it is what finally
-      made it obvious, because the hand-off went from near-black to near-white and back.
+      This had no night value at all, so `windowBackground` resolved to the light value on
+      every device including a dark-mode one — which is the white flash on launch. It was
+      always there; adding a dark splash in front of it is what finally made it obvious,
+      because the hand-off went from near-black to near-white and back.
 
-      Matches Ours.ink, so the frame before the first composition looks like the frame
-      after it.
+      Matches `Ours.surface` exactly, and matches `windowSplashScreenBackground` in
+      values-night-v31/themes.xml, so all three frames of the launch are one colour.
     -->
-    <color name="surface">#0B0B0F</color>
+    <color name="surface">#0F0F14</color>
 
-    <!-- The dark scheme, taken from the same source as the Compose palette. -->
-    <color name="notif_bg">#131318</color>
-    <color name="notif_text">#F2F2F7</color>
-    <color name="notif_dim">#7C7C99</color>
-    <color name="notif_hair">#2A2A34</color>
-    <color name="notif_accent">#2F5BFF</color>
+    <!-- The dark scheme, from the same source as the Compose palette. -->
+    <color name="notif_bg">#1A1A21</color>         <!-- surfaceContainer -->
+    <color name="notif_text">#F2F2F7</color>       <!-- onSurface       17.13:1 -->
+    <color name="notif_dim">#9092A6</color>        <!-- onSurfaceMuted   6.23:1, was #7C7C99 at 4.59:1 -->
+    <color name="notif_hair">#2E2E3A</color>       <!-- outlineVariant -->
+    <color name="notif_accent">#B3C4FF</color>     <!-- primary, the TEXT tone: 11.16:1, was #2F5BFF at 3.80:1 -->
+
+    <color name="widget_bg">#1A1A21</color>
+    <color name="widget_text">#F2F2F7</color>
+    <color name="widget_text_dim">#9092A6</color>
+    <color name="widget_rule">#2E2E3A</color>
+    <color name="widget_fill">#5BE3AF</color>
+    <color name="widget_over">#FF8FA3</color>
 </resources>

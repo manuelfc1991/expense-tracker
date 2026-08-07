@@ -28,8 +28,8 @@ android {
         applicationId = "com.manuel.ours"
         minSdk = 26
         targetSdk = 34
-        versionCode = 61
-        versionName = "5.20"
+        versionCode = 62
+        versionName = "6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -155,6 +155,8 @@ dependencies {
 // Lets the throwaway corpus harness receive -Dcorpus=... from the command line.
 tasks.withType<Test>().configureEach {
     systemProperty("corpus", System.getProperty("corpus") ?: "")
+    // Path to a real inbox dump for RealInboxAuditTest, which skips without one.
+    systemProperty("ours.inbox.dump", System.getProperty("ours.inbox.dump") ?: "")
     testLogging { showStandardStreams = true }
 }
 

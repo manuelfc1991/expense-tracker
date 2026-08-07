@@ -3,6 +3,7 @@ package com.manuel.ours.domain
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.BalanceSource
+import com.manuel.ours.domain.model.CardInfo
 import com.manuel.ours.domain.model.ManualBalance
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.CategoryTotal
@@ -26,7 +27,16 @@ import kotlin.math.roundToInt
 /** Pure functions over a transaction list — no Android, no IO, trivially testable. */
 object MonthlyAggregator {
 
-    val ZONE: ZoneId = ZoneId.of("Asia/Kolkata")
+    /**
+     * The household's zone, from the one place that owns it.
+     *
+     * Kept as a name here because a lot of call sites read `MonthlyAggregator.ZONE` and that
+     * reads well where the subject is a month boundary. It is the same object as
+     * [com.manuel.ours.core.OursZone.ID] — the interface used to format dates in
+     * `ZoneId.systemDefault()` instead, so a day heading and the month total above it could
+     * disagree the moment a phone left IST.
+     */
+    val ZONE: ZoneId = com.manuel.ours.core.OursZone.ID
 
     fun monthRange(year: Int, month: Int): LongRange {
         val ym = YearMonth.of(year, month)
@@ -57,14 +67,28 @@ object MonthlyAggregator {
     }
 
     /**
-     * Money actually spent. Excludes [Category.NON_SPEND] — chiefly credit-card bill
-     * payments, which settle purchases already counted individually. Use
-     * [totalDebited] when you want the raw sum of every debit.
+     * What a debit actually cost, after anything refunded is taken back off it.
+     *
+     * One function, because every figure on every screen has to agree about this. A purchase
+     * that was returned is not spending — the ledger holds both halves, so counting the debit in
+     * full would overstate the month by the refund and charge the budget for something that was
+     * undone. Near the cap that tells the household to stop when it need not.
+     *
+     * Partial refunds are the common case for a multi-item order, so this subtracts rather than
+     * excluding: the purchase keeps whatever the refund did not cancel.
+     */
+    fun netSpent(txn: Transaction): Long =
+        (txn.amountPaise - txn.refundedPaise).coerceAtLeast(0)
+
+    /**
+     * Money actually spent, net of refunds. Excludes the categories that do not count as
+     * spending — chiefly card-bill payments, which settle purchases already counted one by one.
+     * Use [totalDebited] for the raw sum of every debit.
      */
     fun totalSpent(transactions: List<Transaction>): Long =
         transactions
             .filter { it.type == TxnType.DEBIT && it.category.countsAsSpending }
-            .sumOf { it.amountPaise }
+            .sumOf { netSpent(it) }
 
     /** Every debit, including transfers and card bill payments. */
     fun totalDebited(transactions: List<Transaction>): Long =
@@ -95,13 +119,24 @@ object MonthlyAggregator {
             .sumOf { it.amountPaise }
 
     /**
-     * Real income. Excludes credits that are only money coming back — an FD maturing
-     * or a mutual fund redemption isn't earnings, and counting it would show a
-     * spectacular "income" month every time a deposit matures.
+     * Money arriving that the household actually earned.
+     *
+     * Excludes credits that are only money coming back — an FD maturing or a fund redemption is
+     * not earnings, and counting it would show a spectacular "income" month every time a deposit
+     * matures.
+     *
+     * A linked refund is excluded from both sides: `linkRefund` moves the credit to
+     * SELF_TRANSFER, whose flow is NEUTRAL, so it already falls out here — and the
+     * `refundsTxnId` check is belt and braces for a row whose category was changed by hand
+     * afterwards. Money coming back is not income; it is a purchase being undone.
      */
     fun totalReceived(transactions: List<Transaction>): Long =
         transactions
-            .filter { it.type == TxnType.CREDIT && it.category.flow == MoneyFlow.INCOMING }
+            .filter {
+                it.type == TxnType.CREDIT &&
+                    it.category.flow == MoneyFlow.INCOMING &&
+                    it.refundsTxnId == null
+            }
             .sumOf { it.amountPaise }
 
     /**
@@ -148,6 +183,8 @@ object MonthlyAggregator {
         transactions: List<Transaction>,
         manual: Map<String, ManualBalance> = emptyMap(),
         minimums: Map<String, Long> = emptyMap(),
+        /** Accounts the household has declared to be credit cards, keyed the same way. */
+        cards: Map<String, CardInfo> = emptyMap(),
         viewerUid: String = "",
         isOwner: Boolean = true,
     ): List<AccountBalance> {
@@ -159,7 +196,7 @@ object MonthlyAggregator {
                 byAccount[key].orEmpty().any { it.ownerUid == viewerUid } ||
                 manual[key]?.ownerUid == viewerUid
         }
-        val keys = (byAccount.keys + manual.keys + minimums.keys).filter(visible)
+        val keys = (byAccount.keys + manual.keys + minimums.keys + cards.keys).filter(visible)
         return keys.map { key ->
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
@@ -184,6 +221,8 @@ object MonthlyAggregator {
                 },
                 ownerName = latest?.ownerName.orEmpty(),
                 minimumPaise = minimums[key] ?: 0L,
+                isCard = cards.containsKey(key),
+                limitPaise = cards[key]?.limitPaise,
             )
         }.sortedWith(
             compareByDescending<AccountBalance> { it.balancePaise != null }
@@ -223,7 +262,7 @@ object MonthlyAggregator {
         val previousByCategory = previous
             .filter { it.type == TxnType.DEBIT && it.category.countsAsSpending }
             .groupBy { it.category }
-            .mapValues { (_, list) -> list.sumOf { it.amountPaise } }
+            .mapValues { (_, list) -> list.sumOf { netSpent(it) } }
 
         return current
             .filter { it.type == TxnType.DEBIT && it.category.countsAsSpending }
@@ -231,7 +270,7 @@ object MonthlyAggregator {
             .map { (category, list) ->
                 CategoryTotal(
                     category = category,
-                    totalPaise = list.sumOf { it.amountPaise },
+                    totalPaise = list.sumOf { netSpent(it) },
                     txnCount = list.size,
                     previousPaise = previousByCategory[category] ?: 0L,
                 )
@@ -270,7 +309,7 @@ object MonthlyAggregator {
                 MemberTotal(
                     uid = uid,
                     displayName = list.first().ownerName,
-                    totalPaise = list.sumOf { it.amountPaise },
+                    totalPaise = list.sumOf { netSpent(it) },
                 )
             }
             .sortedByDescending { it.totalPaise }
@@ -279,7 +318,7 @@ object MonthlyAggregator {
         val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
         val sums = spendable(transactions)
             .groupBy { dayOfMonth(it.occurredAt) }
-            .mapValues { (_, list) -> list.sumOf { it.amountPaise } }
+            .mapValues { (_, list) -> list.sumOf { netSpent(it) } }
 
         // Every day is present, including zero-spend days — a bar chart with gaps
         // misreads as missing data rather than a day you didn't spend.
@@ -292,7 +331,7 @@ object MonthlyAggregator {
             .map { (_, list) ->
                 MerchantTotal(
                     merchant = list.first().merchant,
-                    totalPaise = list.sumOf { it.amountPaise },
+                    totalPaise = list.sumOf { netSpent(it) },
                     txnCount = list.size,
                 )
             }
@@ -388,7 +427,7 @@ object MonthlyAggregator {
     fun spentInCategory(transactions: List<Transaction>, category: Category): Long =
         transactions
             .filter { it.type == TxnType.DEBIT && it.category == category }
-            .sumOf { it.amountPaise }
+            .sumOf { netSpent(it) }
 
     /** Debits deliberately kept out of the headline, so the UI can show the gap. */
     fun excludedBreakdown(transactions: List<Transaction>): List<CategoryTotal> =

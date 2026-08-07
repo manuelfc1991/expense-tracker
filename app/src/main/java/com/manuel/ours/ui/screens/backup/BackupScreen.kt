@@ -24,18 +24,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val EDGE = 15.dp
 
 /**
  * The only answer in this app to "the phone is gone".
@@ -62,31 +61,19 @@ fun BackupScreen(
         ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(viewModel::examine) }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("BACKUP", style = WordmarkStyle, color = Ours.text)
-                }
+                OursTopBar(title = "BACKUP", onBack = onBack)
             }
 
             item {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     TapeHeader("SAVE A COPY", trailing = if (count > 0) "$count entries" else null)
@@ -99,7 +86,7 @@ fun BackupScreen(
                         "Rebuilding from your inbox brings back what the banks sent. It cannot " +
                             "bring back anything typed or fixed by hand, and the sheet does not " +
                             "keep those either. This file is the only thing that does.",
-                        tone = Ours.textLabel,
+                        tone = Ours.onSurfaceMuted,
                     )
                     AccentButton(
                         label = if (busy) "Working…" else "Back up everything",
@@ -117,7 +104,7 @@ fun BackupScreen(
 
             item {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 14.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     TapeHeader("RESTORE")
@@ -132,15 +119,15 @@ fun BackupScreen(
                     )
                     Note(
                         "Safe to run twice — the second time will tell you it found nothing new.",
-                        tone = Ours.textLabel,
+                        tone = Ours.onSurfaceMuted,
                     )
                 }
             }
 
             status?.let { line ->
                 item {
-                    Column(Modifier.fillMaxWidth().padding(horizontal = EDGE)) {
-                        Note(line, tone = Ours.text)
+                    Column(Modifier.fillMaxWidth().padding(horizontal = Space.edge)) {
+                        Note(line, tone = Ours.onSurface)
                     }
                 }
             }
@@ -150,8 +137,8 @@ fun BackupScreen(
     pending?.let { file ->
         AlertDialog(
             onDismissRequest = viewModel::cancelPending,
-            containerColor = Ours.surface,
-            title = { Text("Restore this backup?", color = Ours.text) },
+            containerColor = Ours.surfaceContainer,
+            title = { Text("Restore this backup?", color = Ours.onSurface) },
             text = {
                 Text(
                     buildString {
@@ -182,17 +169,17 @@ fun BackupScreen(
                         append(".\n\nNothing already on this phone is removed.")
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             },
             confirmButton = {
                 TextButton(onClick = viewModel::confirmRestore) {
-                    Text("Restore", color = Ours.accent)
+                    Text("Restore", color = Ours.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = viewModel::cancelPending) {
-                    Text("Cancel", color = Ours.textSecondary)
+                    Text("Cancel", color = Ours.onSurfaceVariant)
                 }
             },
         )
@@ -200,11 +187,9 @@ fun BackupScreen(
 }
 
 private fun readableDate(epochMillis: Long): String =
-    DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a")
-        .withZone(ZoneId.of("Asia/Kolkata"))
-        .format(Instant.ofEpochMilli(epochMillis))
+    OursZone.format(epochMillis, OursZone.dateTimeComma)
 
 @Composable
-private fun Note(text: String, tone: androidx.compose.ui.graphics.Color = Ours.textSecondary) {
+private fun Note(text: String, tone: androidx.compose.ui.graphics.Color = Ours.onSurfaceVariant) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = tone)
 }

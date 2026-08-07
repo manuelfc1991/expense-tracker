@@ -125,7 +125,7 @@ private fun CaptureOverlay(
     ) {
         val current = state ?: return@Box
         Surface(
-            color = Ours.surface,
+            color = Ours.surfaceContainer,
             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
             modifier = Modifier
                 .fillMaxWidth()

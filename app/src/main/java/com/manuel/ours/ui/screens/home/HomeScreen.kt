@@ -52,32 +52,39 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.domain.Pacing
+import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.DayTotal
 import com.manuel.ours.domain.model.MemberFilter
 import com.manuel.ours.domain.model.MemberTotal
 import com.manuel.ours.domain.model.Transaction
+import com.manuel.ours.ui.components.EmptyState
+import com.manuel.ours.ui.components.StatementSkeleton
+import com.manuel.ours.ui.components.NoticeTone
+import com.manuel.ours.ui.components.Notice
+import com.manuel.ours.ui.components.StaleRibbon
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.CaptureSheet
 import com.manuel.ours.ui.components.AmountColumn
 import com.manuel.ours.ui.components.AnimatedAmount
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.LabelOverValue
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.OursChip
 import com.manuel.ours.ui.components.PillTone
 import com.manuel.ours.ui.components.PrimaryAction
-import com.manuel.ours.ui.components.QuietEmpty
 import com.manuel.ours.ui.components.Ruler
 import com.manuel.ours.ui.components.StatePill
-import com.manuel.ours.ui.components.StatementEntry
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.components.TransactionEntry
 import com.manuel.ours.ui.theme.AxisLabelStyle
 import com.manuel.ours.ui.theme.Ours
-import com.manuel.ours.ui.theme.WordmarkStyle
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.colorForCategory
 import com.manuel.ours.work.SmsBackfillWorker
 import com.manuel.ours.work.SyncWorker
@@ -88,7 +95,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-private val EDGE = 15.dp
 
 /**
  * Home, assembled entirely from the elements in `ui/components/Statement.kt`.
@@ -106,9 +112,11 @@ fun HomeScreen(
     onSort: () -> Unit,
     onSetBudget: () -> Unit,
     onOpenDeleteRequests: () -> Unit = {},
+    onOpenPossiblePayments: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val possiblePayments by viewModel.possiblePayments.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showAddSheet by remember { mutableStateOf(false) }
 
@@ -162,20 +170,44 @@ fun HomeScreen(
       // a fling, and recomposing the whole statement that often to move one button is
       // how a scroll starts dropping frames.
       val addVisible by remember { derivedStateOf { !listState.isScrollInProgress } }
-      Box(Modifier.fillMaxSize().background(Ours.ink)) {
+      Box(Modifier.fillMaxSize().background(Ours.surface)) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            // What is stale, and what is not.
+            //
+            // This phone's own bank messages are read locally and are certainly current; what
+            // may be missing is anything the other person paid since the last sync. So the
+            // figures are never hidden or greyed — they are correct, just possibly incomplete,
+            // and the ribbon says which part. A ribbon rather than a dialog: nothing here blocks.
+            if (state.syncConfigured && state.staleFor != null) {
+                item {
+                    StaleRibbon(
+                        label = "Offline · last synced ${state.staleFor}",
+                        onRetry = { SyncWorker.syncNow(context) },
+                    )
+                }
+            }
+
+            state.syncError?.let { reason ->
+                item {
+                    Notice(
+                        tone = NoticeTone.Error,
+                        title = "Sync failed",
+                        body = reason,
+                        modifier = Modifier.padding(horizontal = Space.edge),
+                        action = {
+                            GhostButton("Try again", onClick = { SyncWorker.syncNow(context) })
+                        },
+                    )
+                }
+            }
+
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("OURS", style = WordmarkStyle, color = Ours.text)
+                OursTopBar(title = "Ours") {
                     // Only meaningful once there is somewhere for changes to go. With
                     // no partner and no folder, "171 pending" reads as a failure when
                     // in fact nothing is wrong or waiting.
@@ -186,19 +218,26 @@ fun HomeScreen(
                             onClick = { SyncWorker.syncNow(context) },
                         )
                     }
+                    // Search reaches the whole ledger from the screen people open first. It used
+                    // to exist only on Activity, so finding a payee meant changing tab.
+                    OursIconButton(
+                        icon = OursIcon.Search,
+                        contentDescription = "Search expenses",
+                        onClick = onSeeAll,
+                    )
                 }
             }
 
             item {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                     verticalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
                     MicroLabel("Spent this month")
                     AnimatedAmount(
                         paise = state.spentThisMonth,
                         style = MaterialTheme.typography.displayLarge,
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                 }
             }
@@ -215,6 +254,7 @@ fun HomeScreen(
                     spent = state.householdSpentThisMonth,
                     budget = state.budgetPaise,
                     affordability = state.affordability,
+                    pacing = state.pacing,
                     filtered = state.filter != MemberFilter.Everyone,
                     onSetBudget = onSetBudget,
                 )
@@ -234,7 +274,7 @@ fun HomeScreen(
                         Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = EDGE),
+                            .padding(horizontal = Space.edge),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         // One chip per person who actually has rows, not a fixed
@@ -266,7 +306,7 @@ fun HomeScreen(
                             (if (state.untaggedGroups == 1) "group" else "groups") +
                             " · about ${state.untaggedGroups} taps",
                         onClick = onSort,
-                        modifier = Modifier.padding(horizontal = EDGE),
+                        modifier = Modifier.padding(horizontal = Space.edge),
                     )
                 }
             }
@@ -276,7 +316,7 @@ fun HomeScreen(
             if (!hasSmsPermission) {
                 item {
                     Notice(
-                        tone = Ours.negative,
+                        tone = Ours.error,
                         title = "Nothing is being tracked",
                         body = "Ours can't read your bank messages, so no expenses are being recorded.",
                         actionLabel = "Turn on SMS access",
@@ -316,6 +356,27 @@ fun HomeScreen(
                 }
             }
 
+            // Senders that wrote something payment-shaped and that nobody has vouched
+            // for. Surfaced here for the same reason Sort is: the failures that cost this
+            // household most were silent, and a queue nobody is told about is one nobody
+            // empties.
+            if (possiblePayments > 0) {
+                item {
+                    Notice(
+                        tone = Ours.warning,
+                        title = if (possiblePayments == 1) {
+                            "1 possible payment"
+                        } else {
+                            "$possiblePayments possible payments"
+                        },
+                        body = "From senders we don't know. Nothing here is in your " +
+                            "total until you say what it is.",
+                        actionLabel = "Review",
+                        onAction = onOpenPossiblePayments,
+                    )
+                }
+            }
+
             if (state.upcomingBills.isNotEmpty()) {
                 item {
                     UpcomingBills(
@@ -332,17 +393,23 @@ fun HomeScreen(
                 TapeHeader(
                     label = if (isToday) "Today" else "Recent",
                     trailing = if (isToday) Money.exact(state.spentToday) else "See all",
-                    trailingColor = if (isToday) Ours.textSecondary else Ours.accent,
+                    trailingColor = if (isToday) Ours.onSurfaceVariant else Ours.primary,
                     modifier = Modifier
-                        .padding(horizontal = EDGE)
+                        .padding(horizontal = Space.edge)
                         .then(if (isToday) Modifier else Modifier.clickable(onClick = onSeeAll)),
                 )
             }
 
             if (state.loading) {
-                item { TapeSkeleton() }
+                item { StatementSkeleton(Modifier.padding(horizontal = Space.edge)) }
             } else if (tape.isEmpty()) {
-                item { QuietEmpty("Nothing yet this month", modifier = Modifier.padding(horizontal = EDGE)) }
+                item {
+                    EmptyState(
+                        title = "Nothing yet this month",
+                        body = "Expenses appear here as your bank messages arrive.",
+                        icon = OursIcon.Activity,
+                    )
+                }
             } else {
                 items(tape, key = { it.id }) { txn ->
                     TransactionTapeRow(
@@ -364,15 +431,15 @@ fun HomeScreen(
         ) {
             Box(
                 Modifier
-                    .padding(end = EDGE, bottom = 14.dp)
+                    .padding(end = Space.edge, bottom = 14.dp)
                     .size(44.dp)
                     .clip(RoundedCornerShape(15.dp))
-                    .background(Ours.accent)
+                    .background(Ours.primaryFixed)
                     .clickable { showAddSheet = true },
                 contentAlignment = Alignment.Center,
             ) {
-                BiIconView(
-                    BiIcon.Add,
+                OursIconView(
+                    OursIcon.Add,
                     contentDescription = "Add expense",
                     tint = Color.White,
                     modifier = Modifier.size(16.dp),
@@ -382,10 +449,14 @@ fun HomeScreen(
       }
 
     if (showAddSheet) {
+        val accounts by viewModel.accounts.collectAsStateWithLifecycle()
         AddExpenseSheet(
             onDismiss = { showAddSheet = false },
-            onConfirm = { amount, merchant, category, split, note ->
-                viewModel.addQuickExpense(amount, merchant, category, split, note)
+            accounts = accounts,
+            onConfirm = { amount, merchant, category, split, note, occurredAt, tail, bank ->
+                viewModel.addQuickExpense(
+                    amount, merchant, category, split, note, occurredAt, tail, bank,
+                )
                 showAddSheet = false
             },
         )
@@ -403,6 +474,7 @@ private fun BudgetRuler(
     spent: Long,
     budget: Long?,
     affordability: Affordability?,
+    pacing: Pacing.Result?,
     filtered: Boolean,
     onSetBudget: () -> Unit,
     modifier: Modifier = Modifier,
@@ -412,14 +484,14 @@ private fun BudgetRuler(
             modifier
                 .fillMaxWidth()
                 .clickable(onClick = onSetBudget)
-                .padding(horizontal = EDGE),
+                .padding(horizontal = Space.edge),
             verticalArrangement = Arrangement.spacedBy(11.dp),
         ) {
             // An empty scale, not a filled one. Drawing a bar with nothing behind it
             // would invent a budget the household never set; an unmarked ruler says
             // plainly that there is a scale here and nothing is measured on it yet.
             Ruler(fraction = 0f)
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -427,11 +499,11 @@ private fun BudgetRuler(
                 LabelOverValue(
                     label = "Budget",
                     value = "Not set",
-                    valueColor = Ours.textSecondary,
+                    valueColor = Ours.onSurfaceVariant,
                 )
                 MicroLabel(
                     "Set one",
-                    color = Ours.accent,
+                    color = Ours.primary,
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
@@ -443,11 +515,11 @@ private fun BudgetRuler(
     val over = spent > budget
     val left = budget - spent
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         Ruler(fraction = fraction, over = over)
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -456,15 +528,66 @@ private fun BudgetRuler(
             LabelOverValue(
                 label = "Used",
                 value = "${(fraction * 100).toInt()}%",
-                valueColor = if (over) Ours.negative else Ours.positive,
+                valueColor = if (over) Ours.error else Ours.success,
                 alignment = Alignment.CenterHorizontally,
             )
             LabelOverValue(
                 label = if (over) "Over" else "Left",
                 value = Money.whole(kotlin.math.abs(left)),
-                valueColor = if (over) Ours.negative else Ours.positive,
+                valueColor = if (over) Ours.error else Ours.success,
                 alignment = Alignment.End,
             )
+        }
+
+        // What the budget still allows, per day, for the days that are left.
+        //
+        // The screen's central number was date-blind: 74% of a month's budget gone on the 6th
+        // was reported in green with nothing said about it, because `spent / budget` cannot
+        // know what day it is. This is the line that answers "can I spend today", which is the
+        // question a household actually asks a budget.
+        pacing?.let { pace ->
+            when (pace.state) {
+                Pacing.State.Short -> {
+                    // No daily figure: dividing into a negative produces a number that reads
+                    // like an allowance. The shortfall is the honest thing to print.
+                    HairlineRow()
+                    Text(
+                        text = "${Money.whole(pace.committedPaise)} is still committed this " +
+                            "month and only ${Money.whole(pace.budgetLeftPaise.coerceAtLeast(0))} " +
+                            "is left — ${Money.whole(pace.shortfallPaise)} short before anyone " +
+                            "spends anything else.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Ours.error,
+                    )
+                }
+                else -> {
+                    val tight = pace.state == Pacing.State.Tight
+                    val tone = if (tight) Ours.warning else Ours.success
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.s1)) {
+                        MicroLabel("A day from here", color = if (tight) Ours.warning else Ours.onSurfaceMuted)
+                        Text(
+                            text = Money.whole(pace.perDayPaise ?: 0L),
+                            style = ValueTextStyle,
+                            color = tone,
+                            maxLines = 1,
+                        )
+                        Text(
+                            text = buildString {
+                                append(pace.daysRemaining)
+                                append(if (pace.daysRemaining == 1) " day left" else " days left")
+                                if (pace.committedPaise > 0) {
+                                    append(", after ")
+                                    append(Money.whole(pace.committedPaise))
+                                    append(" still committed")
+                                }
+                                append(".")
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (tight) Ours.warning else Ours.onSurfaceMuted,
+                        )
+                    }
+                }
+            }
         }
 
         // The reality check the budget cannot perform on itself.
@@ -517,7 +640,7 @@ private fun DailyColumns(days: List<DayTotal>, modifier: Modifier = Modifier) {
     )
 
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         MicroLabel("Daily · $month")
@@ -536,20 +659,20 @@ private fun DailyColumns(days: List<DayTotal>, modifier: Modifier = Modifier) {
                         // reads as a full month rather than as missing days.
                         .fillMaxHeight(ratio.coerceAtLeast(0.035f))
                         .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
-                        .background(if (isPeak) Ours.accent else Ours.hairline)
+                        .background(if (isPeak) Ours.primaryFixed else Ours.outlineVariant)
                 )
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("1", style = AxisLabelStyle, color = Ours.textLabel)
+            Text("1", style = AxisLabelStyle, color = Ours.onSurfaceMuted)
             Text(
                 // Whole rupees on the axis too — paise on a chart label is precision
                 // nobody asked a chart for.
                 "${peak.dayOfMonth} · ${Money.exact(peak.totalPaise)}",
                 style = AxisLabelStyle,
-                color = Ours.textLabel,
+                color = Ours.onSurfaceMuted,
             )
-            Text("${days.size}", style = AxisLabelStyle, color = Ours.textLabel)
+            Text("${days.size}", style = AxisLabelStyle, color = Ours.onSurfaceMuted)
         }
     }
 }
@@ -567,7 +690,7 @@ private fun HouseholdSplit(
     // legend, while still counting toward the total the widths were computed from, so
     // the bar quietly failed to fill.
     val palette = listOf(
-        Ours.accent,
+        Ours.primaryFixed,
         colorForCategory(Category.SHOPPING),
         colorForCategory(Category.GROCERIES),
         colorForCategory(Category.FOOD),
@@ -577,7 +700,7 @@ private fun HouseholdSplit(
     val colorFor = { index: Int -> palette[index % palette.size] }
 
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         MicroLabel("Household")
@@ -614,12 +737,12 @@ private fun HouseholdSplit(
                         text = if (member.uid == selfUid) "You"
                         else member.displayName.split(" ").first(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                     Text(
                         text = Money.bare(member.totalPaise, withDecimals = true),
                         style = com.manuel.ours.ui.theme.ValueTextStyle.copy(fontSize = 12.sp),
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                 }
             }
@@ -633,34 +756,8 @@ private fun TransactionTapeRow(txn: Transaction, last: Boolean, onClick: () -> U
         txn = txn,
         divider = !last,
         onClick = onClick,
-        modifier = Modifier.padding(horizontal = EDGE),
+        modifier = Modifier.padding(horizontal = Space.edge),
     )
-}
-
-@Composable
-private fun TapeSkeleton() {
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = EDGE),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        repeat(4) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(11.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(Modifier.size(28.dp).clip(RoundedCornerShape(9.dp)).background(Ours.surfaceHigh))
-                Column(
-                    Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Box(Modifier.fillMaxWidth(0.45f).height(11.dp).clip(RoundedCornerShape(5.dp)).background(Ours.surfaceHigh))
-                    Box(Modifier.fillMaxWidth(0.25f).height(9.dp).clip(RoundedCornerShape(5.dp)).background(Ours.surfaceHigh))
-                }
-                Box(Modifier.width(48.dp).height(12.dp).clip(RoundedCornerShape(5.dp)).background(Ours.surfaceHigh))
-            }
-        }
-    }
 }
 
 /**
@@ -678,7 +775,7 @@ private fun UpcomingBills(
     Column(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = EDGE)
+            .padding(horizontal = Space.edge)
             .clip(RoundedCornerShape(13.dp))
             .border(1.dp, Ours.warning.copy(alpha = 0.35f), RoundedCornerShape(13.dp))
             .padding(13.dp),
@@ -699,7 +796,7 @@ private fun UpcomingBills(
                         bill.label,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                     MicroLabel(
                         when (bill.daysAway) {
@@ -710,11 +807,15 @@ private fun UpcomingBills(
                     )
                 }
                 bill.amountPaise?.let { AmountColumn(it) }
-                BiIconView(
-                    icon = BiIcon.Dismiss,
-                    contentDescription = "Dismiss",
-                    tint = Ours.textSecondary,
-                    modifier = Modifier.size(13.dp).clickable { onDismiss(bill.id) },
+                OursIconButton(
+                    icon = OursIcon.Dismiss,
+                    contentDescription = "Dismiss this bill",
+                    onClick = { onDismiss(bill.id) },
+                    tint = Ours.onSurfaceVariant,
+                    glyph = 14.dp,
+                    // 40dp: it sits directly beside the amount column, so a full 48 would push
+                    // the figure off its shared right edge.
+                    size = Space.targetTight,
                 )
             }
         }
@@ -734,14 +835,14 @@ private fun Notice(
     Column(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = EDGE)
+            .padding(horizontal = Space.edge)
             .clip(RoundedCornerShape(13.dp))
             .border(1.dp, tone.copy(alpha = 0.35f), RoundedCornerShape(13.dp))
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = Ours.text)
-        Text(body, style = MaterialTheme.typography.bodySmall, color = Ours.textSecondary)
+        Text(title, style = MaterialTheme.typography.titleMedium, color = Ours.onSurface)
+        Text(body, style = MaterialTheme.typography.bodySmall, color = Ours.onSurfaceVariant)
         GhostButton(actionLabel, onClick = onAction)
     }
 }
@@ -751,7 +852,7 @@ private fun SyncStatePill(lastSyncAt: Long, pending: Int, onClick: () -> Unit) {
     val (text, tone, icon) = when {
         pending > 0 -> Triple("$pending waiting", PillTone.Warn, null)
         lastSyncAt == 0L -> Triple("Off", PillTone.Neutral, null)
-        else -> Triple(relativeTime(lastSyncAt), PillTone.Ok, BiIcon.Done)
+        else -> Triple(relativeTime(lastSyncAt), PillTone.Ok, OursIcon.Done)
     }
     StatePill(
         text = text,
@@ -772,4 +873,9 @@ private fun relativeTime(epochMillis: Long): String {
         hours < 24 -> "${hours}h"
         else -> "${days}d"
     }
+}
+
+@Composable
+private fun HairlineRow() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
 }

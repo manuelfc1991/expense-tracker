@@ -15,12 +15,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemberEntity::class,
         ReminderEntity::class,
         SharedRuleEntity::class,
+        PendingSenderEntity::class,
     ],
-    version = 8,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sharedRuleDao(): SharedRuleDao
+    abstract fun pendingSenderDao(): PendingSenderDao
     abstract fun transactionDao(): TransactionDao
     abstract fun syncEventDao(): SyncEventDao
     abstract fun peerCursorDao(): PeerCursorDao
@@ -63,6 +65,70 @@ abstract class AppDatabase : RoomDatabase() {
          * — backfilling these would have opened Trash on hundreds of rows that dedupe
          * repairs deleted, not a person.
          */
+        /**
+         * Adds the two halves of a refund link.
+         *
+         * Nullable and zero-defaulted, so every row already in the ledger is untouched and reads
+         * as "not a refund and not refunded" — which is what it is. Nothing is backfilled: a
+         * refund is a claim about two rows that only a person can make, and guessing them from
+         * matching amounts is the trap this feature exists to avoid.
+         *
+         * Two columns rather than one on purpose. Each row then says what it is without a join,
+         * which matters twice: the list draws a struck-through amount without looking anything
+         * up, and sync is last-write-wins **per row**, so a link that lived only on the credit
+         * would leave the debit on the other phone still counted as spending.
+         */
+        /**
+         * The bank's own message id, so one debit reported twice is one row.
+         *
+         * Kerala Gramin sends a detailed SMS and a bare one for the same payment. Only the
+         * detailed one carries a UPI reference, and the pair arrives just over three minutes
+         * apart — outside the dedup window — so both were stored. On this ledger that was a
+         * 1,778 card bill and a 7,177.79 one, 8,955.79 counted twice in a single month.
+         *
+         * Nullable with no default: rows written before this migration genuinely have no
+         * message id, and NULL is the honest way to say so. Two NULLs must never match, which
+         * is why the comparison in SmsDeduplicator requires both sides to be present.
+         */
+        /**
+         * Senders that write payment-shaped messages and that nobody has vouched for.
+         *
+         * A queue rather than a decision: adopting an unknown sender on the shape of its
+         * message alone was measured against 2,810 real messages and read an EPF passbook
+         * line as ₹61,989 of income. Shape is enough to ask and not enough to count.
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS pending_senders (
+                        header TEXT NOT NULL PRIMARY KEY,
+                        messageCount INTEGER NOT NULL,
+                        firstAt INTEGER NOT NULL,
+                        lastAt INTEGER NOT NULL,
+                        sampleBody TEXT NOT NULL,
+                        lastAmountPaise INTEGER
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN bankMessageId TEXT")
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN refundsTxnId TEXT")
+                db.execSQL(
+                    "ALTER TABLE transactions ADD COLUMN refundedPaise INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transactions ADD COLUMN deletedAt INTEGER")

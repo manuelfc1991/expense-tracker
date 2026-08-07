@@ -39,6 +39,7 @@ class SyncWorker @AssistedInject constructor(
     private val nearbyTransport: NearbyTransport,
     private val sheetTransport: SheetTransport,
     private val rulesRepository: com.manuel.ours.data.repo.RulesRepository,
+    private val prefs: com.manuel.ours.data.prefs.AppPrefs,
 ) : CoroutineWorker(context, params) {
 
     /**
@@ -102,6 +103,13 @@ class SyncWorker @AssistedInject constructor(
             KEY_TRANSPORTS to used.distinct().joinToString(", "),
             KEY_ERROR to failures.joinToString(" · "),
         )
+
+        // Record the outcome where the interface can see it. `setLastSync` already clears the
+        // error on success; this is the other half, so a failure survives to be shown on Home
+        // rather than only appearing in a Settings disclosure nobody opens.
+        if (attempted > 0 && succeeded == 0) {
+            prefs.setSyncError(failures.joinToString(" · ").ifBlank { "Could not reach anything to sync with" })
+        }
 
         return when {
             attempted == 0 -> Result.success(summary)

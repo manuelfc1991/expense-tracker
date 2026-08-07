@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import com.manuel.ours.data.prefs.AppPrefs
+import com.manuel.ours.data.repo.PendingSenderRepository
 import com.manuel.ours.data.prefs.IngestSource
 import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.work.SyncWorker
@@ -24,6 +25,7 @@ class SmsReceiver : BroadcastReceiver() {
     @Inject lateinit var repository: TransactionRepository
     @Inject lateinit var prefs: AppPrefs
     @Inject lateinit var notifier: IngestNotifier
+    @Inject lateinit var pendingSenders: PendingSenderRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -44,7 +46,7 @@ class SmsReceiver : BroadcastReceiver() {
             try {
                 if (prefs.ingestSource.first() != IngestSource.SMS) return@launch
 
-                when (val result = parser.parse(sender, body, receivedAt)) {
+                when (val result = parser.parse(sender, body, receivedAt, prefs.readEveryPaymentOnce())) {
                     is SmsParser.Result.Expense -> {
                         val txn = repository.ingestParsed(result.txn)
                         if (txn != null) {
@@ -59,6 +61,8 @@ class SmsReceiver : BroadcastReceiver() {
                         }
                     }
                     is SmsParser.Result.BillReminder -> notifier.saveReminder(result)
+                    is SmsParser.Result.Unrecognised ->
+                        pendingSenders.record(result, receivedAt)
                     else -> Unit
                 }
             } finally {

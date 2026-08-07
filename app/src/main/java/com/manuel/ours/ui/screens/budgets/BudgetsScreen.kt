@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,9 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.Money
+import com.manuel.ours.ui.components.OursIconButton
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
 import com.manuel.ours.ui.components.CategoryAvatar
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.LabelOverValue
@@ -48,11 +50,10 @@ import com.manuel.ours.ui.components.PrimaryAction
 import com.manuel.ours.ui.components.Ruler
 import com.manuel.ours.ui.components.TapeHeader
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 import com.manuel.ours.ui.theme.colorForCategory
 
-private val EDGE = 15.dp
 
 /**
  * Budgets, measured on the same ruler Home uses.
@@ -74,7 +75,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
     // No Scaffold: nothing here needs one, and nesting it inside the nav host — which
     // already carries the outer Scaffold's innerPadding — applied the system bar inset
     // a second time and cost the screen ~73dp against Home and Summary.
-    Box(Modifier.fillMaxSize().background(Ours.ink)) {
+    Box(Modifier.fillMaxSize().background(Ours.surface).imePadding()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             // 96dp is Home's allowance for the floating add button, and Activity's
@@ -84,17 +85,13 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("BUDGETS", style = WordmarkStyle, color = Ours.text)
+                OursTopBar(title = "Budgets") {
                     if (state.overallLimit != null) {
-                        MicroLabel(
-                            "Edit",
-                            color = Ours.accent,
-                            modifier = Modifier.clickable { editingOverall = !editingOverall },
+                        OursIconButton(
+                            icon = OursIcon.Categorise,
+                            contentDescription = "Edit the monthly budget",
+                            onClick = { editingOverall = !editingOverall },
+                            tint = Ours.primary,
                         )
                     }
                 }
@@ -108,7 +105,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                         title = "Set a monthly budget",
                         caption = "One number · everything else is optional",
                         onClick = { editingOverall = true },
-                        modifier = Modifier.padding(horizontal = EDGE),
+                        modifier = Modifier.padding(horizontal = Space.edge),
                     )
                 }
             }
@@ -134,7 +131,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
             item {
                 TapeHeader(
                     label = "Per category",
-                    modifier = Modifier.padding(horizontal = EDGE, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = Space.edge, vertical = 4.dp),
                 )
             }
 
@@ -154,9 +151,9 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                 item {
                     MicroLabel(
                         "Reset all budgets",
-                        color = Ours.negative,
+                        color = Ours.error,
                         modifier = Modifier
-                            .padding(horizontal = EDGE, vertical = 12.dp)
+                            .padding(horizontal = Space.edge, vertical = 12.dp)
                             .clickable { confirmingReset = true },
                     )
                 }
@@ -170,14 +167,14 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
     if (confirmingReset) {
         AlertDialog(
             onDismissRequest = { confirmingReset = false },
-            containerColor = Ours.surface,
-            title = { Text("Reset all budgets?", color = Ours.text) },
+            containerColor = Ours.surfaceContainer,
+            title = { Text("Reset all budgets?", color = Ours.onSurface) },
             text = {
                 Text(
                     "The monthly budget and every category limit are dropped, on both " +
                         "phones. Spending itself is untouched — only the caps go.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -187,11 +184,11 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
                         editingOverall = false
                         confirmingReset = false
                     },
-                ) { Text("Reset", color = Ours.negative) }
+                ) { Text("Reset", color = Ours.error) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmingReset = false }) {
-                    Text("Cancel", color = Ours.textSecondary)
+                    Text("Cancel", color = Ours.onSurfaceVariant)
                 }
             },
         )
@@ -201,14 +198,14 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = hiltViewModel()) {
 @Composable
 private fun OverallBudget(spentPaise: Long, limitPaise: Long?, modifier: Modifier = Modifier) {
     Column(
-        modifier.fillMaxWidth().padding(horizontal = EDGE),
+        modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         MicroLabel("Spent this month")
         Text(
             text = Money.exact(spentPaise),
             style = MaterialTheme.typography.displayLarge,
-            color = Ours.text,
+            color = Ours.onSurface,
             maxLines = 1,
         )
 
@@ -224,13 +221,13 @@ private fun OverallBudget(spentPaise: Long, limitPaise: Long?, modifier: Modifie
                 LabelOverValue(
                     label = "Used",
                     value = "${(fraction * 100).toInt()}%",
-                    valueColor = if (over) Ours.negative else Ours.positive,
+                    valueColor = if (over) Ours.error else Ours.success,
                     alignment = Alignment.CenterHorizontally,
                 )
                 LabelOverValue(
                     label = if (over) "Over" else "Left",
                     value = Money.whole(kotlin.math.abs(limitPaise - spentPaise)),
-                    valueColor = if (over) Ours.negative else Ours.positive,
+                    valueColor = if (over) Ours.error else Ours.success,
                     alignment = Alignment.End,
                 )
             }
@@ -253,14 +250,14 @@ private fun CategoryBudgetRow(
     // mean "over" everywhere, so a category whose own hue happens to be red cannot own
     // that meaning.
     val barColor = when {
-        limit == null -> Ours.hairline
-        over -> Ours.negative
+        limit == null -> Ours.outlineVariant
+        over -> Ours.error
         fraction >= 0.8f -> Ours.warning
         else -> colorForCategory(progress.category)
     }
 
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+        Modifier.fillMaxWidth().padding(horizontal = Space.edge),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
@@ -274,18 +271,18 @@ private fun CategoryBudgetRow(
                     progress.category.label,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                     maxLines = 1,
                 )
                 MicroLabel(
                     if (limit == null) "No limit" else "of ${Money.formatCompact(limit)}",
-                    color = if (over) Ours.negative else Ours.textLabel,
+                    color = if (over) Ours.error else Ours.onSurfaceMuted,
                 )
             }
             Text(
                 text = Money.bare(progress.spentPaise, withDecimals = true),
                 style = ValueTextStyle,
-                color = Ours.text,
+                color = Ours.onSurface,
                 maxLines = 1,
             )
         }
@@ -331,15 +328,15 @@ private fun BudgetEditor(
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = if (inset) EDGE else 0.dp)
+            .padding(horizontal = if (inset) Space.edge else 0.dp)
             .clip(RoundedCornerShape(13.dp))
-            .background(Ours.surface)
+            .background(Ours.surfaceContainer)
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         MicroLabel(label)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("₹", style = MaterialTheme.typography.displayMedium, color = Ours.textLabel)
+            Text("₹", style = MaterialTheme.typography.displayMedium, color = Ours.onSurfaceMuted)
             BasicTextField(
                 value = text,
                 onValueChange = { input -> text = input.filter { it.isDigit() }.take(9) },
@@ -347,8 +344,8 @@ private fun BudgetEditor(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 textStyle = LocalTextStyle.current
                     .merge(MaterialTheme.typography.displayMedium)
-                    .copy(color = Ours.text),
-                cursorBrush = SolidColor(Ours.accent),
+                    .copy(color = Ours.onSurface),
+                cursorBrush = SolidColor(Ours.primary),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -360,7 +357,7 @@ private fun BudgetEditor(
                 AccentButton(
                     label = "Save",
                     enabled = valid,
-                    icon = BiIcon.Done,
+                    icon = OursIcon.Done,
                     onClick = { rupees?.let { onSave(it * 100) } },
                 )
             }
@@ -371,7 +368,7 @@ private fun BudgetEditor(
         if (onClear != null && initial != null) {
             MicroLabel(
                 "Clear this budget",
-                color = Ours.negative,
+                color = Ours.error,
                 modifier = Modifier.clickable { confirmingClear = true },
             )
         }
@@ -383,13 +380,13 @@ private fun BudgetEditor(
     if (confirmingClear && onClear != null) {
         AlertDialog(
             onDismissRequest = { confirmingClear = false },
-            containerColor = Ours.surface,
-            title = { Text("Clear this budget?", color = Ours.text) },
+            containerColor = Ours.surfaceContainer,
+            title = { Text("Clear this budget?", color = Ours.onSurface) },
             text = {
                 Text(
                     "The limit is dropped on both phones. Spending itself is untouched.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Ours.textSecondary,
+                    color = Ours.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -398,11 +395,11 @@ private fun BudgetEditor(
                         confirmingClear = false
                         onClear()
                     },
-                ) { Text("Clear", color = Ours.negative) }
+                ) { Text("Clear", color = Ours.error) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmingClear = false }) {
-                    Text("Cancel", color = Ours.textSecondary)
+                    Text("Cancel", color = Ours.onSurfaceVariant)
                 }
             },
         )

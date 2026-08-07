@@ -36,17 +36,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.manuel.ours.R
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursTopBar
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.TapeHeader
-import com.manuel.ours.ui.theme.OursMono
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.OursMono
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.ValueTextStyle
-import com.manuel.ours.ui.theme.WordmarkStyle
 
-private val EDGE = 15.dp
 
 private data class Step(
     val title: String,
@@ -111,26 +110,14 @@ fun SheetSetupScreen(onBack: () -> Unit) {
     val script = remember { context.readSyncScript() }
     var copied by remember { mutableStateOf(false) }
 
-    Scaffold(containerColor = Ours.ink) { padding ->
+    Scaffold(containerColor = Ours.surface) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    BiIconView(
-                        BiIcon.Back,
-                        contentDescription = "Back",
-                        tint = Ours.textSecondary,
-                        modifier = Modifier.size(16.dp).clickable(onClick = onBack),
-                    )
-                    Text("SHEET SETUP", style = WordmarkStyle, color = Ours.text)
-                }
+                OursTopBar(title = "SHEET SETUP", onBack = onBack)
             }
 
             item {
@@ -138,8 +125,8 @@ fun SheetSetupScreen(onBack: () -> Unit) {
                     "About five minutes, once, on a computer. After this both phones see " +
                         "every expense wherever they are.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Ours.textSecondary,
-                    modifier = Modifier.padding(horizontal = EDGE),
+                    color = Ours.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = Space.edge),
                 )
             }
 
@@ -148,17 +135,17 @@ fun SheetSetupScreen(onBack: () -> Unit) {
             }
 
             item {
-                TapeHeader("The script", modifier = Modifier.padding(horizontal = EDGE))
+                TapeHeader("The script", modifier = Modifier.padding(horizontal = Space.edge))
             }
 
             item {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = EDGE),
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     AccentButton(
                         label = if (copied) "Copied" else "Copy script",
-                        icon = if (copied) BiIcon.Done else null,
+                        icon = if (copied) OursIcon.Done else null,
                         onClick = {
                             context.copyToClipboard(script)
                             copied = true
@@ -176,7 +163,7 @@ fun SheetSetupScreen(onBack: () -> Unit) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = EDGE)
+                        .padding(horizontal = Space.edge)
                         .clip(RoundedCornerShape(13.dp))
                         .border(1.dp, Ours.warning.copy(alpha = 0.35f), RoundedCornerShape(13.dp))
                         .padding(13.dp),
@@ -187,7 +174,7 @@ fun SheetSetupScreen(onBack: () -> Unit) {
                         "That link is the only credential. Anyone who has it can read and " +
                             "change your expenses, so treat it like a password.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                     Text(
                         "The sheet stores your data in plain text, including the original " +
@@ -195,13 +182,13 @@ fun SheetSetupScreen(onBack: () -> Unit) {
                             "can open and repair yourself. Bluetooth sync is encrypted; " +
                             "this is not.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                     Text(
                         "Re-deploying issues a new link and kills the old one. If you ever " +
                             "redeploy, both phones need the new link.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Ours.textSecondary,
+                        color = Ours.onSurfaceVariant,
                     )
                 }
             }
@@ -212,7 +199,7 @@ fun SheetSetupScreen(onBack: () -> Unit) {
 @Composable
 private fun StepRow(number: Int, step: Step) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = EDGE),
+        Modifier.fillMaxWidth().padding(horizontal = Space.edge),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // The number is the ruler mark: same mono, same tracking as every other label.
@@ -220,7 +207,7 @@ private fun StepRow(number: Int, step: Step) {
             Text(
                 number.toString(),
                 style = ValueTextStyle,
-                color = Ours.accent,
+                color = Ours.primary,
             )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -228,26 +215,26 @@ private fun StepRow(number: Int, step: Step) {
                 step.title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Ours.text,
+                color = Ours.onSurface,
             )
             Text(
                 step.body,
                 style = MaterialTheme.typography.bodySmall,
-                color = Ours.textSecondary,
+                color = Ours.onSurfaceVariant,
             )
             step.literal?.let {
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(9.dp))
-                        .background(Ours.surface)
+                        .background(Ours.surfaceContainer)
                         .padding(11.dp)
                 ) {
                     Text(
                         it,
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = OursMono,
-                        color = Ours.text,
+                        color = Ours.onSurface,
                     )
                 }
             }

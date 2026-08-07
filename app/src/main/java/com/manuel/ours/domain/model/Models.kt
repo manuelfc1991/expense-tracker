@@ -29,7 +29,7 @@ enum class MoneyFlow {
 }
 
 /**
- * No emoji field. Icons come from [com.manuel.ours.ui.components.BiIcon.forCategory],
+ * No emoji field. Icons come from [com.manuel.ours.ui.components.OursIcon.forCategory],
  * so the domain model stays free of presentation and there is no second, stale set of
  * glyphs for someone to render by accident.
  *
@@ -76,6 +76,19 @@ enum class Category(
     // purchase, so the bill is the *only* record. Excluding it hid the money entirely
     // rather than avoiding a double count. If a card whose purchases do arrive by SMS
     // is ever added, this is the line to revisit.
+    //
+    // **That card has now been added.** The Utkarsh SuperCard is a RuPay credit card
+    // whose every purchase arrives from UTKSPR, read since 1 August 2026 — and the
+    // household pays its bill from Kerala Gramin, which is the row the parser labels
+    // "Rupay Card". So for that one card both halves are now recorded: each purchase,
+    // and the bill that settles them.
+    //
+    // Nothing is double-counted yet only because no SuperCard purchase has fallen after
+    // the 1 August floor. The first month it does, this category starts overstating the
+    // total by the size of the bill. The fix is *not* to exclude card bills globally:
+    // the ICICI card's purchases still never arrive, so its bill remains the only record
+    // of that money, and excluding it would hide the spending outright. Whatever replaces
+    // this has to be decided per card, not per category.
     TRANSFERS("Transfers"),
     /**
      * Money moved between two accounts the household owns.
@@ -132,14 +145,18 @@ enum class Category(
             entries.firstOrNull { it.name == name } ?: OTHER
 
         /**
-         * Debits kept out of the spending headline.
+         * Debits kept out of the spending headline — which is **three** categories, not
+         * the six this comment used to claim.
          *
-         * - [CARD_PAYMENT]: a card bill settles purchases already recorded one by one,
-         *   so counting the bill too double-counts every transaction inside it.
-         *   On real data this alone inflated one month by ₹7,325.
-         * - [TRANSFERS]: large round-number debits whose message names no payee are
-         *   far more often money moved between accounts than a purchase.
-         * - [INVESTMENTS]: an FD, RD or SIP is saving, not spending.
+         * - [INVESTMENTS] ("Savings"): an FD, RD or SIP is saving, not spending.
+         * - [SELF_TRANSFER] ("Ours"): out of one of your accounts, into another.
+         * - [INCOME]: never a debit in the first place.
+         *
+         * [TRANSFERS] and [CARD_PAYMENT] are **not** excluded, whatever their names
+         * suggest. Both carry the default [MoneyFlow.SPENDING], and both do so
+         * deliberately — see the notes on each. This list is derived from `flow`, so it
+         * has always behaved that way; only the comment said otherwise, and a comment
+         * that contradicts the one number the household trusts is worse than none.
          *
          * Nothing here is hidden — the summary shows each excluded total, and one tap
          * reclassifies anything that really was spending.
@@ -177,6 +194,15 @@ data class Transaction(
     val amountEditedAt: Long? = null,
     /** Last digits of the account paid, when the bank named one. */
     val counterpartyTail: String? = null,
+    /**
+     * The bank's own id for the message this came from. Identity for dedup, never shown.
+     * See `TransactionEntity.bankMessageId`.
+     */
+    val bankMessageId: String? = null,
+    /** On a credit: the purchase this refund cancels. See TransactionEntity.refundsTxnId. */
+    val refundsTxnId: String? = null,
+    /** On a debit: how much of it has been refunded. */
+    val refundedPaise: Long = 0,
     /**
      * What the bank said was left in [accountTail] just after this payment.
      *
@@ -223,6 +249,54 @@ data class Budget(
  * number — which is fine as long as the screen says so. A balance presented without its
  * date is the app claiming to know something it does not.
  */
+/**
+ * The wallet, as an answer to "paid from".
+ *
+ * Not an account any bank knows, and deliberately stored in `bank` rather than left blank:
+ * `accountBalances()` discards rows with neither a tail nor a bank, so "blank" would mean the
+ * payment vanished from the Accounts tab — which is the whole defect this answers.
+ */
+const val CASH_ACCOUNT = "Cash"
+
+/**
+ * Which account a hand-added payment came out of.
+ *
+ * Three answers, and [Unknown] is as real as the other two — a person who cannot remember
+ * should not be made to guess, and a guess stored as fact is worse than a blank.
+ */
+sealed interface PaidFrom {
+    val accountTail: String?
+    val bank: String?
+
+    object Cash : PaidFrom {
+        override val accountTail: String? = null
+        override val bank: String = CASH_ACCOUNT
+    }
+
+    /** Nobody said. Stored as nothing, and reported as unknown rather than summed as zero. */
+    object Unknown : PaidFrom {
+        override val accountTail: String? = null
+        override val bank: String? = null
+    }
+
+    data class Account(
+        override val accountTail: String?,
+        override val bank: String?,
+    ) : PaidFrom
+}
+
+/**
+ * What the household told us about a credit card.
+ *
+ * @param limitPaise the credit limit, when they know it. Buys one thing — "still free" —
+ *   and the card works without it.
+ * @param dueDay day of the month the bill falls due, or null.
+ */
+data class CardInfo(
+    val limitPaise: Long? = null,
+    val dueDay: Int? = null,
+)
+
 data class AccountBalance(
     /** Stable identity: the account number when the bank gives one, else its name. */
     val key: String,
@@ -234,6 +308,15 @@ data class AccountBalance(
     val asOf: Long?,
     val source: BalanceSource?,
     val ownerName: String,
+    /**
+     * A credit card, whose balance is money **owed** rather than money held.
+     *
+     * Never summed with the others. The Accounts tab totals "what is left" and
+     * `Affordability` spends against it, so folding ₹4,200 of card debt into that total
+     * would report ₹4,200 more to spend than exists — the opposite of the truth.
+     */
+    val isCard: Boolean = false,
+    val limitPaise: Long? = null,
     /**
      * What the bank makes you keep in the account, which is not yours to spend.
      *
@@ -397,4 +480,16 @@ data class HouseholdMember(
     /** "You" for yourself, first names for everyone else — chips are narrow. */
     val chipLabel: String
         get() = if (isSelf) "Me" else displayName.trim().split(" ").firstOrNull().orEmpty()
+}
+
+/**
+ * "Kerala Gramin ···3062", or just the bank when it never named an account.
+ *
+ * Short enough for a chip: the bank's own name is already long, and the tail is what
+ * distinguishes two accounts at the same bank.
+ */
+fun AccountBalance.shortLabel(): String {
+    val name = bank ?: accountTail?.let { "Account" } ?: key
+    val tail = accountTail?.takeIf { it.isNotBlank() }
+    return if (tail != null) "$name ···$tail" else name
 }

@@ -56,7 +56,7 @@ fun SheetField(
                     Text(
                         placeholder,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Ours.textLabel,
+                        color = Ours.onSurfaceMuted,
                     )
                 }
                 BasicTextField(
@@ -66,17 +66,17 @@ fun SheetField(
                     keyboardOptions = keyboardOptions,
                     textStyle = LocalTextStyle.current
                         .merge(MaterialTheme.typography.bodyLarge)
-                        .copy(color = Ours.text),
-                    cursorBrush = SolidColor(Ours.accent),
+                        .copy(color = Ours.onSurface),
+                    cursorBrush = SolidColor(Ours.primary),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
             MicroLabel(
                 text = if (value.isEmpty()) tag else filledTag,
-                color = Ours.accent,
+                color = Ours.primary,
             )
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }
 
@@ -107,13 +107,13 @@ fun SheetTapRow(
             Text(
                 text,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (filled) Ours.text else Ours.textLabel,
+                color = if (filled) Ours.onSurface else Ours.onSurfaceMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            MicroLabel(text = tag, color = Ours.accent)
+            MicroLabel(text = tag, color = Ours.primary)
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }

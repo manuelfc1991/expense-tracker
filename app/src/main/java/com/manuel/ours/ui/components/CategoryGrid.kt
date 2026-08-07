@@ -83,7 +83,7 @@ fun CategoryGrid(
             onClick = { onSelect(option) },
             count = counts?.let { count },
             dim = counts != null && count == 0,
-            icon = BiIcon.forCategory(option),
+            icon = OursIcon.forCategory(option),
             // The category's own hue, the same one the avatar on a row and the header on
             // the Rules screen use. Sixteen words in a grid are told apart by reading
             // them; sixteen coloured marks are told apart by looking.
@@ -131,7 +131,7 @@ private data class Cell(
 @Composable
 private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(9.dp)
-    val accent = cell.tint ?: Ours.accent
+    val accent = cell.tint ?: Ours.primaryFixed
     Row(
         modifier
             // Faded rather than removed: an empty category is still an answer, and a
@@ -141,7 +141,7 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
             .clip(shape)
             .then(
                 if (cell.selected) Modifier.background(accent)
-                else Modifier.border(1.dp, cell.tint?.copy(alpha = 0.5f) ?: Ours.hairline, shape)
+                else Modifier.border(1.dp, cell.tint?.copy(alpha = 0.5f) ?: Ours.outlineVariant, shape)
             )
             .clickable(onClick = cell.onClick)
             .padding(vertical = 9.dp, horizontal = 6.dp),
@@ -157,12 +157,12 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
         // carrying it into the picker is what lets you find Rent without reading four
         // words on the way to it.
         if (cell.icon != null) {
-            BiIconView(
+            OursIconView(
                 icon = cell.icon,
                 contentDescription = null,
                 tint = when {
                     cell.selected -> Color.White
-                    else -> cell.iconTint ?: Ours.textSecondary
+                    else -> cell.iconTint ?: Ours.onSurfaceVariant
                 },
                 modifier = Modifier.size(13.dp),
             )
@@ -173,7 +173,7 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
             color = when {
                 cell.selected -> Color.White
                 cell.tint != null -> cell.tint
-                else -> Ours.textSecondary
+                else -> Ours.onSurfaceVariant
             },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -183,7 +183,7 @@ private fun CategoryCell(cell: Cell, modifier: Modifier = Modifier) {
             Text(
                 text = cell.count.toString(),
                 style = MicroLabelStyle,
-                color = if (cell.selected) Color.White.copy(alpha = 0.7f) else Ours.textLabel,
+                color = if (cell.selected) Color.White.copy(alpha = 0.7f) else Ours.onSurfaceMuted,
                 maxLines = 1,
             )
         }

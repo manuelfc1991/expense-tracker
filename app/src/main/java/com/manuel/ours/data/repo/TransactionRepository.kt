@@ -82,10 +82,13 @@ class TransactionRepository @Inject constructor(
         return txnDao.getBetween(maxOf(from, startAt), to).map { it.toDomain() }
     }
 
-    fun observeNeedsReviewCount(): Flow<Int> = txnDao.observeNeedsReviewCount()
+    fun observeNeedsReviewCount(): Flow<Int> =
+        prefs.trackingStartAt.flatMapLatest { startAt -> txnDao.observeNeedsReviewCount(startAt) }
 
     fun observeNeedsReview(): Flow<List<Transaction>> =
-        txnDao.observeNeedsReview().map { list -> list.map { it.toDomain() } }
+        prefs.trackingStartAt.flatMapLatest { startAt ->
+            txnDao.observeNeedsReview(startAt).map { list -> list.map { it.toDomain() } }
+        }
 
     suspend fun getById(id: String): Transaction? = txnDao.getById(id)?.toDomain()
 
@@ -121,12 +124,24 @@ class TransactionRepository @Inject constructor(
         } else {
             SmsDeduplicator.WINDOW_MS
         }
+        // Deleted rows are candidates too, and must be.
+        //
+        // These lookups used to filter `deleted = 0`, so a tombstone was invisible: a
+        // rescan met the message again, found nothing, and imported it as new. Six rows
+        // deleted on 6 August returned on the next rescan carrying ₹50,955 of duplicates
+        // into a month somebody had just finished cleaning up. A deletion is an answer,
+        // and re-reading the inbox must not overturn it.
         val candidates = buildList {
+            // The bank's own message id first: it is identity rather than inference, and
+            // the row it finds can be well outside any time window.
+            parsed.messageId?.takeIf { it.isNotBlank() }?.let { id ->
+                txnDao.findByMessageIdEvenIfDeleted(id)?.let(::add)
+            }
             parsed.refNo?.takeIf { it.isNotBlank() }?.let { ref ->
-                txnDao.findByRef(ref)?.let(::add)
+                txnDao.findByRefEvenIfDeleted(ref)?.let(::add)
             }
             addAll(
-                txnDao.findNearby(
+                txnDao.findNearbyEvenIfDeleted(
                     parsed.amountPaise,
                     parsed.dedupeAt - window,
                     parsed.dedupeAt + window,
@@ -139,12 +154,21 @@ class TransactionRepository @Inject constructor(
             // occurredAt here is what let a rescan duplicate the whole history.
             val cardBillPair = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT ||
                 existing.category == Category.CARD_PAYMENT.name
-            val matches = if (cardBillPair) {
-                SmsDeduplicator.isCardBillEcho(existing, parsed)
-            } else {
-                SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
+            // The bank saying "this is the same message" outranks both inferences below.
+            // Checked here rather than only inside isDuplicate, because a card-bill pair
+            // takes the other branch entirely and would never see it.
+            val sameMessage = !existing.bankMessageId.isNullOrBlank() &&
+                existing.bankMessageId == parsed.messageId
+            val matches = when {
+                sameMessage -> true
+                cardBillPair -> SmsDeduplicator.isCardBillEcho(existing, parsed)
+                else -> SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
             }
             if (!matches) continue
+            // A match that was deleted stays deleted. Merging richer fields into it would
+            // be harmless, but doing nothing is clearer: the household removed this row,
+            // and a rescan has no business editing it either.
+            if (existing.deleted) return null
             if (SmsDeduplicator.richer(existing, parsed)) {
                 val merged = existing.copy(
                     merchant = parsed.merchant ?: existing.merchant,
@@ -169,11 +193,30 @@ class TransactionRepository @Inject constructor(
         // The parser's Kind wins over merchant matching: a card bill payment must not
         // be categorised by whatever its text happens to look like, or it silently
         // rejoins the spend total it was excluded from.
-        val category = when (parsed.kind) {
-            SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
-            SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
-            SmsParser.Kind.TRANSFER -> Category.TRANSFERS
-            SmsParser.Kind.PURCHASE -> Categorizer.categorize(parsed.merchant, parsed.type, rules)
+        // Settling a card whose purchases this app already records is not spending.
+        //
+        // CARD_PAYMENT counts, deliberately: on this ledger the bill was the only record a
+        // card left, so excluding it hid the money rather than avoiding a double count.
+        // A registered card changes that for itself and for nothing else — its purchases
+        // arrive one by one, so counting the bill as well counts them twice.
+        //
+        // Matched on the card's own last four, named in the bill message ("SuperCard ending
+        // 8842"). Deliberately narrow: where the message does not say which card, this does
+        // nothing and the bill keeps counting, because the alternative is quietly removing
+        // spending the app cannot prove is recorded elsewhere.
+        val registeredCards = cardKeys()
+        val settlesTrackedCard = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT &&
+            listOfNotNull(parsed.accountTail, parsed.counterpartyTail).any { it in registeredCards }
+
+        val category = when {
+            settlesTrackedCard -> Category.SELF_TRANSFER
+            else -> when (parsed.kind) {
+                SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
+                SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
+                SmsParser.Kind.TRANSFER -> Category.TRANSFERS
+                SmsParser.Kind.PURCHASE ->
+                    Categorizer.categorize(parsed.merchant, parsed.type, rules)
+            }
         }
 
         val txn = Transaction(
@@ -207,6 +250,7 @@ class TransactionRepository @Inject constructor(
             counterpartyTail = parsed.counterpartyTail,
             balancePaise = parsed.balancePaise,
             refNo = parsed.refNo,
+            bankMessageId = parsed.messageId,
             bank = parsed.bank,
             splitType = SplitType.SHARED,
             source = source,
@@ -218,7 +262,11 @@ class TransactionRepository @Inject constructor(
             // under fifty pieces of unattributable income.
             needsReview = (parsed.type == TxnType.DEBIT && parsed.merchant == null &&
                 parsed.counterpartyTail?.let { namedAccounts[it] } == null) ||
-                (parsed.kind == SmsParser.Kind.PURCHASE && category == Category.OTHER),
+                (parsed.kind == SmsParser.Kind.PURCHASE && category == Category.OTHER) ||
+                // Read from a sender nobody can vouch for. It counts, because the
+                // household asked for it to, but it is flagged so it lands under Untagged
+                // with the rest — findable and removable together rather than hunted for.
+                !parsed.senderVouched,
             rawSms = parsed.rawBody,
         )
         val dedupeKey = SmsDeduplicator.bucketKey(
@@ -305,6 +353,62 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /**
+     * The accounts the household has declared to be credit cards.
+     *
+     * Value is `limitPaise|dueDay`, both optional — a card works without either, it just
+     * cannot say how much room is left or when the bill lands.
+     */
+    fun observeCards(): kotlinx.coroutines.flow.Flow<Map<String, com.manuel.ours.domain.model.CardInfo>> =
+        sharedRuleDao.observeOfType(RulesRepository.TYPE_CARD).map { rules ->
+            rules
+                // An emptied value is this store's tombstone: the household removed the card.
+                .filter { it.value.isNotBlank() }
+                .associate { rule ->
+                    val parts = rule.value.split('|')
+                    rule.ruleKey to com.manuel.ours.domain.model.CardInfo(
+                        limitPaise = parts.getOrNull(0)?.takeIf(String::isNotBlank)?.toLongOrNull(),
+                        dueDay = parts.getOrNull(1)?.takeIf(String::isNotBlank)?.toIntOrNull(),
+                    )
+                }
+        }
+
+    /** Keys of every account the household has declared a credit card. */
+    private suspend fun cardKeys(): Set<String> =
+        sharedRuleDao.all()
+            .filter { it.type == RulesRepository.TYPE_CARD && it.value.isNotBlank() }
+            .map { it.ruleKey }
+            .toSet()
+
+    /** Declares an account to be a credit card, or clears it when [limitPaise] and day are null. */
+    suspend fun setCard(key: String, limitPaise: Long?, dueDay: Int?) {
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_CARD,
+                    ruleKey = key,
+                    value = "${limitPaise ?: ""}|${dueDay ?: ""}",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
+    suspend fun removeCard(key: String) {
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_CARD,
+                    ruleKey = key,
+                    value = "",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
     fun observeAccountMinimums(): kotlinx.coroutines.flow.Flow<Map<String, Long>> =
         sharedRuleDao.observeOfType(TYPE_MIN_BALANCE).map { rules ->
             rules.mapNotNull { r -> r.value.toLongOrNull()?.let { r.ruleKey to it } }.toMap()
@@ -334,11 +438,13 @@ class TransactionRepository @Inject constructor(
             observeAll(),
             observeManualBalances(),
             observeAccountMinimums(),
-        ) { all, manual, minimums ->
+            observeCards(),
+        ) { all, manual, minimums, cards ->
             com.manuel.ours.domain.MonthlyAggregator.accountBalances(
                 transactions = all,
                 manual = manual,
                 minimums = minimums,
+                cards = cards,
                 viewerUid = viewerUid,
                 isOwner = isOwner,
             )
@@ -390,6 +496,16 @@ class TransactionRepository @Inject constructor(
             }
     }
 
+    /**
+     * @param accountTail last four of the account it came out of, when the household says.
+     * @param bank the institution, or "Cash". Both null means nobody said, which is a real
+     *   answer and is stored as one rather than guessed at.
+     *
+     * These used to be unset on every hand-added row, and `accountBalances()` opens by
+     * discarding anything with neither — so a manual payment was not merely unattributed,
+     * it was invisible to the Accounts tab. The sheet that exists for payments no bank
+     * messaged about was the one place nothing filled the account in.
+     */
     suspend fun addManual(
         amountPaise: Long,
         type: TxnType,
@@ -398,6 +514,8 @@ class TransactionRepository @Inject constructor(
         occurredAt: Long,
         note: String?,
         splitType: SplitType,
+        accountTail: String? = null,
+        bank: String? = null,
     ): Transaction {
         val self = prefs.snapshot()
         val txn = Transaction(
@@ -409,6 +527,8 @@ class TransactionRepository @Inject constructor(
             occurredAt = occurredAt,
             note = note,
             splitType = splitType,
+            accountTail = accountTail,
+            bank = bank,
             source = TxnSource.MANUAL,
             ownerUid = self.selfUid ?: "local",
             ownerName = self.selfName ?: "Me",
@@ -641,6 +761,8 @@ class TransactionRepository @Inject constructor(
             deleteRequestedBy = txn.deleteRequestedBy,
             amountEditedAt = txn.amountEditedAt,
             counterpartyTail = txn.counterpartyTail,
+            refundsTxnId = txn.refundsTxnId,
+            refundedPaise = txn.refundedPaise,
             rawSms = txn.rawSms,
         )
         eventDao.append(
@@ -657,6 +779,70 @@ class TransactionRepository @Inject constructor(
             )
         )
     }
+
+    /**
+     * Records that a credit cancels a purchase.
+     *
+     * Deliberate and reversible, because it is a claim only a person can make. Both rows are
+     * written — the credit learns what it cancels, the debit learns how much of it is undone —
+     * and both are logged, so the two phones cannot end up disagreeing about the month's spend.
+     *
+     * @param refundedPaise how much of the purchase this cancels, capped at the purchase itself.
+     *   A refund larger than the thing it refunds is a mis-link, not a windfall.
+     */
+    suspend fun linkRefund(creditId: String, debitId: String, refundedPaise: Long) {
+        val credit = txnDao.getById(creditId) ?: return
+        val debit = txnDao.getById(debitId) ?: return
+        if (credit.type != TxnType.CREDIT.name || debit.type != TxnType.DEBIT.name) return
+
+        // Capped at the purchase: a refund larger than the thing it refunds is a mis-link, not a
+        // windfall, and letting it through would make the month's spending negative.
+        val amount = refundedPaise.coerceIn(0, debit.amountPaise)
+
+        // The category moves too. A linked credit stops being Income and becomes a movement, which
+        // is what keeps it out of *both* totals rather than only out of spending.
+        saveAndLog(
+            credit.copy(
+                refundsTxnId = debitId,
+                category = Category.SELF_TRANSFER.name,
+                needsReview = false,
+            ).toDomain(),
+            credit.dedupeKey,
+            credit.dedupeAt,
+        )
+        saveAndLog(
+            debit.copy(refundedPaise = amount).toDomain(),
+            debit.dedupeKey,
+            debit.dedupeAt,
+        )
+    }
+
+    /**
+     * Undoes the link, from either side.
+     *
+     * A claim you cannot withdraw is one people will not make, so this is offered on both rows
+     * and restores the credit to Income.
+     */
+    suspend fun unlinkRefund(creditId: String) {
+        val credit = txnDao.getById(creditId) ?: return
+        val debitId = credit.refundsTxnId ?: return
+        txnDao.getById(debitId)?.let { debit ->
+            saveAndLog(debit.copy(refundedPaise = 0).toDomain(), debit.dedupeKey, debit.dedupeAt)
+        }
+        saveAndLog(
+            credit.copy(refundsTxnId = null, category = Category.INCOME.name).toDomain(),
+            credit.dedupeKey,
+            credit.dedupeAt,
+        )
+    }
+
+    /** Debits from the last 60 days that a refund could plausibly be cancelling. */
+    fun observeRefundCandidates(nowMillis: Long = System.currentTimeMillis()): Flow<List<Transaction>> =
+        observeBetween(nowMillis - 60L * 24 * 60 * 60 * 1000, nowMillis + 1)
+            .map { list ->
+                list.filter { it.type == TxnType.DEBIT && it.refundedPaise < it.amountPaise }
+                    .sortedByDescending { it.occurredAt }
+            }
 
     /**
      * Claims any transactions imported before the user's identity existed. Safe to

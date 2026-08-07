@@ -52,10 +52,10 @@ fun TransactionListRow(
     captionColorOverride: androidx.compose.ui.graphics.Color? = null,
     dimAmount: Boolean = false,
 ) {
-    val accent = Ours.accent
+    val accent = Ours.primaryFixed
     Box(
         modifier
-            .background(if (selected) accent.copy(alpha = 0.14f) else Ours.ink)
+            .background(if (selected) accent.copy(alpha = 0.14f) else Ours.surface)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         if (selected) {
@@ -103,7 +103,7 @@ fun CategoryPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Ours.ink,
+        containerColor = Ours.surface,
     ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 15.dp).padding(bottom = 28.dp),

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,12 +42,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.ui.components.AccentButton
-import com.manuel.ours.ui.components.BiIcon
-import com.manuel.ours.ui.components.BiIconView
+import com.manuel.ours.ui.components.OursIcon
+import com.manuel.ours.ui.components.OursIconView
 import com.manuel.ours.ui.components.GhostButton
 import com.manuel.ours.ui.components.MicroLabel
 import com.manuel.ours.ui.components.Ruler
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 
 private data class Page(
     @DrawableRes val icon: Int,
@@ -56,27 +58,25 @@ private data class Page(
 
 private val pages = listOf(
     Page(
-        icon = BiIcon.Message,
+        icon = OursIcon.Message,
         title = "Your expenses, without the data entry",
         body = "Ours reads the SMS your bank already sends you and turns each one " +
             "into a categorised expense. You don't type anything.",
     ),
     Page(
-        icon = BiIcon.Household,
+        icon = OursIcon.Household,
         title = "One budget, two phones",
         body = "You pay from your phone, your partner pays from theirs, and both of you " +
             "see one household total. Each phone reads only its own messages.",
     ),
     Page(
-        icon = BiIcon.Privacy,
+        icon = OursIcon.Privacy,
         title = "Nobody else can read it",
         body = "No account and no server of ours. Your messages are read on this " +
             "phone, and you choose how the phones share: a Google Sheet you own, or " +
             "Bluetooth when you're together.",
     ),
 )
-
-private val EDGE = 22.dp
 
 /**
  * Setup, left-aligned like everything else.
@@ -99,7 +99,10 @@ fun OnboardingScreen(
         viewModel.onSmsPermissionResult(granted[Manifest.permission.READ_SMS] == true)
     }
 
-    Box(Modifier.fillMaxSize().background(Ours.ink)) {
+    // imePadding: the app is edge-to-edge, so the window does not shrink for the keyboard
+    // and the primary action sits underneath it. On the name step that made "Continue"
+    // unreachable — the only way on was the keyboard's own tick.
+    Box(Modifier.fillMaxSize().background(Ours.surface).imePadding()) {
         AnimatedContent(
             targetState = state.step,
             transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(200)) },
@@ -173,7 +176,7 @@ private fun Step(
     actions: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier.fillMaxSize().padding(horizontal = EDGE, vertical = 28.dp),
+        modifier.fillMaxSize().padding(horizontal = Space.s6, vertical = 28.dp),
     ) {
         MicroLabel(label)
         Spacer(Modifier.height(28.dp))
@@ -185,12 +188,12 @@ private fun Step(
 
 @Composable
 private fun Title(text: String) {
-    Text(text, style = MaterialTheme.typography.headlineMedium, color = Ours.text)
+    Text(text, style = MaterialTheme.typography.headlineMedium, color = Ours.onSurface)
 }
 
 @Composable
 private fun Body(text: String) {
-    Text(text, style = MaterialTheme.typography.bodyLarge, color = Ours.textSecondary)
+    Text(text, style = MaterialTheme.typography.bodyLarge, color = Ours.onSurfaceVariant)
 }
 
 @Composable
@@ -199,10 +202,10 @@ private fun IntroPages(index: Int, onNext: () -> Unit) {
     Step(
         label = "Ours · ${index + 1} of ${pages.size}",
         content = {
-            BiIconView(
+            OursIconView(
                 icon = page.icon,
                 contentDescription = null,
-                tint = Ours.accent,
+                tint = Ours.primary,
                 modifier = Modifier.size(28.dp),
             )
             Spacer(Modifier.height(2.dp))
@@ -219,7 +222,7 @@ private fun IntroPages(index: Int, onNext: () -> Unit) {
                             .width(if (i == index) 22.dp else 12.dp)
                             .height(2.dp)
                             .clip(RoundedCornerShape(1.dp))
-                            .background(if (i == index) Ours.accent else Ours.hairline)
+                            .background(if (i == index) Ours.primaryFixed else Ours.outlineVariant)
                     )
                 }
             }
@@ -274,7 +277,7 @@ private fun HouseholdStep(
                 Text(
                     text = inviteSecret,
                     style = MaterialTheme.typography.displayMedium,
-                    color = Ours.accent,
+                    color = Ours.primary,
                     maxLines = 1,
                 )
                 Body(
@@ -314,10 +317,10 @@ private fun PermissionStep(onGrant: () -> Unit, onSkip: () -> Unit) {
     Step(
         label = "Permission",
         content = {
-            BiIconView(
-                icon = BiIcon.Message,
+            OursIconView(
+                icon = OursIcon.Message,
                 contentDescription = null,
-                tint = Ours.accent,
+                tint = Ours.primary,
                 modifier = Modifier.size(28.dp),
             )
             Spacer(Modifier.height(2.dp))
@@ -347,10 +350,10 @@ private fun BackfillStep(
     Step(
         label = if (finished) "Done" else "Reading",
         content = {
-            BiIconView(
-                icon = if (finished) BiIcon.Done else BiIcon.Scanning,
+            OursIconView(
+                icon = if (finished) OursIcon.Done else OursIcon.Scanning,
                 contentDescription = null,
-                tint = if (finished) Ours.positive else Ours.accent,
+                tint = if (finished) Ours.success else Ours.primary,
                 modifier = Modifier.size(28.dp),
             )
             Spacer(Modifier.height(2.dp))
@@ -390,11 +393,11 @@ private fun HairlineField(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
-            .background(Ours.surface)
+            .background(Ours.surfaceContainer)
             .padding(horizontal = 13.dp, vertical = 13.dp),
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = Ours.textLabel)
+            Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = Ours.onSurfaceMuted)
         }
         BasicTextField(
             value = value,
@@ -402,8 +405,8 @@ private fun HairlineField(
             singleLine = true,
             textStyle = LocalTextStyle.current
                 .merge(MaterialTheme.typography.bodyLarge)
-                .copy(color = Ours.text),
-            cursorBrush = SolidColor(Ours.accent),
+                .copy(color = Ours.onSurface),
+            cursorBrush = SolidColor(Ours.primary),
             modifier = Modifier.fillMaxWidth(),
         )
     }

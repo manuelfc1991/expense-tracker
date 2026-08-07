@@ -34,18 +34,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manuel.ours.core.Money
+import com.manuel.ours.core.OursZone
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.ui.theme.AmountTextStyle
 import com.manuel.ours.ui.theme.MicroLabelStyle
 import com.manuel.ours.ui.theme.Ours
+import com.manuel.ours.ui.theme.Space
 import com.manuel.ours.ui.theme.PillTextStyle
 import com.manuel.ours.ui.theme.ValueTextStyle
 import com.manuel.ours.ui.theme.colorForCategory
-import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -61,12 +60,20 @@ import kotlin.math.roundToInt
 // Type primitives
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** The 9sp uppercase caption. Always above its value, never beside it. */
+/**
+ * The 11sp uppercase caption. Always above its value, never beside it.
+ *
+ * Was 9sp — below Material's own `labelSmall` floor, on the most-used style in the app. The wide
+ * tracking is what makes it read as a deliberate caption, not the smallness.
+ *
+ * One line with ellipsis, which costs about 25 characters at this size: a caption that overflows
+ * loses its tail rather than wrapping, so the tail must never be where the meaning is.
+ */
 @Composable
 fun MicroLabel(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = Ours.textLabel,
+    color: Color = Ours.onSurfaceMuted,
 ) {
     Text(
         text = text.uppercase(),
@@ -89,11 +96,11 @@ fun LabelOverValue(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColor: Color = Ours.text,
+    valueColor: Color = Ours.onSurface,
     valueStyle: TextStyle = ValueTextStyle,
     alignment: Alignment.Horizontal = Alignment.Start,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(5.dp), horizontalAlignment = alignment) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.s1), horizontalAlignment = alignment) {
         MicroLabel(label)
         Text(value, style = valueStyle, color = valueColor, maxLines = 1)
     }
@@ -116,11 +123,11 @@ fun LabelOverValue(
 fun Ruler(
     fraction: Float,
     modifier: Modifier = Modifier,
-    height: Dp = 22.dp,
+    height: Dp = 24.dp,
     over: Boolean = fraction > 1f,
 ) {
-    val track = Ours.hairline
-    val fill = if (over) Ours.negative else Ours.positive
+    val track = Ours.outlineVariant
+    val fill = if (over) Ours.error else Ours.success
     Canvas(modifier.fillMaxWidth().height(height)) {
         val pitch = 7.dp.toPx()
         val tickWidth = 1.5.dp.toPx()
@@ -155,7 +162,7 @@ fun Meter(
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(height / 2))
-            .background(Ours.hairline)
+            .background(Ours.outlineVariant)
     ) {
         Box(
             Modifier
@@ -182,7 +189,7 @@ fun Meter(
 fun CategoryAvatar(
     category: Category,
     modifier: Modifier = Modifier,
-    size: Dp = 28.dp,
+    size: Dp = 32.dp,
     @DrawableRes overrideIcon: Int? = null,
 ) {
     val base = colorForCategory(category)
@@ -195,8 +202,8 @@ fun CategoryAvatar(
             .background(base.copy(alpha = if (dark) 0.20f else 0.14f)),
         contentAlignment = Alignment.Center,
     ) {
-        BiIconView(
-            icon = overrideIcon ?: BiIcon.forCategory(category),
+        OursIconView(
+            icon = overrideIcon ?: OursIcon.forCategory(category),
             contentDescription = null,
             tint = tint,
             modifier = Modifier.size(size * 0.46f),
@@ -216,7 +223,7 @@ fun AmountColumn(
     modifier: Modifier = Modifier,
     dim: Boolean = false,
     signed: Boolean = false,
-    color: Color = if (dim) Ours.textSecondary else Ours.text,
+    color: Color = if (dim) Ours.onSurfaceVariant else Ours.onSurface,
 ) {
     // Paise, always — two places on every row, never "only when there are some".
     //
@@ -252,7 +259,7 @@ fun StatementEntry(
     paise: Long,
     modifier: Modifier = Modifier,
     category: Category = Category.OTHER,
-    captionColor: Color = Ours.textLabel,
+    captionColor: Color = Ours.onSurfaceMuted,
     amountDim: Boolean = false,
     divider: Boolean = true,
     @DrawableRes overrideIcon: Int? = null,
@@ -263,20 +270,23 @@ fun StatementEntry(
             Modifier
                 .fillMaxWidth()
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(vertical = 7.dp),
+                // A row is a touch target, so it gets the minimum whether or not its content
+                // fills it. 8dp vertical over a 32dp mark comes to exactly 48.
+                .defaultMinSize(minHeight = Space.target)
+                .padding(vertical = Space.s2),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(11.dp),
+            horizontalArrangement = Arrangement.spacedBy(Space.s3),
         ) {
             CategoryAvatar(category, overrideIcon = overrideIcon)
             Column(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(Space.s1),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Ours.text,
+                    color = Ours.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -289,7 +299,7 @@ fun StatementEntry(
                 Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(Ours.hairline)
+                    .background(Ours.outlineVariant)
             )
         }
     }
@@ -328,37 +338,43 @@ fun OursChip(
      */
     iconTint: Color? = null,
 ) {
-    val accent = tint ?: Ours.accent
+    val accent = tint ?: Ours.primaryFixed
     val bg = if (selected) accent else Color.Transparent
     val fg = when {
         selected -> Color.White
         tint != null -> tint
-        else -> Ours.textSecondary
+        else -> Ours.onSurfaceVariant
     }
     Row(
         modifier
-            .clip(RoundedCornerShape(8.dp))
+            // The chip reads 32dp but is tapped over 48: the outer padding is part of the
+            // clickable and outside the visible shape, so a row of chips has no dead gaps
+            // between targets without the chips themselves growing.
+            .clip(RoundedCornerShape(Space.s2))
+            .clickable(onClick = onClick)
+            .padding(vertical = Space.s2)
+            .clip(RoundedCornerShape(Space.s2))
             .background(bg)
             .border(
                 1.dp,
                 when {
                     selected -> accent
                     tint != null -> tint.copy(alpha = 0.5f)
-                    else -> Ours.hairline
+                    else -> Ours.outlineVariant
                 },
-                RoundedCornerShape(8.dp),
+                RoundedCornerShape(Space.s2),
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .defaultMinSize(minHeight = 32.dp)
+            .padding(horizontal = Space.s3, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (icon != null) {
-            BiIconView(
+            OursIconView(
                 icon,
                 contentDescription = null,
                 tint = if (selected) fg else iconTint ?: fg,
-                modifier = Modifier.size(13.dp),
+                modifier = Modifier.size(14.dp),
             )
         }
         Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
@@ -366,7 +382,7 @@ fun OursChip(
             Text(
                 count.toString(),
                 style = MicroLabelStyle,
-                color = if (selected) Color.White.copy(alpha = 0.7f) else Ours.textLabel,
+                color = if (selected) Color.White.copy(alpha = 0.7f) else Ours.onSurfaceMuted,
                 maxLines = 1,
             )
         }
@@ -389,14 +405,15 @@ fun PrimaryAction(
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Ours.accent)
+            .clip(MaterialTheme.shapes.medium)
+            .background(Ours.primaryFixed)
             .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 13.dp),
+            .defaultMinSize(minHeight = Space.target)
+            .padding(horizontal = Space.s4, vertical = Space.s3),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(Space.s3),
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.s1)) {
             Text(
                 title,
                 style = MaterialTheme.typography.labelLarge,
@@ -405,11 +422,11 @@ fun PrimaryAction(
             )
             MicroLabel(caption, color = Color.White.copy(alpha = 0.72f))
         }
-        BiIconView(
-            BiIcon.More,
+        OursIconView(
+            OursIcon.More,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(12.dp),
+            modifier = Modifier.size(16.dp),
         )
     }
 }
@@ -424,20 +441,18 @@ fun GhostButton(
     Box(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(11.dp))
-            .border(1.dp, Ours.hairline, RoundedCornerShape(11.dp))
+            .clip(RoundedCornerShape(percent = 50))
+            .border(1.dp, Ours.outline, RoundedCornerShape(percent = 50))
             .clickable(onClick = onClick)
-            // 13dp, not 12: this sits beside an [AccentButton] in a pair, and a one-pixel
-            // height difference between two buttons on the same row is the kind of thing
-            // you cannot name but can see.
-            .padding(vertical = 13.dp),
+            // Both this and [AccentButton] are exactly Space.target tall, so the pair cannot
+            // disagree by a pixel — which is what the hand-tuned 13dp was compensating for.
+            .height(Space.target),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            color = Ours.textSecondary,
+            color = Ours.primary,
         )
     }
 }
@@ -457,24 +472,25 @@ fun StatePill(
     @DrawableRes icon: Int? = null,
 ) {
     val fg = when (tone) {
-        PillTone.Ok -> Ours.positive
+        PillTone.Ok -> Ours.success
         PillTone.Warn -> Ours.warning
-        PillTone.Neutral -> Ours.textSecondary
+        PillTone.Neutral -> Ours.onSurfaceVariant
     }
     val edge = when (tone) {
-        PillTone.Neutral -> Ours.hairline
+        PillTone.Neutral -> Ours.outlineVariant
         else -> fg.copy(alpha = 0.42f)
     }
     Row(
         modifier
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, edge, RoundedCornerShape(20.dp))
-            .padding(horizontal = 9.dp, vertical = 4.dp),
+            .clip(RoundedCornerShape(percent = 50))
+            .border(1.dp, edge, RoundedCornerShape(percent = 50))
+            .defaultMinSize(minHeight = 24.dp)
+            .padding(horizontal = 10.dp, vertical = Space.s1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         if (icon != null) {
-            BiIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(10.dp))
+            OursIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(10.dp))
         }
         Text(text.uppercase(), style = PillTextStyle, color = fg, maxLines = 1)
     }
@@ -491,7 +507,7 @@ fun TapeHeader(
     label: String,
     modifier: Modifier = Modifier,
     trailing: String? = null,
-    trailingColor: Color = Ours.textSecondary,
+    trailingColor: Color = Ours.onSurfaceVariant,
 ) {
     Column(modifier.fillMaxWidth()) {
         Row(
@@ -502,7 +518,7 @@ fun TapeHeader(
             MicroLabel(label)
             if (trailing != null) MicroLabel(trailing, color = trailingColor)
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.hairline))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Ours.outlineVariant))
     }
 }
 
@@ -516,15 +532,15 @@ fun TapeHeader(
 fun QuietEmpty(
     text: String,
     modifier: Modifier = Modifier,
-    @DrawableRes icon: Int = BiIcon.Activity,
+    @DrawableRes icon: Int = OursIcon.Activity,
 ) {
     Column(
         modifier.fillMaxWidth().padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        BiIconView(icon, contentDescription = null, tint = Ours.textSecondary, modifier = Modifier.size(22.dp))
-        Text(text, style = MaterialTheme.typography.bodySmall, color = Ours.textSecondary)
+        OursIconView(icon, contentDescription = null, tint = Ours.onSurfaceVariant, modifier = Modifier.size(22.dp))
+        Text(text, style = MaterialTheme.typography.bodySmall, color = Ours.onSurfaceVariant)
     }
 }
 
@@ -555,22 +571,43 @@ fun TransactionEntry(
     dimAmount: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val time = remember(txn.occurredAt) {
-        Instant.ofEpochMilli(txn.occurredAt)
-            .atZone(ZoneId.systemDefault())
-            .format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
-    }
-    // An untagged row says so in the caption and dims its amount, because it is not
-    // in the month's total yet. Showing it at full weight would imply it was counted.
+    // An untagged row says so in the caption and dims its amount, because it is not in the
+    // month's total yet. Showing it at full weight would imply it was counted.
     val untagged = txn.needsReview || txn.category == Category.OTHER
-    val caption = buildString {
-        append(if (untagged) "Untagged" else txn.category.label)
-        append(" · ")
-        append(time)
-        if (showOwner) {
-            append(" · ")
-            append(txn.ownerName.split(" ").firstOrNull().orEmpty())
-        }
+
+    // One remember for the whole caption, keyed on everything it reads.
+    //
+    // This is the hottest path in the app — it runs for every row of a list that holds several
+    // hundred — and it was doing two avoidable things on every recomposition: building a
+    // `DateTimeFormatter` from its pattern string (now a shared instance on `OursZone`), and
+    // running `buildString` plus a `String.split` outside any remember, so scrolling reallocated
+    // the caption of every visible row on every frame.
+    val caption = remember(txn.occurredAt, txn.category, txn.needsReview, txn.ownerName, showOwner) {
+        // The mark already states the category, so the caption spends its width on what the
+        // mark cannot say.
+        //
+        // It is one line with ellipsis, and at 11sp there is room for about 25 characters —
+        // so `Groceries · 11:20 am · Anu` (26) would have rendered as
+        // `GROCERIES · 11:20 AM · A…`, clipping the one thing the owner suffix was added for.
+        // Once a name has to fit, the category word goes. "Untagged" is the exception: a grey
+        // dots mark cannot convey it, which is the whole reason that state has a word.
+        //
+        // Assembled as parts and joined, rather than appended with separators inline: the clock
+        // is now optional, and hand-managed " · " left a dangling separator the moment any one
+        // piece went away.
+        buildList {
+            when {
+                untagged -> add("Untagged")
+                !showOwner -> add(txn.category.label)
+            }
+            // No clock when the bank never gave one. Midnight is the parser's marker for a
+            // date-only message, and printing it as "12:00 am" states a time nobody was told —
+            // on this ledger a card bill dated 3 August read as though it were paid at midnight.
+            if (!OursZone.isDateOnly(txn.occurredAt)) {
+                add(OursZone.format(txn.occurredAt, OursZone.clock))
+            }
+            if (showOwner) add(txn.ownerName.substringBefore(' '))
+        }.joinToString(" · ")
     }
     StatementEntry(
         title = txn.merchant,
@@ -578,7 +615,7 @@ fun TransactionEntry(
         paise = txn.amountPaise,
         category = txn.category,
         captionColor = captionColorOverride
-            ?: if (untagged) Ours.warning else Ours.textLabel,
+            ?: if (untagged) Ours.warning else Ours.onSurfaceMuted,
         amountDim = dimAmount || untagged,
         divider = divider,
         onClick = onClick,
@@ -613,23 +650,25 @@ fun AccentButton(
     dimWhenDisabled: Boolean = false,
 ) {
     val fg = when {
-        enabled -> Color.White
-        dimWhenDisabled -> Color.White.copy(alpha = 0.55f)
-        else -> Ours.textLabel
+        enabled -> Ours.onPrimaryFixed
+        dimWhenDisabled -> Ours.onPrimaryFixed.copy(alpha = 0.6f)
+        else -> Ours.onSurface.copy(alpha = 0.38f)
     }
     Box(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(11.dp))
+            .clip(RoundedCornerShape(percent = 50))
             .background(
                 when {
-                    enabled -> Ours.accent
-                    dimWhenDisabled -> Ours.accent.copy(alpha = 0.45f)
-                    else -> Ours.hairline
+                    enabled -> Ours.primaryFixed
+                    // A flat tint of the content colour, so "not yet" cannot be mistaken for a
+                    // dimmer shade of "go".
+                    dimWhenDisabled -> Ours.primaryFixed.copy(alpha = 0.45f)
+                    else -> Ours.onSurface.copy(alpha = 0.12f)
                 }
             )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 13.dp),
+            .height(Space.target),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -637,7 +676,7 @@ fun AccentButton(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
         ) {
             if (icon != null) {
-                BiIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(13.dp))
+                OursIconView(icon, contentDescription = null, tint = fg, modifier = Modifier.size(18.dp))
             }
             Text(label, style = MaterialTheme.typography.labelLarge, color = fg)
         }
