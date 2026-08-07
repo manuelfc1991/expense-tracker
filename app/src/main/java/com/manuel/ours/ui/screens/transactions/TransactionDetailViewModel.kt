@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,6 +36,7 @@ sealed interface DetailState {
     data class Found(val txn: Transaction) : DetailState
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TransactionDetailViewModel @Inject constructor(
     private val repository: TransactionRepository,
@@ -124,6 +130,24 @@ class TransactionDetailViewModel @Inject constructor(
 
     fun setNote(txnId: String, note: String) {
         viewModelScope.launch { repository.setNote(txnId, note) }
+    }
+
+    /**
+     * The accounts this household transacts through, for the "Paid from" chips.
+     *
+     * The same source the add sheet uses, so the two rows offer the same answers. Cash
+     * and "not sure" are not in here because no account can supply them — they are added
+     * by the screen, and both are real answers rather than blanks.
+     */
+    val accounts: StateFlow<List<com.manuel.ours.domain.model.AccountBalance>> =
+        prefs.selfUid
+            .combine(prefs.householdOwner) { uid, owner -> uid.orEmpty() to owner }
+            .flatMapLatest { (uid, owner) -> repository.observeBalances(uid, owner) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Records which account one payment came out of. Both null means "nobody said". */
+    fun setPaidFrom(txnId: String, accountTail: String?, bank: String?) {
+        viewModelScope.launch { repository.setPaidFrom(txnId, accountTail, bank) }
     }
 
     fun setSplitType(txnId: String, splitType: SplitType) {

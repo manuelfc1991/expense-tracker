@@ -612,6 +612,34 @@ class TransactionRepository @Inject constructor(
         saveAndLog(existing.copy(note = clean).toDomain(), existing.dedupeKey, existing.dedupeAt)
     }
 
+    /**
+     * Says which account one payment came out of, after the fact.
+     *
+     * The sheet asks this when a payment is entered, but nothing could answer it later —
+     * so a row added before that question existed, or answered wrongly, was stuck. It
+     * matters more than an ordinary edit because `accountBalances()` opens by discarding
+     * every row with neither a tail nor a bank: an unattributed payment is not merely
+     * unlabelled, it is absent from the Accounts tab altogether.
+     *
+     * Both fields null is "nobody said", which is a real answer and is stored as one.
+     *
+     * Deliberately does **not** touch any balance. Balances here are quoted, never
+     * derived — the app never sees a cash deposit or a silent interest credit, so a
+     * figure computed by adding up transactions would drift and never find its way back.
+     * This answers *which account*, never *how much is in it*.
+     */
+    suspend fun setPaidFrom(txnId: String, accountTail: String?, bank: String?) {
+        val existing = txnDao.getById(txnId) ?: return
+        val tail = accountTail?.trim()?.takeIf { it.isNotEmpty() }
+        val name = bank?.trim()?.takeIf { it.isNotEmpty() }
+        if (existing.accountTail == tail && existing.bank == name) return
+        saveAndLog(
+            existing.copy(accountTail = tail, bank = name).toDomain(),
+            existing.dedupeKey,
+            existing.dedupeAt,
+        )
+    }
+
     suspend fun setSplitType(txnId: String, splitType: SplitType) {
         val existing = txnDao.getById(txnId) ?: return
         saveAndLog(

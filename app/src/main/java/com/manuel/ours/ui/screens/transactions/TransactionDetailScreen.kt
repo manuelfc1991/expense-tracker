@@ -57,6 +57,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.Trash
+import com.manuel.ours.domain.model.AccountBalance
+import com.manuel.ours.domain.model.CASH_ACCOUNT
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.TxnType
@@ -107,6 +109,7 @@ fun TransactionDetailScreen(
     var editingNote by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     var pickingRefund by rememberSaveable { mutableStateOf(false) }
+    var pickingPaidFrom by rememberSaveable { mutableStateOf(false) }
 
     editingNote?.let { draft ->
         NoteDialog(
@@ -177,6 +180,19 @@ fun TransactionDetailScreen(
                 TextButton(onClick = { confirmingDelete = false }) {
                     Text("Cancel", color = Ours.onSurfaceVariant)
                 }
+            },
+        )
+    }
+
+    if (pickingPaidFrom) {
+        PaidFromDialog(
+            accounts = viewModel.accounts.collectAsStateWithLifecycle().value,
+            currentBank = txn?.bank,
+            currentTail = txn?.accountTail,
+            onDismiss = { pickingPaidFrom = false },
+            onPick = { tail, bank ->
+                viewModel.setPaidFrom(txnId, tail, bank)
+                pickingPaidFrom = false
             },
         )
     }
@@ -470,8 +486,40 @@ fun TransactionDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
                 DetailRow("Paid by", current.ownerName)
-                current.bank?.let { DetailRow("Source", it) }
-                current.accountTail?.let { DetailRow("Account", "•••• $it") }
+
+                // Always drawn, and always tappable.
+                //
+                // "Source" and "Account" used to appear only when the bank had filled
+                // them in, so a hand-added payment — the one kind nothing else can
+                // attribute — showed nothing here and had no way to be told. That is
+                // worse than it reads: `accountBalances()` discards every row with
+                // neither a tail nor a bank, so an unattributed payment is missing from
+                // the Accounts tab entirely rather than merely unlabelled.
+                //
+                // One row rather than two, because "which account" is one question. A
+                // parsed row and a hand-added one now read identically, which is the
+                // whole point — the difference between them is already said, once, by
+                // "Detected from" below.
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { pickingPaidFrom = true }
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MicroLabel("Paid from")
+                    Text(
+                        paidFromLabel(current.bank, current.accountTail),
+                        style = MaterialTheme.typography.bodyMedium,
+                        // Amber when nobody has said, matching how an unrecorded balance
+                        // is already flagged. Unknown is never quietly rendered as fact.
+                        color = if (current.bank == null && current.accountTail == null) {
+                            Ours.warning
+                        } else Ours.onSurface,
+                    )
+                }
+
                 current.refNo?.let { DetailRow("Reference", it) }
                 DetailRow("Detected from", current.source.name.lowercase())
             }
@@ -507,6 +555,88 @@ fun TransactionDetailScreen(
             }
         }
     }
+}
+
+/**
+ * Which account a payment came out of, asked after the fact.
+ *
+ * The same options the add sheet offers, in the same order, because they answer the same
+ * question — the household's accounts, plus the two answers no account can supply. Cash
+ * is one of them and "Not sure" is the other; neither is a blank, and "not sure" is not a
+ * failure state. It is stored as unknown and the Accounts tab reports it as unknown, the
+ * same way it already reports a balance nobody has quoted.
+ *
+ * Cards are offered too. A payment can perfectly well have come off a credit card, and
+ * leaving them out would force it to be recorded as cash or as nothing.
+ */
+@Composable
+private fun PaidFromDialog(
+    accounts: List<AccountBalance>,
+    currentBank: String?,
+    currentTail: String?,
+    onDismiss: () -> Unit,
+    onPick: (tail: String?, bank: String?) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Ours.surfaceContainer,
+        title = {
+            Text("Paid from", style = MaterialTheme.typography.titleMedium, color = Ours.onSurface)
+        },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                OursChip(
+                    label = CASH_ACCOUNT,
+                    selected = currentBank == CASH_ACCOUNT,
+                    onClick = { onPick(null, CASH_ACCOUNT) },
+                )
+                accounts.forEach { account ->
+                    OursChip(
+                        label = paidFromLabel(account.bank, account.accountTail),
+                        // Matched on the account's own key rather than on the label, so
+                        // two accounts at the same bank stay distinguishable.
+                        selected = currentTail != null && currentTail == account.accountTail ||
+                            currentTail == null && currentBank != null &&
+                            currentBank == account.bank,
+                        onClick = { onPick(account.accountTail, account.bank) },
+                    )
+                }
+                OursChip(
+                    label = "Not sure",
+                    selected = currentBank == null && currentTail == null,
+                    onClick = { onPick(null, null) },
+                )
+                Text(
+                    "This says which account the money came out of. It does not change " +
+                        "that account's balance — balances here are what the bank said, " +
+                        "never a total the app worked out.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done", color = Ours.primary) }
+        },
+    )
+}
+
+/**
+ * How an account reads in one line: "Kerala Gramin ···3062", "Cash", or "Not sure".
+ *
+ * Never a blank and never an empty string. An account nobody has named still has digits,
+ * and digits nobody has is still an answer — "not sure" is what the Accounts tab already
+ * reports for it, so the two screens say the same word for the same state.
+ */
+private fun paidFromLabel(bank: String?, accountTail: String?): String = when {
+    bank == null && accountTail == null -> "Not sure"
+    bank == CASH_ACCOUNT -> CASH_ACCOUNT
+    bank != null && accountTail != null -> "$bank ···$accountTail"
+    bank != null -> bank
+    else -> "···$accountTail"
 }
 
 @Composable
