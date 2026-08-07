@@ -357,6 +357,15 @@ data class AccountBalance(
      * household already moves money about specifically to avoid it.
      */
     val minimumPaise: Long = 0L,
+    /**
+     * Whether the ledger itself references this account — a payment came out of it.
+     *
+     * Such an account cannot be removed, and the screen must not offer to: the money is
+     * recorded against it, and `accountBalances()` rebuilds it from the transactions on
+     * every read, so "removing" it would hide it for a moment and leave spending
+     * attributed to an account the screen denies exists.
+     */
+    val fromLedger: Boolean = false,
 ) {
     /** What can actually be taken out before the bank starts charging for it. */
     val usablePaise: Long? get() = balancePaise?.let { (it - minimumPaise).coerceAtLeast(0L) }

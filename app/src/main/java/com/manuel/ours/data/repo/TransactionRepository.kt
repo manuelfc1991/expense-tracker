@@ -338,6 +338,42 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /**
+     * Forgets an account the household added and no longer wants.
+     *
+     * Every rule keyed to the account goes, not just the balance: a leftover minimum, card
+     * or owner rule would put the account straight back on the screen, since
+     * `accountBalances()` builds its key set from all four. Removing three of four and
+     * calling it done is how a deleted thing reappears a week later.
+     *
+     * Tombstones rather than deletes, because this is a synced store — an absent row on
+     * this phone loses to a present row on the other, so a real deletion would be undone
+     * by the next sync. An emptied value is the tombstone everywhere in `shared_rules`.
+     *
+     * This cannot remove an account the ledger references. A payment out of ···3062 is
+     * evidence the account exists, and `accountBalances()` derives it from the
+     * transactions themselves; hiding it would leave money attributed to an account the
+     * screen denies. The caller is expected not to offer removal in that case — see
+     * [com.manuel.ours.domain.model.AccountBalance.fromLedger].
+     */
+    suspend fun removeAccount(key: String) {
+        if (key.isBlank()) return
+        val now = System.currentTimeMillis()
+        val device = prefs.deviceId()
+        sharedRuleDao.upsertAll(
+            listOf(TYPE_BALANCE, TYPE_MIN_BALANCE, RulesRepository.TYPE_CARD, RulesRepository.TYPE_OWNER)
+                .map { type ->
+                    SharedRuleEntity(
+                        type = type,
+                        ruleKey = key,
+                        value = "",
+                        updatedAt = now,
+                        deviceId = device,
+                    )
+                }
+        )
+    }
+
     /** The floor each account must not go under, as the household has recorded it. */
     suspend fun setAccountMinimum(key: String, paise: Long) {
         if (key.isBlank()) return
@@ -502,6 +538,11 @@ class TransactionRepository @Inject constructor(
     fun observeManualBalances(): kotlinx.coroutines.flow.Flow<Map<String, ManualBalance>> =
         sharedRuleDao.observeOfType(TYPE_BALANCE).map { rules ->
             rules.mapNotNull { rule ->
+                // A wholly empty value is the tombstone: the household removed the
+                // account. Distinct from an empty *amount* below, which keeps the account
+                // and only forgets its balance — "" and "|Federal Bank|uid" are different
+                // statements and this is the line that tells them apart.
+                if (rule.value.isBlank()) return@mapNotNull null
                 val parts = rule.value.split('|')
                 // An empty amount means "this account exists and nobody has said what is
                 // in it". Dropping the row instead would take the account with it, along

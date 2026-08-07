@@ -222,6 +222,11 @@ class SummaryViewModel @Inject constructor(
         viewModelScope.launch { repository.setAccountOwner(key, uid, displayName) }
     }
 
+    /** Forgets an account the household added. Only offered when the ledger has none. */
+    fun removeAccount(key: String) {
+        viewModelScope.launch { repository.removeAccount(key) }
+    }
+
     fun setAccountMinimum(key: String, paise: Long) {
         viewModelScope.launch { repository.setAccountMinimum(key, paise) }
     }

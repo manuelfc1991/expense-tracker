@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -34,6 +35,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.rememberScrollState
 import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
@@ -46,6 +50,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import java.time.temporal.ChronoUnit
 import java.time.ZoneId
@@ -101,12 +106,43 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
     // on showing the old number after a message from the bank corrected it underneath.
     var settingBalanceKey by rememberSaveable { mutableStateOf<String?>(null) }
     var addingAccount by rememberSaveable { mutableStateOf(false) }
+    var removingAccount by rememberSaveable { mutableStateOf<String?>(null) }
     var tab by remember { mutableStateOf(SummaryTab.Month) }
     val context = LocalContext.current
     val summary = state.summary
 
+    // Swipe sideways to change tab.
+    //
+    // A horizontal drag on a vertically scrolling list, rather than a pager: the month
+    // header, the tab row and all three tabs' content are items in one LazyColumn, and
+    // splitting that into three scrollable pages would mean three copies of the header or
+    // a nested-scroll arrangement to keep one. The gesture is the part that was missing,
+    // not the layout.
+    //
+    // Orientation.Horizontal does not fight the list's vertical scroll — Compose routes
+    // each axis separately, so a diagonal drag still scrolls rather than jumping tabs.
+    val swipeThreshold = with(LocalDensity.current) { 64.dp.toPx() }
+    var dragged by remember { mutableFloatStateOf(0f) }
+    val swipeTabs = Modifier.draggable(
+        orientation = Orientation.Horizontal,
+        state = rememberDraggableState { delta -> dragged += delta },
+        onDragStarted = { dragged = 0f },
+        onDragStopped = {
+            val entries = SummaryTab.entries
+            val here = entries.indexOf(tab)
+            // Dragging left moves forward, the way a page turns. Clamped at both ends:
+            // running off the last tab must do nothing rather than wrap, since wrapping
+            // makes "which tab am I on" a question you have to look up.
+            when {
+                dragged <= -swipeThreshold && here < entries.lastIndex -> tab = entries[here + 1]
+                dragged >= swipeThreshold && here > 0 -> tab = entries[here - 1]
+            }
+            dragged = 0f
+        },
+    )
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().then(swipeTabs),
         contentPadding = PaddingValues(bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -281,11 +317,50 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
 
     // Resolved fresh on every recomposition, so the dialog follows the live balance. A key
     // whose account has disappeared closes the dialog rather than showing a stale one.
+    removingAccount?.let { key ->
+        val going = state.balances.firstOrNull { it.key == key }
+        AlertDialog(
+            onDismissRequest = { removingAccount = null },
+            containerColor = Ours.surfaceContainer,
+            title = {
+                Text(
+                    "Remove ${going?.bank ?: "this account"}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Ours.onSurface,
+                )
+            },
+            text = {
+                Text(
+                    "It goes from both phones, along with its balance, its minimum and " +
+                        "anything recorded about whose it is. No transaction is deleted — " +
+                        "this only removes an account nothing has been paid from.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Ours.onSurfaceVariant,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.removeAccount(key)
+                        removingAccount = null
+                        settingBalanceKey = null
+                    },
+                ) { Text("Remove", color = Ours.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { removingAccount = null }) {
+                    Text("Keep", color = Ours.onSurfaceVariant)
+                }
+            },
+        )
+    }
+
     settingBalanceKey?.let { key -> state.balances.firstOrNull { it.key == key } }?.let { account ->
         BalanceDialog(
             account = account,
             members = state.members,
             onDismiss = { settingBalanceKey = null },
+            onRemove = { removingAccount = account.key },
             onConfirm = { edit, minimum, owner, dueDay ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
@@ -679,6 +754,7 @@ private fun BalanceDialog(
     members: List<Member>,
     onDismiss: () -> Unit,
     onConfirm: (balance: BalanceEdit?, minimum: Long?, owner: OwnerEdit?, dueDay: Int?) -> Unit,
+    onRemove: () -> Unit,
 ) {
     // Only written when it actually changes. Re-saving the same owner on every visit
     // would bump the rule's `updatedAt` and let this phone win a last-write-wins race it
@@ -770,7 +846,19 @@ private fun BalanceDialog(
             ) { Text("Save", color = if (touched) Ours.primary else Ours.onSurfaceMuted) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
+            // Removal sits with Cancel rather than beside Save, because it is the other
+            // way of leaving this dialog without recording a figure.
+            //
+            // Offered only for an account the ledger does not reference. A payment out of
+            // ···3062 is evidence the account exists, and `accountBalances()` rebuilds it
+            // from the transactions on every read — so "removing" it would hide it for a
+            // moment and leave money attributed to an account the screen denies.
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (!account.fromLedger) {
+                    TextButton(onClick = onRemove) { Text("Remove", color = Ours.error) }
+                }
+                TextButton(onClick = onDismiss) { Text("Cancel", color = Ours.onSurfaceVariant) }
+            }
         },
     )
 }
