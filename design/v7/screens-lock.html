@@ -108,7 +108,8 @@
             <span class="micro">Spent this month</span>
             <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
               class="redact" style="width:2ch"></span><span
-              class="redact" style="width:3ch"></span></span>
+              class="redact" style="width:3ch"></span><span
+              class="redact" style="width:2ch"></span></span>
             <div style="height:28px;flex:none"></div>
             <div class="tape row between"><span class="micro">This month</span>
               <span class="redact" style="width:5ch;font-size:11px"></span></div>
@@ -180,7 +181,8 @@
             <span class="micro">Spent this month</span>
             <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
               class="redact" style="width:2ch"></span><span
-              class="redact" style="width:3ch"></span></span>
+              class="redact" style="width:3ch"></span><span
+              class="redact" style="width:2ch"></span></span>
 
             <div style="height:28px;flex:none"></div>
             <div class="tape row between"><span class="micro">This month</span>
@@ -217,10 +219,6 @@
                 <span class="e-main"><span class="redact" style="width:14ch;font-size:13px"></span>
                   <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
                 <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
-              <div class="entry"><span class="redact dot"></span>
-                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
-                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
-                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
             </div>
 
             <!-- The only unredacted words on the screen, and the only accent. -->
@@ -255,7 +253,8 @@
             <span class="micro">Spent this month</span>
             <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
               class="redact" style="width:2ch"></span><span
-              class="redact" style="width:3ch"></span></span>
+              class="redact" style="width:3ch"></span><span
+              class="redact" style="width:2ch"></span></span>
             <div style="height:28px;flex:none"></div>
             <div class="tape row between"><span class="micro">This month</span>
               <span class="redact" style="width:5ch;font-size:11px"></span></div>
@@ -288,10 +287,6 @@
                 <span class="e-main"><span class="redact" style="width:14ch;font-size:13px"></span>
                   <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
                 <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
-              <div class="entry"><span class="redact dot"></span>
-                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
-                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
-                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
             </div>
             <div class="grow"></div>
             <div style="padding-bottom:8px;flex:none">
@@ -336,7 +331,7 @@
     </span></li>
     <li><span class="k">Nothing new below the fold</span><span class="v">
       The redacted field is the flexible row; the sentence and button are pinned. On the 620dp
-      window the field shows four rows instead of eight and nothing else moves — the button stays
+      window the field shows four rows instead of seven and nothing else moves — the button stays
       the same distance from the thumb.
     </span></li>
     <li><span class="k">Unchanged from the built screen</span><span class="v">
@@ -366,7 +361,8 @@
             <span class="micro">Spent this month</span>
             <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
               class="redact" style="width:2ch"></span><span
-              class="redact" style="width:3ch"></span></span>
+              class="redact" style="width:3ch"></span><span
+              class="redact" style="width:2ch"></span></span>
 
             <div style="height:28px;flex:none"></div>
             <div class="tape row between"><span class="micro">This month</span>
@@ -407,7 +403,6 @@
               </div>
               <button class="btn btn-filled block" style="margin-top:12px">
                 <svg><use href="#i-shield-lock"/></svg>Use screen lock</button>
-              <button class="btn btn-text block" style="margin-top:4px" disabled>Try fingerprint in 28s</button>
             </div>
 
           </div>
@@ -435,6 +430,12 @@
         <li><span class="k">Amber, not red</span><span class="v">
           The house rule: red is for <em>a figure that is wrong</em>. No figure is wrong here. The
           same rule that keeps “sync not running” amber keeps this amber.
+        </span></li>
+        <li><span class="k">One control, not two</span><span class="v">
+          An earlier draft put a disabled <em>Try fingerprint in 28s</em> under the primary button.
+          It repeated the countdown the notice already gives, and <code>.btn[disabled]</code> fills
+          it — so the screen showed two stacked pills, one of which could not be pressed. The
+          notice states the wait; the one button is the way in.
         </span></li>
         <li><span class="k">The countdown is the honest part</span><span class="v">
           A live second count, because “try again later” makes people tap repeatedly and each tap
@@ -468,7 +469,7 @@
             <div class="row between"><span class="wordmark">Ours</span></div>
             <div style="height:32px;flex:none"></div>
             <span class="micro">Spent this month</span>
-            <p class="t-display-l" style="margin-top:10px">₹30,168.20</p>
+            <p class="t-display-l" style="margin-top:10px">₹21,979.40</p>
             <div style="height:28px;flex:none"></div>
             <div class="tape row between"><span class="micro">This month</span>
               <span class="micro">6 Aug</span></div>

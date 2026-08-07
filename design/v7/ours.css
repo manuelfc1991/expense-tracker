@@ -1088,8 +1088,9 @@ pre.wire {
 /* The headline figure. Two things make it read as a withheld amount rather than
    as a missing image: the ₹ stays in real type, and the digits are struck out in
    groups with a separator's worth of air between them. One bar nine characters
-   wide is just a slab. Two groups, not three — Home is `Money.whole`, so there
-   are no paise to hide. The grouping is fixed, never derived from the figure. */
+   wide is just a slab. The groups follow the shape Home actually prints —
+   ₹21,979.40, so 2 / 3 / 2 — and are fixed at that, never derived from the
+   figure standing behind them. */
 .redact-figure { display: inline-flex; align-items: baseline; gap: 0.1em; }
 .redact-figure > .redact { margin-left: 0.08em; }
 

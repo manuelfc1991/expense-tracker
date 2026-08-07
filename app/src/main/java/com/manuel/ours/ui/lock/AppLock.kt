@@ -48,6 +48,12 @@ import androidx.lifecycle.LifecycleEventObserver
 object AppLock {
     const val RELOCK_AFTER_MS = 60_000L
 
+    /**
+     * What `ERROR_LOCKOUT` costs. Android does not tell us the remaining time, and the
+     * platform's own figure is thirty seconds, so that is what the countdown starts from.
+     */
+    const val LOCKOUT_SECONDS = 30
+
     fun isAvailable(context: android.content.Context): Boolean =
         BiometricManager.from(context).canAuthenticate(ALLOWED) ==
             BiometricManager.BIOMETRIC_SUCCESS
@@ -74,6 +80,10 @@ fun AppLockGate(
     var unlocked by remember { mutableStateOf(false) }
     var prompting by remember { mutableStateOf(false) }
     var backgroundedAt by remember { mutableStateOf(0L) }
+    // Why the prompt went away, when it matters. `onAuthenticationError` used to swallow
+    // every code identically, so five failed fingerprints left the user on a screen whose
+    // only control reopened a prompt that failed instantly, with nothing saying why.
+    var lockState by remember { mutableStateOf<LockState>(LockState.Idle) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -100,13 +110,26 @@ fun AppLockGate(
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     prompting = false
+                    lockState = LockState.Idle
                     unlocked = true
                 }
 
                 override fun onAuthenticationError(code: Int, message: CharSequence) {
                     prompting = false
-                    // Cancelled or lockout: stay locked and show the retry screen
-                    // rather than closing the app out from under the user.
+                    // Stay locked either way — closing the app out from under the user is
+                    // never the answer — but say which kind of "locked" this is.
+                    //
+                    // A dismissal is not a failure and must not be dressed as one, so the
+                    // cancel codes fall through to the ordinary screen. Only a real
+                    // lockout gets the notice, because only a lockout makes the button
+                    // that is on screen unable to work.
+                    lockState = when (code) {
+                        BiometricPrompt.ERROR_LOCKOUT ->
+                            LockState.LockedOut(secondsLeft = AppLock.LOCKOUT_SECONDS)
+                        BiometricPrompt.ERROR_LOCKOUT_PERMANENT ->
+                            LockState.LockedOut(secondsLeft = null)
+                        else -> LockState.Idle
+                    }
                 }
             },
         )
@@ -123,39 +146,36 @@ fun AppLockGate(
         if (!unlocked) authenticate()
     }
 
+    // The live countdown. Named rather than left as "try again later", because a vague
+    // wait makes people tap repeatedly and on some builds each tap extends the window.
+    val state = lockState
+    LaunchedEffect(state) {
+        val start = (state as? LockState.LockedOut)?.secondsLeft ?: return@LaunchedEffect
+        for (remaining in start - 1 downTo 0) {
+            kotlinx.coroutines.delay(1_000)
+            lockState = if (remaining == 0) {
+                LockState.Idle
+            } else {
+                LockState.LockedOut(secondsLeft = remaining)
+            }
+        }
+    }
+
+    // No unlock animation, deliberately.
+    //
+    // §21 of the mockup fades the bars out top-down, and the only way to show that is to
+    // keep the ledger composed *underneath* the redaction while it fades. On every other
+    // screen that would be a nicety; on this one it means the real figures are rendered,
+    // behind a view that is on its way out, on the one screen whose entire job is that
+    // they are not visible. One dropped frame or one interrupted animation and the lock
+    // has leaked exactly what it exists to hide.
+    //
+    // So the swap is instant. `LockedScreen` still takes `revealed` and still staggers,
+    // which costs nothing and leaves the transition available to anyone who can find a
+    // way to do it without composing the content first.
     if (unlocked) {
         content()
     } else {
-        LockedScreen(onRetry = { authenticate() })
-    }
-}
-
-@Composable
-private fun LockedScreen(onRetry: () -> Unit) {
-    // Left-ranged and quiet, like every other screen. A centred padlock with a centred
-    // heading is the one shape that says "error"; being locked is not an error.
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Ours.surface)
-            .padding(horizontal = 22.dp, vertical = 28.dp),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        OursIconView(
-            icon = OursIcon.Locked,
-            contentDescription = null,
-            tint = Ours.primary,
-            modifier = Modifier.size(28.dp),
-        )
-        Column(Modifier.height(18.dp)) {}
-        Text("Ours is locked", style = MaterialTheme.typography.headlineMedium, color = Ours.onSurface)
-        Column(Modifier.height(10.dp)) {}
-        Text(
-            text = "Unlock with your fingerprint, face or screen lock.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Ours.onSurfaceVariant,
-        )
-        Column(Modifier.height(26.dp)) {}
-        AccentButton("Unlock", onClick = onRetry)
+        LockedScreen(state = lockState, onUnlock = { authenticate() })
     }
 }
