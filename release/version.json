@@ -1,7 +1,7 @@
 {
-  "versionCode": 62,
-  "versionName": "6.0",
-  "notes": "Every screen redrawn, and the banks the app was not reading. Federal from a second header and the Utkarsh SuperCard are now read; a rescan no longer resurrects what you deleted; one debit reported twice by Kerala Gramin is one row. Refunds, budget pacing, credit cards, and an account on every entry you add by hand.",
+  "versionCode": 63,
+  "versionName": "6.1",
+  "notes": "Two rounds of testing, and the defects they turned up. Card debt is no longer counted as money you can spend; the over-budget alert can actually fire; a charge paid on the 1st is no longer owed all month; sync stops dropping columns and stops marking events delivered to nobody; and nothing you type is lost when the phone rotates.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25566242
 }
