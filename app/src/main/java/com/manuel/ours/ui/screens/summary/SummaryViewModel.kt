@@ -236,6 +236,11 @@ class SummaryViewModel @Inject constructor(
         viewModelScope.launch { repository.setCard(key, limitPaise, dueDay) }
     }
 
+    /** Stops treating an account as a credit card, returning it to "What is left". */
+    fun removeCard(key: String) {
+        viewModelScope.launch { repository.removeCard(key) }
+    }
+
     fun setMonth(value: YearMonth) {
         // Never let the pager run into the future — an empty "next month" chart
         // looks like data loss.

@@ -361,7 +361,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             members = state.members,
             onDismiss = { settingBalanceKey = null },
             onRemove = { removingAccount = account.key },
-            onConfirm = { edit, minimum, owner, dueDay ->
+            onConfirm = { edit, minimum, owner, dueDay, isCard, limitPaise ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
                     // wipe a balance the person never went near.
@@ -375,9 +375,15 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 owner?.let { viewModel.setAccountOwner(account.key, it.uid, it.displayName) }
                 // The limit is carried through untouched: setCard writes both halves of
                 // the rule, so passing only the day would quietly erase the credit limit.
-                if (account.isCard && dueDay != account.dueDay) {
-                    viewModel.setCard(account.key, account.limitPaise, dueDay)
-                }
+                // The card rule carries both halves, so this always writes both — and
+                // clearing it is what moves the account back to "What is left".
+                //
+                // The minimum balance is deliberately left stored rather than wiped when
+                // an account becomes a card. A card ignores it, so it does no harm there,
+                // and switching back restores what the household had recorded instead of
+                // silently losing it.
+                if (isCard) viewModel.setCard(account.key, limitPaise, dueDay)
+                else if (account.isCard) viewModel.removeCard(account.key)
                 settingBalanceKey = null
             },
         )
@@ -753,7 +759,14 @@ private fun BalanceDialog(
     account: AccountBalance,
     members: List<Member>,
     onDismiss: () -> Unit,
-    onConfirm: (balance: BalanceEdit?, minimum: Long?, owner: OwnerEdit?, dueDay: Int?) -> Unit,
+    onConfirm: (
+        balance: BalanceEdit?,
+        minimum: Long?,
+        owner: OwnerEdit?,
+        dueDay: Int?,
+        isCard: Boolean,
+        limitPaise: Long?,
+    ) -> Unit,
     onRemove: () -> Unit,
 ) {
     // Only written when it actually changes. Re-saving the same owner on every visit
@@ -766,6 +779,16 @@ private fun BalanceDialog(
     // only be set at creation has eventually turned out to need changing.
     val openingDueDay = remember { account.dueDay?.toString().orEmpty() }
     var dueDay by remember { mutableStateOf(openingDueDay) }
+    // What kind of thing this is, changeable after the fact.
+    //
+    // The chooser existed only when adding, so an account the bank messaged about first —
+    // which is every account the parser discovers — was a bank account for good. That is
+    // not a labelling detail: a card balance is money **owed**, and while it sits in "What
+    // is left" the app counts a debt as spendable capacity, with the sign inverted.
+    val openingIsCard = remember { account.isCard }
+    var isCard by remember { mutableStateOf(account.isCard) }
+    val openingLimit = remember { account.limitPaise?.let { (it / 100).toString() }.orEmpty() }
+    var limitText by remember { mutableStateOf(openingLimit) }
     // The figure as it opened, so an untouched field is not re-saved as though somebody
     // typed it. Saving a minimum used to overwrite a bank-quoted balance with an
     // identical hand-entered one, silently downgrading "the bank said" to "you said".
@@ -794,9 +817,26 @@ private fun BalanceDialog(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                MicroLabel("Balance now")
+                MicroLabel("What kind")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OursChip(
+                        label = "Bank account",
+                        selected = !isCard,
+                        icon = OursIcon.Bank,
+                        onClick = { isCard = false },
+                    )
+                    OursChip(
+                        label = "Credit card",
+                        selected = isCard,
+                        icon = OursIcon.CreditCard,
+                        onClick = { isCard = true },
+                    )
+                }
+                MicroLabel(if (isCard) "Owed now" else "Balance now")
                 MoneyField(text) { text = it }
-                if (account.isCard) {
+                if (isCard) {
+                    MicroLabel("Credit limit — optional")
+                    MoneyField(limitText) { limitText = it }
                     MicroLabel("Bill due on — day of the month")
                     PlainField(dueDay, "2") { dueDay = it.filter(Char::isDigit).take(2) }
                 } else {
@@ -820,7 +860,7 @@ private fun BalanceDialog(
             // Either field alone is a complete answer: a bank-quoted balance needs only
             // a floor, and a zero-balance account needs only a figure.
             val touched = text != opening || minPaise != null || owner != openingOwner ||
-                dueDay != openingDueDay
+                dueDay != openingDueDay || isCard != openingIsCard || limitText != openingLimit
             TextButton(
                 enabled = touched,
                 onClick = {
@@ -841,6 +881,8 @@ private fun BalanceDialog(
                             OwnerEdit(owner, members.firstOrNull { it.uid == owner }?.displayName)
                         },
                         dueDay.toIntOrNull()?.takeIf { it in 1..31 },
+                        isCard,
+                        Money.parseToPaise(limitText),
                     )
                 },
             ) { Text("Save", color = if (touched) Ours.primary else Ours.onSurfaceMuted) }

@@ -1,7 +1,7 @@
 {
-  "versionCode": 71,
-  "versionName": "6.9",
-  "notes": "Swipe between the Summary tabs, and remove an account you added by mistake.",
+  "versionCode": 72,
+  "versionName": "7.0",
+  "notes": "Any account can be switched to a credit card, and known cards file themselves.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }

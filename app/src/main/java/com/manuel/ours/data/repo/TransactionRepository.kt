@@ -274,7 +274,39 @@ class TransactionRepository @Inject constructor(
             parsed.amountPaise, parsed.dedupeAt, parsed.refNo,
         )
         saveAndLog(txn, dedupeKey, parsed.dedupeAt)
+        adoptKnownCard(parsed)
         return txn
+    }
+
+    /**
+     * Files a card the app already recognises as a card, the first time it is seen.
+     *
+     * `BankRules` marks ten senders `isCard` — the SuperCard, slice, OneCard, and the card
+     * arms of HDFC, ICICI, SBI and Axis — and until now nothing read the flag. So a card
+     * the parser had positively identified still arrived in the Accounts panel as a bank
+     * account, and its balance joined "What is left": a debt counted as money the
+     * household could spend, on the figure `Affordability` measures the budget against.
+     * Asking somebody to correct that by hand is asking them to fix a fact the app
+     * already had.
+     *
+     * Written only when nothing is recorded for the key — including nothing *emptied*.
+     * A blank rule is this store's tombstone, so re-adopting on a blank would reinstate a
+     * card the household deliberately turned back into an account, every time a new
+     * message arrived. Not-yet-asked and already-answered are different states and only
+     * the first one is ours to fill in.
+     *
+     * Limit and due day are left null: this knows a thing is a card, and nothing about
+     * how much room it has or when its bill lands. Guessing either would put a figure on
+     * screen nobody gave it.
+     */
+    private suspend fun adoptKnownCard(parsed: SmsParser.ParsedTxn) {
+        if (!BankRules.isCardBank(parsed.bank)) return
+        val key = parsed.accountTail?.takeIf(String::isNotBlank) ?: parsed.bank
+        if (key.isBlank()) return
+        val existing = sharedRuleDao.all()
+            .any { it.type == RulesRepository.TYPE_CARD && it.ruleKey == key }
+        if (existing) return
+        setCard(key, limitPaise = null, dueDay = null)
     }
 
     /**

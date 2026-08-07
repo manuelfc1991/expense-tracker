@@ -213,6 +213,21 @@ object BankRules {
         .filterValues { it.distinct().size == 1 }
         .mapValues { it.value.first() }
 
+    /**
+     * Whether a bank name belongs to something that is a credit card rather than an account.
+     *
+     * Ten senders here are marked `isCard` — the SuperCard, slice, OneCard and the card arms
+     * of HDFC, ICICI, SBI and Axis — and until now nothing read the flag. So a card the app
+     * had already identified still arrived in the Accounts panel as a bank account, and its
+     * balance counted as money the household could spend rather than money it owed. The sign
+     * was inverted on a figure the budget is measured against.
+     *
+     * Matched on the name the parser stamped on the row, which is this table's own `bank`
+     * string, so the lookup cannot drift from the rule that produced it.
+     */
+    fun isCardBank(bank: String?): Boolean =
+        bank != null && ALL.any { it.bank.equals(bank, ignoreCase = true) && it.isCard }
+
     fun forSender(sender: String): BankRule? {
         val header = normaliseHeader(sender) ?: return null
         byHeader[header]?.let { return it }
