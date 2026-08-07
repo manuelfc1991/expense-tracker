@@ -124,17 +124,24 @@ class TransactionRepository @Inject constructor(
         } else {
             SmsDeduplicator.WINDOW_MS
         }
+        // Deleted rows are candidates too, and must be.
+        //
+        // These lookups used to filter `deleted = 0`, so a tombstone was invisible: a
+        // rescan met the message again, found nothing, and imported it as new. Six rows
+        // deleted on 6 August returned on the next rescan carrying ₹50,955 of duplicates
+        // into a month somebody had just finished cleaning up. A deletion is an answer,
+        // and re-reading the inbox must not overturn it.
         val candidates = buildList {
             // The bank's own message id first: it is identity rather than inference, and
             // the row it finds can be well outside any time window.
             parsed.messageId?.takeIf { it.isNotBlank() }?.let { id ->
-                txnDao.findByMessageId(id)?.let(::add)
+                txnDao.findByMessageIdEvenIfDeleted(id)?.let(::add)
             }
             parsed.refNo?.takeIf { it.isNotBlank() }?.let { ref ->
-                txnDao.findByRef(ref)?.let(::add)
+                txnDao.findByRefEvenIfDeleted(ref)?.let(::add)
             }
             addAll(
-                txnDao.findNearby(
+                txnDao.findNearbyEvenIfDeleted(
                     parsed.amountPaise,
                     parsed.dedupeAt - window,
                     parsed.dedupeAt + window,
@@ -158,6 +165,10 @@ class TransactionRepository @Inject constructor(
                 else -> SmsDeduplicator.isDuplicate(existing, parsed, existing.dedupeAt)
             }
             if (!matches) continue
+            // A match that was deleted stays deleted. Merging richer fields into it would
+            // be harmless, but doing nothing is clearer: the household removed this row,
+            // and a rescan has no business editing it either.
+            if (existing.deleted) return null
             if (SmsDeduplicator.richer(existing, parsed)) {
                 val merged = existing.copy(
                     merchant = parsed.merchant ?: existing.merchant,

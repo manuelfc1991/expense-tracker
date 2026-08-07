@@ -1046,6 +1046,53 @@ pre.wire {
 .vf-window::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
 .vf-window::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
 
+/* ── Redaction ──
+   For the lock gate, and only there. A bar of ink standing where a figure or a
+   name would be, on a statement that is otherwise laid out exactly as it always
+   is: same rows, same hairlines, same right-hand amount column.
+
+   Deliberately NOT `.skel`. A skeleton shimmers, and shimmer means "this is
+   arriving" — a lock screen would then be promising content it is specifically
+   refusing to hand over, and the animation would run for as long as the phone
+   sits on the table. Redaction is still, matte and final.
+
+   Sized in `ch` against the mono face, so a bar occupies the width of the text
+   it is standing in for rather than an invented percentage.
+
+   Cap height (0.72em), not the full em, and a 1px corner. Both are what separate
+   a redaction from a skeleton at a glance: a skeleton is a rounded slab standing
+   in for a line that has not arrived, a redaction is a hard bar struck through a
+   line that has. The first draft used full-em rounded blocks and read, correctly
+   and uselessly, as "loading". */
+.redact {
+  display: inline-block; vertical-align: baseline;
+  background: var(--on-surface); opacity: 0.15;
+  border-radius: 1px; height: 0.72em; width: 6ch;
+  font-family: var(--mono);   /* so `ch` and `em` resolve against the statement face */
+}
+/* The second line of a row — date, bank, "3 hours ago". Secondary in the
+   statement, so secondary under the ink too. */
+.redact.faint { opacity: 0.08; }
+.redact.block { display: block; }
+/* The category dot on a redacted row is a square of the same ink, never the
+   category hue: "you cannot see the amount, but it was rent" is still a
+   disclosure, and it is the one people would most mind. */
+.redact.dot { width: 32px; height: 32px; border-radius: 10px; flex: 0 0 32px; }
+/* Rows further down the page are further from being readable. The gradient is a
+   mask, not opacity on the rows, so the hairlines fade with the ink — and the
+   field is given its natural height rather than being stretched to fill, or the
+   fade lands in empty space below the last row and does nothing. */
+.redact-field { -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 38%, transparent 96%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 38%, transparent 96%); }
+
+/* The headline figure. Two things make it read as a withheld amount rather than
+   as a missing image: the ₹ stays in real type, and the digits are struck out in
+   groups with a separator's worth of air between them. One bar nine characters
+   wide is just a slab. Two groups, not three — Home is `Money.whole`, so there
+   are no paise to hide. The grouping is fixed, never derived from the figure. */
+.redact-figure { display: inline-flex; align-items: baseline; gap: 0.1em; }
+.redact-figure > .redact { margin-left: 0.08em; }
+
 /* Utility */
 .mt-0 { margin-top: 0 !important; }
 .tc { text-align: center; }

@@ -1,5 +1,7 @@
 package com.manuel.ours.ui.screens.home
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -125,7 +127,13 @@ fun AddExpenseSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                // imePadding shrinks the viewport, verticalScroll lets the rest be reached.
+                // Without the scroll this sheet simply clipped: it was already close to a
+                // phone's height with the keyboard up, and adding the "Paid from" row put
+                // Counts as, the note and **Save** underneath the keyboard with no way to
+                // get at them. A form whose submit button cannot be reached is not a form.
                 .imePadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 15.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),

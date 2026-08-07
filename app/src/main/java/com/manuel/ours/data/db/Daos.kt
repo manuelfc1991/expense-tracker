@@ -117,6 +117,33 @@ interface TransactionDao {
     suspend fun findByRef(refNo: String): TransactionEntity?
 
     /**
+     * The same three lookups, **including rows that were deleted**.
+     *
+     * Dedup that only sees live rows cannot see a deletion, so a rescan re-imported every
+     * message whose row somebody had removed — the tombstone was invisible and the message
+     * looked new. Six rows deleted on 6 August came back on the next rescan and put ₹50,955
+     * of duplicates into a month that had just been cleaned up.
+     *
+     * A deleted row is still proof the message was seen. What it means is *not* "import
+     * this again", it is "we have met this one and the household said no".
+     */
+    @Query("SELECT * FROM transactions WHERE refNo = :refNo LIMIT 1")
+    suspend fun findByRefEvenIfDeleted(refNo: String): TransactionEntity?
+
+    @Query("SELECT * FROM transactions WHERE bankMessageId = :id LIMIT 1")
+    suspend fun findByMessageIdEvenIfDeleted(id: String): TransactionEntity?
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE amountPaise = :amountPaise AND dedupeAt BETWEEN :fromAt AND :toAt
+        """
+    )
+    suspend fun findNearbyEvenIfDeleted(
+        amountPaise: Long, fromAt: Long, toAt: Long,
+    ): List<TransactionEntity>
+
+    /**
      * The bank's own message id, which is the only thing tying Kerala Gramin's two
      * SMS for one debit together. Probed directly because the pair falls outside the
      * time window `findNearby` searches.

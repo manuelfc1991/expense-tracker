@@ -2,6 +2,8 @@ package com.manuel.ours.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -118,7 +120,14 @@ fun CaptureSheetContent(
     }
 
     Column(
-        Modifier.fillMaxWidth().imePadding().padding(horizontal = 15.dp).padding(bottom = 26.dp),
+        Modifier
+            .fillMaxWidth()
+            // Same reason as the add sheet: imePadding shrinks the viewport, and without
+            // a scroll the buttons at the bottom go under the keyboard unreachable.
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 15.dp)
+            .padding(bottom = 26.dp),
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         Row(

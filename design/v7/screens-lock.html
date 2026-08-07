@@ -1,0 +1,565 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours v7 — The unlock screen</title>
+<link rel="stylesheet" href="ours.css">
+<script src="sprite.js"></script>
+
+<div class="doc">
+
+<header class="doc-top">
+  <p class="doc-kicker">Ours v7 · Proposed · replaces the built lock gate</p>
+  <h1>The unlock screen</h1>
+  <p class="doc-lede">
+    The one screen in the app with nothing to show. It is also, for anyone who turns the lock on,
+    the screen they see <strong>more often than any other</strong> — several times a day, always
+    before they have got what they came for. It currently spends that moment on a padlock, a
+    sentence and a button on an empty field.
+    <br><br>
+    This redesign spends it on the statement itself, <strong>redacted</strong>. The month is laid
+    out exactly as it always is — same rows, same hairlines, same right-hand amount column — with
+    a bar of ink standing where every figure and every name would be. It is recognisably your
+    ledger and it discloses nothing, which is precisely what a lock is.
+  </p>
+  <nav class="doc-nav">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design system</a>
+    <a href="components.html">Components</a>
+    <a href="screens-core.html">Core screens</a>
+    <a href="screens-flows.html">Flows</a>
+    <a href="overlays.html">Sheets &amp; dialogs</a>
+    <a href="screens-accounts.html">Accounts &amp; cards</a>
+    <a href="screens-lock.html" aria-current="page">Unlock</a>
+  </nav>
+</header>
+
+<!-- ────────────────────────────────────────────────────────────── 18 -->
+<section class="doc-sec" id="why">
+  <h2>18 · What is wrong with the built one</h2>
+
+  <div class="pair">
+    <div>
+      <div class="phone short ours locked ours-dark" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-bluetooth"/></svg></span></div>
+        <div class="screen"><div class="screen-body" style="padding:28px 24px;display:flex;flex-direction:column;justify-content:center">
+          <svg style="width:28px;height:28px;color:var(--primary)"><use href="#i-shield-lock"/></svg>
+          <p class="t-headline-m" style="margin-top:18px">Ours is locked</p>
+          <p class="t-body-l" style="color:var(--on-surface-variant);margin-top:10px">Unlock with
+            your fingerprint, face or screen lock.</p>
+          <button class="btn btn-filled block" style="margin-top:26px">Unlock</button>
+        </div></div>
+      </div></div>
+      <p class="phone-cap"><b>Today — <code>AppLock.kt</code></b>Nothing here is <em>wrong</em>. The
+        left rag is right, the sentence is right, and both survive into the redesign unchanged.</p>
+    </div>
+
+    <div class="spec-block">
+      <ul class="spec-list">
+        <li><span class="k">It could be any app</span><span class="v">
+          Take the word “Ours” out of the heading and this screen belongs to a banking app, a notes
+          app or a password manager. Every other screen in this package is unmistakably a printed
+          statement; this one has no statement on it at all, and it is the screen seen most often.
+        </span></li>
+        <li><span class="k">Two thirds of it is empty</span><span class="v">
+          Vertically centred content in a 780dp window leaves about 300dp of nothing above and
+          below. Quiet is a virtue here — <em>blank</em> is not the same thing, and the difference
+          is whether the emptiness is carrying an idea.
+        </span></li>
+        <li><span class="k">The padlock is redundant</span><span class="v">
+          A shield-lock glyph immediately above the words “Ours is locked” says the sentence twice.
+          It is the only screen in the package that opens with a decorative icon.
+        </span></li>
+        <li><span class="k">One real state is missing</span><span class="v">
+          <code>onAuthenticationError</code> swallows every code identically, so
+          <code>ERROR_LOCKOUT</code> — five failed fingerprints, biometrics disabled for 30
+          seconds — lands the user on a screen whose only control is an <strong>Unlock</strong>
+          button that cannot work yet, with nothing saying why. Pressing it re-opens a prompt that
+          errors instantly. §20 fixes this.
+        </span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 19 -->
+<section class="doc-sec" id="redacted">
+  <h2>19 · The redacted statement</h2>
+
+  <p class="sec-lede">
+    Three states, in the order they actually happen. <code>AppLockGate</code> fires the system
+    prompt on entry, so the screen behind it is seen for a moment before anything is touched — and
+    seen properly the instant the prompt is dismissed, which is this screen’s whole reason to
+    exist.
+  </p>
+
+  <div class="phones">
+
+    <!-- 19a — opening: prompt over the redacted statement -->
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen" style="position:relative">
+
+          <div class="screen-body pad" style="padding-top:16px;display:flex;flex-direction:column">
+            <div class="row between">
+              <span class="wordmark">Ours</span>
+              <span class="pill"><svg style="width:12px;height:12px;fill:currentColor"><use href="#i-lock"/></svg>Locked</span>
+            </div>
+            <div style="height:32px;flex:none"></div>
+            <span class="micro">Spent this month</span>
+            <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
+              class="redact" style="width:2ch"></span><span
+              class="redact" style="width:3ch"></span></span>
+            <div style="height:28px;flex:none"></div>
+            <div class="tape row between"><span class="micro">This month</span>
+              <span class="redact" style="width:5ch;font-size:11px"></span></div>
+            <div class="redact-field" style="margin-top:4px">
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:11ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:8ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:13ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:12ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:9ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+            </div>
+          </div>
+
+          <div class="scrim"></div>
+          <!-- The system BiometricPrompt. Drawn only so the composition behind it can be
+               judged; not ours to style, and nothing here proposes styling it. -->
+          <div class="sheet" style="z-index:11">
+            <div class="grabber"></div>
+            <p class="t-headline-s" style="margin-top:12px">Unlock Ours</p>
+            <p class="t-body-m" style="color:var(--on-surface-variant);margin-top:6px">Your
+              household spending is locked</p>
+            <div style="display:grid;place-items:center;padding:32px 0 24px">
+              <svg style="width:44px;height:44px;color:var(--primary)"><use href="#i-shield-lock"/></svg>
+              <p class="t-body-m" style="color:var(--on-surface-variant);margin-top:16px">Touch the
+                fingerprint sensor</p>
+            </div>
+            <div class="row between">
+              <button class="btn btn-text" style="padding-left:0">Use PIN</button>
+              <button class="btn btn-text">Cancel</button></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>a · Opening</b>The prompt is a system sheet and is not ours to draw.
+        What <em>is</em> ours is what sits behind it — and behind it the app is already, visibly,
+        this household’s ledger.</p>
+    </div>
+
+    <!-- 19b — dismissed: the screen itself -->
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="screen-body pad" style="padding-top:16px;display:flex;flex-direction:column">
+
+            <div class="row between">
+              <span class="wordmark">Ours</span>
+              <span class="pill"><svg style="width:12px;height:12px;fill:currentColor"><use href="#i-lock"/></svg>Locked</span>
+            </div>
+
+            <div style="height:32px;flex:none"></div>
+            <span class="micro">Spent this month</span>
+            <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
+              class="redact" style="width:2ch"></span><span
+              class="redact" style="width:3ch"></span></span>
+
+            <div style="height:28px;flex:none"></div>
+            <div class="tape row between"><span class="micro">This month</span>
+              <span class="redact" style="width:5ch;font-size:11px"></span></div>
+
+            <!-- The field of redacted rows, masked away downward. It fills whatever height is
+                 left over, so the sentence and the button below it never move. -->
+            <div class="redact-field" style="margin-top:4px">
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:11ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:8ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:13ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:12ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:9ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:14ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+            </div>
+
+            <!-- The only unredacted words on the screen, and the only accent. -->
+            <div class="grow"></div>
+            <div style="padding-bottom:8px;flex:none">
+              <p class="t-headline-m">Ours is locked</p>
+              <p class="t-body-l" style="color:var(--on-surface-variant);margin-top:10px">Unlock
+                with your fingerprint, face or screen lock.</p>
+              <button class="btn btn-filled block" style="margin-top:20px">
+                <svg><use href="#i-shield-lock"/></svg>Unlock</button>
+            </div>
+
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>b · Dismissed <em>(the screen)</em></b>Wordmark, redacted month,
+        sentence, button — top to bottom, all on the left rag. Two inks and one accent: there is
+        exactly one thing to press and it is the last thing the eye reaches.</p>
+    </div>
+
+    <!-- 19c — light -->
+    <div>
+      <div class="phone tall ours locked ours-light" data-theme="light"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="screen-body pad" style="padding-top:16px;display:flex;flex-direction:column">
+            <div class="row between">
+              <span class="wordmark">Ours</span>
+              <span class="pill"><svg style="width:12px;height:12px;fill:currentColor"><use href="#i-lock"/></svg>Locked</span>
+            </div>
+            <div style="height:32px;flex:none"></div>
+            <span class="micro">Spent this month</span>
+            <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
+              class="redact" style="width:2ch"></span><span
+              class="redact" style="width:3ch"></span></span>
+            <div style="height:28px;flex:none"></div>
+            <div class="tape row between"><span class="micro">This month</span>
+              <span class="redact" style="width:5ch;font-size:11px"></span></div>
+            <div class="redact-field" style="margin-top:4px">
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:11ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:8ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:13ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:12ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:9ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:14ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+            </div>
+            <div class="grow"></div>
+            <div style="padding-bottom:8px;flex:none">
+              <p class="t-headline-m">Ours is locked</p>
+              <p class="t-body-l" style="color:var(--on-surface-variant);margin-top:10px">Unlock
+                with your fingerprint, face or screen lock.</p>
+              <button class="btn btn-filled block" style="margin-top:20px">
+                <svg><use href="#i-shield-lock"/></svg>Unlock</button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>c · Light <em>(locked to light)</em></b>Ink on paper, which is what
+        redaction has always been. The bars are <code>onSurface</code> at 13%, so they take the
+        theme with them rather than being a grey that only works on one.</p>
+    </div>
+
+  </div>
+
+  <ul class="spec-list">
+    <li><span class="k">What is redacted</span><span class="v">
+      Every figure, every merchant name, every date, and <strong>the category colour</strong>. The
+      dot is a square of the same ink, never the category hue — “you cannot see the amount, but it
+      was Health” is still a disclosure, and it is the one most people would mind most. This is the
+      only place in the package where a category mark is drawn without its colour.
+    </span></li>
+    <li><span class="k">What is not</span><span class="v">
+      The <em>labels</em>: “Spent this month”, “This month”, the wordmark. They describe the app’s
+      structure, not the household’s money, and stripping them would leave an abstract pattern
+      rather than a recognisable statement. The row count is not real either — always six visible,
+      never “you had four transactions today”.
+    </span></li>
+    <li><span class="k">Bar widths are fixed</span><span class="v">
+      Authored, not derived. A bar as wide as the figure behind it would leak the order of
+      magnitude: ₹9,00,000 and ₹90 are three characters apart. Six rows, one authored pattern,
+      identical on every launch — the shape is of <em>a</em> statement, not <em>this</em> one.
+    </span></li>
+    <li><span class="k">Still, never shimmering</span><span class="v">
+      <code>.redact</code> is deliberately not <code>.skel</code>. Shimmer means “this is arriving”;
+      a lock screen would be promising exactly what it is refusing, and the animation would run for
+      as long as the phone sat on the table. See the note in <code>ours.css</code> §4.
+    </span></li>
+    <li><span class="k">Nothing new below the fold</span><span class="v">
+      The redacted field is the flexible row; the sentence and button are pinned. On the 620dp
+      window the field shows four rows instead of eight and nothing else moves — the button stays
+      the same distance from the thumb.
+    </span></li>
+    <li><span class="k">Unchanged from the built screen</span><span class="v">
+      Left rag, the sentence verbatim, the filled button, one accent. This is a re-composition, not
+      a new voice. Being locked is still not an error and the screen still does not say it is.
+    </span></li>
+  </ul>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 20 -->
+<section class="doc-sec" id="lockout">
+  <h2>20 · The state that is missing today</h2>
+
+  <div class="pair">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="screen-body pad" style="padding-top:16px;display:flex;flex-direction:column">
+
+            <div class="row between">
+              <span class="wordmark">Ours</span>
+              <span class="pill"><svg style="width:12px;height:12px;fill:currentColor"><use href="#i-lock"/></svg>Locked</span>
+            </div>
+
+            <div style="height:32px;flex:none"></div>
+            <span class="micro">Spent this month</span>
+            <span class="redact-figure t-display-l" style="margin-top:10px">₹<span
+              class="redact" style="width:2ch"></span><span
+              class="redact" style="width:3ch"></span></span>
+
+            <div style="height:28px;flex:none"></div>
+            <div class="tape row between"><span class="micro">This month</span>
+              <span class="redact" style="width:5ch;font-size:11px"></span></div>
+            <div class="redact-field" style="margin-top:4px">
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:11ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:8ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:13ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:12ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:9ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+            </div>
+
+            <div class="grow"></div>
+            <div style="padding-bottom:8px;flex:none">
+              <div class="notice">
+                <p class="nt-title">Too many attempts</p>
+                <p class="nt-body">Your fingerprint is off for <b class="nowrap">28 seconds</b>.
+                  Your screen lock still works.</p>
+              </div>
+              <button class="btn btn-filled block" style="margin-top:12px">
+                <svg><use href="#i-shield-lock"/></svg>Use screen lock</button>
+              <button class="btn btn-text block" style="margin-top:4px" disabled>Try fingerprint in 28s</button>
+            </div>
+
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Temporarily locked out</b>Amber, not red: nothing here is
+        <em>wrong</em>, something is merely not running yet. The way in becomes the primary
+        button, and the way that cannot work becomes the disabled one — not the reverse.</p>
+    </div>
+
+    <div class="spec-block">
+      <ul class="spec-list">
+        <li><span class="k">The bug this fixes</span><span class="v">
+          <code>onAuthenticationError</code> ignores its <code>code</code>. On
+          <code>ERROR_LOCKOUT</code> the user lands on a screen offering one button, which reopens
+          a prompt that fails instantly, with nothing on screen saying it will keep failing for
+          half a minute. The redesign reads the code; that is the whole change.
+        </span></li>
+        <li><span class="k">Which codes</span><span class="v">
+          <code>ERROR_LOCKOUT</code> (30s) and <code>ERROR_LOCKOUT_PERMANENT</code> (until the
+          screen lock is used) get this state. <code>ERROR_USER_CANCELED</code>,
+          <code>ERROR_NEGATIVE_BUTTON</code> and <code>ERROR_CANCELED</code> get §19b — a dismissal
+          is not a failure and must not be dressed as one.
+        </span></li>
+        <li><span class="k">Amber, not red</span><span class="v">
+          The house rule: red is for <em>a figure that is wrong</em>. No figure is wrong here. The
+          same rule that keeps “sync not running” amber keeps this amber.
+        </span></li>
+        <li><span class="k">The countdown is the honest part</span><span class="v">
+          A live second count, because “try again later” makes people tap repeatedly and each tap
+          on some OEM builds extends the window. Naming the number ends the tapping.
+        </span></li>
+        <li><span class="k">Permanent lockout</span><span class="v">
+          Same layout, no countdown: “Your fingerprint is off until you use your screen lock.” The
+          primary button is unchanged, which is the point — <strong>the PIN is always a way
+          in</strong>, and on this screen it is now the biggest thing on it.
+        </span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 21 -->
+<section class="doc-sec" id="motion">
+  <h2>21 · Unlocking</h2>
+
+  <p class="sec-lede">
+    The redaction is the one thing on the screen that can carry the transition, and it costs
+    nothing: the rows behind it are already in their final positions, so nothing moves.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone short ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="screen-body pad" style="padding-top:16px">
+            <div class="row between"><span class="wordmark">Ours</span></div>
+            <div style="height:32px;flex:none"></div>
+            <span class="micro">Spent this month</span>
+            <p class="t-display-l" style="margin-top:10px">₹30,168.20</p>
+            <div style="height:28px;flex:none"></div>
+            <div class="tape row between"><span class="micro">This month</span>
+              <span class="micro">6 Aug</span></div>
+            <div style="margin-top:4px">
+              <div class="entry"><span class="avatar c-food"><svg><use href="#i-cup-hot"/></svg></span>
+                <span class="e-main"><span class="e-name">Keecheril St</span>
+                  <span class="redact faint" style="width:7ch;font-size:11px"></span></span>
+                <span class="amt">140.00</span></div>
+              <div class="entry"><span class="avatar c-groceries"><svg><use href="#i-basket"/></svg></span>
+                <span class="e-main"><span class="redact" style="width:8ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:9ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:5ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:13ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:6ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:7ch;font-size:14px"></span></span></div>
+              <div class="entry"><span class="redact dot"></span>
+                <span class="e-main"><span class="redact" style="width:10ch;font-size:13px"></span>
+                  <span class="redact faint" style="width:8ch;font-size:11px"></span></span>
+                <span class="amt"><span class="redact" style="width:6ch;font-size:14px"></span></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Mid-transition <em>(a frame, not a state)</em></b>Bars fade out top
+        first, content fades in behind them. Nothing translates, nothing scales, nothing waits on a
+        layout pass — the ledger was always there.</p>
+    </div>
+
+    <div class="spec-block" style="flex:1">
+      <ul class="spec-list">
+        <li><span class="k">Timing</span><span class="v">
+          <code>--dur-medium-2</code> (300ms), <code>--ease-standard</code>, staggered
+          <strong>24ms per row</strong> from the top. Total under 450ms — inside the package’s
+          “a ledger is a thing you check, not watch” ceiling.
+        </span></li>
+        <li><span class="k">Why top-down</span><span class="v">
+          The figure people came for is at the top. It clears first and is readable before the
+          animation has finished, so the stagger never costs anyone a moment.
+        </span></li>
+        <li><span class="k">No reverse</span><span class="v">
+          Re-locking after 60 seconds in the background is not animated. The screen is composed
+          before it is ever visible, and animating <em>into</em> a lock would show, for 300ms, the
+          content being locked away — a leak with a fade on it.
+        </span></li>
+        <li><span class="k">Reduced motion</span><span class="v">
+          <code>prefers-reduced-motion</code> cross-fades the whole field once, no stagger. The
+          bars must still go — they are the state, not the decoration.
+        </span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── 22 -->
+<section class="doc-sec" id="carried">
+  <h2>22 · Carried over unchanged</h2>
+
+  <p class="sec-lede">
+    None of this is up for renegotiation by a visual redesign. It is repeated here because the
+    reasons are load-bearing and live in <code>AppLock.kt</code>, not in a mockup.
+  </p>
+
+  <ul class="spec-list">
+    <li><span class="k">Authenticators</span><span class="v">
+      <code>BIOMETRIC_WEAK</code> <em>or</em> <code>DEVICE_CREDENTIAL</code>, never fingerprint
+      alone: not every phone has a sensor, sensors fail with wet or cold hands, and a lock you can
+      get permanently stuck behind is worse than no lock. The PIN is always a way in.
+    </span></li>
+    <li><span class="k">Re-lock</span><span class="v">
+      After 60 seconds in the background. Locking on every glance away makes an app people open ten
+      times a day unusable, and a short grace period is the difference between a feature that stays
+      on and one that gets switched off.
+    </span></li>
+    <li><span class="k">Never strand</span><span class="v">
+      If the hardware cannot satisfy the prompt at all, the gate opens rather than closes. A user
+      must never be locked out of their own data by a capability check.
+    </span></li>
+    <li><span class="k">Dismissal keeps the app open</span><span class="v">
+      Staying locked with a retry, rather than closing the app out from under the user. The prompt
+      is a system sheet and can be dismissed; §19b is what is behind it when it is.
+    </span></li>
+    <li><span class="k">Cost of the change</span><span class="v"><ul>
+      <li class="win">One new composable — a redacted <code>StatementEntry</code> — plus one
+        <code>when</code> over the error code in <code>onAuthenticationError</code>.</li>
+      <li class="win">No new permission, no new dependency, no new stored state, and nothing read
+        out of the database: the bars are authored, so the locked screen never touches a
+        transaction to draw itself.</li>
+    </ul></span></li>
+  </ul>
+</section>
+
+</div>
+<script src="theme.js"></script>
