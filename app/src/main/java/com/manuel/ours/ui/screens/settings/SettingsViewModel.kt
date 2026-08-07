@@ -195,6 +195,19 @@ class SettingsViewModel @Inject constructor(
     private val _sheetTesting = kotlinx.coroutines.flow.MutableStateFlow(false)
     val sheetTesting: kotlinx.coroutines.flow.StateFlow<Boolean> = _sheetTesting
 
+    /**
+     * Read a payment from any sender, not only banks we can vouch for.
+     *
+     * Its own flow rather than a sixth branch of the combine above, which is already
+     * nested three deep to stay inside the arities `combine` offers typed overloads for.
+     */
+    val readEveryPayment: kotlinx.coroutines.flow.StateFlow<Boolean> = prefs.readEveryPayment
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    fun setReadEveryPayment(value: Boolean) {
+        viewModelScope.launch { prefs.setReadEveryPayment(value) }
+    }
+
     /** Bundled so the outer combine stays within the five arities Flow offers. */
     private data class Flags(
         val developerMode: Boolean,

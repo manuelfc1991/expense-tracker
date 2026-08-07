@@ -118,6 +118,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val readEveryPayment by viewModel.readEveryPayment.collectAsStateWithLifecycle()
     val trashCount by viewModel.trashCount.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -552,6 +553,29 @@ fun SettingsScreen(
                         onClick = { viewModel.setTrackingStartAt(0L) },
                     )
                 }
+
+                Hairline()
+                // The household's call, and a real trade either way.
+                //
+                // On: anything payment-shaped is read whoever sent it, so a bank that
+                // changes its header is never silently missed — at the cost of the
+                // occasional EPF statement or gift-card receipt arriving as a row. Those
+                // are flagged and land under Untagged, where they can be removed together.
+                //
+                // Off: the same messages are held under Possible payments and count
+                // towards nothing until answered.
+                ToggleRow(
+                    title = "Read every payment message",
+                    caption = if (readEveryPayment) {
+                        "Any debit or credit is read, even from a sender we don't know. " +
+                            "Ones we can't vouch for are flagged as Untagged."
+                    } else {
+                        "Only banks we recognise. Anything else waits under Possible payments."
+                    },
+                    checked = readEveryPayment,
+                    onCheckedChange = { viewModel.setReadEveryPayment(it) },
+                    padded = false,
+                )
 
                 Hairline()
                 PanelRow(

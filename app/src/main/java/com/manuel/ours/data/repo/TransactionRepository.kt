@@ -262,7 +262,11 @@ class TransactionRepository @Inject constructor(
             // under fifty pieces of unattributable income.
             needsReview = (parsed.type == TxnType.DEBIT && parsed.merchant == null &&
                 parsed.counterpartyTail?.let { namedAccounts[it] } == null) ||
-                (parsed.kind == SmsParser.Kind.PURCHASE && category == Category.OTHER),
+                (parsed.kind == SmsParser.Kind.PURCHASE && category == Category.OTHER) ||
+                // Read from a sender nobody can vouch for. It counts, because the
+                // household asked for it to, but it is flagged so it lands under Untagged
+                // with the rest — findable and removable together rather than hunted for.
+                !parsed.senderVouched,
             rawSms = parsed.rawBody,
         )
         val dedupeKey = SmsDeduplicator.bucketKey(

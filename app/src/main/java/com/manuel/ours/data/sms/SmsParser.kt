@@ -124,14 +124,32 @@ class SmsParser {
          * resolution.
          */
         val dedupeAt: Long = occurredAt,
+        /**
+         * False when the sender is one we cannot vouch for and the message was read anyway.
+         *
+         * Such a row is a real payment as far as the app can tell, and it counts — but the
+         * app has no idea who sent it, so it is flagged for review and lands under Untagged
+         * where it can be found and removed alongside the others.
+         */
+        val senderVouched: Boolean = true,
     )
 
-    fun parse(sender: String, body: String, receivedAt: Long): Result {
+    /**
+     * @param readEveryPayment adopt a payment-shaped message from **any** sender rather
+     *   than holding it for confirmation. See `AppPrefs.readEveryPayment` for the trade.
+     */
+    fun parse(
+        sender: String,
+        body: String,
+        receivedAt: Long,
+        readEveryPayment: Boolean = false,
+    ): Result {
         val known = BankRules.forSender(sender)
         // A header we do not recognise is not proof this is not a bank. Fall through to
         // the shape of the message itself, which is the thing that actually decides.
         val rule = known
             ?: provisionalRule(sender, body)
+            ?: adoptedRule(sender, body, readEveryPayment)
             ?: return unrecognised(sender, body)
 
         // A sender the app only started reading part-way through its own history.
@@ -169,7 +187,12 @@ class SmsParser {
         // Learn only from a message that survived every reject rule above. An OTP quoting
         // a debit is bank-shaped and must teach us nothing, or one such message enrols a
         // sender whose every future OTP then arrives as an expense.
-        if (known == null) BankRules.rememberDiscovered(sender, rule.bank)
+        // Only remember a header whose bank we actually identified. A sender adopted on
+        // shape alone has the header itself as its "bank", and learning that would dress a
+        // guess up as knowledge — and quietly promote it past the review flag next time.
+        if (known == null && BankRules.bankNamedIn(body) != null) {
+            BankRules.rememberDiscovered(sender, rule.bank)
+        }
 
         return Result.Expense(
             ParsedTxn(
@@ -188,6 +211,9 @@ class SmsParser {
                 // A date without a clock time cannot separate two transactions on the
                 // same day, so dedup uses when the message actually arrived instead.
                 dedupeAt = if (parsedDate?.hasTime == true) parsedDate.epochMillis else receivedAt,
+                // Vouched when the table knew the header, or the message named a bank we
+                // know. Anything else was taken on the shape of the text alone.
+                senderVouched = known != null || BankRules.bankNamedIn(body) != null,
             )
         )
     }
@@ -226,6 +252,20 @@ class SmsParser {
         if (!looksLikeBankAlert(body)) return null
         val named = BankRules.bankNamedIn(body) ?: return null
         return BankRule(bank = named, headers = listOf(header))
+    }
+
+    /**
+     * A rule for a payment-shaped message from a sender nobody can vouch for.
+     *
+     * Only when the household has asked for it. The bank is the header itself, which is
+     * honest — it is all we know — and the row is flagged unvouched so it is findable.
+     */
+    private fun adoptedRule(sender: String, body: String, enabled: Boolean): BankRule? {
+        if (!enabled) return null
+        val header = BankRules.normaliseHeader(sender) ?: return null
+        if (header.length !in 3..15 || header.none { it.isLetter() }) return null
+        if (!looksLikeBankAlert(body)) return null
+        return BankRule(bank = header, headers = listOf(header))
     }
 
     /**

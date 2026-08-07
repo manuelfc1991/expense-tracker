@@ -54,6 +54,9 @@ class SmsBackfillWorker @AssistedInject constructor(
         // The tracking-start date wins over the rolling window. Without this the
         // "safety net" rescan in OursApp would quietly re-import every month the user
         // has retired, every single launch.
+        // Read once for the whole scan rather than per message: it cannot change
+        // mid-backfill, and a DataStore read per SMS over six months is thousands.
+        val readEveryPayment = prefs.readEveryPaymentOnce()
         val since = maxOf(
             System.currentTimeMillis() - monthsBack * 30L * 24 * 60 * 60 * 1000,
             prefs.trackingStartAtOnce(),
@@ -93,7 +96,7 @@ class SmsBackfillWorker @AssistedInject constructor(
                 val body = cursor.getString(bodyIdx) ?: continue
                 val date = cursor.getLong(dateIdx)
 
-                when (val result = parser.parse(sender, body, date)) {
+                when (val result = parser.parse(sender, body, date, readEveryPayment)) {
                     is SmsParser.Result.Expense -> {
                         if (repository.ingestParsed(result.txn) != null) imported++
                     }

@@ -46,7 +46,7 @@ class SmsReceiver : BroadcastReceiver() {
             try {
                 if (prefs.ingestSource.first() != IngestSource.SMS) return@launch
 
-                when (val result = parser.parse(sender, body, receivedAt)) {
+                when (val result = parser.parse(sender, body, receivedAt, prefs.readEveryPaymentOnce())) {
                     is SmsParser.Result.Expense -> {
                         val txn = repository.ingestParsed(result.txn)
                         if (txn != null) {

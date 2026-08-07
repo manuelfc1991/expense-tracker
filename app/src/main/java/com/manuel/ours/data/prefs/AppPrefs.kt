@@ -53,6 +53,7 @@ class AppPrefs @Inject constructor(
         val NEARBY_ALWAYS = booleanPreferencesKey("nearby_always")
         val APP_LOCK = booleanPreferencesKey("app_lock")
         val CAPTURE_POPUP = booleanPreferencesKey("capture_popup")
+        val READ_EVERY_PAYMENT = booleanPreferencesKey("read_every_payment")
         val SETTINGS_INDEX = booleanPreferencesKey("settings_index")
         val THEME_TONE = stringPreferencesKey("theme_tone")
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
@@ -142,6 +143,29 @@ class AppPrefs @Inject constructor(
      */
     val capturePopup: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.CAPTURE_POPUP] ?: false }
+
+    /**
+     * Read a payment from **any** sender, not only banks we can vouch for.
+     *
+     * On by this household's decision, and the trade is deliberate. Audited over 2,810 of
+     * their messages, six unrecognised headers write something payment-shaped and none is
+     * a bank — an EPF passbook line, an Amazon Pay balance, a fuel receipt, a gift card and
+     * two trading spams. With this on, those become rows and count until removed; the EPF
+     * one reads as ₹61,989 of income.
+     *
+     * The household would rather delete six rows than miss a bank, and that is a fair call
+     * to make about their own ledger — a missed bank is silent and costs months, while a
+     * wrong row is visible and costs a tap. Rows arriving this way are flagged
+     * [SmsParser.ParsedTxn.senderVouched] = false so they land under Untagged, where they
+     * can be found and removed together rather than hunted for.
+     *
+     * Off puts them in Possible payments instead, where they are held and count towards
+     * nothing until answered.
+     */
+    val readEveryPayment: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.READ_EVERY_PAYMENT] ?: true }
+
+    suspend fun readEveryPaymentOnce(): Boolean = readEveryPayment.first()
 
     /**
      * Draw Settings as an index of five pages rather than one scroll.
@@ -370,6 +394,10 @@ class AppPrefs @Inject constructor(
 
     suspend fun setCapturePopup(value: Boolean) {
         context.dataStore.edit { it[Keys.CAPTURE_POPUP] = value }
+    }
+
+    suspend fun setReadEveryPayment(value: Boolean) {
+        context.dataStore.edit { it[Keys.READ_EVERY_PAYMENT] = value }
     }
 
     suspend fun setThemeTone(value: ThemeTone) {

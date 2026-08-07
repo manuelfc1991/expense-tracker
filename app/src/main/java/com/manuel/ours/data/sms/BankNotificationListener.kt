@@ -49,7 +49,7 @@ class BankNotificationListener : NotificationListenerService() {
 
         scope.launch {
             if (prefs.ingestSource.first() != IngestSource.NOTIFICATION) return@launch
-            when (val result = parser.parse(sender, full, sbn.postTime)) {
+            when (val result = parser.parse(sender, full, sbn.postTime, prefs.readEveryPaymentOnce())) {
                 is SmsParser.Result.Expense -> {
                     val txn = repository.ingestParsed(
                         result.txn,
