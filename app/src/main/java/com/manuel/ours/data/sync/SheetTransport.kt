@@ -206,9 +206,18 @@ class SheetTransport @Inject constructor(
                 }
             }
 
-            response.optLong("cursor", -1L).takeIf { it >= 0 }?.let { prefs.setSheetCursor(it) }
+            // Staged, not committed. See SyncTransport.commitPull.
+            pendingCursor = response.optLong("cursor", -1L).takeIf { it >= 0 }
             events.filter { it.deviceId != selfDeviceId }
         }
+
+    /** Set by [pull], written by [commitPull] once the rows are safely in Room. */
+    private var pendingCursor: Long? = null
+
+    override suspend fun commitPull() {
+        pendingCursor?.let { prefs.setSheetCursor(it) }
+        pendingCursor = null
+    }
 
     /** Verifies the URL before the user leaves the settings screen. */
     suspend fun testConnection(url: String): Result<String> = withContext(Dispatchers.IO) {

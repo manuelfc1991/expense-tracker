@@ -361,6 +361,13 @@ interface MerchantRuleDao {
     @Query("DELETE FROM merchant_rules WHERE id = :id")
     suspend fun delete(id: Long)
 
+    /** For an emptied `merchant` shared rule, which is this store's tombstone. */
+    @Query("DELETE FROM merchant_rules WHERE pattern = :pattern")
+    suspend fun deleteByPattern(pattern: String)
+
+    @Query("SELECT * FROM merchant_rules WHERE id = :id")
+    suspend fun getById(id: Long): MerchantRuleEntity?
+
     @Query("SELECT COUNT(*) FROM merchant_rules")
     suspend fun count(): Int
 

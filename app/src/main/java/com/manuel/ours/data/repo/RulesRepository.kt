@@ -267,6 +267,16 @@ class RulesRepository @Inject constructor(
 
         val merchantRules = all.filter { it.type == TYPE_MERCHANT }
         for (rule in merchantRules) {
+            val pattern = rule.ruleKey.lowercase().trim()
+            // An emptied value is this store's tombstone, and merchant rules were the one
+            // type not honouring it: the blank failed the category lookup below and hit
+            // `continue`, so a correction deleted on one phone lived on forever on the
+            // other. Every other type — account, sender, balance, budget, member, card —
+            // already treats empty as "remove this".
+            if (rule.value.isBlank()) {
+                merchantRuleDao.deleteByPattern(pattern)
+                continue
+            }
             // An unknown category name is ignored rather than filed as Other: a typo in
             // a hand-edited spreadsheet should do nothing, not quietly recategorise.
             val category = Category.entries.firstOrNull {
@@ -274,7 +284,7 @@ class RulesRepository @Inject constructor(
             } ?: continue
             merchantRuleDao.upsert(
                 MerchantRuleEntity(
-                    pattern = rule.ruleKey.lowercase().trim(),
+                    pattern = pattern,
                     category = category.name,
                     userDefined = true,
                 )

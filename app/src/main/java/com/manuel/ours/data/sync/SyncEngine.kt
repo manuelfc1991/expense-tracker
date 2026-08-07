@@ -55,6 +55,10 @@ class SyncEngine @Inject constructor(
                 prefs.writeLamport(clock.current)
             }
 
+            // Only now is it safe to say those rows have been taken. Before this the
+            // cursor moved inside `pull`, so a failure in `applyRemote` lost them for good.
+            transport.commitPull()
+
             // Push only what has not been sent, in batches, marking each as it lands.
             //
             // One request for the whole backlog is fine until the backlog is large, and

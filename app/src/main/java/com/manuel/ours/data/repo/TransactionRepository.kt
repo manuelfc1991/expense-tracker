@@ -1316,7 +1316,31 @@ class TransactionRepository @Inject constructor(
     suspend fun upsertMerchantRule(pattern: String, category: Category) =
         setMerchantRule(pattern, category)
 
-    suspend fun deleteMerchantRule(id: Long) = merchantRuleDao.delete(id)
+    /**
+     * Deletes a merchant correction **and** writes the tombstone that carries the
+     * deletion to the other phone.
+     *
+     * Without the shared rule the removal had no way of travelling: the pattern stayed
+     * on the partner's phone and kept recategorising, and the next sync could even push
+     * it back. An emptied value is how every other type says "remove this".
+     */
+    suspend fun deleteMerchantRule(id: Long) {
+        val rule = merchantRuleDao.getById(id)
+        merchantRuleDao.delete(id)
+        rule?.pattern?.let { pattern ->
+            sharedRuleDao.upsertAll(
+                listOf(
+                    SharedRuleEntity(
+                        type = RulesRepository.TYPE_MERCHANT,
+                        ruleKey = pattern,
+                        value = "",
+                        updatedAt = System.currentTimeMillis(),
+                        deviceId = prefs.deviceId(),
+                    )
+                )
+            )
+        }
+    }
 
     companion object {
         /** Shared-rule type for an account the household has named. */

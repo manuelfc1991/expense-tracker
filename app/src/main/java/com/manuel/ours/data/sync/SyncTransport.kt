@@ -33,6 +33,19 @@ interface SyncTransport {
     suspend fun push(deviceId: String, events: List<SyncEvent>)
 
     /**
+     * Called once the events from [pull] have actually been written to Room.
+     *
+     * A transport that keeps a server-side read cursor must advance it **here**, not in
+     * `pull`. The sheet advanced it as soon as the rows were fetched, so if the apply
+     * then failed — a database error, or the worker being killed between the two — the
+     * cursor had already moved and those rows were never fetched again. The partner's
+     * transactions were simply gone, with no error path that could recover them.
+     *
+     * No-op for a transport with nothing to commit.
+     */
+    suspend fun commitPull() = Unit
+
+    /**
      * Fetch everything this device has not already seen, from every peer.
      *
      * Handing a device its own events back is harmless — the merge is idempotent — but

@@ -61,6 +61,9 @@ class NearbyTransport @Inject constructor(
     private var pending: List<SyncEvent> = emptyList()
     private var exchangeComplete: CompletableDeferred<Unit>? = null
 
+    /** Whether this round actually reached a peer. See [push]. */
+    private var reachedPeer = false
+
     /** Encrypted blob to transmit this round, prepared before the session opens. */
     private var outgoing: String? = null
 
@@ -79,6 +82,11 @@ class NearbyTransport @Inject constructor(
      * session, which is why [exchange] takes the payload directly.
      */
     override suspend fun push(deviceId: String, events: List<SyncEvent>) {
+        // Nothing is delivered here — the exchange already happened in [pull]. So this
+        // must refuse when no peer was reached, or the engine marks the batch pushed and
+        // drops it from the outbound queue having sent it to nobody. Recovering from that
+        // needs a manual re-upload of the entire log.
+        check(reachedPeer) { "No peer reached in this round" }
         pending = events
     }
 
@@ -98,6 +106,11 @@ class NearbyTransport @Inject constructor(
             peerDeviceIds.clear()
             exchangeComplete = CompletableDeferred()
             outgoing = codec.encode(pending.ifEmpty { unsentEvents() })
+            // Cleared once staged. It was never cleared, so the round *after* a
+            // successful one re-transmitted the previous batch instead of the new events,
+            // which the engine then marked pushed anyway.
+            pending = emptyList()
+            reachedPeer = false
 
             val serviceId = "$SERVICE_PREFIX.$householdId"
 
@@ -107,6 +120,11 @@ class NearbyTransport @Inject constructor(
 
                 // Bounded: if nobody is nearby we must not hold the sync worker open.
                 withTimeoutOrNull(EXCHANGE_TIMEOUT_MS) { exchangeComplete?.await() }
+
+                // A peer that sent us a blob is a peer that received ours — the exchange
+                // is symmetric. This is what lets [push] tell "delivered" from "timed out
+                // with nobody there", which it previously could not.
+                reachedPeer = received.isNotEmpty()
 
                 buildList {
                     received.forEach { (endpointId, blob) ->
