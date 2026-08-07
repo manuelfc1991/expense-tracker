@@ -148,6 +148,13 @@ fun TransactionEntity.toDomain() = Transaction(
     counterpartyTail = counterpartyTail,
     balancePaise = balancePaise,
     bankMessageId = bankMessageId,
+    // Both halves of a refund. Omitted here originally, which silently erased the
+    // link on every write — `linkRefund` does `entity.copy(...).toDomain()`, so the
+    // column it had just set was dropped on the way back out and the whole refund
+    // feature never persisted. RefundTest builds domain objects directly and never
+    // crosses this mapper, which is why it stayed green.
+    refundsTxnId = refundsTxnId,
+    refundedPaise = refundedPaise,
 )
 
 fun Transaction.toEntity(
@@ -165,6 +172,8 @@ fun Transaction.toEntity(
     accountTail = accountTail,
     refNo = refNo,
     bankMessageId = bankMessageId,
+    refundsTxnId = refundsTxnId,
+    refundedPaise = refundedPaise,
     bank = bank,
     note = note,
     splitType = splitType.name,

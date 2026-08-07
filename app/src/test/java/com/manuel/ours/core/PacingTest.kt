@@ -117,8 +117,20 @@ class PacingTest {
         assertThat(result.shortfallPaise).isEqualTo(rupees(800))
     }
 
+    /**
+     * This asserted `Short`, and the change is deliberate.
+     *
+     * `Short` means "the cap cannot cover what is still owed". With no commitments at all
+     * the old condition reduced to plain `budgetLeft < 0`, and `BudgetAlerter` rendered it
+     * as "Not enough left for this month's commitments — ₹0 still due and ₹0 left ·
+     * ₹1,500 short": two of three figures zero, describing a shortfall against nothing.
+     *
+     * Being over budget is a different condition, and one the screen already states
+     * plainly — Home's budget row reads "USED 153% · OVER ₹20,649" — so nothing is lost by
+     * pacing reporting what it actually knows: there is ₹0 a day left, which is Tight.
+     */
     @Test
-    fun `over budget is short`() {
+    fun `over budget with nothing owed is tight, not a shortfall`() {
         val result = Pacing.of(
             spentPaise = rupees(40_000),
             budgetPaise = rupees(38_500),
@@ -126,8 +138,9 @@ class PacingTest {
             committedRemainingPaise = 0,
             now = at(15),
         )!!
-        assertThat(result.state).isEqualTo(Pacing.State.Short)
-        assertThat(result.shortfallPaise).isEqualTo(rupees(1_500))
+        assertThat(result.state).isEqualTo(Pacing.State.Tight)
+        assertThat(result.perDayPaise).isEqualTo(0)
+        assertThat(result.shortfallPaise).isEqualTo(0)
     }
 
     @Test

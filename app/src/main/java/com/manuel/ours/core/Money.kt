@@ -9,6 +9,15 @@ import java.math.RoundingMode
  */
 object Money {
 
+    /**
+     * ₹100 crore in paise — the ceiling on a single parsed amount.
+     *
+     * Not a limit on what a household can spend; a limit on what a *message* can plausibly
+     * be saying. Past this the number came from a reference, a phone number or an overflow.
+     */
+    const val MAX_PLAUSIBLE_PAISE = 100_00_00_00_000L
+
+
     /** "₹1,23,456" — Indian lakh/crore grouping, not Western thousands. */
     fun format(paise: Long, withDecimals: Boolean = false): String {
         val negative = paise < 0
@@ -132,8 +141,21 @@ object Money {
                 .multiply(BigDecimal(multiplier))
                 .multiply(BigDecimal(100))
                 .setScale(0, RoundingMode.HALF_UP)
-                .toLong()
+                // longValueExact, never toLong.
+                //
+                // BigDecimal.toLong() truncates the high bits instead of throwing, so a
+                // spam SMS reading "INR 92233720368547758.08 debited" came back as
+                // Long.MIN_VALUE — a *negative* amount, which then flowed into the
+                // spending total, the budget and the widget. The catch below never fired
+                // because no NumberFormatException was ever raised.
+                .longValueExact()
+                // No real payment is a hundred crore. A figure past this is a parse that
+                // went wrong, and refusing it is safer than recording it.
+                .takeIf { it in 0..MAX_PLAUSIBLE_PAISE }
         } catch (_: NumberFormatException) {
+            null
+        } catch (_: ArithmeticException) {
+            // longValueExact on anything wider than a Long.
             null
         }
     }

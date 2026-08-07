@@ -132,14 +132,21 @@ fun affordability(
     committedRemainingPaise: Long = 0L,
     partialView: Boolean = false,
 ): Affordability {
-    val known = balances.mapNotNull { it.usablePaise }
+    // Cards are debt, not capacity, and must be dropped before anything is summed.
+    //
+    // The Accounts panel partitions them out; this did not, and both call sites hand it
+    // the unpartitioned list — so a ₹4,200 card balance was added to what the household
+    // could spend, with the sign inverted. `AccountBalance.isCard` says outright that it
+    // is "never summed with the others"; only the screen was honouring that.
+    val spendable = balances.filter { !it.isCard }
+    val known = spendable.mapNotNull { it.usablePaise }
     return Affordability(
         // A zero or negative budget is no budget. Treating ₹0 as a cap would put every
         // household that has not set one permanently, uselessly, over budget.
         budgetPaise = budgetPaise?.takeIf { it > 0L },
         spentPaise = householdSpentPaise,
         usablePaise = if (known.isEmpty()) null else known.sum(),
-        unknownAccounts = balances.count { it.usablePaise == null },
+        unknownAccounts = spendable.count { it.usablePaise == null },
         committedPaise = committedRemainingPaise.coerceAtLeast(0L),
         partialView = partialView,
     )

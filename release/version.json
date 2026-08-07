@@ -1,7 +1,7 @@
 {
-  "versionCode": 61,
-  "versionName": "5.20",
-  "notes": "Two icons that were saying the wrong thing: the rules list opened and closed with money up and down arrows, and an approvals queue with nothing in it drew the ledger's receipt. Both now use the mark that means what they do.",
+  "versionCode": 62,
+  "versionName": "6.0",
+  "notes": "Every screen redrawn, and the banks the app was not reading. Federal from a second header and the Utkarsh SuperCard are now read; a rescan no longer resurrects what you deleted; one debit reported twice by Kerala Gramin is one row. Refunds, budget pacing, credit cards, and an account on every entry you add by hand.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25497974
+  "sizeBytes": 25566242
 }

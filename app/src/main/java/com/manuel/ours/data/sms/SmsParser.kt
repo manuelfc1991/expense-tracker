@@ -326,10 +326,21 @@ class SmsParser {
 
     // -- Reject heuristics --------------------------------------------------------
 
+    /**
+     * The structural rule [OTP_BARE] is switched off as soon as the message contains an
+     * amount — which is precisely the dangerous case — so this list is the only defence
+     * left for a code SMS that quotes the sum being authorised. It has to name them.
+     *
+     * "123456 is your PIN for the transaction of Rs 4,821.00 at AMAZON" matched none of
+     * the original markers, matched the debit verb "transaction of", and was recorded as
+     * a ₹4,821 expense **before the payment was even authorised**.
+     */
     private val otpMarkers = listOf(
         "otp", "one time password", "one-time password", "do not share",
         "never share", "verification code", "security code", "login code",
         "is your code", "use this code", "2fa", "authentication code",
+        "is your pin", "your pin for", "authorise", "authorize",
+        "authorisation code", "authorization code", "to approve", "approval code",
     )
 
     private fun looksLikeOtp(lower: String): Boolean {
@@ -613,7 +624,13 @@ class SmsParser {
     }
 
     companion object {
-        private const val CURRENCY = "(?:rs\\.?|inr|₹)"
+        /**
+         * The `(?<![a-z])` is load-bearing. Without it "rs" matches inside ordinary
+         * words, and `extractAmount` takes the *first* match — so a bank footer reading
+         * "Yours 24x7" produced an amount of ₹24, and "Dear Customers 50000" produced
+         * ₹50,000, whenever either appeared before the real figure.
+         */
+        private const val CURRENCY = "(?<![a-z])(?:rs\\.?|inr|₹)"
 
         /**
          * The `(?![a-z])` after the K/L/Cr suffix is load-bearing. Without it,

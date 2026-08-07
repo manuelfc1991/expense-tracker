@@ -134,7 +134,13 @@ object Pacing {
 
         // A shortfall is reckoned on the real money, not the discretionary abstraction: what
         // matters is that the cap cannot cover what is still owed.
-        if (budgetLeft - committedRemainingPaise < 0) {
+        //
+        // It requires something to actually be owed. Without that guard the condition is
+        // just `budgetLeft < 0` — plain over-budget — and the alert it produced read
+        // "₹0 still due and ₹0 left · ₹5,000 short", two of whose three figures are zero.
+        // Being over budget is a different thing from not being able to meet a
+        // commitment, and the percentage thresholds already say the first one.
+        if (committedRemainingPaise > 0 && budgetLeft - committedRemainingPaise < 0) {
             return Result(
                 state = State.Short,
                 perDayPaise = null,

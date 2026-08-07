@@ -119,10 +119,18 @@ class BudgetAlerter @Inject constructor(
                         )
                     }
                     prefs.markBudgetAlertFired(key)
+                    // Only one budget alert per month per budget: having said the useful
+                    // thing, the blunt percentage would be a second interruption saying
+                    // less.
+                    //
+                    // Inside the `if`, not outside it. This `continue` used to run whether
+                    // or not an alert had actually been added, so once a pace alert had
+                    // fired the loop skipped the thresholds for the rest of the month and
+                    // no over-budget alert could ever be delivered. Combined with `Short`
+                    // firing on plain over-budget, "Over your monthly budget" was
+                    // unreachable for the overall cap.
+                    continue
                 }
-                // Only one budget alert per month per budget: having said the useful thing, the
-                // blunt percentage would be a second interruption saying less.
-                continue
             }
 
             // Categories, and any month with no commitments detected, keep the thresholds.

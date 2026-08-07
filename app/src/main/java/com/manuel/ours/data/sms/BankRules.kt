@@ -31,6 +31,9 @@ object BankRules {
     /** 1 August 2026, 00:00 in Asia/Kolkata. See [BankRule.notBefore]. */
     const val AUGUST_2026 = 1_785_522_600_000L
 
+    /** Shortest header the prefix fallback may match on. See [forSender]. */
+    private const val MIN_PREFIX_MATCH = 3
+
     val ALL: List<BankRule> = listOf(
         BankRule("HDFC Bank", listOf("HDFCBK", "HDFCBN", "HDFCB", "HDFC")),
         BankRule("ICICI Bank", listOf("ICICIB", "ICICIT", "ICICI")),
@@ -216,12 +219,22 @@ object BankRules {
         taught[header]?.let { return BankRule(bank = it, headers = listOf(header)) }
         discovered[header]?.let { return BankRule(bank = it, headers = listOf(header)) }
         // Fall back to a prefix match — banks add suffixes like "HDFCBKS", "SBIINBA".
-        byHeader.entries.firstOrNull { (key, _) ->
-            header.startsWith(key) || key.startsWith(header)
-        }?.let { return it.value }
-        return taught.entries.firstOrNull { (key, _) ->
-            header.startsWith(key) || key.startsWith(header)
-        }?.let { BankRule(bank = it.value, headers = listOf(it.key)) }
+        //
+        // Both directions need a floor. `key.startsWith(header)` had none, so a
+        // one-letter core matched the first table entry beginning with it: "AD-Y" became
+        // Yes Bank, "AD-AU" became AU Small Finance Bank. Such a sender was then marked
+        // *vouched for*, skipping the review queue and the "must name its bank" rule that
+        // every other unknown-sender path applies. Four characters is the shortest real
+        // header in the table (SBI, GPAY, CRED), so that is the floor.
+        if (header.length >= MIN_PREFIX_MATCH) {
+            byHeader.entries.firstOrNull { (key, _) ->
+                header.startsWith(key) || key.startsWith(header)
+            }?.let { return it.value }
+            return taught.entries.firstOrNull { (key, _) ->
+                header.startsWith(key) || key.startsWith(header)
+            }?.let { BankRule(bank = it.value, headers = listOf(it.key)) }
+        }
+        return null
     }
 
     /**

@@ -250,8 +250,20 @@ object MonthlyAggregator {
         val today = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate()
         val monthEnd = YearMonth.from(today).plusMonths(1)
             .atDay(1).atStartOfDay(ZONE).toInstant().toEpochMilli()
+        val monthStart = YearMonth.from(today)
+            .atDay(1).atStartOfDay(ZONE).toInstant().toEpochMilli()
         return recurring
             .filter { it.nextExpectedAt in now until monthEnd }
+            // Already paid this month is not still owed.
+            //
+            // `nextExpectedAt` is `lastSeenAt + 30 days`, so a monthly charge paid on the
+            // 1st of a 31-day month lands back inside the same month and was counted as
+            // still to come. That is the rent-on-the-1st false alarm `Pacing` exists to
+            // avoid, recurring every month with 31 days. The charge's own last sighting
+            // settles it: seen this month, and monthly, means paid.
+            .filterNot {
+                it.cadence == RecurringCharge.Cadence.MONTHLY && it.lastSeenAt >= monthStart
+            }
             .sumOf { it.typicalPaise }
     }
 
@@ -338,8 +350,13 @@ object MonthlyAggregator {
             .sortedByDescending { it.totalPaise }
             .take(limit)
 
+    /**
+     * Netted, like every other figure. Using the gross amount made a purchase that was
+     * returned in full — contributing ₹0 to the month and ₹0 to its category — still
+     * headline as the month's biggest expense, above the rent that actually was.
+     */
     fun biggestExpense(transactions: List<Transaction>): Transaction? =
-        spendable(transactions).maxByOrNull { it.amountPaise }
+        spendable(transactions).maxByOrNull { netSpent(it) }?.takeIf { netSpent(it) > 0 }
 
     fun summarize(
         year: Int,
