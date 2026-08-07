@@ -417,5 +417,111 @@
   </ul>
 </section>
 
+
+<!-- ────────────────────────────────────────────────────────────── 16 -->
+<section class="doc-sec" id="by-person">
+  <h2>16 · Accounts, grouped by person</h2>
+
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Purpose.</strong> Show whose money is where, without changing what the household
+    can spend.
+  </p>
+  <p class="t-body-m" style="max-width:66ch">
+    <strong>Why.</strong> The panel is a flat list under one total, so an account that belongs to
+    one person reads exactly like one the household spends from. On this ledger the SBI account
+    holds ₹10,314.54 and is a partner’s; it sits in “What is left” beside Kerala Gramin and
+    Federal, and nothing on screen says it is hers. The household asked the question out loud —
+    <em>“that ₹10,000 went to my wife’s account, is it still ours?”</em> — which is the sign that
+    the screen is not answering it.
+  </p>
+
+  <div class="phones">
+    <div>
+      <div class="phone tall ours" data-theme="dark"><div class="phone-scroll">
+        <div class="statusbar"><span>9:41</span><span class="sb-icons"><svg><use href="#i-cloud-check"/></svg></span></div>
+        <div class="screen">
+          <div class="appbar"><button class="ico-btn" aria-label="Previous month"><svg><use href="#i-chevron-left"/></svg></button>
+            <span class="appbar-title tc"><span class="wordmark">August 2026</span></span>
+            <button class="ico-btn" aria-label="Next month"><svg><use href="#i-chevron-right"/></svg></button></div>
+          <div class="tabs"><button class="tab">Month</button>
+            <button class="tab" aria-selected="true">Accounts</button><button class="tab">Committed</button></div>
+          <div class="screen-body pad stack-4" style="padding-top:16px">
+
+            <div class="tape row between"><span class="micro">What is left</span><span class="micro">₹19,963</span></div>
+
+            <div class="tape row between" style="border:0;padding-bottom:0">
+              <span class="micro">Manuel</span><span class="micro">₹9,649</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">Kerala Gramin</b>
+                <span class="micro" style="margin-top:3px">···· 3062 · today</span>
+                <span class="micro" style="margin-top:3px">of ₹10,149 · ₹500 must stay</span></td>
+                <td class="r"><span class="amt">9,649.00</span></td></tr>
+              <tr><td><b style="font-size:13px">Federal</b>
+                <span class="micro" style="margin-top:3px">···· 4657 · today</span></td>
+                <td class="r"><span class="amt">0.00</span></td></tr>
+              <tr><td><b style="font-size:13px">ICICI</b>
+                <span class="micro" style="margin-top:3px">···· 3008 · tap to set</span></td>
+                <td class="r"><span class="micro">—</span></td></tr>
+            </table>
+
+            <div class="tape row between" style="border:0;padding-bottom:0">
+              <span class="micro">Beula</span><span class="micro">₹10,314</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">SBI</b>
+                <span class="micro warn" style="margin-top:3px">you said, 2 days ago</span></td>
+                <td class="r"><span class="amt">10,314.54</span></td></tr>
+            </table>
+
+            <div class="tape row between"><span class="micro">Owed on cards</span><span class="micro">₹4,200</span></div>
+            <table class="dtable">
+              <tr><td><b style="font-size:13px">Utkarsh SuperCard</b>
+                <span class="micro" style="margin-top:3px">RuPay ···· 8842 · Manuel</span></td>
+                <td class="r"><span class="amt">4,200.00</span></td></tr>
+            </table>
+
+            <button class="btn btn-outline block"><svg><use href="#i-plus-lg"/></svg>Add an account</button>
+          </div>
+        </div>
+      </div></div>
+      <p class="phone-cap"><b>Grouped</b>One household total at the top, then a sub-total per
+        person. The grouping is presentation: the figure the budget is measured against does not
+        move.</p>
+    </div>
+
+    <div class="spec-block">
+      <ul class="spec-list">
+        <li><span class="k">The total does not change</span><span class="v">
+          “What is left” stays one household figure and keeps its position at the top. The budget
+          is <strong>one cap over one household</strong>; a per-person sub-total that started
+          behaving like a per-person budget would break the rule Home, Budgets, the widget and
+          <code>BudgetAlerter</code> all have to agree on.
+        </span></li>
+        <li><span class="k">Ownership has to be recorded, not guessed</span><span class="v">
+          <code>AccountBalance.ownerName</code> is <code>latest?.ownerName</code> — <em>whoever
+          last paid from the account</em>. Grouping on that today would file a joint account under
+          whoever used it most recently and put the partner’s SBI, which has a typed balance and
+          no transactions, under a blank heading. A hand-added account already stores who added it
+          (<code>ManualBalance.ownerUid</code>); what is missing is an explicit owner for the rest,
+          and it belongs in the account rule so it travels between the phones.
+        </span></li>
+        <li><span class="k">Three groups, and the third is honest</span><span class="v">
+          A section per member, then <strong>Shared</strong> for accounts nobody has claimed —
+          not a guess, and not hidden. An account whose owner is unknown is in the same position
+          as an account whose balance is unknown, and this app already refuses to sum that as zero.
+        </span></li>
+        <li><span class="k">What it answers</span><span class="v">
+          Whether money handed to a partner is still money the household can spend. Today the
+          panel implies yes by putting it in one list; grouping states the position and leaves the
+          household to decide, rather than deciding for them silently.
+        </span></li>
+        <li><span class="k">Who sees what is unchanged</span><span class="v">
+          The existing rule stands: everyone sees their own accounts, the household owner sees all
+          of them. Grouping changes the arrangement, never the visibility.
+        </span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 </div>
 <script src="theme.js"></script>
