@@ -111,6 +111,10 @@ class OursApp : Application(), Configuration.Provider {
             // stored, drawn on Home the day the statement arrived, and never mentioned
             // again — including on the day it fell due.
             com.manuel.ours.work.DueBillsWorker.enqueuePeriodic(this@OursApp)
+            // And once now. The daily job is subject to Doze and to WorkManager's
+            // batching, so on a quiet phone it can slip by hours — and a bill due today
+            // mentioned at eleven at night was mentioned too late.
+            com.manuel.ours.work.DueBillsWorker.checkNow(this@OursApp)
 
             // Restore nearby sync if it is switched on. The toggle used to be the only
             // thing that ever started the service, so after an app restart — or a phone

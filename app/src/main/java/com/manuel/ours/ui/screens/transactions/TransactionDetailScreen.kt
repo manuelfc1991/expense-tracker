@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.manuel.ours.core.OursZone
 import com.manuel.ours.core.Money
 import com.manuel.ours.domain.Trash
+import com.manuel.ours.data.repo.TransactionRepository
 import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.CASH_ACCOUNT
 import com.manuel.ours.domain.model.Category
@@ -377,7 +378,32 @@ fun TransactionDetailScreen(
                 val purchase by remember(current.refundsTxnId) { viewModel.refundedPurchase(current.refundsTxnId) }
                     .collectAsStateWithLifecycle(initialValue = null)
 
-                if (current.refundsTxnId == null) {
+                // A refund comes from whoever you bought from. This one asks about every
+                // credit there is, including the ₹81 of savings interest Federal pays —
+                // "Dear Customer, Rs.81 credited to your A/c XX4657", which names no
+                // payee at all, so the parser falls back to the bank's own name.
+                //
+                // When the counterparty *is* the bank holding the account, the money came
+                // from the bank rather than from a shop: interest, a reversal, a salary.
+                // None of those can be a refund, and asking anyway is a question with no
+                // right answer, put prominently on a screen the household reads often.
+                //
+                // The answer is still reachable — the button stays, quietly — because the
+                // parser having named no payee is not proof of anything. What goes is the
+                // banner that treats every credit as suspicious.
+                val bankPaidYou = bankPaidYou(current.merchant, current.bank)
+
+                if (current.refundsTxnId == null && bankPaidYou) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = Space.edge),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        GhostButton(
+                            label = "This is a refund",
+                            onClick = { pickingRefund = true },
+                        )
+                    }
+                } else if (current.refundsTxnId == null) {
                     Notice(
                         tone = NoticeTone.Info,
                         title = "Is this money coming back?",
@@ -623,6 +649,23 @@ private fun PaidFromDialog(
         },
     )
 }
+
+/**
+ * Whether a credit came from the bank itself rather than from somebody you bought from.
+ *
+ * A refund comes from a merchant. When the credit names no counterparty — or names the
+ * very bank holding the account, which is what the parser falls back to — the money came
+ * from the bank: interest, a reversal, a salary. None of those can be a refund.
+ *
+ * This decides whether the entry screen asks "Is this money coming back?". It used to ask
+ * on every credit there was, including the ₹81 of savings interest Federal pays on
+ * "Dear Customer, Rs.81 credited to your A/c XX4657" — a question with no right answer,
+ * put prominently on a screen the household reads often.
+ */
+internal fun bankPaidYou(merchant: String, bank: String?): Boolean =
+    merchant.isBlank() ||
+        merchant.equals(bank, ignoreCase = true) ||
+        merchant == TransactionRepository.UNKNOWN_PAYEE
 
 /**
  * How an account reads in one line: "Kerala Gramin ···3062", "Cash", or "Not sure".

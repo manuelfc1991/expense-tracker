@@ -9,6 +9,8 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -130,9 +132,31 @@ class DueBillsWorker @AssistedInject constructor(
 
     companion object {
         private const val PERIODIC = "due-bills"
+        private const val ONE_SHOT = "due-bills-now"
 
         /** "15 Aug" — the date said plainly, since the title already said how far off. */
         private val DAY_MONTH = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+
+        /**
+         * Checks now, as well as on the daily schedule.
+         *
+         * The periodic job is subject to Doze and to WorkManager's own batching — on a
+         * phone left alone it can slip by hours, and a bill due *today* announced at
+         * eleven at night is a bill announced too late. Opening the app is the moment the
+         * household is most able to act on it.
+         *
+         * Safe to call on every launch: the worker skips anything already in
+         * `firedBillAlerts`, so this can run a hundred times and still say each thing
+         * once. `KEEP` rather than `REPLACE` so rapid restarts do not cancel a run that
+         * is already under way.
+         */
+        fun checkNow(context: Context) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                ONE_SHOT,
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<DueBillsWorker>().build(),
+            )
+        }
 
         /**
          * Daily, with a flex window rather than a fixed hour.
