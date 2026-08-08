@@ -372,6 +372,21 @@ class RulesRepository @Inject constructor(
         const val TYPE_CARD = "card"
 
         /**
+         * An account the household says is **money put aside** — a fixed deposit, an RD, a
+         * PPF. Key: the account key, same as balances. Value: unused, so the rule's presence
+         * is the whole statement; an emptied value is the tombstone.
+         *
+         * A third kind rather than a flag, for the reason `card` is one: it decides which
+         * total the balance joins. An FD is money the household owns and cannot spend, which
+         * is neither of the other two answers — counting it in "what is left" reports money
+         * that is locked up as available, and leaving it out entirely denies it exists.
+         *
+         * It shows in its own block and stays out of `Affordability`, exactly as a card
+         * does, but with the opposite meaning: a card is owed, this is held.
+         */
+        const val TYPE_SAVINGS = "savings"
+
+        /**
          * **Whose** account this is, as the household has said out loud.
          *
          * Key: the account key, same as balances and cards. Value: `uid|displayName`.
@@ -396,7 +411,7 @@ class RulesRepository @Inject constructor(
          */
         private val SHAREABLE_TYPES = setOf(
             TYPE_ACCOUNT, TYPE_SENDER, TYPE_BALANCE, TYPE_MIN_BALANCE, TYPE_BUDGET,
-            TYPE_MEMBER, TYPE_CARD, TYPE_OWNER,
+            TYPE_MEMBER, TYPE_CARD, TYPE_OWNER, TYPE_SAVINGS,
         )
     }
 }

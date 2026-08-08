@@ -59,6 +59,7 @@ import com.manuel.ours.domain.Affordability
 import com.manuel.ours.domain.model.AccountBalance
 import com.manuel.ours.domain.model.Member
 import com.manuel.ours.domain.model.BalanceSource
+import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.MonthlyAggregator
 import com.manuel.ours.domain.RecurringCharge
 import com.manuel.ours.domain.model.CategoryTotal
@@ -300,7 +301,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
         AddAccountDialog(
             members = state.members,
             onDismiss = { addingAccount = false },
-            onConfirm = { key, bank, balance, minimum, isCard, limit, dueDay, owner ->
+            onConfirm = { key, bank, balance, minimum, kind, limit, dueDay, owner ->
                 // Always written, even with no figure: the entry is what records that
                 // the account exists and who added it, which is what keeps it on their
                 // own screen as "tap to set" rather than only on the owner's. A null
@@ -308,7 +309,11 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 // what is in it.
                 viewModel.setAccountBalance(key, balance, bank)
                 minimum?.let { viewModel.setAccountMinimum(key, it) }
-                if (isCard) viewModel.setCard(key, limit, dueDay)
+                when (kind) {
+                    AccountKind.Card -> viewModel.setCard(key, limit, dueDay)
+                    AccountKind.Savings -> viewModel.setSavings(key, true)
+                    AccountKind.Bank -> Unit
+                }
                 owner?.let { viewModel.setAccountOwner(key, it.uid, it.displayName) }
                 addingAccount = false
             },
@@ -361,7 +366,7 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
             members = state.members,
             onDismiss = { settingBalanceKey = null },
             onRemove = { removingAccount = account.key },
-            onConfirm = { edit, minimum, owner, dueDay, isCard, limitPaise ->
+            onConfirm = { edit, minimum, owner, dueDay, kind, limitPaise ->
                 when (edit) {
                     // Untouched: not the same as cleared. Saving only a minimum must not
                     // wipe a balance the person never went near.
@@ -382,10 +387,72 @@ fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
                 // an account becomes a card. A card ignores it, so it does no harm there,
                 // and switching back restores what the household had recorded instead of
                 // silently losing it.
-                if (isCard) viewModel.setCard(account.key, limitPaise, dueDay)
-                else if (account.isCard) viewModel.removeCard(account.key)
+                //
+                // Both rules are cleared on the way out, not just the one being left. The
+                // kinds are three states of one thing, but they are stored as two
+                // independent rules, so a card turned into money put aside would otherwise
+                // still be a card as well — and the panel partitions on `isCard` first, so
+                // the account would silently stay under "Owed on cards" while the household
+                // had said the opposite.
+                if (kind != AccountKind.Card && account.isCard) viewModel.removeCard(account.key)
+                if (kind != AccountKind.Savings && account.isSavings) {
+                    viewModel.setSavings(account.key, false)
+                }
+                when (kind) {
+                    AccountKind.Card -> viewModel.setCard(account.key, limitPaise, dueDay)
+                    AccountKind.Savings -> viewModel.setSavings(account.key, true)
+                    AccountKind.Bank -> Unit
+                }
                 settingBalanceKey = null
             },
+        )
+    }
+}
+
+/**
+ * What an account *is*, which decides which total its balance joins.
+ *
+ * One value rather than two booleans. `isCard` and `isSavings` as separate flags admit a
+ * state where both are true, and nothing downstream would know which total to believe —
+ * the panel partitions on one then the other, so it would silently pick by order.
+ *
+ * An enum, so `rememberSaveable` can hold it: enums are Serializable, which is the whole
+ * difference between this and the sealed `PaidFrom` that crashed the add sheet.
+ */
+private enum class AccountKind { Bank, Card, Savings }
+
+/** What kind the app currently has this account down as. */
+private fun AccountBalance.kind(): AccountKind = when {
+    isCard -> AccountKind.Card
+    isSavings -> AccountKind.Savings
+    else -> AccountKind.Bank
+}
+
+/** The three-way kind chooser, identical in the add and edit dialogs. */
+@Composable
+private fun KindChooser(kind: AccountKind, onPick: (AccountKind) -> Unit) {
+    MicroLabel("What kind")
+    Row(
+        Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        OursChip(
+            label = "Bank account",
+            selected = kind == AccountKind.Bank,
+            icon = OursIcon.Bank,
+            onClick = { onPick(AccountKind.Bank) },
+        )
+        OursChip(
+            label = "Credit card",
+            selected = kind == AccountKind.Card,
+            icon = OursIcon.CreditCard,
+            onClick = { onPick(AccountKind.Card) },
+        )
+        OursChip(
+            label = "Put aside",
+            selected = kind == AccountKind.Savings,
+            icon = OursIcon.forCategory(Category.INVESTMENTS),
+            onClick = { onPick(AccountKind.Savings) },
         )
     }
 }
@@ -530,7 +597,7 @@ private fun AddAccountDialog(
         bank: String,
         balance: Long?,
         minimum: Long?,
-        isCard: Boolean,
+        kind: AccountKind,
         limit: Long?,
         dueDay: Int?,
         owner: Member?,
@@ -541,8 +608,10 @@ private fun AddAccountDialog(
     var balance by rememberSaveable { mutableStateOf("") }
     var minimum by rememberSaveable { mutableStateOf("") }
     // Asked first and in words, because it decides which total the account joins — money
-    // held or money owed — and that is not a detail a form field can carry.
-    var isCard by rememberSaveable { mutableStateOf(false) }
+    // available, money held or money owed — and that is not a detail a form field can
+    // carry.
+    var kind by rememberSaveable { mutableStateOf(AccountKind.Bank) }
+    val isCard = kind == AccountKind.Card
     var limit by rememberSaveable { mutableStateOf("") }
     // The day of the month the bill falls due. Stored since cards existed and, until
     // now, impossible to fill in: every call site passed null, so the field was written,
@@ -569,22 +638,14 @@ private fun AddAccountDialog(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                MicroLabel("What kind")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OursChip(
-                        label = "Bank account",
-                        selected = !isCard,
-                        icon = OursIcon.Bank,
-                        onClick = { isCard = false },
-                    )
-                    OursChip(
-                        label = "Credit card",
-                        selected = isCard,
-                        icon = OursIcon.CreditCard,
-                        onClick = { isCard = true },
-                    )
-                }
-                MicroLabel(if (isCard) "Card" else "Bank")
+                KindChooser(kind) { kind = it }
+                MicroLabel(
+                    when (kind) {
+                        AccountKind.Card -> "Card"
+                        AccountKind.Savings -> "Where it is"
+                        AccountKind.Bank -> "Bank"
+                    },
+                )
                 // Generic placeholders, not this household's own bank and account.
                 //
                 // These read as examples but they are hints in an empty field, and a hint
@@ -594,34 +655,56 @@ private fun AddAccountDialog(
                 // wants, not what somebody else put in it.
                 PlainField(
                     bank,
-                    if (isCard) "Card name" else "Bank name",
+                    when (kind) {
+                        AccountKind.Card -> "Card name"
+                        AccountKind.Savings -> "Bank or fund name"
+                        AccountKind.Bank -> "Bank name"
+                    },
                 ) { bank = it }
                 MicroLabel("Last four digits — optional")
                 PlainField(tail, "Last 4 digits") {
                     tail = it.filter(Char::isDigit).take(4)
                 }
-                MicroLabel(if (isCard) "Owed now" else "Balance now")
+                MicroLabel(
+                    when (kind) {
+                        AccountKind.Card -> "Owed now"
+                        AccountKind.Savings -> "Amount put aside"
+                        AccountKind.Bank -> "Balance now"
+                    },
+                )
                 MoneyField(balance) { balance = it }
-                if (isCard) {
-                    MicroLabel("Credit limit — optional")
-                    MoneyField(limit) { limit = it }
-                    MicroLabel("Bill due on — day of the month, optional")
-                    PlainField(dueDay, "Day of the month") {
-                        dueDay = it.filter(Char::isDigit).take(2)
+                when (kind) {
+                    AccountKind.Card -> {
+                        MicroLabel("Credit limit — optional")
+                        MoneyField(limit) { limit = it }
+                        MicroLabel("Bill due on — day of the month, optional")
+                        PlainField(dueDay, "Day of the month") {
+                            dueDay = it.filter(Char::isDigit).take(2)
+                        }
                     }
-                } else {
-                    MicroLabel("Minimum balance")
-                    MoneyField(minimum) { minimum = it }
+                    // Money put aside has no floor to hold: the whole figure is untouchable
+                    // by definition, so a minimum under it would be saying the same thing
+                    // twice and inviting a second, contradictory number.
+                    AccountKind.Savings -> Unit
+                    AccountKind.Bank -> {
+                        MicroLabel("Minimum balance")
+                        MoneyField(minimum) { minimum = it }
+                    }
                 }
                 OwnerPicker(members, owner) { owner = it?.uid }
                 Text(
-                    if (isCard) {
-                        "Owed is kept apart from what is left — it is money already spent. " +
-                            "If this card's purchases reach the app by SMS, paying its bill " +
-                            "will not be counted as spending a second time."
-                    } else {
-                        "The balance is yours, not the bank's — a real one from a message " +
-                            "replaces it once this account starts sending them."
+                    when (kind) {
+                        AccountKind.Card ->
+                            "Owed is kept apart from what is left — it is money already " +
+                                "spent. If this card's purchases reach the app by SMS, " +
+                                "paying its bill will not be counted as spending a second " +
+                                "time."
+                        AccountKind.Savings ->
+                            "Money put aside is shown but kept out of what is left — you " +
+                                "own it, and it is not there to spend this month."
+                        AccountKind.Bank ->
+                            "The balance is yours, not the bank's — a real one from a " +
+                                "message replaces it once this account starts sending them."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.onSurfaceVariant,
@@ -637,9 +720,10 @@ private fun AddAccountDialog(
                         cleanBank,
                         Money.parseToPaise(balance),
                         // A card has no minimum to hold; it has a limit, which is a
-                        // different thing and is stored on the card rule instead.
-                        if (isCard) null else Money.parseToPaise(minimum),
-                        isCard,
+                        // different thing and is stored on the card rule instead. Money put
+                        // aside has none either — all of it is already held back.
+                        if (kind == AccountKind.Bank) Money.parseToPaise(minimum) else null,
+                        kind,
                         Money.parseToPaise(limit),
                         // Only a real day of the month. A typo like 45 is no answer, and
                         // storing it would schedule a reminder that never comes round.
@@ -771,7 +855,7 @@ private fun BalanceDialog(
         minimum: Long?,
         owner: OwnerEdit?,
         dueDay: Int?,
-        isCard: Boolean,
+        kind: AccountKind,
         limitPaise: Long?,
     ) -> Unit,
     onRemove: () -> Unit,
@@ -792,8 +876,9 @@ private fun BalanceDialog(
     // which is every account the parser discovers — was a bank account for good. That is
     // not a labelling detail: a card balance is money **owed**, and while it sits in "What
     // is left" the app counts a debt as spendable capacity, with the sign inverted.
-    val openingIsCard = remember { account.isCard }
-    var isCard by remember { mutableStateOf(account.isCard) }
+    val openingKind = remember { account.kind() }
+    var kind by remember { mutableStateOf(openingKind) }
+    val isCard = kind == AccountKind.Card
     val openingLimit = remember { account.limitPaise?.let { (it / 100).toString() }.orEmpty() }
     var limitText by remember { mutableStateOf(openingLimit) }
     // The figure as it opened, so an untouched field is not re-saved as though somebody
@@ -824,33 +909,29 @@ private fun BalanceDialog(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                MicroLabel("What kind")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OursChip(
-                        label = "Bank account",
-                        selected = !isCard,
-                        icon = OursIcon.Bank,
-                        onClick = { isCard = false },
-                    )
-                    OursChip(
-                        label = "Credit card",
-                        selected = isCard,
-                        icon = OursIcon.CreditCard,
-                        onClick = { isCard = true },
-                    )
-                }
-                MicroLabel(if (isCard) "Owed now" else "Balance now")
+                KindChooser(kind) { kind = it }
+                MicroLabel(
+                    when (kind) {
+                        AccountKind.Card -> "Owed now"
+                        AccountKind.Savings -> "Amount put aside"
+                        AccountKind.Bank -> "Balance now"
+                    },
+                )
                 MoneyField(text) { text = it }
-                if (isCard) {
-                    MicroLabel("Credit limit — optional")
-                    MoneyField(limitText) { limitText = it }
-                    MicroLabel("Bill due on — day of the month")
-                    PlainField(dueDay, "Day of the month") {
-                        dueDay = it.filter(Char::isDigit).take(2)
+                when (kind) {
+                    AccountKind.Card -> {
+                        MicroLabel("Credit limit — optional")
+                        MoneyField(limitText) { limitText = it }
+                        MicroLabel("Bill due on — day of the month")
+                        PlainField(dueDay, "Day of the month") {
+                            dueDay = it.filter(Char::isDigit).take(2)
+                        }
                     }
-                } else {
-                    MicroLabel("Minimum balance")
-                    MoneyField(minText) { minText = it }
+                    AccountKind.Savings -> Unit
+                    AccountKind.Bank -> {
+                        MicroLabel("Minimum balance")
+                        MoneyField(minText) { minText = it }
+                    }
                 }
                 OwnerPicker(members, owner) { owner = it?.uid }
                 Text(
@@ -869,7 +950,7 @@ private fun BalanceDialog(
             // Either field alone is a complete answer: a bank-quoted balance needs only
             // a floor, and a zero-balance account needs only a figure.
             val touched = text != opening || minPaise != null || owner != openingOwner ||
-                dueDay != openingDueDay || isCard != openingIsCard || limitText != openingLimit
+                dueDay != openingDueDay || kind != openingKind || limitText != openingLimit
             TextButton(
                 enabled = touched,
                 onClick = {
@@ -890,7 +971,7 @@ private fun BalanceDialog(
                             OwnerEdit(owner, members.firstOrNull { it.uid == owner }?.displayName)
                         },
                         dueDay.toIntOrNull()?.takeIf { it in 1..31 },
-                        isCard,
+                        kind,
                         Money.parseToPaise(limitText),
                     )
                 },
@@ -1108,9 +1189,14 @@ private fun WhatsLeft(
     // spends against, so folding card debt into it would report more to spend than
     // exists — the opposite of the truth. They are different quantities and they get
     // different words: "left" is capacity, "owed" is a bill already run up.
-    val (cards, accounts) = balances.partition { it.isCard }
+    val (cards, notCards) = balances.partition { it.isCard }
+    // Three kinds, three totals, because they are three different quantities: money you
+    // can spend, money you hold but cannot, and money you owe. Folding any pair together
+    // gets a sign or an availability wrong.
+    val (putAside, accounts) = notCards.partition { it.isSavings }
     val usable = accounts.mapNotNull { it.usablePaise }.sum()
     val owed = cards.mapNotNull { it.balancePaise }.sum()
+    val aside = putAside.mapNotNull { it.balancePaise }.sum()
 
     // Whose money is where — one household total, then a sub-total per person.
     //
@@ -1224,6 +1310,44 @@ private fun WhatsLeft(
                 }
             }
         }
+        }
+
+        if (putAside.isNotEmpty()) {
+            TapeHeader("Put aside", trailing = Money.whole(aside))
+            putAside.forEach { account ->
+                Row(
+                    Modifier.fillMaxWidth().clickable { onSet(account) },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text(
+                            account.bank ?: "Savings",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Ours.onSurface,
+                        )
+                        MicroLabel(
+                            buildString {
+                                account.accountTail?.let { append("···· $it") }
+                                if (isNotEmpty()) append(" · ")
+                                // Said plainly, because the whole point of this block is
+                                // that the figure is real and is not part of the total
+                                // above it.
+                                append("not counted as spendable")
+                            },
+                        )
+                    }
+                    if (account.balancePaise != null) {
+                        AmountColumn(account.balancePaise!!)
+                    } else {
+                        MicroLabel("—")
+                    }
+                }
+            }
         }
 
         if (cards.isNotEmpty()) {

@@ -340,6 +340,19 @@ data class AccountBalance(
      * would report ₹4,200 more to spend than exists — the opposite of the truth.
      */
     val isCard: Boolean = false,
+    /**
+     * Money the household owns and cannot spend — a fixed deposit, an RD, a PPF.
+     *
+     * A third kind because it is a third answer. [isCard] is money owed and an ordinary
+     * balance is money available; this is money held. Counting it in "what is left" tells
+     * somebody they can spend a deposit that is locked up, and leaving it out of the
+     * screen entirely denies that they own it.
+     *
+     * Like [isCard] it must be excluded in `Affordability` and not merely on the screen —
+     * the card version of exactly this bug counted a debt as capacity for a whole release,
+     * because only the panel honoured the partition.
+     */
+    val isSavings: Boolean = false,
     val limitPaise: Long? = null,
     /**
      * Day of the month this card's bill falls due, when the household has said.

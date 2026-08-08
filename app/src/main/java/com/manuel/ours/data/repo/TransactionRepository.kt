@@ -205,20 +205,16 @@ class TransactionRepository @Inject constructor(
         // 8842"). Deliberately narrow: where the message does not say which card, this does
         // nothing and the bill keeps counting, because the alternative is quietly removing
         // spending the app cannot prove is recorded elsewhere.
-        val registeredCards = cardKeys()
-        val settlesTrackedCard = parsed.kind == SmsParser.Kind.CARD_BILL_PAYMENT &&
-            listOfNotNull(parsed.accountTail, parsed.counterpartyTail).any { it in registeredCards }
-
-        val category = when {
-            settlesTrackedCard -> Category.SELF_TRANSFER
-            else -> when (parsed.kind) {
-                SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
-                SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
-                SmsParser.Kind.TRANSFER -> Category.TRANSFERS
-                SmsParser.Kind.PURCHASE ->
-                    Categorizer.categorize(parsed.merchant, parsed.type, rules)
-            }
-        }
+        // The decision itself lives in the companion, as a pure function of the parsed
+        // message and the set of registered cards. It sat inline here for eleven releases
+        // and no test ever reached it — the one rule the whole double-count defence rests
+        // on was the one rule nothing guarded. `SettlesTrackedCardTest` guards it now.
+        val category = categoryForKind(
+            kind = parsed.kind,
+            accountTail = parsed.accountTail,
+            counterpartyTail = parsed.counterpartyTail,
+            registeredCards = cardKeys(),
+        ) ?: Categorizer.categorize(parsed.merchant, parsed.type, rules)
 
         val txn = Transaction(
             id = UUID.randomUUID().toString(),
@@ -393,7 +389,13 @@ class TransactionRepository @Inject constructor(
         val now = System.currentTimeMillis()
         val device = prefs.deviceId()
         sharedRuleDao.upsertAll(
-            listOf(TYPE_BALANCE, TYPE_MIN_BALANCE, RulesRepository.TYPE_CARD, RulesRepository.TYPE_OWNER)
+            listOf(
+                TYPE_BALANCE,
+                TYPE_MIN_BALANCE,
+                RulesRepository.TYPE_CARD,
+                RulesRepository.TYPE_OWNER,
+                RulesRepository.TYPE_SAVINGS,
+            )
                 .map { type ->
                     SharedRuleEntity(
                         type = type,
@@ -509,6 +511,31 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /** Accounts the household has declared money put aside — an FD, an RD, a PPF. */
+    fun observeSavings(): kotlinx.coroutines.flow.Flow<Set<String>> =
+        sharedRuleDao.observeOfType(RulesRepository.TYPE_SAVINGS).map { rules ->
+            // An emptied value is the tombstone, as everywhere in this store.
+            rules.filter { it.value.isNotBlank() }.map { it.ruleKey }.toSet()
+        }
+
+    /** Declares an account to be money put aside, or — with [yes] false — stops. */
+    suspend fun setSavings(key: String, yes: Boolean) {
+        if (key.isBlank()) return
+        sharedRuleDao.upsertAll(
+            listOf(
+                SharedRuleEntity(
+                    type = RulesRepository.TYPE_SAVINGS,
+                    ruleKey = key,
+                    // The rule's presence is the whole statement; "1" is just a value that
+                    // is not blank, since blank is how this store says "removed".
+                    value = if (yes) "1" else "",
+                    updatedAt = System.currentTimeMillis(),
+                    deviceId = prefs.deviceId(),
+                )
+            )
+        )
+    }
+
     suspend fun removeCard(key: String) {
         sharedRuleDao.upsertAll(
             listOf(
@@ -553,14 +580,20 @@ class TransactionRepository @Inject constructor(
             observeManualBalances(),
             observeAccountMinimums(),
             observeCards(),
-            observeAccountOwners(),
-        ) { all, manual, minimums, cards, owners ->
+            // Paired because `combine` is only typed to five flows; a sixth falls back to
+            // the vararg form, which needs every flow to have the same element type.
+            combine(observeAccountOwners(), observeSavings()) { owners, savings ->
+                owners to savings
+            },
+        ) { all, manual, minimums, cards, ownersAndSavings ->
+            val (owners, savings) = ownersAndSavings
             com.manuel.ours.domain.MonthlyAggregator.accountBalances(
                 transactions = all,
                 manual = manual,
                 minimums = minimums,
                 cards = cards,
                 owners = owners,
+                savings = savings,
                 viewerUid = viewerUid,
                 isOwner = isOwner,
             )
@@ -1543,6 +1576,57 @@ class TransactionRepository @Inject constructor(
     }
 
     companion object {
+        /**
+         * Whether this bill settles a card whose purchases the app already counts.
+         *
+         * Matched on a last four the message itself names ("SuperCard ending 2020"),
+         * against the keys the household has declared cards. Deliberately narrow: where
+         * the message does not say *which* card, this is false and the bill keeps
+         * counting, because the alternative is quietly removing spending the app cannot
+         * prove it recorded elsewhere.
+         *
+         * Both tails are checked. A bill can name the card as the account being settled
+         * or as the counterparty being paid, depending on which side sent the message,
+         * and only one of the two is populated in either case.
+         */
+        internal fun settlesTrackedCard(
+            kind: SmsParser.Kind,
+            accountTail: String?,
+            counterpartyTail: String?,
+            registeredCards: Set<String>,
+        ): Boolean = kind == SmsParser.Kind.CARD_BILL_PAYMENT &&
+            listOfNotNull(accountTail, counterpartyTail).any { it in registeredCards }
+
+        /**
+         * The category a message gets from its **kind**, or null when only the merchant
+         * text can answer — a purchase, which the `Categorizer` handles.
+         *
+         * The parser's kind wins over merchant matching: a card bill must not be
+         * categorised by whatever its text happens to look like, or it silently rejoins
+         * the spend total it was excluded from.
+         *
+         * `CARD_PAYMENT` counts as spending, deliberately. On this ledger the bill was the
+         * only record an unregistered card ever left, so excluding it hid the money rather
+         * than avoiding a double count. Registering a card changes that for that card and
+         * nothing else — its purchases then arrive one by one, so counting the bill as
+         * well would count them twice.
+         */
+        internal fun categoryForKind(
+            kind: SmsParser.Kind,
+            accountTail: String?,
+            counterpartyTail: String?,
+            registeredCards: Set<String>,
+        ): Category? = when {
+            settlesTrackedCard(kind, accountTail, counterpartyTail, registeredCards) ->
+                Category.SELF_TRANSFER
+            else -> when (kind) {
+                SmsParser.Kind.CARD_BILL_PAYMENT -> Category.CARD_PAYMENT
+                SmsParser.Kind.SAVINGS_DEPOSIT -> Category.INVESTMENTS
+                SmsParser.Kind.TRANSFER -> Category.TRANSFERS
+                SmsParser.Kind.PURCHASE -> null
+            }
+        }
+
         /** Shared-rule type for an account the household has named. */
         const val TYPE_ACCOUNT = "account"
 

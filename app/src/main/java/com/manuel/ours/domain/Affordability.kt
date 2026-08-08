@@ -138,7 +138,11 @@ fun affordability(
     // the unpartitioned list — so a ₹4,200 card balance was added to what the household
     // could spend, with the sign inverted. `AccountBalance.isCard` says outright that it
     // is "never summed with the others"; only the screen was honouring that.
-    val spendable = balances.filter { !it.isCard }
+    // Money put aside is excluded for the same reason, from the other direction. A fixed
+    // deposit is money the household genuinely owns, so it is not a debt — but it cannot be
+    // spent this month, and "safe to spend" is the one figure that has to mean available
+    // rather than owned. Counting a ₹20,000 FD here would tell somebody they could spend it.
+    val spendable = balances.filter { !it.isCard && !it.isSavings }
     val known = spendable.mapNotNull { it.usablePaise }
     return Affordability(
         // A zero or negative budget is no budget. Treating ₹0 as a cap would put every

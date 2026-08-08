@@ -236,6 +236,11 @@ class SummaryViewModel @Inject constructor(
         viewModelScope.launch { repository.setCard(key, limitPaise, dueDay) }
     }
 
+    /** Declares an account money put aside — an FD, an RD — or stops. */
+    fun setSavings(key: String, yes: Boolean) {
+        viewModelScope.launch { repository.setSavings(key, yes) }
+    }
+
     /** Stops treating an account as a credit card, returning it to "What is left". */
     fun removeCard(key: String) {
         viewModelScope.launch { repository.removeCard(key) }

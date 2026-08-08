@@ -196,6 +196,8 @@ object MonthlyAggregator {
         minimums: Map<String, Long> = emptyMap(),
         /** Accounts the household has declared to be credit cards, keyed the same way. */
         cards: Map<String, CardInfo> = emptyMap(),
+        /** Accounts the household has declared money put aside, keyed the same way. */
+        savings: Set<String> = emptySet(),
         /** Whose each account is, as recorded. Absent means unclaimed, never guessed. */
         owners: Map<String, AccountOwner> = emptyMap(),
         viewerUid: String = "",
@@ -209,7 +211,8 @@ object MonthlyAggregator {
                 byAccount[key].orEmpty().any { it.ownerUid == viewerUid } ||
                 manual[key]?.ownerUid == viewerUid
         }
-        val keys = (byAccount.keys + manual.keys + minimums.keys + cards.keys).filter(visible)
+        val keys = (byAccount.keys + manual.keys + minimums.keys + cards.keys + savings)
+            .filter(visible)
         return keys.map { key ->
             val rows = byAccount[key].orEmpty()
             val quoted = rows.filter { it.balancePaise != null }.maxByOrNull { it.occurredAt }
@@ -266,6 +269,7 @@ object MonthlyAggregator {
                 ownerName = owners[key]?.displayName.orEmpty(),
                 minimumPaise = minimums[key] ?: 0L,
                 isCard = cards.containsKey(key),
+                isSavings = key in savings,
                 limitPaise = cards[key]?.limitPaise,
                 dueDay = cards[key]?.dueDay,
                 fromLedger = byAccount.containsKey(key),
