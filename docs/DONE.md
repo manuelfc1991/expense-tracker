@@ -4,7 +4,9 @@ What has actually shipped, reconstructed from `git log`. The open list is `AT-HO
 this is the other half of it.
 
 Regenerated on **8 August 2026** from `45233a1`, covering **145 commits** from the first
-one on 3 August 2026 to **7.4 (76)**. The commit that updates this file is necessarily not
+one on 3 August 2026 to **7.4 (76)**. The 7.5 entry below it was added by hand, off a
+branch, and is marked as unpublished — regenerating will not produce it until it lands on
+`master`. The commit that updates this file is necessarily not
 in it — regenerate after a release and the previous one appears.
 
 The stretch from 6.0 to 7.4 is a single day and a half of small releases, most of them one
@@ -38,6 +40,31 @@ honest — there are no release tags in this repository to trust instead.
 </details>
 
 ---
+
+## 7.5 (77) — 8 Aug 2026 — **built, not published**
+
+> Money put aside is shown but not counted as spendable.
+
+The one entry here that is not a release. 7.5 is installed on Manuel's phone
+(`adb install -r`) and sits on the branch `worktree-put-aside`; `release/version.json`
+still names 76, so no phone has been offered it and Beula's is still on 7.4. Publishing
+it is `publishRelease` plus a push, and it has not been done.
+
+- `d3712f8` Money put aside: a third kind of account, and the card-bill test that was missing
+- `39b86b6` 7.5 — the third chip was off the edge of the screen
+
+A balance now answers one of three things rather than two — available, held, or owed —
+because a fixed deposit is neither of the old answers. Excluded in `affordability()`
+rather than only on the panel, which is the shape of the card bug that shipped once
+already.
+
+The second commit is the argument for screenshots in one line. The build was green, the
+tests passed, and on the phone the "Put aside" chip was off the right-hand edge of a
+scrolling row that gives no sign it scrolls — the release's only new option, invisible.
+
+Also lifts `settlesTrackedCard` out of `importParsed`. That rule decides whether paying a
+card bill counts as spending, and until now nothing tested it, because it sat behind Room,
+a parser and a DAO. 486 tests to 502.
 
 ## 7.4 (76) — 8 Aug 2026
 

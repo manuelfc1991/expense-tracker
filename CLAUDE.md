@@ -51,7 +51,7 @@ when it was not.
 
 ```bash
 ./gradlew :app:assembleRelease                 # build
-./gradlew :app:testReleaseUnitTest             # 486 tests, all should pass
+./gradlew :app:testReleaseUnitTest             # 502 tests, all should pass
 ./gradlew :app:publishRelease -PreleaseNotes="one line, shown in the update prompt"
 ```
 
@@ -98,6 +98,32 @@ household-wide spend, never one member's share. Home, Budgets, the widget and
 Unknown is never zero. An account with no recorded balance is counted and reported, not
 summed as ₹0 — see `AffordabilityTest`.
 
+### A balance means one of three things
+
+An account carries a figure, and what that figure *is* decides which total it joins.
+There are three answers and they are not interchangeable:
+
+| Kind | The money is | Where it shows | In "safe to spend"? |
+|---|---|---|---|
+| **Bank account** | available | *What is left* | yes |
+| **Put aside** (`isSavings`) | held — an FD, an RD, a PPF | *Put aside* | **no** — owned, not available |
+| **Credit card** (`isCard`) | owed | *Owed on cards* | **no** — already spent |
+
+Get the middle one wrong in either direction and the app lies: count a ₹20,000 deposit
+in "what is left" and it invites somebody to spend money that is locked up; leave it off
+the screen and it denies they own it.
+
+**The exclusion must live in `affordability()`, never only on the panel.** Both callers
+hand it the unpartitioned list, so a kind honoured only by the screen is a kind the
+safe-to-spend figure ignores. This is not hypothetical — it is exactly how a card balance
+was counted as spendable, sign inverted, for a whole release. `PutAsideTest` and
+`CardConversionTest` are the same test written twice for that reason.
+
+The kinds are stored as two independent rules (`card`, `savings`) but presented as one
+three-way choice, so changing kind must **clear the rule being left**, not merely write
+the one being chosen. The panel partitions on `isCard` first, so an account that is
+somehow both stays filed as a card and the household's answer is silently discarded.
+
 ## Sync
 
 Two transports: `SheetTransport` (Google Apps Script, `sheet-sync/Code.gs`) and
@@ -105,15 +131,20 @@ Two transports: `SheetTransport` (Google Apps Script, `sheet-sync/Code.gs`) and
 
 **Anything that is not a transaction travels as a `SharedRuleEntity`** — a synced
 key-value store, `(type, ruleKey) → value`, last-write-wins on `updatedAt`. Types:
-`account`, `sender`, `merchant`, `balance`, `minbal`, `budget`, `member`, `card`, `owner`.
-An **emptied value is the tombstone** for all of them.
+`account`, `sender`, `merchant`, `balance`, `minbal`, `budget`, `member`, `card`, `owner`,
+`savings`. An **emptied value is the tombstone** for all of them.
+
+`savings` is the simplest of them: its value is never read, so the rule's *presence* is
+the whole statement. It is written as `"1"` only because blank is how this store says
+"removed".
 
 `balance` is the exception worth knowing: its value is `amount|bank|uid`, and an empty
 *amount* means "this account exists and nobody has said what is in it" — a real state, not
 a tombstone. Only a **wholly** empty value removes the account. `removeAccount` writes the
-tombstone to all four account-keyed types at once (`balance`, `minbal`, `card`, `owner`),
-because `accountBalances()` builds its key set from all of them and clearing one leaves the
-account on screen.
+tombstone to all five account-keyed types at once (`balance`, `minbal`, `card`, `owner`,
+`savings`), because `accountBalances()` builds its key set from all of them and clearing
+one leaves the account on screen. **Adding an account-keyed type means adding it there
+too** — that list is load-bearing, not housekeeping.
 
 Two things to know:
 
@@ -175,6 +206,23 @@ inbox on 8 August 2026:
   not happened; there is no ICICI traffic to make it happen.
 
 This is why card-bill exclusion is decided **per card** and never per category.
+
+The rule itself is `TransactionRepository.categoryForKind` — a pure function of the
+parsed message and the set of registered cards, pinned by `SettlesTrackedCardTest`. It
+lived inline in `importParsed` until 7.5, which meant the one rule the whole double-count
+defence rests on was reachable only through Room, a parser and a DAO, and no test had ever
+touched it. Three things about it are worth keeping in mind:
+
+- It is decided **at import, once**. Registering a card protects bills read *after*
+  registration; ones already stored keep counting until somebody recategorises them.
+- Paying a bill never reduces the card's *owed* figure. Nothing subtracts a payment from
+  an outstanding balance, and `repairCardBillEchoes` deletes the issuer's acknowledgement
+  when a same-amount debit sits within 26h — which is the very message that would have
+  carried the new outstanding. The figure moves when the issuer next quotes one, so for
+  ICICI, which sends nothing, never.
+- Ordering matters. If the issuer's message is imported before the bank's debit, the debit
+  is swallowed as a duplicate of a row already filed `CARD_PAYMENT`, and the registered-card
+  rule never runs on it — so the bill counts as spending despite the card being registered.
 
 `BankRules` marks ten senders `isCard`, and `adoptKnownCard` files one as a card the first
 time it is seen — so a card the parser recognises never lands in "What is left" counting a
