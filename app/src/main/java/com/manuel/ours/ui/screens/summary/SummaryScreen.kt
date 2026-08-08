@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -428,13 +430,24 @@ private fun AccountBalance.kind(): AccountKind = when {
     else -> AccountKind.Bank
 }
 
-/** The three-way kind chooser, identical in the add and edit dialogs. */
+/**
+ * The three-way kind chooser, identical in the add and edit dialogs.
+ *
+ * Wrapped rather than scrolled. Two chips fitted a dialog's width and three do not, and a
+ * scrolling row hid the third one off the right-hand edge — on the phone, "Put aside" was
+ * simply not there unless you thought to drag a row that gives no sign it moves. A chip
+ * nobody can see is a feature nobody has, and this was the release's only new option.
+ *
+ * FlowRow is what the rest of the app already does with chips that outgrow their line;
+ * `AddExpenseSheet` and the Activity filters both wrap the same way.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun KindChooser(kind: AccountKind, onPick: (AccountKind) -> Unit) {
     MicroLabel("What kind")
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()),
+    FlowRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         OursChip(
             label = "Bank account",
