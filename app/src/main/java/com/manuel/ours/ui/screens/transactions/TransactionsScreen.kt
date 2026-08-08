@@ -42,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
@@ -281,6 +282,9 @@ fun TransactionsScreen(
             // in front of you, biggest first, and wraps rather than scrolling, because
             // Android draws no scrollbar and off-screen chips are not merely out of
             // reach: there is nothing to say they exist.
+            val landscape = LocalConfiguration.current.orientation ==
+                android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
             if (state.filtering) {
                 ActiveFilterLine(
                     label = state.categoryFilter.label(),
@@ -303,7 +307,7 @@ fun TransactionsScreen(
                     Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
-                    // Two rows, not four.
+                    // Two rows in portrait, one in landscape.
                     //
                     // The chips wrap rather than scroll on purpose — Android draws no
                     // scrollbar, so a chip off the side is not merely out of reach, there
@@ -311,9 +315,15 @@ fun TransactionsScreen(
                     // push four rows of filters between the search box and the first
                     // entry, which is the thing the screen is actually for.
                     //
-                    // Two rows still shows the categories that matter: they are ordered
-                    // biggest-first, so what gets cut is always the tail.
-                    maxLines = 2,
+                    // Landscape gets one row because the constraint there is height, not
+                    // width: 1080px of it, already carrying the app bar, the search box
+                    // and the member chips. A row of filters costs the same there as in
+                    // portrait and buys a third as much list. Wider rows also fit more
+                    // chips, so one row in landscape shows nearly what two do in portrait.
+                    //
+                    // Either way the categories are ordered biggest-first, so what gets
+                    // cut is always the tail.
+                    maxLines = if (landscape) 1 else 2,
                     // The same "More ›" chip that ends the list, shown in its place when
                     // the tail is cut. Exactly one appears either way — it is the last
                     // item, so if anything overflows it does too, and the indicator takes

@@ -1,7 +1,7 @@
 {
-  "versionCode": 75,
-  "versionName": "7.3",
-  "notes": "Input hints say what the field wants instead of naming a real account.",
+  "versionCode": 76,
+  "versionName": "7.4",
+  "notes": "One row of category filters in landscape, two in portrait.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }
