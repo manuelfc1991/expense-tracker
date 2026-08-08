@@ -51,7 +51,7 @@ when it was not.
 
 ```bash
 ./gradlew :app:assembleRelease                 # build
-./gradlew :app:testReleaseUnitTest             # 287 tests, all should pass
+./gradlew :app:testReleaseUnitTest             # 486 tests, all should pass
 ./gradlew :app:publishRelease -PreleaseNotes="one line, shown in the update prompt"
 ```
 
@@ -105,8 +105,15 @@ Two transports: `SheetTransport` (Google Apps Script, `sheet-sync/Code.gs`) and
 
 **Anything that is not a transaction travels as a `SharedRuleEntity`** — a synced
 key-value store, `(type, ruleKey) → value`, last-write-wins on `updatedAt`. Types:
-`account`, `sender`, `merchant`, `balance`, `minbal`, `budget`, `member`. An **emptied
-value is the tombstone** for all of them.
+`account`, `sender`, `merchant`, `balance`, `minbal`, `budget`, `member`, `card`, `owner`.
+An **emptied value is the tombstone** for all of them.
+
+`balance` is the exception worth knowing: its value is `amount|bank|uid`, and an empty
+*amount* means "this account exists and nobody has said what is in it" — a real state, not
+a tombstone. Only a **wholly** empty value removes the account. `removeAccount` writes the
+tombstone to all four account-keyed types at once (`balance`, `minbal`, `card`, `owner`),
+because `accountBalances()` builds its key set from all of them and clearing one leaves the
+account on screen.
 
 Two things to know:
 
@@ -128,9 +135,52 @@ A missing header is never a few stray messages — a household banks with one ba
 is that household's entire history. Adding `KGBANK` once took the app from 179 to 429
 transactions. `RegionalBankTest` guards this.
 
-This household: **Kerala Gramin** (`KGBANK`, main, salary ~₹58,200/month, a/c ···3062,
-₹500 minimum), **Federal** (`FEDBNK`, ···4657, ₹3,000 minimum), **ICICI**
-(`ICICIT`/`ICICIO`, ···3008, zero-balance). No SBI sender on Manuel's phone.
+This household's **accounts**: **Kerala Gramin** (`KGBANK`, main, salary ~₹58,200/month,
+a/c ···3062, ₹500 minimum) and **Federal** (`FEDBNK`, ···4657, ₹3,000 minimum). A third,
+**SBI**, is the partner's and has no sender on Manuel's phone at all — it exists only as a
+hand-typed balance, which is why it is the account that exposed every bug about typed
+figures going stale.
+
+Its **cards**, both registered as cards in the app so their balances read as money *owed*
+rather than money to spend:
+
+| | | | |
+|---|---|---|---|
+| **Utkarsh SuperCard** | `UTKSPR` / `UTKSPC` | ···2020 | ₹1,800 limit, bill due 20th |
+| **ICICI** | `ICICIT` / `ICICIO` | ···3008 | ₹11,000 limit, bill due 30th |
+
+Deliberately no balances here — those move daily and a stale figure in this file is worse
+than none. Read them off the Accounts tab.
+
+The two cards are opposite cases, and the difference is what they send. Counted from the
+inbox on 8 August 2026:
+
+- **SuperCard — 185 messages, and every kind of them.** Individual purchases
+  ("your SuperCard 2020 debited for INR 152.00 ... for UPI"), bill payments ("We have
+  received payment of INR 834.00 for your SuperCard ending 2020"), and monthly statements
+  carrying a due date ("Your Jul-2026 statement ... TAD: INR 834.00, MAD: INR 41.70. Pay by
+  03 Aug"). Both halves of the money reach the app, so this is the card the double-count
+  note on `Category.TRANSFERS` is about — and the risk is **live**: three purchases landed
+  on 7 August, after the 1 August floor. Registering it is what defuses that. A bill naming
+  a registered card's last four becomes `SELF_TRANSFER` rather than `CARD_PAYMENT`, since
+  its purchases were already counted one by one. That happens **at import**, so it protects
+  bills read after registration, never ones already stored.
+- **ICICI — zero messages. Not few: none at all.** No purchases, no bills, no statements,
+  despite `ICICIT`/`ICICIO` being registered senders. Its balance is entirely hand-typed,
+  and nothing about it will ever update itself. Two consequences: the double-count
+  mechanism can never fire for it, and its bill will only ever be recorded if the household
+  types it or pays it from an account that *does* message. Worth watching — if such a
+  payment is ever parsed as a card bill naming ···3008, it would be excluded as a
+  self-transfer while its purchases were never counted, hiding the money outright. That has
+  not happened; there is no ICICI traffic to make it happen.
+
+This is why card-bill exclusion is decided **per card** and never per category.
+
+`BankRules` marks ten senders `isCard`, and `adoptKnownCard` files one as a card the first
+time it is seen — so a card the parser recognises never lands in "What is left" counting a
+debt as spendable. It writes only when *nothing* is recorded for that key, blank included:
+a blank rule is the tombstone, and adopting on blank would reinstate a card the household
+had deliberately turned back into an account.
 
 Dump headers without reading anyone's messages:
 
