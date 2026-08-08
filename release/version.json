@@ -1,7 +1,7 @@
 {
-  "versionCode": 73,
-  "versionName": "7.1",
-  "notes": "A balance you typed now moves when the app sees money leave the account.",
+  "versionCode": 74,
+  "versionName": "7.2",
+  "notes": "The Activity category filters fit two rows instead of four.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }

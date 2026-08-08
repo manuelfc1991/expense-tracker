@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowOverflow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -302,6 +303,29 @@ fun TransactionsScreen(
                     Modifier.fillMaxWidth().padding(horizontal = Space.edge, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
+                    // Two rows, not four.
+                    //
+                    // The chips wrap rather than scroll on purpose — Android draws no
+                    // scrollbar, so a chip off the side is not merely out of reach, there
+                    // is nothing to say it exists. But wrapping unbounded let a busy month
+                    // push four rows of filters between the search box and the first
+                    // entry, which is the thing the screen is actually for.
+                    //
+                    // Two rows still shows the categories that matter: they are ordered
+                    // biggest-first, so what gets cut is always the tail.
+                    maxLines = 2,
+                    // The same "More ›" chip that ends the list, shown in its place when
+                    // the tail is cut. Exactly one appears either way — it is the last
+                    // item, so if anything overflows it does too, and the indicator takes
+                    // over. That matters more than it looks: with no filter active this
+                    // chip is the *only* way into the full category sheet.
+                    overflow = FlowRowOverflow.expandIndicator {
+                        OursChip(
+                            label = "More ›",
+                            selected = false,
+                            onClick = { showFilterSheet = true },
+                        )
+                    },
                 ) {
                     OursChip(
                         label = "All",
