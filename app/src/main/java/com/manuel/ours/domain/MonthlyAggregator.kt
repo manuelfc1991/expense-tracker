@@ -220,12 +220,40 @@ object MonthlyAggregator {
             val useTyped = typedPaise != null &&
                 (quoted == null || typed.setAt > quoted.occurredAt)
             val latest = rows.maxByOrNull { it.occurredAt }
+
+            // What the app has watched leave the account since the figure was typed.
+            //
+            // Only for a **typed** figure. A bank-quoted balance corrects itself — the
+            // next message from that account brings a newer one — so adjusting it would
+            // double-count against the very quote that is about to replace it. A typed
+            // figure is corrected by nothing at all: it sits there looking authoritative
+            // while the real balance moves underneath, and this household's main account
+            // is the worst case, because Kerala Gramin quotes a balance on some messages
+            // and omits it on a UPI transfer. ₹10,149 typed on the 5th was still ₹10,149
+            // on the 8th, with a ₹185 payment on the 7th sitting in the ledger unapplied.
+            //
+            // This is not a derived balance. It is a stated figure plus the movements the
+            // app actually saw after it — a chequebook, not a reconstruction. The reason
+            // balances are never derived from scratch stands: the app cannot see a cash
+            // deposit or a silent interest credit, so it can only ever adjust *forward*
+            // from something a person or a bank asserted.
+            //
+            // Raw amounts, not `netSpent`: a refund is its own credit row in the ledger
+            // and adding it there too would count it twice. Category is irrelevant — a
+            // self-transfer still leaves the account.
+            val movedSincePaise = if (useTyped) {
+                rows.filter { it.occurredAt > typed!!.setAt }
+                    .sumOf { if (it.type == TxnType.DEBIT) -it.amountPaise else it.amountPaise }
+            } else 0L
+
             AccountBalance(
                 key = key,
                 accountTail = latest?.accountTail?.takeIf(String::isNotBlank)
                     ?: key.takeIf { it.all(Char::isDigit) },
                 bank = latest?.bank ?: typed?.bank,
-                balancePaise = if (useTyped) typedPaise else quoted?.balancePaise,
+                balancePaise = if (useTyped) typedPaise!! + movedSincePaise
+                else quoted?.balancePaise,
+                movedSincePaise = movedSincePaise,
                 asOf = if (useTyped) typed!!.setAt else quoted?.occurredAt,
                 source = when {
                     useTyped -> BalanceSource.HAND

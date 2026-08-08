@@ -1195,6 +1195,18 @@ private fun WhatsLeft(
                                 "${Money.whole(account.minimumPaise)} must stay",
                         )
                     }
+                    // Said out loud, because the figure on the right is no longer the
+                    // figure anybody typed. Kerala Gramin quotes a balance on some
+                    // messages and omits it on a UPI transfer, so a hand-typed figure can
+                    // sit there for days while payments the app *did* see go unapplied.
+                    if (account.movedSincePaise != 0L) {
+                        val out = account.movedSincePaise < 0
+                        MicroLabel(
+                            (if (out) "less " else "plus ") +
+                                Money.whole(kotlin.math.abs(account.movedSincePaise)) +
+                                " seen since",
+                        )
+                    }
                 }
                 if (account.usablePaise != null) {
                     AmountColumn(account.usablePaise!!)

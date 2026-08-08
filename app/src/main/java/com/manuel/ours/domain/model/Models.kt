@@ -366,6 +366,15 @@ data class AccountBalance(
      * attributed to an account the screen denies exists.
      */
     val fromLedger: Boolean = false,
+    /**
+     * Movements the app has seen since a **typed** balance was entered, already folded
+     * into [balancePaise]. Negative when more went out than came in; zero for a
+     * bank-quoted figure, which corrects itself.
+     *
+     * Carried so the screen can say the figure was adjusted rather than silently showing
+     * a number nobody typed.
+     */
+    val movedSincePaise: Long = 0L,
 ) {
     /** What can actually be taken out before the bank starts charging for it. */
     val usablePaise: Long? get() = balancePaise?.let { (it - minimumPaise).coerceAtLeast(0L) }
