@@ -81,10 +81,10 @@ fun ParserTesterScreen(onBack: () -> Unit) {
             OursTopBar(title = "Parser", onBack = onBack)
 
             MicroLabel("Sender ID")
-            PlainField(sender, { sender = it }, "HDFCBK", singleLine = true)
+            PlainField(sender, { sender = it }, "Sender header", singleLine = true)
 
             MicroLabel("Message body")
-            PlainField(body, { body = it }, "Rs.451.00 debited from a/c XX1234…", minLines = 5)
+            PlainField(body, { body = it }, "Paste a message here", minLines = 5)
 
             when (result) {
                 null -> Text(

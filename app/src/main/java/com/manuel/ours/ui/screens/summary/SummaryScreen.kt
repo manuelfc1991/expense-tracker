@@ -585,12 +585,19 @@ private fun AddAccountDialog(
                     )
                 }
                 MicroLabel(if (isCard) "Card" else "Bank")
+                // Generic placeholders, not this household's own bank and account.
+                //
+                // These read as examples but they are hints in an empty field, and a hint
+                // that names a real account is one keystroke from being accepted as an
+                // answer. They also rot: the last-four hint here said 8842 while the card
+                // it was describing is ···2020. A placeholder should say what the field
+                // wants, not what somebody else put in it.
                 PlainField(
                     bank,
-                    if (isCard) "Utkarsh SuperCard" else "Kerala Gramin Bank",
+                    if (isCard) "Card name" else "Bank name",
                 ) { bank = it }
                 MicroLabel("Last four digits — optional")
-                PlainField(tail, if (isCard) "8842" else "3062") {
+                PlainField(tail, "Last 4 digits") {
                     tail = it.filter(Char::isDigit).take(4)
                 }
                 MicroLabel(if (isCard) "Owed now" else "Balance now")
@@ -599,7 +606,7 @@ private fun AddAccountDialog(
                     MicroLabel("Credit limit — optional")
                     MoneyField(limit) { limit = it }
                     MicroLabel("Bill due on — day of the month, optional")
-                    PlainField(dueDay, "2") {
+                    PlainField(dueDay, "Day of the month") {
                         dueDay = it.filter(Char::isDigit).take(2)
                     }
                 } else {
@@ -838,7 +845,9 @@ private fun BalanceDialog(
                     MicroLabel("Credit limit — optional")
                     MoneyField(limitText) { limitText = it }
                     MicroLabel("Bill due on — day of the month")
-                    PlainField(dueDay, "2") { dueDay = it.filter(Char::isDigit).take(2) }
+                    PlainField(dueDay, "Day of the month") {
+                        dueDay = it.filter(Char::isDigit).take(2)
+                    }
                 } else {
                     MicroLabel("Minimum balance")
                     MoneyField(minText) { minText = it }

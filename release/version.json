@@ -1,7 +1,7 @@
 {
-  "versionCode": 74,
-  "versionName": "7.2",
-  "notes": "The Activity category filters fit two rows instead of four.",
+  "versionCode": 75,
+  "versionName": "7.3",
+  "notes": "Input hints say what the field wants instead of naming a real account.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }
