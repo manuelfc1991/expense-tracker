@@ -3,9 +3,14 @@
 What has actually shipped, reconstructed from `git log`. The open list is `AT-HOME.md`;
 this is the other half of it.
 
-Generated on **6 August 2026** from `78f4497`, covering **106 commits** from the first one
-on 3 August 2026 to **5.20 (61)**. The commit that updates this file is necessarily not in
-it — regenerate after a release and the previous one appears.
+Regenerated on **8 August 2026** from `45233a1`, covering **145 commits** from the first
+one on 3 August 2026 to **7.4 (76)**. The commit that updates this file is necessarily not
+in it — regenerate after a release and the previous one appears.
+
+The stretch from 6.0 to 7.4 is a single day and a half of small releases, most of them one
+fix each. That is the shape of working against a phone you can see: 6.3 exists because the
+add button crashed the app, 6.7 because the reminder written in 6.6 had never actually
+run, and 7.1 because a balance somebody typed on the 5th still said so on the 8th.
 
 Each heading is the version the app carried *after* that commit — so the commits under a
 heading are the work that release delivered. The quoted line is the note the phones showed
@@ -34,6 +39,116 @@ honest — there are no release tags in this repository to trust instead.
 
 ---
 
+## 7.4 (76) — 8 Aug 2026
+
+> One row of category filters in landscape, two in portrait.
+
+- `45233a1` 7.4 — one row of category filters in landscape
+
+## 7.3 (75) — 8 Aug 2026
+
+> Input hints say what the field wants instead of naming a real account.
+
+- `a48df97` 7.3 — placeholders say what the field wants
+
+## 7.2 (74) — 8 Aug 2026
+
+> The Activity category filters fit two rows instead of four.
+
+- `2dbd856` 7.2 — the Activity category filters fit two rows
+
+## 7.1 (73) — 8 Aug 2026
+
+> A balance you typed now moves when the app sees money leave the account.
+
+- `4ce7f18` CLAUDE.md: the cards, and what each one actually sends
+- `5bd1581` 7.1 — a typed balance moves when money moves
+
+## 7.0 (72) — 7 Aug 2026
+
+> Any account can be switched to a credit card, and known cards file themselves.
+
+- `7024737` 7.0 — an account can become a credit card, and known cards file themselves
+
+## 6.9 (71) — 7 Aug 2026
+
+> Swipe between the Summary tabs, and remove an account you added by mistake.
+
+- `9fd21d1` 6.9 — swipe between Summary tabs, and remove an account
+
+## 6.8 (70) — 7 Aug 2026
+
+> Notifications carry the app's own icon; refunds add up and unlink cleanly.
+
+- `8237df1` Remove an account, and swipe between the Summary tabs
+- `396f545` 6.8 — refunds that add up, an undo that restores, and our own icon in the shade
+
+## 6.7 (69) — 7 Aug 2026
+
+> Bill reminders check on launch too, and interest credits stop being asked about.
+
+- `fe27539` 6.7 — the reminder had never actually run, and the refund prompt asked about everything
+
+## 6.6 (68) — 7 Aug 2026
+
+> Reminders for bills and card due dates, three days ahead and on the day.
+
+- `5e37ea4` 6.6 — bills that are due now say so
+
+## 6.5 (67) — 7 Aug 2026
+
+> A rounder, larger add button.
+
+- `9c37410` 6.5 — a round add button, at the size a touch target should be
+
+## 6.4 (66) — 7 Aug 2026
+
+> Every entry now says which account it was paid from, and lets you change it.
+
+- `ec16167` 6.4 — Paid from on the entry screen
+
+## 6.3 (65) — 7 Aug 2026
+
+> Fixes the crash when opening the add-expense sheet.
+
+- `7e8fc1b` Paid from, on the entry as well as the sheet
+- `582a6ba` 6.3 — the add-expense sheet no longer closes the app
+
+## 6.2 (64) — 7 Aug 2026
+
+> Accounts are grouped by whoever owns them, with a Shared group for the rest.
+
+- `e4105a1` 6.2 — a partner's account is household capacity, and says so
+
+## 6.1 (63) — 7 Aug 2026
+
+> Two rounds of testing, and the defects they turned up. Card debt is no longer counted as
+> money you can spend; the over-budget alert can actually fire; a charge paid on the 1st is no
+> longer owed all month; sync stops dropping columns and stops marking events delivered to
+> nobody; and nothing you type is lost when the phone rotates.
+
+- `6aaf95f` Accounts, grouped by whoever owns them
+- `d1e3c7a` Spec: accounts grouped by person
+- `8a53674` Ours 6.1
+- `fd949c1` Finish the open list, and call it 6.1
+
+## 6.0 (62) — 7 Aug 2026
+
+> Every screen redrawn, and the banks the app was not reading. Federal from a second header
+> and the Utkarsh SuperCard are now read; a rescan no longer resurrects what you deleted; one
+> debit reported twice by Kerala Gramin is one row. Refunds, budget pacing, credit cards, and
+> an account on every entry you add by hand.
+
+- `9c41c73` A commitment the detector drops is one the budget spends twice
+- `128f47f` Insets, targets, and a destructive tap that asked nothing
+- `230310d` Stop sync losing events it never delivered
+- `61f9a05` Make the three budget figures agree, and net the excluded side
+- `5d60059` Ours 6.0
+- `42d8375` Columns that vanished in transit, and four UI defects
+- `b2e2219` Five money-model defects found by testing 6.0
+- `eb51dbb` Merge v7: the redesign, the banks we were not reading, and 6.0
+- `1f8c0f9` Show Trash and Backup once, and call this 6.0
+
 ## 5.20 (61) — 6 Aug 2026
 
 > Two icons that were saying the wrong thing: the rules list opened and closed with money
@@ -41,6 +156,21 @@ honest — there are no release tags in this repository to trust instead.
 > Both now use the mark that means what they do.
 
 - `78f4497` Icons that mean what they draw
+- `c491738` Read every payment message, at the household's asking
+- `57284ac` The unlock screen is the statement, redacted
+- `c8bed7f` A rescan must not overturn a deletion
+- `23ed50e` Ask about senders we don't know, instead of dropping them
+- `708b758` Say which account paid, and let a credit card be one
+- `ed5f130` Mock up accounts, credit cards, and a queue for senders we don't know
+- `53e44e1` One debit, described twice, is one row
+- `6d25d67` The v7 design, and the banks it turned out we were not reading
+- `c3b4204` Review the money model and the test surface
+- `a75fef5` Record 5.20 in the done list
+
+Those ten are the v7 branch, and they are filed here by the rule this file follows —
+the version in `build.gradle.kts` at each commit — rather than by when they reached a
+phone. The branch did not bump the version until its last commit, so all of that work
+**shipped in 6.0**. Read the two sections together.
 
 ## 5.19 (60) — 6 Aug 2026
 
