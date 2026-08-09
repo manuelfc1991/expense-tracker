@@ -1,0 +1,175 @@
+{
+  "repo": {
+    "name": {
+      "en-US": "Ours"
+    },
+    "description": {
+      "en-US": "Sideload channel for Ours, a household expense tracker that reads Indian bank and UPI SMS. The APKs here are the same signed binaries the household's own phones install, not rebuilds — so an F-Droid install updates in place over existing data."
+    },
+    "icon": {
+      "en-US": {
+        "name": "/icons/icon.png",
+        "sha256": "b53ee5deb3bcec4c4100fca113efaee1bd95a62726d42ab07e821eca77c51ff1",
+        "size": 43223
+      }
+    },
+    "address": "https://manuelfc1991.github.io/expense-tracker/fdroid/repo",
+    "timestamp": 1786267135000,
+    "categories": {
+      "Money": {
+        "name": {
+          "en-US": "Money"
+        }
+      }
+    }
+  },
+  "packages": {
+    "com.manuel.ours": {
+      "metadata": {
+        "added": 1786266565000,
+        "categories": [
+          "Money"
+        ],
+        "issueTracker": "https://github.com/manuelfc1991/expense-tracker/issues",
+        "lastUpdated": 1786266565000,
+        "license": "Proprietary",
+        "sourceCode": "https://github.com/manuelfc1991/expense-tracker",
+        "authorName": "Manuel Francis Correya",
+        "name": {
+          "en-US": "Ours"
+        },
+        "summary": {
+          "en-US": "Reads bank SMS into a shared household ledger"
+        },
+        "description": {
+          "en-US": "A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app\nsends, turns them into transactions, and keeps two phones in one household agreeing\nabout them.\n\n* Parses debits, credits, card purchases, card bills and self-transfers out of SMS —\n  no typing, no CSV, no bank login.\n* One budget over one household, not one per person: spending is measured against\n  everything the household spent, whoever spent it.\n* Three kinds of account, because a balance means three different things. Money in a\n  current account is available; money on a credit card is owed; money in an FD, an RD\n  or a PPF is held. Only the first is safe to spend, and the app never quietly adds\n  the other two to it.\n* Unknown is never zero. An account nobody has quoted a balance for is counted and\n  reported as unknown, not summed as ₹0.\n* Syncs between phones over a Google Sheet the household owns, or directly over\n  Bluetooth. There is no server and no account.\n\nBuilt for one household and sideloaded to two phones with real money in them, so it\nis opinionated about Indian bank message formats and makes no attempt to be a\ngeneral-purpose tracker."
+        },
+        "icon": {
+          "en-US": {
+            "name": "/com.manuel.ours/en-US/icon_FEGtXdyPgmdULmqorXWJhBQfxZcTH8qEUPSZ1VXf24M=.png",
+            "sha256": "1441ad5ddc8f8267542e6aa8ad758984141fc597131fca8450f499d555dfdb83",
+            "size": 42406
+          }
+        },
+        "preferredSigner": "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
+      },
+      "versions": {
+        "467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5": {
+          "added": 1786266565000,
+          "file": {
+            "name": "/com.manuel.ours_77.apk",
+            "sha256": "467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5",
+            "size": 25584650
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "7.5",
+            "versionCode": 77,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 34
+            },
+            "signer": {
+              "sha256": [
+                "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.RECEIVE_SMS"
+              },
+              {
+                "name": "android.permission.READ_SMS"
+              },
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.POST_NOTIFICATIONS"
+              },
+              {
+                "name": "android.permission.SYSTEM_ALERT_WINDOW"
+              },
+              {
+                "name": "android.permission.REQUEST_INSTALL_PACKAGES"
+              },
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.CAMERA"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+              },
+              {
+                "name": "android.permission.BLUETOOTH",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADMIN",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_COARSE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_FINE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_SCAN"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADVERTISE"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_CONNECT"
+              },
+              {
+                "name": "android.permission.NEARBY_WIFI_DEVICES"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "android.permission.WAKE_LOCK"
+              },
+              {
+                "name": "android.permission.RECEIVE_BOOT_COMPLETED"
+              },
+              {
+                "name": "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          },
+          "antiFeatures": {
+            "NonFreeDep": {},
+            "NonFreeNet": {}
+          }
+        }
+      }
+    }
+  }
+}

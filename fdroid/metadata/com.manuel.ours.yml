@@ -1,0 +1,55 @@
+# Written by hand rather than by `fdroid update --create-metadata`, which produces a
+# stub naming the APK's own label and nothing else. Everything here is what the F-Droid
+# client shows on the app's page, so it is the only description a person who is not in
+# this household will ever read.
+
+Categories:
+  - Money
+
+# There is no LICENCE file in this repository, so the code is legally all-rights-reserved
+# and this is the honest value. F-Droid's own repository would reject that; ours does not
+# care. Add a LICENSE file and this becomes GPL-3.0-only, Apache-2.0, or whatever is
+# chosen — do not change it here first.
+License: Proprietary
+
+AuthorName: Manuel Francis Correya
+SourceCode: https://github.com/manuelfc1991/expense-tracker
+IssueTracker: https://github.com/manuelfc1991/expense-tracker/issues
+
+# Both are true and both are worth stating plainly. The sheet transport talks to Google
+# Apps Script, and Bluetooth sync is built on play-services-nearby — the two reasons this
+# app could not go in F-Droid's own repository.
+AntiFeatures:
+  - NonFreeNet
+  - NonFreeDep
+
+Name: Ours
+Summary: Reads bank SMS into a shared household ledger
+
+Description: |-
+    A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app
+    sends, turns them into transactions, and keeps two phones in one household agreeing
+    about them.
+
+    * Parses debits, credits, card purchases, card bills and self-transfers out of SMS —
+      no typing, no CSV, no bank login.
+    * One budget over one household, not one per person: spending is measured against
+      everything the household spent, whoever spent it.
+    * Three kinds of account, because a balance means three different things. Money in a
+      current account is available; money on a credit card is owed; money in an FD, an RD
+      or a PPF is held. Only the first is safe to spend, and the app never quietly adds
+      the other two to it.
+    * Unknown is never zero. An account nobody has quoted a balance for is counted and
+      reported as unknown, not summed as ₹0.
+    * Syncs between phones over a Google Sheet the household owns, or directly over
+      Bluetooth. There is no server and no account.
+
+    Built for one household and sideloaded to two phones with real money in them, so it
+    is opinionated about Indian bank message formats and makes no attempt to be a
+    general-purpose tracker.
+
+RepoType: git
+Repo: https://github.com/manuelfc1991/expense-tracker.git
+
+AutoUpdateMode: None
+UpdateCheckMode: None

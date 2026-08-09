@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fdroid>
+	<repo icon="icon.png" name="Ours" pubkey="308204e7308202cfa00302010202083e03d3a3fe962a70300d06092a864886f70d01010b050030213110300e060355040b1307462d44726f6964310d300b060355040313046f7572733020170d3236303830393039303732335a180f32303533313232353039303732335a30213110300e060355040b1307462d44726f6964310d300b060355040313046f75727330820222300d06092a864886f70d01010105000382020f003082020a0282020100ed8d012db53898bb51901e3c4ca8c77457f49d70ea24b63a3190462976dcedd94b22c750ef3f9badd59cff7233b596cccc328d606c1def032732b4636e174253cf805c53d9dc06a09e6b7b2d248d8a6ad3d73cd7d7aa17ee88d10b488638049dd362043a27ef3f25ab4287d37ee7069ebf2af4777ee6a35efb1392d080575e12e7a5bddafdc77b9c8d8bafe5ff7b9e07b1241c36ce4c13e10fb10adeb3d72f737443a32c5bf604183f9e03f2fd12ed8ad8c40f6e20398c73b3213836768c540dd701bceb2e9f95369905310c55db3011bd6a63432a44507a8fd566e717353153e3881afeace02ed049a81eb25141feb6f3cde5b9909090cd433fbc51a280f53eb73d91f60521a04d1d5bb3d7e8e28d64a5a1de06fb0ee48df437ddf2b26204b516d12e9d53698bf53dde9f5cb0a4ab8538d93a01bf43c4cfa51c0a5e0536a666877098217ebc84f2bc9d85c7cb712aa26d956c55e34916337054cd85438e7a588c44794ab1faea300c09374389159ed422f7029ac9c3557e8c15be9dcab79fb582b6b1f7833b338cc83b2dc448ef6a2e08946b17bafef59af38526f4de4d99f59589d6b4443c2637f011f7f3e6552c3d238feebcd373c2cadcb3f857057a303fe565aa18a478abe052a591fd28de58d6d5fd725fead83cd315406578a9ffbad1c2bffc2493acc480b5bbb3f77513f4112c9aaab770f3f4f415e6a501713766dd0203010001a321301f301d0603551d0e041604149ca8943a2ea148e2b241662bd96c4225107e3f5a300d06092a864886f70d01010b05000382020100a8a212aaa1edf707811f6eea02c5e6a5f84a1b52480441ee2e179732c2858e1ba2d5bbe66b42b8a84cbf02e181511fdb510769f91028e9a6ea7e7c7f2d861b0908cc6a3658ebaf3ca85bda8870543cef45d7048a89e16f39e3aa0939a4b76a0b96958d40a7bc43836a8312cde4d00eae0f9fd279d73571957aed75f9be57b7795d00afb6c7fea43e2ef00d786b5046dfa65f66710bc1543fb7f717f5ccfa009b9110863caf29ef02ae0b1efdafc9930625cf59e6f5474823b95314ab15a7cabf74f4ffacc96fdc02b91ad7c4c2382a75e742fcac6f275046aa9ebdfb2d572409ab8a7092eeaf532afc6c8a5228809dd79ae8a9214c604a8279a081dc4cc59b4057f29ab12c0b307279ec306ce833bec39c56619a98cc9c57cfce17cb4831445a67ff411a4abc5592540b7a7a43ffe16ba5b85787e7ac9787a45779835b309d429470d3a7176751e67929bb06ab256538f2b6384e86b24d070fce69fc9e8c4974b007de572b9f636f1309a19891c2a227128a95fb46654ca00cddeaf59c991175feeafad959361dbb37cd7297815a57f3049ed1a38226a9ec72b1e8243b32e2e8b6a460ff18a3788b8803c36e53889deda828434aeea3c59d40a4245c479b693dddb4764adad9f46da876bac8dea5985e3269d83fd6e2189d89cf99cdd9a6d0cf3581a40fbca0d7e2132fe42b7df025867b356ebc70fa2d1ad849cbfa32dadffc" timestamp="1786267135" url="https://manuelfc1991.github.io/expense-tracker/fdroid/repo" version="20002">
+		<description>Sideload channel for Ours, a household expense tracker that reads Indian bank and UPI SMS. The APKs here are the same signed binaries the household's own phones install, not rebuilds — so an F-Droid install updates in place over existing data.</description>
+	</repo>
+	<application id="com.manuel.ours">
+		<id>com.manuel.ours</id>
+		<added>2026-08-09</added>
+		<lastupdated>2026-08-09</lastupdated>
+		<name>Ours</name>
+		<summary>Reads bank SMS into a shared household ledger</summary>
+		<desc>A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app
+sends, turns them into transactions, and keeps two phones in one household agreeing
+about them.
+
+* Parses debits, credits, card purchases, card bills and self-transfers out of SMS —
+  no typing, no CSV, no bank login.
+* One budget over one household, not one per person: spending is measured against
+  everything the household spent, whoever spent it.
+* Three kinds of account, because a balance means three different things. Money in a
+  current account is available; money on a credit card is owed; money in an FD, an RD
+  or a PPF is held. Only the first is safe to spend, and the app never quietly adds
+  the other two to it.
+* Unknown is never zero. An account nobody has quoted a balance for is counted and
+  reported as unknown, not summed as ₹0.
+* Syncs between phones over a Google Sheet the household owns, or directly over
+  Bluetooth. There is no server and no account.
+
+Built for one household and sideloaded to two phones with real money in them, so it
+is opinionated about Indian bank message formats and makes no attempt to be a
+general-purpose tracker.</desc>
+		<license>Proprietary</license>
+		<categories>Money</categories>
+		<category>Money</category>
+		<web></web>
+		<source>https://github.com/manuelfc1991/expense-tracker</source>
+		<tracker>https://github.com/manuelfc1991/expense-tracker/issues</tracker>
+		<author>Manuel Francis Correya</author>
+		<marketversion></marketversion>
+		<marketvercode>77</marketvercode>
+		<antifeatures>NonFreeDep,NonFreeNet</antifeatures>
+		<package>
+			<version>7.5</version>
+			<versioncode>77</versioncode>
+			<apkname>com.manuel.ours_77.apk</apkname>
+			<hash type="sha256">467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5</hash>
+			<size>25584650</size>
+			<sdkver>26</sdkver>
+			<targetSdkVersion>34</targetSdkVersion>
+			<added>2026-08-09</added>
+			<sig>dca6fd620f01df3b9f69974a1d8241cf</sig>
+			<permissions>ACCESS_COARSE_LOCATION,ACCESS_FINE_LOCATION,ACCESS_NETWORK_STATE,ACCESS_WIFI_STATE,BLUETOOTH,BLUETOOTH_ADMIN,BLUETOOTH_ADVERTISE,BLUETOOTH_CONNECT,BLUETOOTH_SCAN,CAMERA,CHANGE_WIFI_STATE,FOREGROUND_SERVICE,FOREGROUND_SERVICE_CONNECTED_DEVICE,FOREGROUND_SERVICE_DATA_SYNC,INTERNET,NEARBY_WIFI_DEVICES,POST_NOTIFICATIONS,READ_SMS,RECEIVE_BOOT_COMPLETED,RECEIVE_SMS,REQUEST_INSTALL_PACKAGES,SYSTEM_ALERT_WINDOW,USE_BIOMETRIC,USE_FINGERPRINT,WAKE_LOCK,com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions>
+			<uses-permission maxSdkVersion="30" name="android.permission.ACCESS_COARSE_LOCATION"/>
+			<uses-permission maxSdkVersion="30" name="android.permission.ACCESS_FINE_LOCATION"/>
+			<uses-permission maxSdkVersion="30" name="android.permission.BLUETOOTH"/>
+			<uses-permission maxSdkVersion="30" name="android.permission.BLUETOOTH_ADMIN"/>
+			<nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode>
+		</package>
+	</application>
+</fdroid>

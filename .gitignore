@@ -8,4 +8,27 @@ build/
 # ...except the one the phones download. Build outputs stay ignored; this is the
 # published artefact the update manifest points at.
 !release/Ours.apk
+# ...and the ones the F-Droid repo serves. These are the repository's payload, not build
+# output: the signed index names each by hash, so an APK missing here is an entry the
+# client will try to download and fail on.
+!fdroid/repo/*.apk
+!fdroid/archive/*.apk
 app/src/main/res/raw/sheet_sync_script.txt
+
+# The F-Droid repo's own signing key, and the config file holding its passwords. Same
+# deal as ours-release.jks: gitignored, absent from a clone, and losing it is not
+# recoverable by rebuilding — every client that added the repo would have to remove and
+# re-add it, because the fingerprint they pinned is this key's. See docs/HANDOVER.md.
+fdroid/keystore.p12
+fdroid/config.yml
+fdroid/tmp/
+fdroid/unsigned/
+fdroid/srclibs/
+fdroid/.fdroid.*
+
+# `fdroid update` leaves a run report next to the index, and it is a report about the
+# machine, not the repo: home directory, Linux distribution and version, absolute paths
+# to apksigner, jarsigner and keytool, and the full command line. Harmless on a private
+# build server; this one is published to the open web on every push.
+fdroid/repo/status/
+fdroid/archive/status/

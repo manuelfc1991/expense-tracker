@@ -1,0 +1,34 @@
+# Starting point for `fdroid/config.yml`, which is gitignored because it holds the
+# repo-signing passwords. Copy this file to config.yml and fill in the three blanks.
+#
+#   cp fdroid/config.example.yml fdroid/config.yml
+#
+# The passwords and the keystore are the same secret in two halves: without
+# `fdroid/keystore.p12` the passwords are useless, and without them the keystore is.
+# Neither arrives with a clone. Losing the keystore is the serious one — it is not
+# regenerable, and every phone that added the repo pinned that key's fingerprint, so a
+# new key means removing and re-adding the repo on each of them. See docs/HANDOVER.md.
+
+sdk_path: $ANDROID_HOME
+
+keystore: keystore.p12
+repo_keyalias: ours
+keystorepass: PUT_THE_KEYSTORE_PASSWORD_HERE
+keypass: PUT_THE_KEY_PASSWORD_HERE
+# What the existing key's certificate says. Used only when generating a new one — which
+# is not something to do casually; see the note above.
+keydname: CN=ours, OU=F-Droid
+
+repo_url: https://manuelfc1991.github.io/expense-tracker/fdroid/repo
+repo_name: Ours
+repo_description: >-
+  Sideload channel for Ours, a household expense tracker that reads Indian bank and
+  UPI SMS. The APKs here are the same signed binaries the household's own phones
+  install, not rebuilds — so an F-Droid install updates in place over existing data.
+
+archive_url: https://manuelfc1991.github.io/expense-tracker/fdroid/archive
+archive_name: Ours (older versions)
+archive_description: >-
+  Previous releases of Ours, kept so a phone can be put back on a known-good build.
+
+archive_older: 3

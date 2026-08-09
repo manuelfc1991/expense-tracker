@@ -1,0 +1,24 @@
+{
+  "repo": {
+    "icon": {
+      "en-US": {
+        "sha256": "b53ee5deb3bcec4c4100fca113efaee1bd95a62726d42ab07e821eca77c51ff1",
+        "size": 43223
+      }
+    },
+    "timestamp": 1786267135000
+  },
+  "packages": {
+    "com.manuel.ours": {
+      "metadata": {
+        "icon": {
+          "en-US": {
+            "name": "/com.manuel.ours/en-US/icon_FEGtXdyPgmdULmqorXWJhBQfxZcTH8qEUPSZ1VXf24M=.png",
+            "sha256": "1441ad5ddc8f8267542e6aa8ad758984141fc597131fca8450f499d555dfdb83",
+            "size": 42406
+          }
+        }
+      }
+    }
+  }
+}
