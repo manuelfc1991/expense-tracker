@@ -26,27 +26,20 @@ AntiFeatures:
 Name: Ours
 Summary: Reads bank SMS into a shared household ledger
 
+# One line per paragraph, however unwieldy that looks here. F-Droid renders a newline as
+# a newline, so a description wrapped for readability in this file arrives on the phone
+# broken mid-sentence at whatever column the editor happened to use. Checked on a
+# screenshot, not assumed.
 Description: |-
-    A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app
-    sends, turns them into transactions, and keeps two phones in one household agreeing
-    about them.
+    A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app sends, turns them into transactions, and keeps two phones in one household agreeing about them.
 
-    * Parses debits, credits, card purchases, card bills and self-transfers out of SMS —
-      no typing, no CSV, no bank login.
-    * One budget over one household, not one per person: spending is measured against
-      everything the household spent, whoever spent it.
-    * Three kinds of account, because a balance means three different things. Money in a
-      current account is available; money on a credit card is owed; money in an FD, an RD
-      or a PPF is held. Only the first is safe to spend, and the app never quietly adds
-      the other two to it.
-    * Unknown is never zero. An account nobody has quoted a balance for is counted and
-      reported as unknown, not summed as ₹0.
-    * Syncs between phones over a Google Sheet the household owns, or directly over
-      Bluetooth. There is no server and no account.
+    * Parses debits, credits, card purchases, card bills and self-transfers out of SMS — no typing, no CSV, no bank login.
+    * One budget over one household, not one per person: spending is measured against everything the household spent, whoever spent it.
+    * Three kinds of account, because a balance means three different things. Money in a current account is available; money on a credit card is owed; money in an FD, an RD or a PPF is held. Only the first is safe to spend, and the app never quietly adds the other two to it.
+    * Unknown is never zero. An account nobody has quoted a balance for is counted and reported as unknown, not summed as ₹0.
+    * Syncs between phones over a Google Sheet the household owns, or directly over Bluetooth. There is no server and no account.
 
-    Built for one household and sideloaded to two phones with real money in them, so it
-    is opinionated about Indian bank message formats and makes no attempt to be a
-    general-purpose tracker.
+    Built for one household and sideloaded to two phones with real money in them, so it is opinionated about Indian bank message formats and makes no attempt to be a general-purpose tracker.
 
 RepoType: git
 Repo: https://github.com/manuelfc1991/expense-tracker.git

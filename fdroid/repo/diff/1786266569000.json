@@ -6,11 +6,14 @@
         "size": 43223
       }
     },
-    "timestamp": 1786267135000
+    "timestamp": 1786268958000
   },
   "packages": {
     "com.manuel.ours": {
       "metadata": {
+        "description": {
+          "en-US": "A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app sends, turns them into transactions, and keeps two phones in one household agreeing about them.\n\n* Parses debits, credits, card purchases, card bills and self-transfers out of SMS — no typing, no CSV, no bank login.\n* One budget over one household, not one per person: spending is measured against everything the household spent, whoever spent it.\n* Three kinds of account, because a balance means three different things. Money in a current account is available; money on a credit card is owed; money in an FD, an RD or a PPF is held. Only the first is safe to spend, and the app never quietly adds the other two to it.\n* Unknown is never zero. An account nobody has quoted a balance for is counted and reported as unknown, not summed as ₹0.\n* Syncs between phones over a Google Sheet the household owns, or directly over Bluetooth. There is no server and no account.\n\nBuilt for one household and sideloaded to two phones with real money in them, so it is opinionated about Indian bank message formats and makes no attempt to be a general-purpose tracker."
+        },
         "icon": {
           "en-US": {
             "name": "/com.manuel.ours/en-US/icon_FEGtXdyPgmdULmqorXWJhBQfxZcTH8qEUPSZ1VXf24M=.png",
