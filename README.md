@@ -217,6 +217,19 @@ What it does: copies the APK to `fdroid/repo/com.manuel.ours_<versionCode>.apk`,
 runs `fdroid update`, which rebuilds and re-signs the index. Three versions stay in the
 main repo and older ones move to `fdroid/archive`.
 
+**The store listing** — icon, description, "What's New" and screenshots — lives in
+`fdroid/metadata/`. Three parts of it are easy to get wrong:
+
+- A changelog goes in `changelogs/<versionCode>.txt`, and only appears if
+  `CurrentVersionCode` and the `Builds` list in `com.manuel.ours.yml` name that version.
+  Both are rewritten from the APK by the publish script, so leave them alone.
+- `Description` renders newlines literally. One line per paragraph, however wide.
+- Screenshots are shot on an **emulator with invented data**, never on a phone. The real
+  screens are the household's actual balances and these images are served publicly.
+  `tools/fdroid-demo-inbox.sh` builds the fake inbox and documents the two traps
+  (the AVD boots in airplane mode; `adb emu sms send` reports OK while delivering
+  nothing).
+
 **Two files do not arrive with a clone**, exactly like the app's own signing key:
 
 | | |

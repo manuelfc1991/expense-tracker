@@ -1,6 +1,6 @@
 {
   "repo": {
-    "timestamp": 1786270766000,
+    "timestamp": 1786273572000,
     "version": 20002,
     "name": "Ours",
     "icon": "icon.png",
@@ -35,6 +35,14 @@
       "localized": {
         "en-US": {
           "icon": "icon_FEGtXdyPgmdULmqorXWJhBQfxZcTH8qEUPSZ1VXf24M=.png",
+          "phoneScreenshots": [
+            "01-home.png",
+            "02-activity.png",
+            "03-month.png",
+            "04-accounts.png",
+            "05-put-aside.png",
+            "06-sort.png"
+          ],
           "whatsNew": "Money put aside is now its own kind of account.\n\nA balance used to mean one of two things: money you can spend, or money you owe on a card. A fixed deposit is neither \u2014 it is yours, and you cannot spend it. Counting it as spendable invites spending money that is locked up; leaving it off the screen pretends you do not own it. It now has its own total, shown but never added to what is safe to spend.\n\nAlso: the card-bill rule that stops a credit-card payment being counted twice is now covered by t"
         }
       }
