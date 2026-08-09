@@ -924,3 +924,23 @@ invisible forever.
 must. Weekly groceries at one shop repeat as reliably as a subscription; the amounts
 are what tell them apart. Claiming a commitment that does not exist makes every other
 number in the app suspect.
+
+---
+
+# Licence
+
+Copyright (C) 2026 Manuel Francis Correya.
+
+Ours is free software: you may redistribute it and modify it under the terms of the
+**GNU General Public License, version 3** — the full text is in `LICENSE`, and
+`GPL-3.0-only` in `fdroid/metadata/com.manuel.ours.yml` is the same statement in the form
+F-Droid clients read. It is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Version 3 only, not "or any later version", and share-alike rather than permissive: this
+is an app that reads a household's bank messages, so anyone distributing a changed build
+of it should have to publish what they changed.
+
+The font in `licenses/` carries its own terms (SIL Open Font License), and the
+Android, Kotlin and Compose libraries carry theirs.

@@ -1,10 +1,11 @@
 {
   "repo": {
-    "timestamp": 1786273572000
+    "timestamp": 1786275214000
   },
   "packages": {
     "com.manuel.ours": {
       "metadata": {
+        "license": "GPL-3.0-only",
         "screenshots": {
           "phone": {
             "en-US": [

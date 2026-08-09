@@ -6,11 +6,11 @@
 Categories:
   - Money
 
-# There is no LICENCE file in this repository, so the code is legally all-rights-reserved
-# and this is the honest value. F-Droid's own repository would reject that; ours does not
-# care. Add a LICENSE file and this becomes GPL-3.0-only, Apache-2.0, or whatever is
-# chosen — do not change it here first.
-License: Proprietary
+# Matches the LICENSE file at the repository root, and must keep matching it: this string
+# is what every F-Droid client displays, and it is the only licence statement most people
+# will ever see. SPDX identifier, not a friendly name — "GPL-3.0-only" and "GPL-3.0" and
+# "GPLv3" are not interchangeable to the tools that read this.
+License: GPL-3.0-only
 
 AuthorName: Manuel Francis Correya
 SourceCode: https://github.com/manuelfc1991/expense-tracker

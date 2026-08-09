@@ -14,7 +14,7 @@
       }
     },
     "address": "https://manuelfc1991.github.io/expense-tracker/fdroid/repo",
-    "timestamp": 1786273572000,
+    "timestamp": 1786275214000,
     "categories": {
       "Money": {
         "name": {
@@ -32,7 +32,7 @@
         ],
         "issueTracker": "https://github.com/manuelfc1991/expense-tracker/issues",
         "lastUpdated": 1786266565000,
-        "license": "Proprietary",
+        "license": "GPL-3.0-only",
         "sourceCode": "https://github.com/manuelfc1991/expense-tracker",
         "screenshots": {
           "phone": {

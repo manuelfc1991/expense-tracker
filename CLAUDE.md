@@ -104,9 +104,13 @@ Three things that are easy to get wrong:
   has to remove and re-add the repository by hand.
 
 Anti-features are declared honestly in `fdroid/metadata/com.manuel.ours.yml`: `NonFreeNet`
-for the Apps Script transport, `NonFreeDep` for `play-services-nearby`. `License:
-Proprietary` is not a decision, it is what having no `LICENSE` file means — add one and
-change it there first.
+for the Apps Script transport, `NonFreeDep` for `play-services-nearby`.
+
+The licence is **GPL-3.0-only** (`LICENSE` at the root, since 9 Aug 2026). Two places
+state it — that file and the `License:` field in the metadata — and they must agree,
+because the metadata string is what every F-Droid client displays. It is an SPDX
+identifier: `GPL-3.0-only` is a different string from `GPL-3.0` or `GPLv3` to the tools
+that read it.
 
 ## Design
 
