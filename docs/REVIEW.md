@@ -147,6 +147,58 @@ Asia/Kolkata and are consistent; the interface is the odd one out.
 
 ---
 
+## 3b. A card's outstanding drifts the wrong way, in both directions
+
+Added **9 August 2026**, against **7.5 (77)**, after the household paid ₹468.41 onto the
+ICICI card from Kerala Gramin and the Accounts panel did not move the way it should.
+
+**Severity: high. The figure is wrong after every card message, and the screen says
+nothing.**
+
+A typed balance is adjusted by the movements the app has seen since — a chequebook, and a
+good idea. `MonthlyAggregator.accountBalances`:
+
+```kotlin
+rows.filter { it.occurredAt > typed!!.setAt }
+    .sumOf { if (it.type == TxnType.DEBIT) -it.amountPaise else it.amountPaise }
+```
+
+That is written for a bank account, where a debit is money leaving and a credit is money
+arriving. It is applied to **every** key with a typed figure, and a credit card is the one
+kind where both signs mean the opposite:
+
+| On a card | Really | What the app does |
+|---|---|---|
+| a purchase (`DEBIT`) | you owe **more** | subtracts it — owed goes **down** |
+| paying the bill (`CREDIT`) | you owe **less** | adds it — owed goes **up** |
+
+`CardDriftTest` pins both, currently asserting the wrong answers so that a fix has to come
+here and say so. It is the `isCard`-blindness of `PutAsideTest` and `CardConversionTest`
+one more time: the kind is honoured where the money is *presented* and ignored where it is
+*computed*.
+
+Live, on the day this was written: the SuperCard read **₹943 owed** against ₹797 of
+purchases in the preceding three days, which is a typed ₹1,740 walking downwards as the
+household spent on it. And the ICICI payment that prompted this raised the outstanding by
+₹468.41 instead of lowering it.
+
+Two things make it invisible rather than merely wrong. The card row renders neither the
+`you said` marker nor the `plus ₹468 seen since` caption that every bank-account row gets
+(`SummaryScreen.kt:1367`), so a drifting typed figure looks like a quoted one. And a card
+bill quotes no balance to correct it: ICICI's acknowledgement is *"Payment of Rs 468.41 has
+been received on your ICICI Bank Credit Card XX3008"* and names no outstanding at all — so
+unlike a bank account, nothing arrives later to overwrite the drift.
+
+### The fix
+
+Invert the adjustment for `isCard` keys, and render the two captions on card rows. Both are
+small; the second is what stops the next version of this bug hiding for a release. Note
+that `CLAUDE.md` records ICICI as sending **zero** messages — as of 9 August it sends
+payment acknowledgements, which is what put a transaction under key `3008` at all and made
+the drift reachable for that card.
+
+---
+
 ## 4. Where the tests are not
 
 **Severity: high, and it is the reason the findings above were found by eye.**

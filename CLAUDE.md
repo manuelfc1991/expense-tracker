@@ -242,14 +242,21 @@ inbox on 8 August 2026:
   a registered card's last four becomes `SELF_TRANSFER` rather than `CARD_PAYMENT`, since
   its purchases were already counted one by one. That happens **at import**, so it protects
   bills read after registration, never ones already stored.
-- **ICICI — zero messages. Not few: none at all.** No purchases, no bills, no statements,
-  despite `ICICIT`/`ICICIO` being registered senders. Its balance is entirely hand-typed,
-  and nothing about it will ever update itself. Two consequences: the double-count
-  mechanism can never fire for it, and its bill will only ever be recorded if the household
-  types it or pays it from an account that *does* message. Worth watching — if such a
-  payment is ever parsed as a card bill naming ···3008, it would be excluded as a
-  self-transfer while its purchases were never counted, hiding the money outright. That has
-  not happened; there is no ICICI traffic to make it happen.
+- **ICICI — no purchases, but it does acknowledge payments.** No individual spends, no
+  statements. What it does send, first seen 9 August 2026, is *"Payment of Rs 468.41 has
+  been received on your ICICI Bank Credit Card XX3008 through Bharat Bill Payment System"* —
+  a card bill naming a registered card's last four, so it is filed `SELF_TRANSFER` and kept
+  out of spending. That exclusion assumes the purchases were counted one by one, and for
+  this card none of them ever were — so what keeps the money in the month is not the card
+  rule but the **paying account's own debit**, which is a separate row and counts normally.
+  The exclusion is therefore only safe while both legs arrive. Check the bank leg whenever
+  an ICICI bill looks missing: on 9 August its leg was filed `INCOME`, and with the card
+  leg excluded that payment appears in no total at all.
+
+  Its outstanding is still entirely hand-typed. The acknowledgement quotes no balance, so
+  nothing corrects that figure; worse, the payment lands under key `3008` as a credit and
+  the chequebook adjustment in `accountBalances` *raises* what the app thinks is owed. See
+  `docs/REVIEW.md` §3b and `CardDriftTest`.
 
 This is why card-bill exclusion is decided **per card** and never per category.
 
