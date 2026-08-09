@@ -1397,6 +1397,40 @@ private fun WhatsLeft(
                                 }
                             },
                         )
+                        // Where the figure came from, exactly as a bank account says it.
+                        //
+                        // A card row used to say only its tail and its due day, so a
+                        // hand-typed outstanding — which is all this household has for
+                        // ICICI, since the issuer quotes no balance in anything it sends —
+                        // looked identical to one the issuer stood behind. Amber and
+                        // "you said" is the whole difference between a fact and a memory.
+                        val cardAge = card.asOf?.let { at ->
+                            when (val days = ChronoUnit.DAYS.between(OursZone.dateOf(at), today)) {
+                                0L -> "today"
+                                1L -> "yesterday"
+                                else -> "$days days ago"
+                            }
+                        }
+                        if (cardAge != null) {
+                            MicroLabel(
+                                buildString {
+                                    if (card.source == BalanceSource.HAND) append("you said, ")
+                                    append(cardAge)
+                                },
+                                color = if (card.source == BalanceSource.HAND) Ours.warning
+                                else Ours.onSurfaceMuted,
+                            )
+                        }
+                        // And what the app has applied to it since, which on a card is a
+                        // payment bringing the debt down or a purchase pushing it up.
+                        if (card.movedSincePaise != 0L) {
+                            val down = card.movedSincePaise < 0
+                            MicroLabel(
+                                (if (down) "less " else "plus ") +
+                                    Money.whole(kotlin.math.abs(card.movedSincePaise)) +
+                                    " seen since",
+                            )
+                        }
                         // How much room is left, which is the figure a card is actually
                         // used against. Only when both halves are known — a limit with no
                         // outstanding, or the reverse, cannot say anything true.

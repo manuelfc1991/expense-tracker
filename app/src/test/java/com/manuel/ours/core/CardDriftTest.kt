@@ -21,8 +21,11 @@ import org.junit.Test
  * mean the opposite: a purchase is a debit that *increases* what you owe, and paying the
  * bill is a credit that *reduces* it.
  *
- * Pinned as the current behaviour, wrong direction and all, so that fixing it has to
- * come here and say so.
+ * Unflipped, this walked the SuperCard's outstanding down by every purchase made on it and
+ * pushed the ICICI card's up by the ₹468.41 that settled it — a number moving confidently
+ * in the wrong direction on both cards at once, with nothing on screen saying it had moved
+ * at all. Same family as [PutAsideTest] and [CardConversionTest]: the kind was honoured
+ * where the money is presented and ignored where it is computed.
  */
 class CardDriftTest {
 
@@ -55,15 +58,15 @@ class CardDriftTest {
     @Test
     fun `a payment onto the card moves the outstanding`() {
         val owed = owedAfter(listOf(row("pay", TxnType.CREDIT, 468_41L, typedAt + 1)))
-        // Paying ₹468.41 off a ₹10,000 card should leave ₹9,531.59 owed.
-        assertThat(owed).isEqualTo(10_468_41L)
+        // Paying ₹468.41 off a ₹10,000 card leaves ₹9,531.59 owed.
+        assertThat(owed).isEqualTo(9_531_59L)
     }
 
     /** A purchase on the card, which genuinely increases the debt. */
     @Test
     fun `a purchase on the card moves the outstanding`() {
         val owed = owedAfter(listOf(row("buy", TxnType.DEBIT, 797_00L, typedAt + 1)))
-        // Spending ₹797 on a ₹10,000 card should leave ₹10,797 owed.
-        assertThat(owed).isEqualTo(9_203_00L)
+        // Spending ₹797 on a ₹10,000 card leaves ₹10,797 owed.
+        assertThat(owed).isEqualTo(10_797_00L)
     }
 }

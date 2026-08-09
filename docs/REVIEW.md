@@ -172,10 +172,12 @@ kind where both signs mean the opposite:
 | a purchase (`DEBIT`) | you owe **more** | subtracts it — owed goes **down** |
 | paying the bill (`CREDIT`) | you owe **less** | adds it — owed goes **up** |
 
-`CardDriftTest` pins both, currently asserting the wrong answers so that a fix has to come
-here and say so. It is the `isCard`-blindness of `PutAsideTest` and `CardConversionTest`
-one more time: the kind is honoured where the money is *presented* and ignored where it is
-*computed*.
+It is the `isCard`-blindness of `PutAsideTest` and `CardConversionTest` one more time: the
+kind is honoured where the money is *presented* and ignored where it is *computed*.
+
+**Fixed 9 August 2026**, in the same sitting: `accountBalances` negates the adjustment for
+a card key, and the card row now renders the `you said` marker and the `seen since` caption
+that every bank-account row already had. `CardDriftTest` pins both directions.
 
 Live, on the day this was written: the SuperCard read **₹943 owed** against ₹797 of
 purchases in the preceding three days, which is a typed ₹1,740 walking downwards as the
@@ -189,13 +191,25 @@ bill quotes no balance to correct it: ICICI's acknowledgement is *"Payment of Rs
 been received on your ICICI Bank Credit Card XX3008"* and names no outstanding at all — so
 unlike a bank account, nothing arrives later to overwrite the drift.
 
-### The fix
+### What it does not fix
 
-Invert the adjustment for `isCard` keys, and render the two captions on card rows. Both are
-small; the second is what stops the next version of this bug hiding for a release. Note
-that `CLAUDE.md` records ICICI as sending **zero** messages — as of 9 August it sends
-payment acknowledgements, which is what put a transaction under key `3008` at all and made
-the drift reachable for that card.
+The adjustment can only apply what the app **sees**, and on a card the two legs of a bill
+payment are not the same number. This one was paid through CRED: ₹468.41 reached the card,
+₹425.41 left Kerala Gramin, and ₹43 was CRED points. The card leg is the honest figure and
+the app happens to have it here — but only because ICICI acknowledged the payment. A card
+that stays silent leaves the app holding the bank leg alone, which is short by whatever the
+points covered, and nothing on either row says which of the two it is looking at.
+
+The complete answer is an explicit **paid to** on a transaction — the household naming the
+card a payment settles, instead of the app inferring it from a tail in the text. That also
+buys the ICICI bill a place in the month's spending, which it currently lacks: its
+purchases were never recorded one by one, so excluding the bill as a self-transfer hides
+the money unless the bank leg happens to be categorised as spending. On 9 August the bank
+leg was filed `INCOME`, and the payment appeared in no total at all.
+
+Note also that `CLAUDE.md` recorded ICICI as sending **zero** messages. As of 9 August it
+sends payment acknowledgements, which is what put a transaction under key `3008` at all and
+made the drift reachable for that card.
 
 ---
 

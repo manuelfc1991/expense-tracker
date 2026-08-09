@@ -244,9 +244,18 @@ object MonthlyAggregator {
             // Raw amounts, not `netSpent`: a refund is its own credit row in the ledger
             // and adding it there too would count it twice. Category is irrelevant — a
             // self-transfer still leaves the account.
+            //
+            // A card is the one kind where both signs mean the opposite, because the
+            // figure it carries is a debt rather than a holding. A purchase is a debit
+            // that *increases* what you owe; paying the bill is a credit that reduces it.
+            // Unflipped, this walked the SuperCard's outstanding down by every purchase
+            // and pushed the ICICI card's up by the ₹468.41 that settled it — the number
+            // moving confidently in the wrong direction on both cards at once.
+            val owedNotHeld = cards.containsKey(key)
             val movedSincePaise = if (useTyped) {
-                rows.filter { it.occurredAt > typed!!.setAt }
+                val net = rows.filter { it.occurredAt > typed!!.setAt }
                     .sumOf { if (it.type == TxnType.DEBIT) -it.amountPaise else it.amountPaise }
+                if (owedNotHeld) -net else net
             } else 0L
 
             AccountBalance(
