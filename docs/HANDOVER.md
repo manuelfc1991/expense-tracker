@@ -1,7 +1,7 @@
 # Moving to another machine
 
 A clone gets you the code, the design specs, the published APK and the working notes in
-`CLAUDE.md`. Three things it deliberately does not get you, and one of them will destroy
+`CLAUDE.md`. Four things it deliberately does not get you, and one of them will destroy
 live data if you get it wrong.
 
 ---
@@ -45,6 +45,34 @@ adb -s <device> shell dumpsys package com.manuel.ours | grep -A2 signatures
 The SHA-256 must match what is already on the phone. If you ever do lose the key, say so
 rather than working around it — the honest options are narrow and all of them involve the
 household reinstalling, so the data has to be exported first.
+
+## 1b. The F-Droid repo's key — a second key, with a different failure
+
+**Files:** `fdroid/keystore.p12` and `fdroid/config.yml`, both gitignored. The first
+signs the index of the F-Droid repository this project serves from GitHub Pages; the
+second holds its two passwords. Start a new `config.yml` from the committed
+`fdroid/config.example.yml`, which is the same file with the passwords removed.
+
+Move them the same way as the app's signing key, and for the same reason.
+
+```bash
+scp fdroid/keystore.p12 fdroid/config.yml newmachine:~/Manuel/Expense/fdroid/
+```
+
+The failure is not the same failure, so it is worth being precise about. Losing
+`ours-release.jks` means no phone can take another update without an uninstall. Losing
+`fdroid/keystore.p12` costs no data at all — the APKs are still signed with the app key
+and still installable — but the repository can only be re-signed with a **new** key, and
+a new key has a new fingerprint. Every phone that added the repo pinned the old one, so
+each has to remove the repository and add it back. Two phones today; still worth not
+doing by accident.
+
+Verify a restored key by publishing and comparing the fingerprint the script prints:
+
+```bash
+./tools/fdroid-publish.sh | grep fingerprint
+# must be 16DCB69731B32B61A482A16D1BC9B4E093BC4234832B8769868298629BBB570E
+```
 
 ## 2. `local.properties`
 
@@ -94,7 +122,8 @@ Keep `docs/memory/` and the live memory directory in step by hand; nothing syncs
 git clone git@github.com:manuelfc1991/expense-tracker.git
 cd expense-tracker
 # copy ours-release.jks + keystore.properties in, write local.properties
-./gradlew :app:testReleaseUnitTest        # ~499 tests, all should pass
+# and, to publish to the F-Droid repo, fdroid/keystore.p12 + fdroid/config.yml
+./gradlew :app:testReleaseUnitTest        # 502 tests, all should pass
 ./gradlew :app:assembleRelease
 apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
 ```

@@ -39,13 +39,14 @@ want to get it running, the next section is the whole job.
 [first phone](#2-set-it-up-on-the-first-phone) ·
 [install over real data](#3-install-on-a-phone-that-already-has-real-data) ·
 [cut a release](#4-cut-a-release-the-phones-will-accept) ·
-[second phone](#5-put-a-second-phone-in-the-household) ·
-[accounts, cards, deposits](#6-record-an-account-a-card-or-money-put-aside) ·
-[read a month](#7-read-a-month-honestly) ·
-[parser misses messages](#8-when-it-isnt-reading-my-messages) ·
-[backup and restore](#9-back-up-and-prove-the-restore-works) ·
-[verify on the phone](#10-verify-a-ui-change-on-the-phone) ·
-[troubleshooting](#11-troubleshooting)
+[publish to F-Droid](#5-publish-it-to-the-f-droid-repo) ·
+[second phone](#6-put-a-second-phone-in-the-household) ·
+[accounts, cards, deposits](#7-record-an-account-a-card-or-money-put-aside) ·
+[read a month](#8-read-a-month-honestly) ·
+[parser misses messages](#9-when-it-isnt-reading-my-messages) ·
+[backup and restore](#10-back-up-and-prove-the-restore-works) ·
+[verify on the phone](#11-verify-a-ui-change-on-the-phone) ·
+[troubleshooting](#12-troubleshooting)
 
 **Reference** — [how sync works](#how-sync-works) ·
 [what else travels](#what-else-travels-between-phones) ·
@@ -78,7 +79,7 @@ cd ours
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-That is enough for a debug build on any phone or emulator. **Three files do not arrive
+That is enough for a debug build on any phone or emulator. **Five files do not arrive
 with a clone**, because they are gitignored:
 
 | File | What it is | Without it |
@@ -86,6 +87,8 @@ with a clone**, because they are gitignored:
 | `local.properties` | your Android SDK path | Gradle cannot find the SDK; some setups fall back to `ANDROID_HOME` |
 | `ours-release.jks` | the release signing key | release builds are produced **unsigned**, silently |
 | `keystore.properties` | that key's passwords | same |
+| `fdroid/keystore.p12` | signs the F-Droid repo index | nothing can be published to the F-Droid repo — tutorial 5 |
+| `fdroid/config.yml` | that key's passwords | same; copy `fdroid/config.example.yml` |
 
 The signing pair matters more than it looks — see tutorial 4 before your first release
 build. `docs/HANDOVER.md` covers picking the project up on another machine.
@@ -168,7 +171,74 @@ To check what really landed in a build rather than trusting the log:
 aapt2 dump resources app/build/outputs/apk/release/app-release.apk | grep -A6 'color/surface'
 ```
 
-## 5. Put a second phone in the household
+## 5. Publish it to the F-Droid repo
+
+There is a second way onto a phone, alongside the in-app updater: this repository is
+also its own **F-Droid repository**, served from GitHub Pages.
+
+    https://manuelfc1991.github.io/expense-tracker/fdroid/repo
+
+    fingerprint 16DCB69731B32B61A482A16D1BC9B4E093BC4234832B8769868298629BBB570E
+
+The important property is that the APKs it serves are the **same signed binaries** the
+phones already run — not rebuilds. That is why F-Droid's own repository was never an
+option: F-Droid builds from source and signs with F-Droid's key, and an APK with a
+different signature cannot install over the live database. Ours keeps
+`ours-release.jks`, so installing through the F-Droid client is an ordinary in-place
+update.
+
+**Adding it to a phone.** Open the link below on the phone, or scan the QR code on the
+repository's own page at the URL above. F-Droid shows the repo, its icon and the app
+before anything is added; the fingerprint on that screen must match the one printed
+here.
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d "fdroidrepos://manuelfc1991.github.io/expense-tracker/fdroid/repo?fingerprint=16DCB69731B32B61A482A16D1BC9B4E093BC4234832B8769868298629BBB570E"
+```
+
+The `fdroidrepos://` scheme, not `https://` — an https link opens the browser and lands
+on the repository's human-readable page instead of the client.
+
+**Publishing a build into it**, after tutorial 4:
+
+```bash
+# needs fdroidserver on PATH: pipx install fdroidserver, or apt install fdroidserver
+./tools/fdroid-publish.sh
+git add fdroid && git commit -m "F-Droid: 7.6" && git push
+```
+
+The script refuses to publish an APK whose signing certificate is not
+`c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2`. Checking that an APK
+is *signed* is not the useful check — an unsigned build and a differently-signed build
+both look fine and neither can reach the phones.
+
+What it does: copies the APK to `fdroid/repo/com.manuel.ours_<versionCode>.apk`, then
+runs `fdroid update`, which rebuilds and re-signs the index. Three versions stay in the
+main repo and older ones move to `fdroid/archive`.
+
+**Two files do not arrive with a clone**, exactly like the app's own signing key:
+
+| | |
+|---|---|
+| `fdroid/keystore.p12` | signs the repository index |
+| `fdroid/config.yml` | its two passwords — start from `fdroid/config.example.yml` |
+
+Losing the keystore is worse than losing `ours-release.jks`, in one specific way: it is
+not regenerable into the same thing. Every phone that added the repo pinned *that* key's
+fingerprint, so a replacement key means removing and re-adding the repository on each of
+them by hand.
+
+**If Pages stops serving**, check which branch it is publishing:
+
+```bash
+gh api repos/manuelfc1991/expense-tracker/pages --jq '.source.branch, .status'
+```
+
+It must be a branch that actually contains `fdroid/`. `.nojekyll` at the repository root
+is what stops GitHub trying to build the site with Jekyll.
+
+## 6. Put a second phone in the household
 
 Sheet sync carries everything; Bluetooth carries transactions only. Do the sheet first.
 
@@ -196,7 +266,7 @@ Two things that surprise people, both deliberate:
 The script lives at `sheet-sync/Code.gs` and Gradle copies it into the app at build
 time. **Edit that file, never the copy in `res/raw`.**
 
-## 6. Record an account, a card, or money put aside
+## 7. Record an account, a card, or money put aside
 
 **Summary ▸ Accounts ▸ Add an account**, or tap any account already listed to change it.
 The first question is *what kind*, and it is the one that matters, because it decides
@@ -221,7 +291,7 @@ arrive as bank accounts by default.
 > sticks. Emptying the field instead hands the account back to whatever the bank last
 > said.
 
-## 7. Read a month honestly
+## 8. Read a month honestly
 
 Three quantities are easy to conflate, and the app keeps them apart on purpose:
 
@@ -235,7 +305,7 @@ The budget is **one cap over one household**, always measured against unfiltered
 household-wide spending — never one member's share. Filtering to "Me" changes what you
 are looking at, not what the budget is measured against.
 
-## 8. When it "isn't reading my messages"
+## 9. When it "isn't reading my messages"
 
 **Check sender coverage first, before suspecting the extraction regexes.** Sender
 matching is the first rule in `SmsParser.parse()`, so an unrecognised TRAI header
@@ -253,7 +323,7 @@ adb shell content query --uri content://sms/inbox --projection address
 Compare what comes back against `BankRules.forSender`. If a header is missing, add it
 there — then **Settings ▸ Rescan messages**, which never duplicates.
 
-## 9. Back up, and prove the restore works
+## 10. Back up, and prove the restore works
 
 **Settings ▸ This app ▸ Backup & restore ▸ Back up everything** writes the whole history
 to one JSON file and hands it to the share sheet.
@@ -281,7 +351,7 @@ in this order:
 If step 3 duplicates the history, stop: that is the one outcome that makes the feature
 worse than not having it.
 
-## 10. Verify a UI change on the phone
+## 11. Verify a UI change on the phone
 
 A green build is not verification. Take a screenshot and **look at it**, zoomed in.
 
@@ -298,7 +368,7 @@ release's only new option invisible on the device.
 preferences by accident, including the tracking start date. Screenshot, locate the
 control, *then* tap. Navigating tabs is safe; toggling is not.
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -311,6 +381,9 @@ control, *then* tap. Navigating tabs is safe; toggling is not.
 | Sheet sync says `Unknown action: pullRules` | the sheet runs an older script | redeploy `sheet-sync/Code.gs` |
 | Re-upload "Queued 0" | everything is before the tracking start date | move the date, or accept it |
 | Sync now reports *Sheet* when you expected Bluetooth | shared rules never travel over Bluetooth | expected — only transactions do |
+| An `https://…/fdroid/repo` link opens the browser | that is the repo's own web page, not the client | use the `fdroidrepos://` form — tutorial 5 |
+| F-Droid shows the repo but never the app | the index is signed and fetched, the APK is not committed | `*.apk` is gitignored; `!fdroid/repo/*.apk` is what lets it through |
+| F-Droid offers an update that will not install | the APK was signed with the wrong key | `./tools/fdroid-publish.sh` refuses these; something bypassed it |
 
 ---
 
@@ -454,6 +527,19 @@ Three limits on a feature that downloads and opens an executable:
 
 `apkUrl` is data in the manifest rather than code in the app, so where updates come
 from can change without shipping a build to change it.
+
+**There is now a second channel beside it**, and the two are independent: the F-Droid
+repository in `fdroid/`, described in tutorial 5. It serves the same signed APK, so a
+phone can take an update from either and end up in the same place — no migration, no
+reinstall, nothing to switch off. What F-Droid adds is what a hand-rolled updater does
+not have: a signed index, a version history, and a client that already handles
+background checks and installs.
+
+Both are hosted out of this repository, so both are limited the same way — every
+release adds another ~25 MB APK to git, permanently. The obvious economy is to stop
+committing `release/Ours.apk` and point `apkUrl` at the copy in `fdroid/repo/`. Worth
+doing eventually; not worth doing casually, because `release/` is the channel the phones
+are actually on.
 
 **Developer mode** hides in Settings ▸ About: seven taps on the version, then one on
 the household code — two targets in order, because a single repeated tap is something a

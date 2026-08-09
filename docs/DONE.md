@@ -52,6 +52,8 @@ it is `publishRelease` plus a push, and it has not been done.
 
 - `d3712f8` Money put aside: a third kind of account, and the card-bill test that was missing
 - `39b86b6` 7.5 — the third chip was off the edge of the screen
+- `298c1a1` Docs: working tutorials in the README, and the third account kind in the manual
+- `0552122` An F-Droid repository of our own, on GitHub Pages
 
 A balance now answers one of three things rather than two — available, held, or owed —
 because a fixed deposit is neither of the old answers. Excluded in `affordability()`
@@ -65,6 +67,15 @@ scrolling row that gives no sign it scrolls — the release's only new option, i
 Also lifts `settlesTrackedCard` out of `importParsed`. That rule decides whether paying a
 card bill counts as spending, and until now nothing tested it, because it sat behind Room,
 a parser and a DAO. 486 tests to 502.
+
+The last commit adds a second way onto a phone: an F-Droid repository served from this
+repository's own GitHub Pages, at
+`https://manuelfc1991.github.io/expense-tracker/fdroid/repo`. F-Droid's *own* repository
+was considered and ruled out — it builds from source and signs with F-Droid's key, and an
+APK not signed with `ours-release.jks` cannot install over the live database. Ours serves
+the identical signed binary, so it is an ordinary in-place update. The client on Manuel's
+phone fetched the signed index, verified the fingerprint and listed the app; adding the
+repository is one tap that has not been made yet.
 
 ## 7.4 (76) — 8 Aug 2026
 

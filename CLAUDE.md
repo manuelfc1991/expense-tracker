@@ -66,6 +66,48 @@ Verifying what actually landed in an APK beats trusting the build log:
 aapt2 dump resources app/build/outputs/apk/release/app-release.apk | grep -A6 'color/surface'
 ```
 
+### The F-Droid repo in `fdroid/`
+
+A second channel onto the phones, served from GitHub Pages off this same repository:
+
+```bash
+./tools/fdroid-publish.sh     # after publishRelease; needs fdroidserver on PATH
+git add fdroid && git commit && git push
+```
+
+The whole thing rests on one property: **the APKs it serves are the same signed binaries
+as `release/Ours.apk`, not rebuilds.** That is what makes an F-Droid install an ordinary
+in-place update rather than the uninstall the one rule forbids, and it is exactly what
+F-Droid's *own* repository could not offer — they build from source and sign with their
+key. So the choice is not reversible-by-preference: publishing there would mean the
+household's two phones could never install from it.
+
+`tools/fdroid-publish.sh` pins the release certificate rather than checking that the APK
+is signed at all. Signed is not the property that matters, and both failure modes —
+unsigned, and signed with the wrong key — build cleanly and reach the phones as an update
+they cannot accept.
+
+Three things that are easy to get wrong:
+
+- **`fdroid update` empties `repo/icons/`** and copies the repo icon in from the path
+  `repo_icon` names, relative to `fdroid/`. Writing straight to `repo/icons/icon.png`
+  appears to work and is silently undone on the next run — that is why
+  `tools/fdroid-icon.py` writes `fdroid/icon.png`. The app's own icon comes from
+  `fdroid/metadata/com.manuel.ours/en-US/icon.png`, because the launcher icon is
+  adaptive-only and there is no bitmap in the APK for fdroid to find.
+- **`fdroid update` also writes `repo/status/*.json`**, which describes the *machine*:
+  home directory, distribution, absolute paths to apksigner and keytool. Gitignored. On a
+  private build server that is diagnostics; here it would be published to the open web.
+- **`fdroid/keystore.p12` and `fdroid/config.yml` are gitignored** and absent from a
+  clone, like `ours-release.jks`. Losing the keystore is the worse of the two: a new key
+  has a new fingerprint, and every phone that added the repo pinned the old one, so each
+  has to remove and re-add the repository by hand.
+
+Anti-features are declared honestly in `fdroid/metadata/com.manuel.ours.yml`: `NonFreeNet`
+for the Apps Script transport, `NonFreeDep` for `play-services-nearby`. `License:
+Proprietary` is not a decision, it is what having no `LICENSE` file means — add one and
+change it there first.
+
 ## Design
 
 `design/ours-mockup-v2.html` is the spec; `ui/components/Statement.kt` is that spec in
@@ -254,8 +296,8 @@ emulator -avd <name> -no-window -gpu swiftshader_indirect -no-snapshot
 
 ## What does not arrive with a clone
 
-`ours-release.jks`, `keystore.properties`, `local.properties`. See
-`docs/HANDOVER.md`.
+`ours-release.jks`, `keystore.properties`, `local.properties`, and now
+`fdroid/keystore.p12` with `fdroid/config.yml`. See `docs/HANDOVER.md`.
 
 ## The other documents
 
