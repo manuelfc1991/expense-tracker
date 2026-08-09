@@ -312,4 +312,5 @@ emulator -avd <name> -no-window -gpu swiftshader_indirect -no-snapshot
 | `AT-HOME.md` | what is left that needs the other phone |
 | `docs/REVIEW.md` | what the money model gets wrong, and where the tests are not |
 | `docs/HANDOVER.md` | picking this up on another machine |
+| `docs/FDROID-OFFICIAL.md` | what getting into F-Droid's own repo would cost, and the question to answer first |
 | `design/` | the mockups the screens are built from |
