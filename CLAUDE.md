@@ -253,10 +253,14 @@ inbox on 8 August 2026:
   an ICICI bill looks missing: on 9 August its leg was filed `INCOME`, and with the card
   leg excluded that payment appears in no total at all.
 
-  Its outstanding is still entirely hand-typed. The acknowledgement quotes no balance, so
-  nothing corrects that figure; worse, the payment lands under key `3008` as a credit and
-  the chequebook adjustment in `accountBalances` *raises* what the app thinks is owed. See
-  `docs/REVIEW.md` §3b and `CardDriftTest`.
+  Its outstanding is still entirely hand-typed, and the acknowledgement quotes no balance,
+  so nothing in any message will ever correct that figure. What the acknowledgement *does*
+  do is land under key `3008`, where the chequebook adjustment in `accountBalances` applies
+  it. Note it arrives as a **debit**, not a credit: `DEBIT_VERB` holds `"payment of"` and
+  `detectType` tests it first. That is the same sign a purchase carries, which is why a
+  card's direction is decided by category and not by `TxnType`. See `docs/REVIEW.md` §3b
+  and `CardDriftTest` — and do not "simplify" that to a per-card sign flip, which is wrong
+  for half the traffic and was already tried.
 
 This is why card-bill exclusion is decided **per card** and never per category.
 

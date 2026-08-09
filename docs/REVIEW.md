@@ -147,13 +147,13 @@ Asia/Kolkata and are consistent; the interface is the odd one out.
 
 ---
 
-## 3b. A card's outstanding drifts the wrong way, in both directions
+## 3b. Spending on a card reduces what the app thinks you owe
 
-Added **9 August 2026**, against **7.5 (77)**, after the household paid ₹468.41 onto the
-ICICI card from Kerala Gramin and the Accounts panel did not move the way it should.
+Added and fixed **9 August 2026**, against **7.5 (77)**, after the household paid ₹468.41
+onto the ICICI card and asked why the Accounts panel had not moved.
 
-**Severity: high. The figure is wrong after every card message, and the screen says
-nothing.**
+**Severity: high on any card the app hears purchases from, and the screen says nothing
+either way.**
 
 A typed balance is adjusted by the movements the app has seen since — a chequebook, and a
 good idea. `MonthlyAggregator.accountBalances`:
@@ -163,33 +163,48 @@ rows.filter { it.occurredAt > typed!!.setAt }
     .sumOf { if (it.type == TxnType.DEBIT) -it.amountPaise else it.amountPaise }
 ```
 
-That is written for a bank account, where a debit is money leaving and a credit is money
-arriving. It is applied to **every** key with a typed figure, and a credit card is the one
-kind where both signs mean the opposite:
+That is written for a bank account: a debit is money leaving, a credit is money arriving.
+It was applied to **every** key with a typed figure. A card holds a debt rather than a
+holding, and the trap is that `TxnType` cannot tell its two kinds of traffic apart —
+**both arrive as debits**:
 
-| On a card | Really | What the app does |
+| Message | Really | Old behaviour |
 |---|---|---|
-| a purchase (`DEBIT`) | you owe **more** | subtracts it — owed goes **down** |
-| paying the bill (`CREDIT`) | you owe **less** | adds it — owed goes **up** |
+| `"your SuperCard 2020 debited for INR 72.00"` | you owe **more** | subtracts — **wrong** |
+| `"Payment of Rs 468.41 has been received on your ICICI Bank Credit Card XX3008"` | you owe **less** | subtracts — right, by luck |
+
+The second reads as a debit because `DEBIT_VERB` contains `"payment of"` and `detectType`
+tests it before `CREDIT_VERB`. So the first instinct — mirror the sign for cards — is
+wrong: it fixes the purchases and breaks the settlements. That was written, committed
+(`39518e0`) and reverted within the hour, which is the whole reason both cases are now
+pinned in one test file that says they may not be changed apart.
+
+**The rule that holds:** on a card key, a row reduces the debt when it settles the card —
+`SELF_TRANSFER` (a bill on a *registered* card), `CARD_PAYMENT` (an unregistered one), or
+any credit, which is a refund coming back. Everything else on a card is a purchase and
+adds. The importer has already made that judgement in `settlesTrackedCard`; this just
+reads it. `CardDriftTest` pins five cases.
+
+Live, on the day this was written:
+
+- **ICICI ···3008 read ₹10,063.11**, which is a typed ₹10,531.52 less the ₹468.41 payment.
+  Right to the paise-ish — the household's own figure was ₹10,531.59, so the seven paise
+  are a typo in what was typed, not drift. This card is only ever *settled*, never spent
+  on through SMS, so the broken direction never touched it.
+- **Utkarsh SuperCard read ₹943** against ₹797 of purchases in the preceding three days.
+  That is the broken direction, and it is the card that sends 185 messages a year. Under
+  the fix the same inputs read ₹797 **higher**. Which of the two matches the real card is
+  for the household to check and retype — the fix changes the arithmetic from here on, it
+  does not rewrite a figure already stored.
 
 It is the `isCard`-blindness of `PutAsideTest` and `CardConversionTest` one more time: the
-kind is honoured where the money is *presented* and ignored where it is *computed*.
+kind honoured where the money is *presented* and ignored where it is *computed*.
 
-**Fixed 9 August 2026**, in the same sitting: `accountBalances` negates the adjustment for
-a card key, and the card row now renders the `you said` marker and the `seen since` caption
-that every bank-account row already had. `CardDriftTest` pins both directions.
-
-Live, on the day this was written: the SuperCard read **₹943 owed** against ₹797 of
-purchases in the preceding three days, which is a typed ₹1,740 walking downwards as the
-household spent on it. And the ICICI payment that prompted this raised the outstanding by
-₹468.41 instead of lowering it.
-
-Two things make it invisible rather than merely wrong. The card row renders neither the
-`you said` marker nor the `plus ₹468 seen since` caption that every bank-account row gets
-(`SummaryScreen.kt:1367`), so a drifting typed figure looks like a quoted one. And a card
-bill quotes no balance to correct it: ICICI's acknowledgement is *"Payment of Rs 468.41 has
-been received on your ICICI Bank Credit Card XX3008"* and names no outstanding at all — so
-unlike a bank account, nothing arrives later to overwrite the drift.
+Two things made it invisible rather than merely wrong, and both are fixed. The card row
+rendered neither the `you said` marker nor the `seen since` caption that every
+bank-account row gets, so a drifting typed figure looked like a quoted one. And no card
+bill quotes a balance to correct it: ICICI's acknowledgement names no outstanding at all,
+so unlike a bank account nothing arrives later to overwrite the drift.
 
 ### What it does not fix
 

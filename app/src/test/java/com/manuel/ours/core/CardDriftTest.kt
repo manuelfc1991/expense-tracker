@@ -12,32 +12,42 @@ import com.manuel.ours.domain.model.TxnType
 import org.junit.Test
 
 /**
- * What a card's outstanding does after a payment, and after a purchase.
+ * Which way a card's outstanding moves, per kind of message.
  *
- * `accountBalances` adjusts a **typed** figure by the movements it has seen since — a
- * chequebook, not a reconstruction. That rule is written for a bank account, where a
- * credit is money arriving and a debit is money leaving, and it is applied to every key
- * with a typed figure regardless of kind. A credit card is the one kind where both signs
- * mean the opposite: a purchase is a debit that *increases* what you owe, and paying the
- * bill is a credit that *reduces* it.
+ * `accountBalances` adjusts a **typed** figure by the movements seen since — a chequebook,
+ * not a reconstruction. On a bank account the sign comes from [TxnType] and the category is
+ * irrelevant. On a card neither of those holds, because the figure is a debt and *both*
+ * messages that move it arrive as debits:
  *
- * Unflipped, this walked the SuperCard's outstanding down by every purchase made on it and
- * pushed the ICICI card's up by the ₹468.41 that settled it — a number moving confidently
- * in the wrong direction on both cards at once, with nothing on screen saying it had moved
- * at all. Same family as [PutAsideTest] and [CardConversionTest]: the kind was honoured
- * where the money is presented and ignored where it is computed.
+ * - `"your SuperCard 2020 debited for INR 72.00"` — a purchase, so the debt grows
+ * - `"Payment of Rs 468.41 has been received on your ICICI Bank Credit Card XX3008"` — a
+ *   settlement, so the debt shrinks; it reads as a debit only because `DEBIT_VERB` holds
+ *   "payment of" and is tested before `CREDIT_VERB`
+ *
+ * So a card can take neither the bank-account rule nor its mirror image: one sign is right
+ * for purchases and the other for settlements. Flipping the lot was the first attempt and
+ * would have pushed the ICICI payment the wrong way in order to fix the SuperCard — which
+ * is why both cases are pinned here together, and why neither may be changed alone.
+ *
+ * Same family as [PutAsideTest] and [CardConversionTest]: the kind honoured where the money
+ * is presented and ignored where it is computed.
  */
 class CardDriftTest {
 
     private val typedAt = 1_000L
 
-    private fun row(id: String, type: TxnType, paise: Long, at: Long) = Transaction(
+    private fun row(
+        id: String,
+        type: TxnType,
+        paise: Long,
+        category: Category,
+    ) = Transaction(
         id = id,
         amountPaise = paise,
         type = type,
-        merchant = "ICICI Bank Credit Card",
-        category = Category.SELF_TRANSFER,
-        occurredAt = at,
+        merchant = "Card",
+        category = category,
+        occurredAt = typedAt + 1,
         accountTail = "3008",
         bank = "ICICI Bank",
         ownerUid = "manuel",
@@ -47,26 +57,52 @@ class CardDriftTest {
         balancePaise = null,
     )
 
-    private fun owedAfter(rows: List<Transaction>): Long? =
+    /** Outstanding on a card typed at ₹10,531.59, after the given movements. */
+    private fun owedAfter(vararg rows: Transaction): Long? =
         MonthlyAggregator.accountBalances(
-            transactions = rows,
-            manual = mapOf("3008" to ManualBalance(10_000_00L, typedAt, "ICICI Bank", "manuel")),
+            transactions = rows.toList(),
+            manual = mapOf("3008" to ManualBalance(10_531_59L, typedAt, "ICICI Bank", "manuel")),
             cards = mapOf("3008" to CardInfo(11_000_00L, 30)),
         ).single { it.isCard }.balancePaise
 
-    /** Paying the bill: the issuer's acknowledgement is a credit on the card. */
+    /**
+     * The live case. Paid through CRED: ₹468.41 reached the card, of which ₹43 was points,
+     * so only ₹425.41 left the bank. The card leg is the one that settles the card.
+     */
     @Test
-    fun `a payment onto the card moves the outstanding`() {
-        val owed = owedAfter(listOf(row("pay", TxnType.CREDIT, 468_41L, typedAt + 1)))
-        // Paying ₹468.41 off a ₹10,000 card leaves ₹9,531.59 owed.
-        assertThat(owed).isEqualTo(9_531_59L)
+    fun `a bill payment reduces what is owed`() {
+        val owed = owedAfter(row("pay", TxnType.DEBIT, 468_41L, Category.SELF_TRANSFER))
+        assertThat(owed).isEqualTo(10_063_18L)
     }
 
-    /** A purchase on the card, which genuinely increases the debt. */
+    /** An unregistered card's bill is filed `CARD_PAYMENT` and settles just the same. */
     @Test
-    fun `a purchase on the card moves the outstanding`() {
-        val owed = owedAfter(listOf(row("buy", TxnType.DEBIT, 797_00L, typedAt + 1)))
-        // Spending ₹797 on a ₹10,000 card leaves ₹10,797 owed.
-        assertThat(owed).isEqualTo(10_797_00L)
+    fun `a card payment on an unregistered card reduces what is owed`() {
+        val owed = owedAfter(row("pay", TxnType.DEBIT, 468_41L, Category.CARD_PAYMENT))
+        assertThat(owed).isEqualTo(10_063_18L)
+    }
+
+    /** A purchase is the other direction, and arrives as a debit exactly like the bill. */
+    @Test
+    fun `a purchase increases what is owed`() {
+        val owed = owedAfter(row("buy", TxnType.DEBIT, 797_00L, Category.FOOD))
+        assertThat(owed).isEqualTo(11_328_59L)
+    }
+
+    /** Money credited back to the card — a refund — reduces the debt. */
+    @Test
+    fun `a refund credited to the card reduces what is owed`() {
+        val owed = owedAfter(row("ref", TxnType.CREDIT, 500_00L, Category.INCOME))
+        assertThat(owed).isEqualTo(10_031_59L)
+    }
+
+    /** The two together, which is what a real month on a card looks like. */
+    @Test
+    fun `purchases and a settlement net out`() {
+        val owed = owedAfter(
+            row("buy", TxnType.DEBIT, 797_00L, Category.FOOD),
+            row("pay", TxnType.DEBIT, 468_41L, Category.SELF_TRANSFER),
+        )
+        assertThat(owed).isEqualTo(10_860_18L)
     }
 }

@@ -242,20 +242,41 @@ object MonthlyAggregator {
             // from something a person or a bank asserted.
             //
             // Raw amounts, not `netSpent`: a refund is its own credit row in the ledger
-            // and adding it there too would count it twice. Category is irrelevant — a
-            // self-transfer still leaves the account.
+            // and adding it there too would count it twice. On a bank account the
+            // category is irrelevant — a self-transfer still leaves the account.
             //
-            // A card is the one kind where both signs mean the opposite, because the
-            // figure it carries is a debt rather than a holding. A purchase is a debit
-            // that *increases* what you owe; paying the bill is a credit that reduces it.
-            // Unflipped, this walked the SuperCard's outstanding down by every purchase
-            // and pushed the ICICI card's up by the ₹468.41 that settled it — the number
-            // moving confidently in the wrong direction on both cards at once.
+            // On a **card** it is the only thing that answers the question, and
+            // `TxnType` cannot. The figure a card carries is a debt, and both of the
+            // messages that move it arrive as debits:
+            //
+            //   "your SuperCard 2020 debited for INR 72.00"        purchase → owe more
+            //   "Payment of Rs 468.41 has been received on your
+            //    ICICI Bank Credit Card XX3008"                    payment  → owe less
+            //
+            // The second reads as a debit because `DEBIT_VERB` contains "payment of" and
+            // is tested before `CREDIT_VERB`. So a card cannot take the bank-account rule
+            // and cannot take its mirror image either: one sign is right for purchases
+            // and the other for settlements, and taking either wholesale is wrong for
+            // half the traffic. Flipping the lot was tried first and would have pushed
+            // the ICICI payment the wrong way to fix the SuperCard purchases.
+            //
+            // What separates them is what the message *is*, which the importer has
+            // already decided: `settlesTrackedCard` files a bill paying off a registered
+            // card as `SELF_TRANSFER`, and an unregistered one as `CARD_PAYMENT`. Those
+            // reduce the debt. A refund credited back to the card reduces it too.
+            // Everything else on a card is a purchase, and adds.
             val owedNotHeld = cards.containsKey(key)
             val movedSincePaise = if (useTyped) {
-                val net = rows.filter { it.occurredAt > typed!!.setAt }
-                    .sumOf { if (it.type == TxnType.DEBIT) -it.amountPaise else it.amountPaise }
-                if (owedNotHeld) -net else net
+                rows.filter { it.occurredAt > typed!!.setAt }.sumOf { row ->
+                    if (owedNotHeld) {
+                        val settles = row.type == TxnType.CREDIT ||
+                            row.category == Category.SELF_TRANSFER ||
+                            row.category == Category.CARD_PAYMENT
+                        if (settles) -row.amountPaise else row.amountPaise
+                    } else {
+                        if (row.type == TxnType.DEBIT) -row.amountPaise else row.amountPaise
+                    }
+                }
             } else 0L
 
             AccountBalance(
