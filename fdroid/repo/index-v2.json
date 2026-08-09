@@ -14,7 +14,7 @@
       }
     },
     "address": "https://manuelfc1991.github.io/expense-tracker/fdroid/repo",
-    "timestamp": 1786268958000,
+    "timestamp": 1786270766000,
     "categories": {
       "Money": {
         "name": {
@@ -167,6 +167,9 @@
           "antiFeatures": {
             "NonFreeDep": {},
             "NonFreeNet": {}
+          },
+          "whatsNew": {
+            "en-US": "Money put aside is now its own kind of account.\n\nA balance used to mean one of two things: money you can spend, or money you owe on a card. A fixed deposit is neither — it is yours, and you cannot spend it. Counting it as spendable invites spending money that is locked up; leaving it off the screen pretends you do not own it. It now has its own total, shown but never added to what is safe to spend.\n\nAlso: the card-bill rule that stops a credit-card payment being counted twice is now covered by t"
           }
         }
       }

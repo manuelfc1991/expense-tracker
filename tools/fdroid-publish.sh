@@ -77,6 +77,30 @@ else
   echo "  Added $target"
 fi
 
+# --- keep the metadata's idea of "current" in step with the APK --------------------
+#
+# `fdroid update` attaches changelogs/<n>.txt to a release only when n equals
+# CurrentVersionCode. Leave that to be remembered by hand and the failure is silent: the
+# changelog is written, committed and published, and simply never appears. So it is
+# derived here rather than maintained.
+
+meta="$FDROID_DIR/metadata/com.manuel.ours.yml"
+sed -i "s/^CurrentVersion: .*/CurrentVersion: \"$name\"/" "$meta"
+sed -i "s/^CurrentVersionCode: .*/CurrentVersionCode: $code/" "$meta"
+
+# The Builds list has to gain this release too, and has to end with it: index-v2 attaches
+# the changelog to the *last* entry only. Appended rather than hand-maintained for the
+# same reason as above — forgetting is silent. Builds is deliberately the final key in the
+# file so that appending two lines is a valid edit.
+if ! grep -q "^    versionCode: $code\$" "$meta"; then
+  printf '  - versionName: "%s"\n    versionCode: %s\n' "$name" "$code" >> "$meta"
+  echo "  Recorded $name ($code) in $meta"
+fi
+
+changelog="$FDROID_DIR/metadata/com.manuel.ours/en-US/changelogs/$code.txt"
+[[ -f "$changelog" ]] || echo "
+  No $changelog — this release will show no 'What's New'. Write one and re-run."
+
 # Has to run inside fdroid/, which is where config.yml and the keystore are found.
 # `--pretty` keeps index-v2.json diffable, which matters because it is committed.
 #

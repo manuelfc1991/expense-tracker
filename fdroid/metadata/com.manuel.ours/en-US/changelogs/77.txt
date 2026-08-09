@@ -1,0 +1,5 @@
+Money put aside is now its own kind of account.
+
+A balance used to mean one of two things: money you can spend, or money you owe on a card. A fixed deposit is neither — it is yours, and you cannot spend it. Counting it as spendable invites spending money that is locked up; leaving it off the screen pretends you do not own it. It now has its own total, shown but never added to what is safe to spend.
+
+Also: the card-bill rule that stops a credit-card payment being counted twice is now covered by tests, and the account-kind chooser no longer runs off the edge of the screen.

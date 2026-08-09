@@ -46,3 +46,22 @@ Repo: https://github.com/manuelfc1991/expense-tracker.git
 
 AutoUpdateMode: None
 UpdateCheckMode: None
+
+# Rewritten by tools/fdroid-publish.sh from the APK on every publish, so it is never
+# edited by hand. It is not decoration: `fdroid update` attaches a changelog to a release
+# only when its filename matches CurrentVersionCode, so a stale value here means
+# `changelogs/78.txt` is written, committed, published — and silently never shown.
+CurrentVersion: "7.5"
+CurrentVersionCode: 77
+
+# One entry per published release, newest last, and no build recipe in them — this repo
+# ships binaries, it does not build from source.
+#
+# They are here for one reason. In index-v2, which is the format a current F-Droid client
+# actually reads, a changelog is attached to a release only if the app has Builds and the
+# release is the last of them (fdroidserver index.py). No Builds, no "What's New" — and
+# nothing warns, because index-v1 carries the changelog perfectly well and index-v1 is
+# what you would look at to check.
+Builds:
+  - versionName: "7.5"
+    versionCode: 77
