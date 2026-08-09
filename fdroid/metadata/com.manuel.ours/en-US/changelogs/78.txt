@@ -1,0 +1,5 @@
+Spending on a credit card was being subtracted from what the app said you owed, rather than added to it. Both a purchase and a bill payment arrive from the bank as a debit, and only the purchase was going the wrong way — so the more a card was used, the smaller its outstanding looked.
+
+Card rows now say where their figure came from, the same way bank accounts already did: amber "you said" when somebody typed it, and a line for anything the app has applied since. A card's outstanding is often the one number nobody's bank stands behind.
+
+Your stored figures are not rewritten. Check a card you spend on and retype it once.

@@ -51,8 +51,8 @@ UpdateCheckMode: None
 # edited by hand. It is not decoration: `fdroid update` attaches a changelog to a release
 # only when its filename matches CurrentVersionCode, so a stale value here means
 # `changelogs/78.txt` is written, committed, published — and silently never shown.
-CurrentVersion: "7.5"
-CurrentVersionCode: 77
+CurrentVersion: "7.6"
+CurrentVersionCode: 78
 
 # One entry per published release, newest last, and no build recipe in them — this repo
 # ships binaries, it does not build from source.
@@ -65,3 +65,5 @@ CurrentVersionCode: 77
 Builds:
   - versionName: "7.5"
     versionCode: 77
+  - versionName: "7.6"
+    versionCode: 78

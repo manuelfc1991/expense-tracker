@@ -1,7 +1,7 @@
 {
-  "versionCode": 76,
-  "versionName": "7.4",
-  "notes": "One row of category filters in landscape, two in portrait.",
+  "versionCode": 78,
+  "versionName": "7.6",
+  "notes": "Spending on a card no longer reduces what the app says you owe, and card rows now show whose figure it is",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25584650
 }
