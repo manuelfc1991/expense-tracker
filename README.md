@@ -27,7 +27,7 @@ fingerprint. Bluetooth is encrypted end to end and involves no third party at al
 
 ```bash
 ./gradlew assembleDebug            # app/build/outputs/apk/debug/app-debug.apk
-./gradlew :app:testReleaseUnitTest # 502 tests
+./gradlew :app:testReleaseUnitTest # 600 tests (25 skipped — see below)
 ```
 
 Kotlin · Jetpack Compose · Material 3 · Room · Hilt · WorkManager · minSdk 26

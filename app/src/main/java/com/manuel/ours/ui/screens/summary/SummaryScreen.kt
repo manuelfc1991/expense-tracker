@@ -1187,7 +1187,10 @@ private fun LedgerLine(
  * showing it blank is what makes it obvious it can be filled in.
  */
 @Composable
-private fun WhatsLeft(
+// Internal so `AccountsPanelTest` can reach it. This panel is where the three kinds of money
+// are told apart on screen, and getting that partition wrong is how a debt was once presented
+// as spendable — worth a test that does not need a phone in hand.
+internal fun WhatsLeft(
     balances: List<AccountBalance>,
     /** This phone's member, so their accounts head the list. */
     selfUid: String,

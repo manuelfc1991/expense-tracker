@@ -145,6 +145,19 @@ dependencies {
     // Robolectric needs a real Context to build an in-memory Room database.
     testImplementation("androidx.test:core-ktx:1.6.1")
 
+    // Compose UI tests on the JVM, under Robolectric.
+    //
+    // These artifacts were declared for `androidTest` only, where nothing ever used them:
+    // the instrumented source set is empty, so 17,000 lines of screen code had no test of
+    // any kind. Instrumented tests need a device or emulator attached, which is why they
+    // never got written — running them in the unit-test source set removes that excuse and
+    // makes them part of `testReleaseUnitTest` like everything else.
+    //
+    // `isIncludeAndroidResources` is already true above, which is the setting this needs.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.compose.ui.test.manifest)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

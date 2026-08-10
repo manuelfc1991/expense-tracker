@@ -51,9 +51,21 @@ when it was not.
 
 ```bash
 ./gradlew :app:assembleRelease                 # build
-./gradlew :app:testReleaseUnitTest             # 502 tests, all should pass
+./gradlew :app:testReleaseUnitTest             # 600 tests, 25 skipped, none failing
+./gradlew :app:testDebugUnitTest               # the same 600, with the 23 UI tests running
 ./gradlew :app:publishRelease -PreleaseNotes="one line, shown in the update prompt"
 ```
+
+**The UI tests only run under `testDebugUnitTest`.** Compose needs a host activity, which only
+`ui-test-manifest` declares, and that is a debug dependency — a release APK has no business
+shipping a test activity. So they *skip* under the release suite, which is why its skip count is
+25 rather than 2. Skipped rather than failing, deliberately: a test that always fails in the
+suite a release is gated on gets read as noise and deleted.
+
+Getting that skip to work took a rule rather than an `@Before`, because a JUnit `@Rule` wraps
+`@Before` too — `createComposeRule()` had already launched its activity and thrown before any
+assumption could run. The debug suite was green and the release suite had 23 failures, and the
+two disagreeing was the only sign. See `ui/ComposeOnDebugOnly.kt`.
 
 `publishRelease` copies the signed APK and a manifest into `release/`, both committed,
 so **`git push` is the whole release process**. The phones read

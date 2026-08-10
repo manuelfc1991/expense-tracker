@@ -92,6 +92,40 @@ fun MoveMoneySheet(
     ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Ours.surface,
+    ) {
+        MoveMoneyForm(accounts = accounts, onDismiss = onDismiss, onConfirm = onConfirm)
+    }
+}
+
+/**
+ * The sheet's contents, without the sheet.
+ *
+ * Separated so it can be tested. [MoveMoneySheet] focuses the amount field the moment it opens,
+ * and a `ModalBottomSheet` composes its body into a window of its own — under Robolectric the
+ * focus request fires before that body is attached and throws, so every rule this form enforces
+ * was unreachable from a test and had to be checked by tapping a real phone.
+ *
+ * The wrapper above is now thin enough to have nothing worth testing, which is the point: the
+ * decisions all live here.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun MoveMoneyForm(
+    accounts: List<AccountBalance>,
+    onDismiss: () -> Unit,
+    onConfirm: (
+        from: MoveSide,
+        to: MoveSide,
+        amountOutPaise: Long,
+        amountInPaise: Long,
+        occurredAt: Long,
+        note: String,
+    ) -> Unit,
+) {
     var amountText by rememberSaveable { mutableStateOf("") }
     var reachedText by rememberSaveable { mutableStateOf("") }
     var note by rememberSaveable { mutableStateOf("") }
@@ -132,12 +166,7 @@ fun MoveMoneySheet(
         )
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Ours.surface,
-    ) {
-        Column(
+    Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
@@ -303,7 +332,6 @@ fun MoveMoneySheet(
                 )
             }
         }
-    }
 }
 
 /**
