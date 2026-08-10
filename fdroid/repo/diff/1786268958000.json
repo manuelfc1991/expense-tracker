@@ -1,11 +1,11 @@
 {
   "repo": {
-    "timestamp": 1786294169000
+    "timestamp": 1786341129000
   },
   "packages": {
     "com.manuel.ours": {
       "metadata": {
-        "lastUpdated": 1786294094000,
+        "lastUpdated": 1786341126000,
         "license": "GPL-3.0-only",
         "screenshots": {
           "phone": {
@@ -45,6 +45,124 @@
         }
       },
       "versions": {
+        "6f9cfe826a328a86375f3d67469e7d66c9893ca0f0fae6c9b65d15d35cc9d5df": {
+          "added": 1786341126000,
+          "file": {
+            "name": "/com.manuel.ours_79.apk",
+            "sha256": "6f9cfe826a328a86375f3d67469e7d66c9893ca0f0fae6c9b65d15d35cc9d5df",
+            "size": 25601034
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "7.7",
+            "versionCode": 79,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 34
+            },
+            "signer": {
+              "sha256": [
+                "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.RECEIVE_SMS"
+              },
+              {
+                "name": "android.permission.READ_SMS"
+              },
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.POST_NOTIFICATIONS"
+              },
+              {
+                "name": "android.permission.SYSTEM_ALERT_WINDOW"
+              },
+              {
+                "name": "android.permission.REQUEST_INSTALL_PACKAGES"
+              },
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.CAMERA"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+              },
+              {
+                "name": "android.permission.BLUETOOTH",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADMIN",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_COARSE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_FINE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_SCAN"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADVERTISE"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_CONNECT"
+              },
+              {
+                "name": "android.permission.NEARBY_WIFI_DEVICES"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "android.permission.WAKE_LOCK"
+              },
+              {
+                "name": "android.permission.RECEIVE_BOOT_COMPLETED"
+              },
+              {
+                "name": "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          },
+          "antiFeatures": {
+            "NonFreeDep": {},
+            "NonFreeNet": {}
+          },
+          "whatsNew": {
+            "en-US": "Money moved between your own accounts can now be recorded as what it is. Open the add sheet and tap \"Between my accounts\": say where it came out of and where it went into, and both sides are written and linked. Nothing about it counts as spending, and nothing counts as income.\n\nThis matters most for money sent to an account no bank texts this phone about. Until now the app saw the payment leaving and nothing arriving, so it filed the whole amount as spending that never happened.\n\nSettling a card"
+          }
+        },
         "be08633220b46fd0d9423989fcae9832b780f2f6854bbc883d2736467136fcbb": {
           "added": 1786294094000,
           "file": {

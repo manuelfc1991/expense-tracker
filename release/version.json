@@ -1,7 +1,7 @@
 {
-  "versionCode": 78,
-  "versionName": "7.6",
-  "notes": "Spending on a card no longer reduces what the app says you owe, and card rows now show whose figure it is",
+  "versionCode": 79,
+  "versionName": "7.7",
+  "notes": "Money moved between your own accounts can be recorded as a move, so a transfer stops counting as spending",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25584650
+  "sizeBytes": 25601034
 }

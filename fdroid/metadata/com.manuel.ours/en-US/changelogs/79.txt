@@ -1,0 +1,7 @@
+Money moved between your own accounts can now be recorded as what it is. Open the add sheet and tap "Between my accounts": say where it came out of and where it went into, and both sides are written and linked. Nothing about it counts as spending, and nothing counts as income.
+
+This matters most for money sent to an account no bank texts this phone about. Until now the app saw the payment leaving and nothing arriving, so it filed the whole amount as spending that never happened.
+
+Settling a card bill through a rewards app takes two figures, because there are two: what left the bank, and the larger amount that reached the card. Both are recorded against the account each actually moved on. The difference is not stored anywhere — it is neither spending nor income, and any total holding it would be wrong.
+
+If the bank has already texted about one side, that message is relabelled rather than copied, so a transfer is never counted twice. Deleting either half removes both.
