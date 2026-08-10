@@ -768,6 +768,12 @@ class TransactionRepository @Inject constructor(
         val out = findMoveLeg(amountOutPaise, fromKey, occurredAt, null) {
             it.type == TxnType.DEBIT.name
         }
+        // Excluding the row already taken is belt-and-braces *here*: the two ends are refused
+        // above unless their keys differ, and a row has one key, so nothing found for `from`
+        // can be found for `to`. It is passed anyway because `adoptableLeg` is the general
+        // rule and the guard is real there — mutation testing found this branch unreachable
+        // through this call, which is worth stating rather than leaving as an assumption
+        // somebody later re-derives after allowing same-key moves.
         val arrival = findMoveLeg(amountInPaise, toKey, occurredAt, out?.id) {
             // On a card, an arrival is a debit as often as not — see the class note. Anywhere
             // else, only a credit can be money coming in, and adopting a debit there would
