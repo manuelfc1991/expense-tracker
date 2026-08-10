@@ -297,9 +297,19 @@ class TransactionRepository @Inject constructor(
      * screen nobody gave it.
      */
     private suspend fun adoptKnownCard(parsed: SmsParser.ParsedTxn) {
-        if (!BankRules.isCardBank(parsed.bank)) return
         val key = parsed.accountTail?.takeIf(String::isNotBlank) ?: parsed.bank
         if (key.isBlank()) return
+        // Two ways to know, because the sender alone was not enough. The household's own
+        // ICICI card texts from a header that maps to "ICICI Bank", so `isCardBank` says no
+        // and the card spent its life in "What is left" as spendable money. The message says
+        // what the sender will not — see `BankRules.namesCreditCard`.
+        //
+        // The text test is keyed to *this row's* account, so a message naming a card can only
+        // adopt that card, never whatever account the row happens to be filed under.
+        val known = BankRules.isCardBank(parsed.bank) ||
+            (parsed.accountTail?.takeIf(String::isNotBlank) != null &&
+                BankRules.namesCreditCard(parsed.rawBody, parsed.accountTail))
+        if (!known) return
         val existing = sharedRuleDao.all()
             .any { it.type == RulesRepository.TYPE_CARD && it.ruleKey == key }
         if (existing) return
@@ -717,10 +727,10 @@ class TransactionRepository @Inject constructor(
      * amount to the paise, on that account, within a day either side, on a row not already part
      * of another move; the nearest in time wins.
      *
-     * An adopted row keeps its own amount, its own type and its `rawSms`. Only what the household
-     * has now *said* about it changes: the category, the statement line, and the link. Overwriting
-     * the bank's own figures with a person's would be inventing a fact, and the bank's copy is the
-     * one worth keeping.
+     * An adopted row keeps its own **amount** and its `rawSms`. Overwriting the bank's own figures
+     * with a person's would be inventing a fact, and the bank's copy is the one worth keeping.
+     * What changes is only what the household has now stated: the category, the statement line,
+     * the link, and the **direction**.
      *
      * ## Two amounts, and why the difference has no name
      *
@@ -734,13 +744,18 @@ class TransactionRepository @Inject constructor(
      * to would be wrong. Naming it would create an entry that has to be excluded from everything,
      * which is a liability with no reader. The two amounts already say it.
      *
-     * ## Direction is not [TxnType]
+     * ## Direction comes from the statement, not from a verb
      *
-     * The arriving leg is written as a credit, but an *adopted* arriving leg keeps whatever the
-     * issuer's message parsed as — and on a card that is a debit, because `DEBIT_VERB` holds
-     * "payment of" and is tested first. `accountBalances` settles a card on category rather than
-     * on type for exactly this reason, so the adopted row moves the outstanding the right way
-     * without being rewritten. See `CardDriftTest`.
+     * Both legs are written with the direction the move says they have, adopted rows included.
+     * A card issuer's acknowledgement parses as a *debit* — `DEBIT_VERB` holds "payment of" and
+     * is tested before `CREDIT_VERB` — and leaving it that way made the arriving leg count as
+     * money leaving the household in `totalDebited`.
+     *
+     * This is safe in both directions. `accountBalances` settles a card on **category**, so the
+     * outstanding moved correctly before this change and moves correctly after it; `CardDriftTest`
+     * pins that independently and must keep passing whichever type such a row carries. And a
+     * rescan still recognises the message: a card bill is deduped by `isCardBillEcho`, which
+     * compares amount and day and never looks at direction.
      *
      * @return false if the two ends are the same account, either is unidentifiable, or either
      *   amount is not positive. None of those is a move, and none should be stored as one.
@@ -800,6 +815,20 @@ class TransactionRepository @Inject constructor(
                         category = Category.SELF_TRANSFER.name,
                         merchant = line,
                         transferPeerId = peerId,
+                        // The direction the household has just stated, which outranks what a
+                        // verb implied. "Payment of Rs 468.41 has been received on your Credit
+                        // Card" parses as a *debit* only because `DEBIT_VERB` holds "payment
+                        // of" — and left at that, the arriving leg counted as money leaving the
+                        // household, so "left our accounts" read ₹1,143.82 for a ₹425.41
+                        // payment. Worse, it read differently depending on whether the card had
+                        // texted at all: an arrival nobody messaged about is written as a credit
+                        // and counted correctly. One move, two answers.
+                        //
+                        // The amount and `rawSms` are still the bank's and are never touched.
+                        // The type is not a figure the bank quoted, it is the parser's reading
+                        // of a verb, and the person saying "this was a move into that card" is
+                        // the better authority on which way it went.
+                        type = type.name,
                         // A row that was flagged for review has just been explained.
                         needsReview = false,
                         // The household's own note outranks nothing — an existing one was

@@ -17,6 +17,7 @@ import com.manuel.ours.domain.model.MoveSide
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.TxnSource
 import com.manuel.ours.domain.model.TxnType
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -77,9 +78,14 @@ class MoveMoneyRepositoryTest {
             prefs = prefs,
             clock = LamportClock(),
         )
-        // The ICICI card, registered as the household has it registered.
-        repo.setCard("3008", 11_000_00L, 30)
+        // Deliberately *not* registering the ICICI card here. A `setCard` in setUp would
+        // have to be undone by the adoption test below, and undoing it writes a tombstone —
+        // which `adoptKnownCard` then honours by refusing to re-adopt, exactly as it should.
+        // Each test that needs the card says so.
     }
+
+    /** The ICICI card as the household has it registered. */
+    private fun registerCard() = runBlocking { repo.setCard("3008", 11_000_00L, 30) }
 
     @After
     fun tearDown() = db.close()
@@ -229,6 +235,10 @@ class MoveMoneyRepositoryTest {
      */
     @Test
     fun `when both messages already arrived the move writes no new rows`() {
+        // The card has to be known for its acknowledgement to be adoptable: on a card an
+        // arrival may be a debit, and that licence is confined to cards. Seeded rows bypass
+        // the importer, so nothing here registers it on the way past.
+        registerCard()
         seed("bank", 5_000_00L, TxnType.DEBIT, "3062", "Kerala Gramin Bank")
         // Date-only, so it landed at midnight — most of a day from the payment it echoes.
         seed(
@@ -245,14 +255,46 @@ class MoveMoneyRepositoryTest {
     }
 
     /**
-     * The card's acknowledgement keeps its debit, and must.
+     * The card's acknowledgement becomes a credit, because that is what it is.
      *
-     * "Payment of Rs …" parses as a debit because `DEBIT_VERB` holds "payment of". Rewriting it
-     * to a credit to make the arrow look right would be inventing a fact; `accountBalances`
-     * settles a card on category instead, which is what `CardDriftTest` pins.
+     * "Payment of Rs …" parses as a *debit* only because `DEBIT_VERB` holds "payment of" and is
+     * tested first. Left that way, the arriving leg was money leaving the household as far as
+     * `totalDebited` was concerned — see the test below. The amount and the original message are
+     * still the bank's and are not touched; the direction is the household's statement.
      */
     @Test
-    fun `an adopted card acknowledgement stays a debit`() {
+    fun `an adopted card acknowledgement is turned the way the move says`() {
+        registerCard()
+        seed(
+            "ack", 468_41L, TxnType.DEBIT, "3008", "ICICI Bank",
+            occurredAt = at - 19 * 60 * 60 * 1000L, category = Category.CARD_PAYMENT,
+            raw = "Payment of Rs 468.41 has been received on your Credit Card XX3008",
+        )
+
+        move(kgb, icici, out = 425_41L, into = 468_41L)
+
+        val ack = live().first { it.id == "ack" }
+        assertThat(ack.type).isEqualTo(TxnType.CREDIT.name)
+        assertThat(ack.category).isEqualTo(Category.SELF_TRANSFER.name)
+        // The bank's own figures, untouched.
+        assertThat(ack.amountPaise).isEqualTo(468_41L)
+        assertThat(ack.rawSms).isEqualTo(
+            "Payment of Rs 468.41 has been received on your Credit Card XX3008"
+        )
+    }
+
+    /**
+     * Only what actually left the household is counted as having left it.
+     *
+     * `totalDebited` is the "left our accounts" line, and it sums debits. With the adopted card
+     * leg still a debit it read ₹893.82 for a ₹425.41 payment — and, worse, it read differently
+     * depending on whether the card had texted at all, because an arrival nobody messaged about
+     * is written as a credit. One move, two answers, decided by something the household cannot
+     * see.
+     */
+    @Test
+    fun `an adopted card leg is not counted as money leaving the accounts`() {
+        registerCard()
         seed(
             "ack", 468_41L, TxnType.DEBIT, "3008", "ICICI Bank",
             occurredAt = at - 19 * 60 * 60 * 1000L, category = Category.CARD_PAYMENT,
@@ -260,10 +302,20 @@ class MoveMoneyRepositoryTest {
 
         move(kgb, icici, out = 425_41L, into = 468_41L)
 
-        val ack = live().first { it.id == "ack" }
-        assertThat(ack.type).isEqualTo(TxnType.DEBIT.name)
-        assertThat(ack.category).isEqualTo(Category.SELF_TRANSFER.name)
-        assertThat(ack.amountPaise).isEqualTo(468_41L)
+        assertThat(MonthlyAggregator.totalDebited(live().map { it.toDomain() }))
+            .isEqualTo(425_41L)
+    }
+
+    /**
+     * And the same move reports the same figure whether or not the card sent anything — which
+     * is the property that was actually broken.
+     */
+    @Test
+    fun `left our accounts does not depend on whether the card texted`() {
+        move(kgb, icici, out = 425_41L, into = 468_41L)
+        val withoutAck = MonthlyAggregator.totalDebited(live().map { it.toDomain() })
+
+        assertThat(withoutAck).isEqualTo(425_41L)
     }
 
     /**
@@ -558,6 +610,43 @@ class MoveMoneyRepositoryTest {
             assertThat(repo.ingestParsed(parsed)).isNull()
             assertThat(live()).hasSize(2)
         }
+
+    // ── Recognising the card from the message ─────────────────────────────────────────
+
+    /**
+     * The whole point of reading the text: an ICICI acknowledgement, imported normally, files
+     * ···3008 as a **card** without anybody registering it.
+     *
+     * Measured failing on a clean emulator before this — the card landed in *What is left*, its
+     * debt counted as spendable. The real phone was only right because it had been set by hand,
+     * so a restore or a new device would have started wrong.
+     */
+    @Test
+    fun `an ICICI acknowledgement files its card without anyone registering it`() = runBlocking {
+        assertThat(repo.observeCards().first()).doesNotContainKey("3008")
+
+        val body = "Payment of Rs 468.41 has been received on your ICICI Bank Credit Card " +
+            "XX3008 through Bharat Bill Payment System."
+        val result = SmsParser().parse("VM-ICICIT", body, 1_782_000_000_000L)
+        assertThat(result).isInstanceOf(SmsParser.Result.Expense::class.java)
+        repo.ingestParsed((result as SmsParser.Result.Expense).txn)
+
+        assertThat(repo.observeCards().first()).containsKey("3008")
+    }
+
+    /**
+     * And an ordinary bank debit still files an ordinary account. The eager direction is the
+     * one that costs money: a bank balance reported as debt.
+     */
+    @Test
+    fun `an ordinary bank debit does not become a card`() = runBlocking {
+        val body = "Debited Rs 5000 from a/c XX4657 on 02JUL2026 07:20:07.Bal Rs 3572.55. " +
+            "-Federal Bank"
+        val result = SmsParser().parse("AD-FEDBNK", body, 1_782_000_000_000L)
+        repo.ingestParsed((result as SmsParser.Result.Expense).txn)
+
+        assertThat(repo.observeCards().first()).doesNotContainKey("4657")
+    }
 
     // ── Dates ─────────────────────────────────────────────────────────────────────────
 

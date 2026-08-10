@@ -1,7 +1,7 @@
 {
-  "versionCode": 79,
-  "versionName": "7.7",
-  "notes": "Money moved between your own accounts can be recorded as a move, so a transfer stops counting as spending",
+  "versionCode": 80,
+  "versionName": "7.8",
+  "notes": "A credit card is recognised from what its message says, so a card is no longer counted as money you can spend",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 25601034
 }

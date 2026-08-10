@@ -263,13 +263,18 @@ fun MoveMoneySheet(
             // rows this creates are the app's answer to a question nobody can check later,
             // so the sheet says the answer before it is stored rather than after.
             if (from != null && to != null && out != null && out > 0) {
+                // Two lines, because one could not hold it. Two account names joined by an
+                // arrow is most of a phone's width before the amounts start, and on a real
+                // card payment this read "FEDERAL BANK ···4657 → ICICI BANK ···3008 · ₹42…" —
+                // truncated exactly where the second figure, the whole point of the field
+                // above, would have been.
+                MicroLabel("${from.moveLabel()} → ${to.moveLabel()}")
                 MicroLabel(
                     buildString {
-                        append("${from.moveLabel()} → ${to.moveLabel()}")
                         if (reached != null && reached != out) {
-                            append(" · ${Money.whole(out)} out, ${Money.whole(reached)} in")
+                            append("${Money.whole(out)} out, ${Money.whole(reached)} in · ")
                         }
-                        append(" · not spending")
+                        append("not spending")
                     },
                 )
             }

@@ -174,9 +174,12 @@ Four things about it are load-bearing:
   never duplicated — the SMS lands in seconds and the person says what it was afterwards. The
   rule is `adoptableLeg`, pure and in the companion for the same reason `categoryForKind` is.
   Too eager relabels an unrelated payment of the same size; too shy doubles the money.
-- **An adopted row keeps its own amount and type.** A card's acknowledgement parses as a *debit*,
-  so the arriving leg is not rewritten to a credit — `accountBalances` settles a card on category,
-  which is what makes that work. See §3b and `CardDriftTest`.
+- **An adopted row keeps its own amount and `rawSms`; its direction is restated.** A card's
+  acknowledgement parses as a *debit* — `DEBIT_VERB` holds "payment of" — and left that way the
+  arriving leg counted as money leaving in `totalDebited`, so "left our accounts" read ₹1,143.82
+  for a ₹425.41 payment, and read *differently* depending on whether the card had texted at all.
+  The type is the parser's reading of a verb, not a figure the bank quoted. Safe both ways:
+  `accountBalances` settles a card on **category**, which `CardDriftTest` pins independently.
 - **Two amounts, and the gap has no name.** ₹425.41 left the bank, ₹468.41 reached the card, ₹43
   was CRED points. Modelling the ₹43 would create an entry every total then has to exclude.
 - **Both legs delete together.** Half a move is not a smaller truth, it is a false one.
@@ -312,6 +315,21 @@ time it is seen — so a card the parser recognises never lands in "What is left
 debt as spendable. It writes only when *nothing* is recorded for that key, blank included:
 a blank rule is the tombstone, and adopting on blank would reinstate a card the household
 had deliberately turned back into an account.
+
+**The sender was not enough, and this household's own card is the proof.** ICICI's
+acknowledgements arrive from `ICICIT`, which the table maps to **"ICICI Bank"** — the account
+rule. The card rule's headers are `ICICICC` and `ICICCD`, which this card never sends from, and
+`ICICIO` is absent from the table entirely. So `isCardBank` said no and ···3008 sat in "What is
+left" with its debt counted as spendable. Measured on a clean emulator during the 7.7 testing:
+three real messages in, and the card was filed as a bank account. The phone looked right only
+because it had been set by hand — a restore or a new device would not have been.
+
+Since 7.8 there is a second test, `BankRules.namesCreditCard`, which reads the message instead:
+*"your ICICI Bank Credit Card XX3008"*. **The digits must directly follow the phrase.** A bill
+reminder can name a card while quoting the *account* it debits, and filing that account as a card
+inverts the sign on real money — which is why remapping `ICICIT` to the card rule was rejected
+(it would turn a real ICICI bank account into a card), and why that adjacency must not be
+loosened. `CardFromMessageTest` pins both directions.
 
 Dump headers without reading anyone's messages:
 

@@ -1,6 +1,6 @@
 {
   "repo": {
-    "timestamp": 1786341129000,
+    "timestamp": 1786347103000,
     "version": 20002,
     "name": "Ours",
     "icon": "icon.png",
@@ -21,8 +21,8 @@
       "categories": [
         "Money"
       ],
-      "suggestedVersionName": "7.7",
-      "suggestedVersionCode": "79",
+      "suggestedVersionName": "7.8",
+      "suggestedVersionCode": "80",
       "description": "A bank SMS is already a statement line. Ours reads the ones an Indian bank or UPI app sends, turns them into transactions, and keeps two phones in one household agreeing about them.\n\n* Parses debits, credits, card purchases, card bills and self-transfers out of SMS \u2014 no typing, no CSV, no bank login.\n* One budget over one household, not one per person: spending is measured against everything the household spent, whoever spent it.\n* Three kinds of account, because a balance means three different things. Money in a current account is available; money on a credit card is owed; money in an FD, an RD or a PPF is held. Only the first is safe to spend, and the app never quietly adds the other two to it.\n* Unknown is never zero. An account nobody has quoted a balance for is counted and reported as unknown, not summed as \u20b90.\n* Syncs between phones over a Google Sheet the household owns, or directly over Bluetooth. There is no server and no account.\n\nBuilt for one household and sideloaded to two phones with real money in them, so it is opinionated about Indian bank message formats and makes no attempt to be a general-purpose tracker.",
       "issueTracker": "https://github.com/manuelfc1991/expense-tracker/issues",
       "license": "GPL-3.0-only",
@@ -31,7 +31,7 @@
       "summary": "Reads bank SMS into a shared household ledger",
       "added": 1786266565000,
       "packageName": "com.manuel.ours",
-      "lastUpdated": 1786341126000,
+      "lastUpdated": 1786347100000,
       "localized": {
         "en-US": {
           "icon": "icon_FEGtXdyPgmdULmqorXWJhBQfxZcTH8qEUPSZ1VXf24M=.png",
@@ -43,13 +43,139 @@
             "05-put-aside.png",
             "06-sort.png"
           ],
-          "whatsNew": "Money moved between your own accounts can now be recorded as what it is. Open the add sheet and tap \"Between my accounts\": say where it came out of and where it went into, and both sides are written and linked. Nothing about it counts as spending, and nothing counts as income.\n\nThis matters most for money sent to an account no bank texts this phone about. Until now the app saw the payment leaving and nothing arriving, so it filed the whole amount as spending that never happened.\n\nSettling a card"
+          "whatsNew": "A credit card is now recognised from what its message says, not only from who sent it. The ICICI card texts from a header the app read as an ordinary bank, so on a phone where nobody had corrected it by hand the card appeared under what is left \u2014 money owed, counted as money to spend. It now reads \"Credit Card\" and the digits beside it, and files the card itself.\n\nThe digits have to sit right next to those words. A bill reminder can mention a credit card while naming the account it will be debit"
         }
       }
     }
   ],
   "packages": {
     "com.manuel.ours": [
+      {
+        "added": 1786347100000,
+        "apkName": "com.manuel.ours_80.apk",
+        "hash": "6c983687b6a347a4df0c1d562034ebf84e4a36ccd58878295ae68114528585bf",
+        "hashType": "sha256",
+        "minSdkVersion": 26,
+        "nativecode": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "packageName": "com.manuel.ours",
+        "sig": "dca6fd620f01df3b9f69974a1d8241cf",
+        "signer": "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2",
+        "size": 25601034,
+        "targetSdkVersion": 34,
+        "uses-permission": [
+          [
+            "android.permission.RECEIVE_SMS",
+            null
+          ],
+          [
+            "android.permission.READ_SMS",
+            null
+          ],
+          [
+            "android.permission.INTERNET",
+            null
+          ],
+          [
+            "android.permission.ACCESS_NETWORK_STATE",
+            null
+          ],
+          [
+            "android.permission.POST_NOTIFICATIONS",
+            null
+          ],
+          [
+            "android.permission.SYSTEM_ALERT_WINDOW",
+            null
+          ],
+          [
+            "android.permission.REQUEST_INSTALL_PACKAGES",
+            null
+          ],
+          [
+            "android.permission.USE_BIOMETRIC",
+            null
+          ],
+          [
+            "android.permission.CAMERA",
+            null
+          ],
+          [
+            "android.permission.FOREGROUND_SERVICE",
+            null
+          ],
+          [
+            "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE",
+            null
+          ],
+          [
+            "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+            null
+          ],
+          [
+            "android.permission.BLUETOOTH",
+            30
+          ],
+          [
+            "android.permission.BLUETOOTH_ADMIN",
+            30
+          ],
+          [
+            "android.permission.ACCESS_COARSE_LOCATION",
+            30
+          ],
+          [
+            "android.permission.ACCESS_FINE_LOCATION",
+            30
+          ],
+          [
+            "android.permission.BLUETOOTH_SCAN",
+            null
+          ],
+          [
+            "android.permission.BLUETOOTH_ADVERTISE",
+            null
+          ],
+          [
+            "android.permission.BLUETOOTH_CONNECT",
+            null
+          ],
+          [
+            "android.permission.NEARBY_WIFI_DEVICES",
+            null
+          ],
+          [
+            "android.permission.ACCESS_WIFI_STATE",
+            null
+          ],
+          [
+            "android.permission.CHANGE_WIFI_STATE",
+            null
+          ],
+          [
+            "android.permission.USE_FINGERPRINT",
+            null
+          ],
+          [
+            "android.permission.WAKE_LOCK",
+            null
+          ],
+          [
+            "android.permission.RECEIVE_BOOT_COMPLETED",
+            null
+          ],
+          [
+            "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+            null
+          ]
+        ],
+        "versionCode": 80,
+        "versionName": "7.8"
+      },
       {
         "added": 1786341126000,
         "apkName": "com.manuel.ours_79.apk",
@@ -301,132 +427,6 @@
         ],
         "versionCode": 78,
         "versionName": "7.6"
-      },
-      {
-        "added": 1786266565000,
-        "apkName": "com.manuel.ours_77.apk",
-        "hash": "467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5",
-        "hashType": "sha256",
-        "minSdkVersion": 26,
-        "nativecode": [
-          "arm64-v8a",
-          "armeabi-v7a",
-          "x86",
-          "x86_64"
-        ],
-        "packageName": "com.manuel.ours",
-        "sig": "dca6fd620f01df3b9f69974a1d8241cf",
-        "signer": "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2",
-        "size": 25584650,
-        "targetSdkVersion": 34,
-        "uses-permission": [
-          [
-            "android.permission.RECEIVE_SMS",
-            null
-          ],
-          [
-            "android.permission.READ_SMS",
-            null
-          ],
-          [
-            "android.permission.INTERNET",
-            null
-          ],
-          [
-            "android.permission.ACCESS_NETWORK_STATE",
-            null
-          ],
-          [
-            "android.permission.POST_NOTIFICATIONS",
-            null
-          ],
-          [
-            "android.permission.SYSTEM_ALERT_WINDOW",
-            null
-          ],
-          [
-            "android.permission.REQUEST_INSTALL_PACKAGES",
-            null
-          ],
-          [
-            "android.permission.USE_BIOMETRIC",
-            null
-          ],
-          [
-            "android.permission.CAMERA",
-            null
-          ],
-          [
-            "android.permission.FOREGROUND_SERVICE",
-            null
-          ],
-          [
-            "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE",
-            null
-          ],
-          [
-            "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
-            null
-          ],
-          [
-            "android.permission.BLUETOOTH",
-            30
-          ],
-          [
-            "android.permission.BLUETOOTH_ADMIN",
-            30
-          ],
-          [
-            "android.permission.ACCESS_COARSE_LOCATION",
-            30
-          ],
-          [
-            "android.permission.ACCESS_FINE_LOCATION",
-            30
-          ],
-          [
-            "android.permission.BLUETOOTH_SCAN",
-            null
-          ],
-          [
-            "android.permission.BLUETOOTH_ADVERTISE",
-            null
-          ],
-          [
-            "android.permission.BLUETOOTH_CONNECT",
-            null
-          ],
-          [
-            "android.permission.NEARBY_WIFI_DEVICES",
-            null
-          ],
-          [
-            "android.permission.ACCESS_WIFI_STATE",
-            null
-          ],
-          [
-            "android.permission.CHANGE_WIFI_STATE",
-            null
-          ],
-          [
-            "android.permission.USE_FINGERPRINT",
-            null
-          ],
-          [
-            "android.permission.WAKE_LOCK",
-            null
-          ],
-          [
-            "android.permission.RECEIVE_BOOT_COMPLETED",
-            null
-          ],
-          [
-            "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
-            null
-          ]
-        ],
-        "versionCode": 77,
-        "versionName": "7.5"
       }
     ]
   }

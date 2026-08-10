@@ -1,13 +1,132 @@
 {
   "repo": {
-    "timestamp": 1786341129000
+    "timestamp": 1786347103000
   },
   "packages": {
     "com.manuel.ours": {
       "metadata": {
-        "lastUpdated": 1786341126000
+        "lastUpdated": 1786347100000
       },
       "versions": {
+        "467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5": null,
+        "6c983687b6a347a4df0c1d562034ebf84e4a36ccd58878295ae68114528585bf": {
+          "added": 1786347100000,
+          "file": {
+            "name": "/com.manuel.ours_80.apk",
+            "sha256": "6c983687b6a347a4df0c1d562034ebf84e4a36ccd58878295ae68114528585bf",
+            "size": 25601034
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "7.8",
+            "versionCode": 80,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 34
+            },
+            "signer": {
+              "sha256": [
+                "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.RECEIVE_SMS"
+              },
+              {
+                "name": "android.permission.READ_SMS"
+              },
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.POST_NOTIFICATIONS"
+              },
+              {
+                "name": "android.permission.SYSTEM_ALERT_WINDOW"
+              },
+              {
+                "name": "android.permission.REQUEST_INSTALL_PACKAGES"
+              },
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.CAMERA"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+              },
+              {
+                "name": "android.permission.BLUETOOTH",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADMIN",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_COARSE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_FINE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_SCAN"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADVERTISE"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_CONNECT"
+              },
+              {
+                "name": "android.permission.NEARBY_WIFI_DEVICES"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "android.permission.WAKE_LOCK"
+              },
+              {
+                "name": "android.permission.RECEIVE_BOOT_COMPLETED"
+              },
+              {
+                "name": "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          },
+          "antiFeatures": {
+            "NonFreeDep": {},
+            "NonFreeNet": {}
+          },
+          "whatsNew": {
+            "en-US": "A credit card is now recognised from what its message says, not only from who sent it. The ICICI card texts from a header the app read as an ordinary bank, so on a phone where nobody had corrected it by hand the card appeared under what is left — money owed, counted as money to spend. It now reads \"Credit Card\" and the digits beside it, and files the card itself.\n\nThe digits have to sit right next to those words. A bill reminder can mention a credit card while naming the account it will be debit"
+          }
+        },
         "6f9cfe826a328a86375f3d67469e7d66c9893ca0f0fae6c9b65d15d35cc9d5df": {
           "added": 1786341126000,
           "file": {

@@ -1,0 +1,7 @@
+A credit card is now recognised from what its message says, not only from who sent it. The ICICI card texts from a header the app read as an ordinary bank, so on a phone where nobody had corrected it by hand the card appeared under what is left — money owed, counted as money to spend. It now reads "Credit Card" and the digits beside it, and files the card itself.
+
+The digits have to sit right next to those words. A bill reminder can mention a credit card while naming the account it will be debited from, and treating that account as a card would report a real balance as debt.
+
+Moving money into a card no longer inflates what left your accounts. A card issuer's message about being paid reads as money going out, so an amount that arrived was being counted as an amount that left — and the figure differed depending on whether the card had texted at all.
+
+Deleting one half of a move now says both halves will go, because both always did. Transfers no longer offer to be recorded as refunds, and a move between two accounts with long names is readable again.

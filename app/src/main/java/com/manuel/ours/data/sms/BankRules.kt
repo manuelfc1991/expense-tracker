@@ -228,6 +228,38 @@ object BankRules {
     fun isCardBank(bank: String?): Boolean =
         bank != null && ALL.any { it.bank.equals(bank, ignoreCase = true) && it.isCard }
 
+    /**
+     * Whether the message itself calls [tail] a credit card.
+     *
+     * [isCardBank] asks the sender, and for this household's own ICICI card the sender cannot
+     * answer. Its acknowledgements arrive from `ICICIT`, which the table above maps to
+     * **"ICICI Bank"** — the account rule, not the card one, whose headers are `ICICICC` and
+     * `ICICCD`. `ICICIO` is not in the table at all and prefix-matches to the same place. So
+     * `adoptKnownCard` could never fire for it, and on a fresh install the card landed in
+     * *What is left* with its debt counted as money to spend. Verified on a clean device: three
+     * real messages in, and ···3008 was filed as a bank account.
+     *
+     * Remapping `ICICIT` to the card rule would be the wrong fix — it is ICICI's ordinary
+     * transactional header and anyone with an ICICI *bank account* would have that account
+     * turned into a card. The evidence is not in the sender, it is in the text: the message
+     * says *"your ICICI Bank Credit Card XX3008"*.
+     *
+     * **The digits must directly follow the words.** A bill reminder can mention a credit card
+     * while quoting the *account* it will be debited from ("your credit card bill of Rs 500 is
+     * due, a/c XX4657"), and filing that account as a card would invert the sign on real money.
+     * So this matches only a tail attached to the phrase, with nothing but a card-number
+     * decoration (`no`, `ending`, `XX`, `****`) allowed in between.
+     */
+    fun namesCreditCard(body: String?, tail: String?): Boolean {
+        if (body.isNullOrBlank() || tail.isNullOrBlank()) return false
+        return CREDIT_CARD_TAIL.findAll(body).any { it.groupValues[1] == tail }
+    }
+
+    private val CREDIT_CARD_TAIL = Regex(
+        """credit\s*card\s*(?:no\.?|number|ending(?:\s+(?:in|with))?)?\s*[x*\s-]{0,6}(\d{4})\b""",
+        RegexOption.IGNORE_CASE,
+    )
+
     fun forSender(sender: String): BankRule? {
         val header = normaliseHeader(sender) ?: return null
         byHeader[header]?.let { return it }

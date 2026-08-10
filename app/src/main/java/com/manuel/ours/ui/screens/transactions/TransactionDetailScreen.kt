@@ -137,7 +137,14 @@ fun TransactionDetailScreen(
             containerColor = Ours.surfaceContainer,
             title = {
                 Text(
-                    if (isOwner) "Delete this entry?" else "Ask to remove this?",
+                    // A move is one event recorded twice and both halves go together, so the
+                    // question has to say so. It said "this entry" and removed two, which is
+                    // the one thing a confirmation must never do.
+                    when {
+                        !isOwner -> "Ask to remove this?"
+                        txn.transferPeerId != null -> "Delete both sides of this move?"
+                        else -> "Delete this entry?"
+                    },
                     color = Ours.onSurface,
                 )
             },
@@ -156,7 +163,16 @@ fun TransactionDetailScreen(
                     // added for.
                     if (isOwner) {
                         "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
-                            "It goes from both phones, and waits in Trash for " +
+                            // Both legs, said plainly. Half a move is not a smaller record of
+                            // it — the remaining side would go on adjusting an account with
+                            // nothing on the other end to explain it.
+                            (if (txn.transferPeerId != null) {
+                                "Both sides of the move go, since one without the other would " +
+                                    "leave money that arrived from nowhere. They go from both " +
+                                    "phones, and wait in Trash for "
+                            } else {
+                                "It goes from both phones, and waits in Trash for "
+                            }) +
                             "${Trash.WINDOW_DAYS} days in case you change your mind."
                     } else {
                         "${txn.merchant}, ${Money.format(txn.amountPaise, withDecimals = true)}. " +
@@ -374,7 +390,11 @@ fun TransactionDetailScreen(
             // spending overstated by ₹2,000, and the budget charged for a purchase that was
             // undone. Only a person can say which credits are refunds — matching on amount is the
             // trap this exists to avoid — so it is asked, once, and only where it can apply.
-            if (current.type == TxnType.CREDIT) {
+            // Never on a leg of a stated move. The household has already said where that
+            // money came from — the other half of the pair — and it is not a shop refunding
+            // a purchase. Offering the question there is offering a wrong answer, and taking
+            // it would file the arriving leg against some unrelated debit.
+            if (current.type == TxnType.CREDIT && current.transferPeerId == null) {
                 val purchase by remember(current.refundsTxnId) { viewModel.refundedPurchase(current.refundsTxnId) }
                     .collectAsStateWithLifecycle(initialValue = null)
 
