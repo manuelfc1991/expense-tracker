@@ -81,6 +81,14 @@ fun AddExpenseSheet(
      * and "Not sure", which are the two answers no list of accounts can contain.
      */
     accounts: List<AccountBalance> = emptyList(),
+    /**
+     * Leaves for `MoveMoneySheet`, when the payment turns out not to be one.
+     *
+     * Offered here rather than as a second button on the statement, because this is where
+     * somebody discovers they are on the wrong sheet: they have opened "new expense" to record
+     * a card bill or money sent to their wife, which is neither new nor an expense.
+     */
+    onMoveMoney: (() -> Unit)? = null,
     onConfirm: (
         amountPaise: Long,
         merchant: String,
@@ -143,7 +151,20 @@ fun AddExpenseSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            MicroLabel("New expense")
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MicroLabel("New expense")
+                if (onMoveMoney != null) {
+                    OursChip(
+                        label = "Between my accounts",
+                        selected = false,
+                        onClick = onMoveMoney,
+                    )
+                }
+            }
 
             // Both halves dim until there is a figure, so an untouched sheet shows a
             // grey ₹0 rather than a lone rupee sign floating beside nothing.
@@ -345,9 +366,11 @@ internal val PaidFromSaver: Saver<PaidFrom, Any> = listSaver(
     },
 )
 
+// Internal rather than private: `MoveMoneySheet` asks the same question with the same rules,
+// and a second copy of a picker that must refuse future dates is a second thing to get wrong.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ManualDatePicker(
+internal fun ManualDatePicker(
     initial: Long,
     onPick: (Long) -> Unit,
     onDismiss: () -> Unit,

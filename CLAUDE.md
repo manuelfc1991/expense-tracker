@@ -159,6 +159,32 @@ Get the middle one wrong in either direction and the app lies: count a ₹20,000
 in "what is left" and it invites somebody to spend money that is locked up; leave it off
 the screen and it denies they own it.
 
+### Moving money between two of them
+
+`TransactionRepository.moveMoney` writes **both** legs of a movement between the household's own
+places and links them with `transferPeerId`, set on each row naming the other. Everything else in
+this app discovers a transfer by *pairing two messages* — `markSelfTransfers` matches an equal
+debit and credit, the card-bill rules match a bill against its acknowledgement — and all of it
+fails when one leg never arrives. It never arrives for the commonest case: the partner's SBI has
+no sender on this phone, so ₹10,000 sent there is counted as ₹10,000 of spending.
+
+Four things about it are load-bearing:
+
+- **It adopts before it writes.** A leg the bank already texted about is found and relabelled,
+  never duplicated — the SMS lands in seconds and the person says what it was afterwards. The
+  rule is `adoptableLeg`, pure and in the companion for the same reason `categoryForKind` is.
+  Too eager relabels an unrelated payment of the same size; too shy doubles the money.
+- **An adopted row keeps its own amount and type.** A card's acknowledgement parses as a *debit*,
+  so the arriving leg is not rewritten to a credit — `accountBalances` settles a card on category,
+  which is what makes that work. See §3b and `CardDriftTest`.
+- **Two amounts, and the gap has no name.** ₹425.41 left the bank, ₹468.41 reached the card, ₹43
+  was CRED points. Modelling the ₹43 would create an entry every total then has to exclude.
+- **Both legs delete together.** Half a move is not a smaller truth, it is a false one.
+
+There is deliberately **no "paid to" field on every transaction**, and no separate "my own
+payment" switch — the first is blank or meaningless on almost every row, and the second is a
+second place for what `SELF_TRANSFER` already says.
+
 **The exclusion must live in `affordability()`, never only on the panel.** Both callers
 hand it the unpartitioned list, so a kind honoured only by the screen is a kind the
 safe-to-spend figure ignores. This is not hypothetical — it is exactly how a card balance

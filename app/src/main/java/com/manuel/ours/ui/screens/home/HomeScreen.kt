@@ -121,6 +121,10 @@ fun HomeScreen(
     val possiblePayments by viewModel.possiblePayments.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
+    // Reached from inside the add sheet rather than from a second button on the statement.
+    // Moving money is rare next to spending it, and the moment somebody discovers they are
+    // on the wrong sheet is the moment they are looking at the first one.
+    var showMoveSheet by rememberSaveable { mutableStateOf(false) }
 
     var hasSmsPermission by remember {
         mutableStateOf(
@@ -464,11 +468,27 @@ fun HomeScreen(
         AddExpenseSheet(
             onDismiss = { showAddSheet = false },
             accounts = accounts,
+            onMoveMoney = {
+                showAddSheet = false
+                showMoveSheet = true
+            },
             onConfirm = { amount, merchant, category, split, note, occurredAt, tail, bank ->
                 viewModel.addQuickExpense(
                     amount, merchant, category, split, note, occurredAt, tail, bank,
                 )
                 showAddSheet = false
+            },
+        )
+    }
+
+    if (showMoveSheet) {
+        val accounts by viewModel.accounts.collectAsStateWithLifecycle()
+        MoveMoneySheet(
+            onDismiss = { showMoveSheet = false },
+            accounts = accounts,
+            onConfirm = { from, to, out, reached, occurredAt, note ->
+                viewModel.moveMoney(from, to, out, reached, occurredAt, note)
+                showMoveSheet = false
             },
         )
     }

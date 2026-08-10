@@ -204,6 +204,13 @@ data class Transaction(
     /** On a debit: how much of it has been refunded. */
     val refundedPaise: Long = 0,
     /**
+     * The other leg of a stated move between two of the household's own accounts.
+     *
+     * Null on everything else, including the self-transfers `markSelfTransfers` paired by
+     * matching amounts — see `TransactionEntity.transferPeerId`.
+     */
+    val transferPeerId: String? = null,
+    /**
      * What the bank said was left in [accountTail] just after this payment.
      *
      * Read straight off the message — "Bal Rs 3065.35" — and stored rather than
@@ -283,6 +290,31 @@ sealed interface PaidFrom {
         override val accountTail: String?,
         override val bank: String?,
     ) : PaidFrom
+}
+
+/**
+ * One end of a move between two accounts the household owns.
+ *
+ * Both ends are the same shape on purpose. "Out of Kerala Gramin into the ICICI card" and
+ * "out of Kerala Gramin into my wife's SBI" are the same event to this app — money that left
+ * one place the household owns and arrived at another — and the only thing that distinguishes
+ * a card from a savings account from a partner's account is what the *destination* is already
+ * recorded as. None of that is this type's business.
+ *
+ * [label] is what the pair reads as on the statement line, so it is a display string and is
+ * chosen by the screen that offers the choice, not derived here.
+ */
+data class MoveSide(
+    val accountTail: String?,
+    val bank: String?,
+    val label: String,
+) {
+    /**
+     * How `accountBalances()` files this account: its digits when the bank gave any, else its
+     * name. Null when it is neither, which is not an end a move can have — you cannot say
+     * money arrived somewhere without saying where.
+     */
+    val key: String? get() = accountTail?.takeIf(String::isNotBlank) ?: bank
 }
 
 /**

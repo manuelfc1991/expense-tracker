@@ -66,6 +66,14 @@ data class SyncPayload(
     val refundsTxnId: String? = null,
     val refundedPaise: Long = 0,
     /**
+     * The other leg of a stated move between own accounts.
+     *
+     * Both legs carry it and both are logged, so the phones cannot end up with one half
+     * filed as a transfer and the other as spending. Defaulted, so a payload an older build
+     * wrote decodes as "not a move" rather than failing the whole sync.
+     */
+    val transferPeerId: String? = null,
+    /**
      * The bank's own message id, and the balance it quoted.
      *
      * Both are properties of the message a row came from, so the phone that received it

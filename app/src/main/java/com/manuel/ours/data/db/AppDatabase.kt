@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SharedRuleEntity::class,
         PendingSenderEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -97,6 +97,21 @@ abstract class AppDatabase : RoomDatabase() {
          * message alone was measured against 2,810 real messages and read an EPF passbook
          * line as ₹61,989 of income. Shape is enough to ask and not enough to count.
          */
+        /**
+         * Adds the link between the two legs of a stated move between own accounts.
+         *
+         * Nullable with no default, so every row already in the ledger keeps a null — which
+         * is the truth about all of them. Nothing is backfilled and nothing could be: the
+         * self-transfers already in there were paired by matching amounts, and that inference
+         * is not the same claim as this column. Guessing partners from it is exactly the trap
+         * the refund link was written to avoid.
+         */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN transferPeerId TEXT")
+            }
+        }
+
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

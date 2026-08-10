@@ -81,6 +81,20 @@ data class TransactionEntity(
      */
     val refundsTxnId: String? = null,
     /**
+     * The other leg of a move between two accounts the household owns.
+     *
+     * Set on **both** rows, each naming the other, so either one says what it is without a
+     * join — the same reason a refund is two columns rather than one. Sync is last-write-wins
+     * per row, so a link stored on only one leg would arrive on the other phone as a pair
+     * where one half is a transfer and the other is spending.
+     *
+     * Null on every SMS-discovered self-transfer. `markSelfTransfers` pairs rows by matching
+     * amounts and leaves this alone: that pairing is an inference, and this column records a
+     * move somebody stated. The category is what both mechanisms agree on; only a stated move
+     * gets to claim which row is its partner.
+     */
+    val transferPeerId: String? = null,
+    /**
      * On a **debit**: how much of it has been refunded. Zero for almost every row.
      *
      * Partial is the common case for a multi-item order, so this is an amount rather than a flag —
@@ -155,6 +169,7 @@ fun TransactionEntity.toDomain() = Transaction(
     // crosses this mapper, which is why it stayed green.
     refundsTxnId = refundsTxnId,
     refundedPaise = refundedPaise,
+    transferPeerId = transferPeerId,
 )
 
 fun Transaction.toEntity(
@@ -174,6 +189,7 @@ fun Transaction.toEntity(
     bankMessageId = bankMessageId,
     refundsTxnId = refundsTxnId,
     refundedPaise = refundedPaise,
+    transferPeerId = transferPeerId,
     bank = bank,
     note = note,
     splitType = splitType.name,

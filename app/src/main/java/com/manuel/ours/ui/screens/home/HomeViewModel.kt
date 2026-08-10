@@ -439,6 +439,33 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Money from one of the household's own places to another — see `moveMoney`.
+     *
+     * Silently does nothing when the repository refuses. Everything it refuses (same account
+     * both ends, an unidentifiable end, a non-positive amount) is already prevented by the
+     * sheet's Save button, so a message here would be about a state no one can reach.
+     */
+    fun moveMoney(
+        from: com.manuel.ours.domain.model.MoveSide,
+        to: com.manuel.ours.domain.model.MoveSide,
+        amountOutPaise: Long,
+        amountInPaise: Long,
+        occurredAt: Long,
+        note: String,
+    ) {
+        viewModelScope.launch {
+            transactionRepository.moveMoney(
+                from = from,
+                to = to,
+                amountOutPaise = amountOutPaise,
+                amountInPaise = amountInPaise,
+                occurredAt = occurredAt,
+                note = note.takeIf { it.isNotBlank() },
+            )
+        }
+    }
+
     fun dismissBill(id: String) {
         viewModelScope.launch { reminderDao.dismiss(id) }
     }

@@ -23,6 +23,7 @@ import com.manuel.ours.domain.Trash
 import com.manuel.ours.domain.model.AccountOwner
 import com.manuel.ours.domain.model.Category
 import com.manuel.ours.domain.model.ManualBalance
+import com.manuel.ours.domain.model.MoveSide
 import com.manuel.ours.domain.model.SplitType
 import com.manuel.ours.domain.model.Transaction
 import com.manuel.ours.domain.model.TxnSource
@@ -693,6 +694,168 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
+     * Records money moving from one account the household owns to another.
+     *
+     * The one thing this app could not be told. Every other kind of movement is discovered by
+     * *pairing two messages* — `markSelfTransfers` matches an equal debit and credit on two
+     * accounts, and the card-bill rules match a bill against its acknowledgement — and all of
+     * that fails the moment one of the two legs never arrives. It never arrives for the
+     * household's most common move: the partner's SBI has no sender on this phone at all, so
+     * ₹10,000 sent there leaves Kerala Gramin, lands nowhere the app can see, and is counted as
+     * ₹10,000 of spending that did not happen.
+     *
+     * So this writes **both** legs from one statement, and links them with
+     * [TransactionEntity.transferPeerId] so neither can later be read as anything else. Both are
+     * [Category.SELF_TRANSFER], which is what keeps the money out of the spending total on the
+     * way out and out of income on the way in.
+     *
+     * ## It adopts before it writes
+     *
+     * A leg the bank already texted about is *found and relabelled*, never duplicated. That is
+     * the ordinary case — the SMS lands in seconds, the person opens the app afterwards and says
+     * what the payment was — and writing a second row for it would double the money. Matching is
+     * amount to the paise, on that account, within a day either side, on a row not already part
+     * of another move; the nearest in time wins.
+     *
+     * An adopted row keeps its own amount, its own type and its `rawSms`. Only what the household
+     * has now *said* about it changes: the category, the statement line, and the link. Overwriting
+     * the bank's own figures with a person's would be inventing a fact, and the bank's copy is the
+     * one worth keeping.
+     *
+     * ## Two amounts, and why the difference has no name
+     *
+     * [amountOutPaise] is what left [from]; [amountInPaise] is what reached [to]. They differ when
+     * a bill is settled through a rewards app — ₹468.41 reached the ICICI card, ₹425.41 left
+     * Kerala Gramin, ₹43 was points. Both figures are true and both are recorded, each against
+     * the account it actually moved on.
+     *
+     * The ₹43 is deliberately **not** modelled. It is not spending, it is not income, and it is
+     * not a transfer — it is the gap between two true numbers, and every total it could be added
+     * to would be wrong. Naming it would create an entry that has to be excluded from everything,
+     * which is a liability with no reader. The two amounts already say it.
+     *
+     * ## Direction is not [TxnType]
+     *
+     * The arriving leg is written as a credit, but an *adopted* arriving leg keeps whatever the
+     * issuer's message parsed as — and on a card that is a debit, because `DEBIT_VERB` holds
+     * "payment of" and is tested first. `accountBalances` settles a card on category rather than
+     * on type for exactly this reason, so the adopted row moves the outstanding the right way
+     * without being rewritten. See `CardDriftTest`.
+     *
+     * @return false if the two ends are the same account, either is unidentifiable, or either
+     *   amount is not positive. None of those is a move, and none should be stored as one.
+     */
+    suspend fun moveMoney(
+        from: MoveSide,
+        to: MoveSide,
+        amountOutPaise: Long,
+        amountInPaise: Long,
+        occurredAt: Long,
+        note: String? = null,
+    ): Boolean {
+        val fromKey = from.key ?: return false
+        val toKey = to.key ?: return false
+        if (fromKey == toKey) return false
+        if (amountOutPaise <= 0 || amountInPaise <= 0) return false
+
+        val cards = cardKeys()
+
+        // Both rows read the same line, because they are one event. It also means the
+        // statement needs no direction logic of its own: the row says "from → to" whichever
+        // half of the pair a reader is looking at, and the amount column tells them which.
+        val line = "${from.label} → ${to.label}"
+
+        val out = findMoveLeg(amountOutPaise, fromKey, occurredAt, null) {
+            it.type == TxnType.DEBIT.name
+        }
+        val arrival = findMoveLeg(amountInPaise, toKey, occurredAt, out?.id) {
+            // On a card, an arrival is a debit as often as not — see the class note. Anywhere
+            // else, only a credit can be money coming in, and adopting a debit there would
+            // relabel an unrelated payment of the same size.
+            toKey in cards || it.type == TxnType.CREDIT.name
+        }
+
+        val outId = out?.id ?: UUID.randomUUID().toString()
+        val inId = arrival?.id ?: UUID.randomUUID().toString()
+        val self = prefs.snapshot()
+        val cleanNote = note?.trim()?.takeIf { it.isNotEmpty() }
+
+        suspend fun write(
+            existing: TransactionEntity?,
+            id: String,
+            peerId: String,
+            amountPaise: Long,
+            type: TxnType,
+            side: MoveSide,
+        ) {
+            if (existing != null) {
+                saveAndLog(
+                    existing.copy(
+                        category = Category.SELF_TRANSFER.name,
+                        merchant = line,
+                        transferPeerId = peerId,
+                        // A row that was flagged for review has just been explained.
+                        needsReview = false,
+                        // The household's own note outranks nothing — an existing one was
+                        // typed about this same payment and is not ours to discard.
+                        note = existing.note ?: cleanNote,
+                    ).toDomain(),
+                    existing.dedupeKey,
+                    existing.dedupeAt,
+                )
+                return
+            }
+            saveAndLog(
+                Transaction(
+                    id = id,
+                    amountPaise = amountPaise,
+                    type = type,
+                    merchant = line,
+                    category = Category.SELF_TRANSFER,
+                    occurredAt = occurredAt,
+                    accountTail = side.accountTail,
+                    bank = side.bank,
+                    note = cleanNote,
+                    splitType = SplitType.SHARED,
+                    source = TxnSource.MANUAL,
+                    ownerUid = self.selfUid ?: "local",
+                    ownerName = self.selfName ?: "Me",
+                    needsReview = false,
+                    transferPeerId = peerId,
+                ),
+                // A key of its own, like every other hand-written row. Dedup at ingest
+                // gathers candidates by amount and time rather than by this key, so a bank
+                // message arriving afterwards still finds this row and is dropped.
+                "move:$id",
+                occurredAt,
+            )
+        }
+
+        write(out, outId, inId, amountOutPaise, TxnType.DEBIT, from)
+        write(arrival, inId, outId, amountInPaise, TxnType.CREDIT, to)
+        return true
+    }
+
+    /** Fetches the day either side, then applies [adoptableLeg] — the rule lives in the companion. */
+    private suspend fun findMoveLeg(
+        amountPaise: Long,
+        key: String,
+        occurredAt: Long,
+        excludeId: String?,
+        accept: (TransactionEntity) -> Boolean,
+    ): TransactionEntity? = adoptableLeg(
+        rows = txnDao.findNearby(
+            amountPaise,
+            occurredAt - SmsDeduplicator.CARD_BILL_WINDOW_MS,
+            occurredAt + SmsDeduplicator.CARD_BILL_WINDOW_MS,
+        ),
+        key = key,
+        occurredAt = occurredAt,
+        excludeId = excludeId,
+        accept = accept,
+    )
+
+    /**
      * Recategorization also writes a userDefined merchant rule, so the same merchant
      * lands correctly next time without asking again.
      */
@@ -827,19 +990,28 @@ class TransactionRepository @Inject constructor(
      * request and the row stays visible — and counted — until the owner decides.
      *
      * The owner's own delete is immediate. Asking yourself for permission is theatre.
+     *
+     * **Both legs of a move go together.** A move is one event recorded twice, and half of one
+     * is not a smaller truth — it is a false one: delete the bank's debit alone and the arriving
+     * leg carries on reducing a card's outstanding with nothing having paid for it. Deleting
+     * either half is understood as undoing the move.
      */
     suspend fun deleteOrRequest(txnId: String): Boolean {
+        val peerId = txnDao.getById(txnId)?.transferPeerId
         if (prefs.householdOwnerOnce()) {
             delete(txnId)
+            peerId?.let { delete(it) }
             return true
         }
-        val existing = txnDao.getById(txnId) ?: return false
         val uid = prefs.snapshot().selfUid ?: return false
-        saveAndLog(
-            existing.copy(deleteRequestedBy = uid).toDomain(),
-            existing.dedupeKey,
-            existing.dedupeAt,
-        )
+        for (id in listOfNotNull(txnId, peerId)) {
+            val existing = txnDao.getById(id) ?: continue
+            saveAndLog(
+                existing.copy(deleteRequestedBy = uid).toDomain(),
+                existing.dedupeKey,
+                existing.dedupeAt,
+            )
+        }
         return false
     }
 
@@ -963,6 +1135,7 @@ class TransactionRepository @Inject constructor(
             counterpartyTail = txn.counterpartyTail,
             refundsTxnId = txn.refundsTxnId,
             refundedPaise = txn.refundedPaise,
+            transferPeerId = txn.transferPeerId,
             bankMessageId = txn.bankMessageId,
             balancePaise = txn.balancePaise,
             rawSms = txn.rawSms,
@@ -1611,6 +1784,42 @@ class TransactionRepository @Inject constructor(
          * nothing else — its purchases then arrive one by one, so counting the bill as
          * well would count them twice.
          */
+        /**
+         * Which already-recorded row, if any, *is* one leg of a move being stated.
+         *
+         * The rule the whole feature rests on: get it too eager and a move relabels an
+         * unrelated payment of the same size; get it too shy and the app writes a second row
+         * for money that left the account once, doubling it. So it lives here as a pure
+         * function of some rows and a claim, reachable without a database — `categoryForKind`
+         * was moved out for the same reason after eleven releases in which no test could get
+         * at the one rule the double-count defence depended on.
+         *
+         * Narrow on purpose:
+         * - **the same account**, keyed the way `accountBalances()` keys it;
+         * - **not already half of another move** — a row belongs to one move or to none;
+         * - whatever [accept] adds about direction, which differs between the two ends.
+         *
+         * [rows] is expected to be pre-filtered to the right amount and a day either side —
+         * a day because a card issuer's acknowledgement carries a date and no clock time, so
+         * it lands at midnight, most of a day from the payment it is acknowledging.
+         *
+         * **Nearest in time wins.** Two genuine payments of the same size on one day is not a
+         * far-fetched case for a household that pays two card bills, and taking the first
+         * found would pair the wrong halves.
+         */
+        internal fun adoptableLeg(
+            rows: List<TransactionEntity>,
+            key: String,
+            occurredAt: Long,
+            excludeId: String?,
+            accept: (TransactionEntity) -> Boolean,
+        ): TransactionEntity? = rows.filter { row ->
+            row.id != excludeId &&
+                row.transferPeerId == null &&
+                (row.accountTail?.takeIf(String::isNotBlank) ?: row.bank) == key &&
+                accept(row)
+        }.minByOrNull { kotlin.math.abs(it.dedupeAt - occurredAt) }
+
         internal fun categoryForKind(
             kind: SmsParser.Kind,
             accountTail: String?,

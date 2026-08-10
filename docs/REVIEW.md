@@ -222,6 +222,25 @@ purchases were never recorded one by one, so excluding the bill as a self-transf
 the money unless the bank leg happens to be categorised as spending. On 9 August the bank
 leg was filed `INCOME`, and the payment appeared in no total at all.
 
+**Answered in 7.7, as a stated move rather than as a field.** `TransactionRepository.moveMoney`
+writes both legs of a movement between two of the household's own places and links them with
+`transferPeerId`, so neither is inferred from anything. It takes the two amounts separately —
+₹425.41 out of Kerala Gramin, ₹468.41 into the card — because both are true and each belongs
+against the account it moved on. The ₹43 is deliberately given no name: it is neither spending
+nor income nor a transfer, and every total it could join would be wrong.
+
+A "to" box on every transaction was the other option and was rejected. The payee of a shop
+purchase is already the merchant column, so the field would be blank or meaningless on almost
+every row, and "this was my own payment" is a second control saying what `SELF_TRANSFER`
+already says — free to disagree with it, which is how every category in this app once ended up
+with two names that different screens rendered differently.
+
+Two things here are still open. The bank leg of the 9 August payment is still filed `INCOME`
+and nothing retroactively repairs it; a move stated over it now would adopt and relabel it, but
+only if somebody states one. And a move can only be started from the add sheet — there is no
+way to look at a row already in Activity and say "that was a transfer", which is where a person
+who has just noticed the mistake actually is.
+
 Note also that `CLAUDE.md` recorded ICICI as sending **zero** messages. As of 9 August it
 sends payment acknowledgements, which is what put a transaction under key `3008` at all and
 made the drift reachable for that card.

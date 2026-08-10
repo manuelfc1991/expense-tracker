@@ -183,6 +183,7 @@ class SyncEngine @Inject constructor(
         counterpartyTail = counterpartyTail,
         refundsTxnId = refundsTxnId,
         refundedPaise = refundedPaise,
+        transferPeerId = transferPeerId,
         // Prefer whatever we already hold: our own copy came from this phone's
         // inbox and is authoritative. Fall back to the peer's only when we have none.
         rawSms = existing?.rawSms ?: rawSms,
