@@ -54,6 +54,37 @@ class TransactionDetailViewModel @Inject constructor(
         .map { txn -> if (txn == null) DetailState.Missing else DetailState.Found(txn) }
 
     /**
+     * Says that the row on screen was one leg of a move between the household's own accounts.
+     *
+     * No new repository call: `moveMoney` already *adopts* a leg the bank has reported rather
+     * than writing a second one, so stating the move over an existing row relabels that very row
+     * and writes only the side that was missing. Which is why this is the natural place for the
+     * action — the row being looked at is the row being explained.
+     *
+     * Until now a move could only be started from the add sheet, which is not where somebody is
+     * when they notice a payment filed wrongly.
+     */
+    fun moveMoney(
+        from: com.manuel.ours.domain.model.MoveSide,
+        to: com.manuel.ours.domain.model.MoveSide,
+        amountOutPaise: Long,
+        amountInPaise: Long,
+        occurredAt: Long,
+        note: String,
+    ) {
+        viewModelScope.launch {
+            repository.moveMoney(
+                from = from,
+                to = to,
+                amountOutPaise = amountOutPaise,
+                amountInPaise = amountInPaise,
+                occurredAt = occurredAt,
+                note = note.takeIf { it.isNotBlank() },
+            )
+        }
+    }
+
+    /**
      * Debits this credit could plausibly be cancelling.
      *
      * Same-amount candidates first, because that is the common case, but nothing is preselected

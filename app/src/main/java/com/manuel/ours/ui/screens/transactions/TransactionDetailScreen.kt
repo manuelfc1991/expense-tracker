@@ -110,6 +110,7 @@ fun TransactionDetailScreen(
     var editingNote by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     var pickingRefund by rememberSaveable { mutableStateOf(false) }
+    var statingMove by rememberSaveable { mutableStateOf(false) }
     var pickingPaidFrom by rememberSaveable { mutableStateOf(false) }
 
     editingNote?.let { draft ->
@@ -131,6 +132,28 @@ fun TransactionDetailScreen(
     // first, offers an Undo afterwards, and what slips past both is recoverable from
     // Trash for thirty days. It used to have none of the three: this screen closed on
     // the tap, which was taken as proof that an undo had nowhere to live.
+    // Naming the other end of a move, with this row standing in for the end already known.
+    //
+    // A debit is the money leaving, so this account is the source; a credit is the money
+    // arriving, so it is the destination. Both amounts start from what the row says and can be
+    // corrected — a card bill settled through a rewards app reaches the card with more than left
+    // the bank.
+    if (statingMove && txn != null) {
+        val accounts by viewModel.accounts.collectAsStateWithLifecycle()
+        val ownKey = txn.accountTail?.takeIf { it.isNotBlank() } ?: txn.bank
+        com.manuel.ours.ui.screens.home.MoveMoneySheet(
+            onDismiss = { statingMove = false },
+            accounts = accounts,
+            initialAmountPaise = txn.amountPaise,
+            initialFromKey = ownKey.takeIf { txn.type == TxnType.DEBIT },
+            initialToKey = ownKey.takeIf { txn.type == TxnType.CREDIT },
+            onConfirm = { from, to, out, into, occurredAt, note ->
+                viewModel.moveMoney(from, to, out, into, occurredAt, note)
+                statingMove = false
+            },
+        )
+    }
+
     if (confirmingDelete && txn != null) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
@@ -471,6 +494,27 @@ fun TransactionDetailScreen(
                             onClick = { viewModel.unlinkRefund(txnId) },
                         )
                     }
+                }
+            }
+
+            // Saying this row was one leg of a move between your own accounts.
+            //
+            // Offered here because this is where somebody is standing when they notice a payment
+            // filed wrongly — until now a move could only be begun from the add sheet, which is
+            // the one place they are not. Stating it does not write a duplicate: `moveMoney`
+            // adopts a leg the bank already reported, so this very row is relabelled and only
+            // the missing side is created.
+            //
+            // Hidden once the row is already half of a move; there is nothing left to say.
+            if (current.transferPeerId == null) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = Space.edge),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    GhostButton(
+                        label = "This was a move",
+                        onClick = { statingMove = true },
+                    )
                 }
             }
 

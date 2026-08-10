@@ -1,6 +1,6 @@
 {
   "repo": {
-    "timestamp": 1786347100000,
+    "timestamp": 1786355984000,
     "categories": {
       "Money": {
         "name": {
@@ -17,7 +17,7 @@
           "Money"
         ],
         "issueTracker": "https://github.com/manuelfc1991/expense-tracker/issues",
-        "lastUpdated": 1786347100000,
+        "lastUpdated": 1786355984000,
         "license": "GPL-3.0-only",
         "sourceCode": "https://github.com/manuelfc1991/expense-tracker",
         "authorName": "Manuel Francis Correya",
@@ -33,6 +33,121 @@
         "preferredSigner": "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
       },
       "versions": {
+        "be08633220b46fd0d9423989fcae9832b780f2f6854bbc883d2736467136fcbb": {
+          "added": 1786294094000,
+          "file": {
+            "name": "/com.manuel.ours_78.apk",
+            "sha256": "be08633220b46fd0d9423989fcae9832b780f2f6854bbc883d2736467136fcbb",
+            "size": 25584650
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "7.6",
+            "versionCode": 78,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 34
+            },
+            "signer": {
+              "sha256": [
+                "c618446939df65fa5ad19a854914a9e7ee397c0a376bf1801c883728f8178ae2"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.RECEIVE_SMS"
+              },
+              {
+                "name": "android.permission.READ_SMS"
+              },
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.POST_NOTIFICATIONS"
+              },
+              {
+                "name": "android.permission.SYSTEM_ALERT_WINDOW"
+              },
+              {
+                "name": "android.permission.REQUEST_INSTALL_PACKAGES"
+              },
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.CAMERA"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+              },
+              {
+                "name": "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+              },
+              {
+                "name": "android.permission.BLUETOOTH",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADMIN",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_COARSE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.ACCESS_FINE_LOCATION",
+                "maxSdkVersion": 30
+              },
+              {
+                "name": "android.permission.BLUETOOTH_SCAN"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_ADVERTISE"
+              },
+              {
+                "name": "android.permission.BLUETOOTH_CONNECT"
+              },
+              {
+                "name": "android.permission.NEARBY_WIFI_DEVICES"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "android.permission.WAKE_LOCK"
+              },
+              {
+                "name": "android.permission.RECEIVE_BOOT_COMPLETED"
+              },
+              {
+                "name": "com.manuel.ours.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          },
+          "antiFeatures": {
+            "NonFreeDep": {},
+            "NonFreeNet": {}
+          }
+        },
         "467f98f0057f68a164d7427eeca60ac464b1490440ddb588bf494234905d21b5": {
           "added": 1786266565000,
           "file": {

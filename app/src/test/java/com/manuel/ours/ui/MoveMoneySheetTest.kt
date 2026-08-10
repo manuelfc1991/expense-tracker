@@ -228,4 +228,62 @@ class MoveMoneySheetTest {
         show()
         assertThat(chips("Cash").fetchSemanticsNodes().size).isEqualTo(2)
     }
+
+    // ── Opened from a row that already answers part of it ─────────────────────────────
+
+    /**
+     * A transaction on screen has settled two of the three answers — how much, and which account
+     * it moved on. Asking again would be asking somebody to retype what they are looking at, and
+     * the only question left is the one the app cannot know: where the money went.
+     */
+    @Test
+    fun `a prefilled form needs only the other end`() {
+        val got = Confirmed()
+        compose.setContent {
+            OursTheme {
+                MoveMoneyForm(
+                    accounts = listOf(federal, card),
+                    onDismiss = {},
+                    initialAmountPaise = 425_41L,
+                    initialFromKey = "4657",
+                    onConfirm = { from, to, out, into, _, _ ->
+                        got.from = from; got.to = to; got.out = out; got.into = into
+                    },
+                )
+            }
+        }
+        // The source is already chosen, so naming the destination is enough to complete it.
+        save().assertIsNotEnabled()
+        chips("ICICI Bank")[1].performClick()
+        save().assertIsEnabled()
+        save().performClick()
+
+        assertThat(got.out).isEqualTo(425_41L)
+        assertThat(got.from?.accountTail).isEqualTo("4657")
+        assertThat(got.to?.accountTail).isEqualTo("3008")
+    }
+
+    /** A credit arrives somewhere, so the row's account is the destination rather than the source. */
+    @Test
+    fun `a prefilled destination leaves the source to be named`() {
+        val got = Confirmed()
+        compose.setContent {
+            OursTheme {
+                MoveMoneyForm(
+                    accounts = listOf(federal, card),
+                    onDismiss = {},
+                    initialAmountPaise = 5_000_00L,
+                    initialToKey = "3008",
+                    onConfirm = { from, to, out, into, _, _ ->
+                        got.from = from; got.to = to; got.out = out; got.into = into
+                    },
+                )
+            }
+        }
+        chips("Federal Bank")[0].performClick()
+        save().performClick()
+
+        assertThat(got.from?.accountTail).isEqualTo("4657")
+        assertThat(got.to?.accountTail).isEqualTo("3008")
+    }
 }

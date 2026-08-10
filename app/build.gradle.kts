@@ -1,4 +1,7 @@
 import java.io.FileInputStream
+// Imported rather than fully qualified: in the Kotlin DSL `java` resolves to Gradle's own
+// java extension, so `java.net.URI(...)` inside a task does not compile.
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -28,8 +31,8 @@ android {
         applicationId = "com.manuel.ours"
         minSdk = 26
         targetSdk = 34
-        versionCode = 80
-        versionName = "7.8"
+        versionCode = 81
+        versionName = "7.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -240,5 +243,78 @@ tasks.register("publishRelease") {
             """.trimIndent() + "\n"
         )
         println("Published ${published.name} (${published.length() / 1024 / 1024} MB), version $name ($code)")
+
+        // Say plainly what still has to happen, when it still has to happen.
+        //
+        // The phones read the manifest from **master**, and publishing from anywhere else is
+        // only half a release. Between 7.4 and 7.8 four releases were built, signed, published
+        // and reported as shipped while sitting on a branch, and neither phone could see any of
+        // them for weeks — every step said "success", because every step had succeeded.
+        val branch = runCatching {
+            providers.exec {
+                commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
+            }.standardOutput.asText.get().trim()
+        }.getOrDefault("")
+        if (branch.isNotEmpty() && branch != RELEASE_BRANCH) {
+            println(
+                """
+
+                |  ⚠  Published from '$branch', but the phones read '$RELEASE_BRANCH'.
+                |     Nothing reaches either phone until this is merged and pushed:
+                |
+                |       git checkout $RELEASE_BRANCH && git merge --ff-only $branch && git push
+                |
+                |     Then confirm they can actually see it:
+                |
+                |       ./gradlew :app:verifyPhonesSeeRelease
+                """.trimMargin()
+            )
+        }
+    }
+}
+
+/** The branch `UpdateChecker` fetches the manifest from. The phones read nothing else. */
+val RELEASE_BRANCH = "master"
+
+/**
+ * Asks the phones' own question: is the newest release visible from where they look?
+ *
+ * The one check nothing performed. `assembleRelease` proves it builds, `publishRelease` proves
+ * the files were written, the F-Droid script proves that channel is current — and all three pass
+ * while the in-app updater serves a manifest months old, because it reads a *branch* and nothing
+ * verified that branch had moved.
+ *
+ * Fetches the live manifest and compares it against the version this build produces. Run it after
+ * pushing; a failure means the work exists but has not reached anybody.
+ */
+tasks.register("verifyPhonesSeeRelease") {
+    group = "distribution"
+    description = "Fails if the manifest the phones fetch is older than this build"
+
+    doLast {
+        val code = android.defaultConfig.versionCode!!
+        val url =
+            "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/" +
+                "$RELEASE_BRANCH/release/version.json"
+
+        val body = runCatching { URI(url).toURL().readText() }.getOrElse {
+            throw GradleException("Could not read the live manifest at $url — ${it.message}")
+        }
+        // Deliberately not a JSON parser: this task must not acquire a dependency to answer a
+        // question about one integer, and a manifest this cannot read is itself a failure worth
+        // reporting rather than working around.
+        val live = Regex("\"versionCode\"\\s*:\\s*(\\d+)").find(body)?.groupValues?.get(1)?.toInt()
+            ?: throw GradleException("No versionCode in the live manifest:\n$body")
+
+        when {
+            live == code -> println("Phones see $live — current.")
+            live > code ->
+                println("Phones see $live, newer than this build ($code). Nothing to do.")
+            else -> throw GradleException(
+                "The phones can only see version $live, but this build is $code. " +
+                    "The release has not reached '$RELEASE_BRANCH' — merge and push, " +
+                    "or no update is ever offered.",
+            )
+        }
     }
 }

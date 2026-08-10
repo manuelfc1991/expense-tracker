@@ -82,6 +82,16 @@ fun MoveMoneySheet(
      * there is the same wash as money moved between two of one's own accounts.
      */
     accounts: List<AccountBalance>,
+    /**
+     * What the sheet already knows, when it was opened from a row rather than from the ➕.
+     *
+     * A transaction on screen has settled two of the three answers — how much, and which account
+     * it moved on — so asking again would be asking a person to retype what they are looking at.
+     * The remaining question is the one the app cannot know: where the money went.
+     */
+    initialAmountPaise: Long? = null,
+    initialFromKey: String? = null,
+    initialToKey: String? = null,
     onConfirm: (
         from: MoveSide,
         to: MoveSide,
@@ -97,7 +107,14 @@ fun MoveMoneySheet(
         sheetState = sheetState,
         containerColor = Ours.surface,
     ) {
-        MoveMoneyForm(accounts = accounts, onDismiss = onDismiss, onConfirm = onConfirm)
+        MoveMoneyForm(
+            accounts = accounts,
+            onDismiss = onDismiss,
+            initialAmountPaise = initialAmountPaise,
+            initialFromKey = initialFromKey,
+            initialToKey = initialToKey,
+            onConfirm = onConfirm,
+        )
     }
 }
 
@@ -117,6 +134,9 @@ fun MoveMoneySheet(
 internal fun MoveMoneyForm(
     accounts: List<AccountBalance>,
     onDismiss: () -> Unit,
+    initialAmountPaise: Long? = null,
+    initialFromKey: String? = null,
+    initialToKey: String? = null,
     onConfirm: (
         from: MoveSide,
         to: MoveSide,
@@ -126,7 +146,9 @@ internal fun MoveMoneyForm(
         note: String,
     ) -> Unit,
 ) {
-    var amountText by rememberSaveable { mutableStateOf("") }
+    var amountText by rememberSaveable {
+        mutableStateOf(initialAmountPaise?.let(::asFieldText) ?: "")
+    }
     var reachedText by rememberSaveable { mutableStateOf("") }
     var note by rememberSaveable { mutableStateOf("") }
     var whenPicked by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -134,8 +156,8 @@ internal fun MoveMoneyForm(
 
     // Held as keys rather than as objects: `accounts` is a flow and re-emits new instances
     // whenever any balance moves, which would drop a selection mid-entry.
-    var fromKey by rememberSaveable { mutableStateOf<String?>(null) }
-    var toKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var fromKey by rememberSaveable { mutableStateOf(initialFromKey) }
+    var toKey by rememberSaveable { mutableStateOf(initialToKey) }
 
     val cash = remember {
         AccountBalance(key = CASH_ACCOUNT, accountTail = null, bank = CASH_ACCOUNT,
@@ -354,3 +376,12 @@ private fun AccountBalance.toMoveSide() = MoveSide(
     bank = bank,
     label = moveLabel(),
 )
+
+/**
+ * Paise as the amount field expects them: bare digits and a point.
+ *
+ * Not `Money.format` — that groups thousands and the field strips anything that is not a digit
+ * or a point, so "1,234.56" would be read back as 123456 and silently multiply the amount by a
+ * hundred. Deliberately local: nothing else wants a number without its separators.
+ */
+private fun asFieldText(paise: Long): String = "%d.%02d".format(paise / 100, paise % 100)

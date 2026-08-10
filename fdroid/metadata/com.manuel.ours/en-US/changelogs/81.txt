@@ -1,0 +1,5 @@
+A payment already in your list can now be told it was a move between your own accounts. Open it and tap "This was a move", then say where the money went — the amount and the account are taken from the row you are looking at, so there is nothing to retype.
+
+This matters for anything already filed wrongly. Until now a move could only be started from the add sheet, which is not where you are standing when you notice the mistake. Stating it does not add a second entry: the row you opened is relabelled, and only the missing side is written.
+
+A card bill settled through a rewards app still takes two figures — what left the bank, and the larger amount that reached the card.
