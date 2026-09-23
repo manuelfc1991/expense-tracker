@@ -1,7 +1,7 @@
 {
-  "versionCode": 90,
-  "versionName": "8.0",
-  "notes": "Ours 8 is a new app. Updating clears everything in 7.9 — set up again afterwards.",
+  "versionCode": 91,
+  "versionName": "8.1",
+  "notes": "Setup examples no longer show anyone's real bank, card or name.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 19177968
 }
