@@ -1,7 +1,7 @@
 {
-  "versionCode": 81,
-  "versionName": "7.9",
-  "notes": "A payment already in your list can be told it was a move between your own accounts",
+  "versionCode": 90,
+  "versionName": "8.0",
+  "notes": "Ours 8 is a new app. Updating clears everything in 7.9 — set up again afterwards.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
-  "sizeBytes": 25601034
+  "sizeBytes": 19177968
 }
