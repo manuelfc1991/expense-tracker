@@ -1,7 +1,7 @@
 {
-  "versionCode": 91,
-  "versionName": "8.1",
-  "notes": "Setup examples no longer show anyone's real bank, card or name.",
+  "versionCode": 92,
+  "versionName": "8.2",
+  "notes": "Amounts group as you type, and an account with no figure yet says so instead of showing zero.",
   "apkUrl": "https://raw.githubusercontent.com/manuelfc1991/expense-tracker/master/release/Ours.apk",
   "sizeBytes": 19177968
 }
